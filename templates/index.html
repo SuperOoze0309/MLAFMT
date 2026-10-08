@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLA Formatter</title>
+<style>
+  :root {
+    --accent: #2f6fdb; --accent-d: #2459b3; --bg: #f6f7f9; --card: #fff; --border: #d7dbe2;
+    --text: #1f2937; --muted: #6b7280; --ok: #15803d; --err: #b91c1c; --soft: #f2f6fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14161a; --card: #1d2026; --border: #323742; --text: #e5e7eb;
+            --muted: #9aa1ad; --soft: #1b2638; --ok: #4ade80; --err: #f87171; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC",
+         Roboto, sans-serif; background: var(--bg); color: var(--text);
+         padding: 24px 16px 40px; line-height: 1.5; }
+  .app { max-width: 560px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  h1 { font-size: 26px; }
+  .tagline { font-size: 16px; margin-top: 6px; }
+  .what { font-size: 13px; color: var(--muted); margin: 4px 0 18px; }
+  .ghost { white-space: nowrap; background: var(--card); border: 1px solid var(--border); color: var(--text);
+           border-radius: 8px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+  .ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+          padding: 16px; margin-bottom: 12px; }
+  .step { color: var(--accent); font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+  label.f { display: block; font-size: 14px; }
+  label.f input { display: block; width: 100%; margin-top: 3px; padding: 9px 10px; font-size: 15px;
+                  border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+                  color: var(--text); }
+  label.f input:focus { outline: none; border-color: var(--accent);
+                        box-shadow: 0 0 0 3px rgba(47,111,219,.15); }
+  .req { color: var(--err); }
+
+  .drop { border: 2px dashed #b9cdf3; background: var(--soft); color: var(--accent); border-radius: 10px;
+          padding: 26px 12px; text-align: center; cursor: pointer; font-size: 15px; transition: .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); }
+  .drop.has { border-style: solid; color: var(--text); }
+  .drop small { display: block; color: var(--muted); margin-top: 4px; font-size: 13px; }
+
+  .primary { width: 100%; background: var(--accent); color: #fff; border: 0; border-radius: 10px;
+             padding: 14px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .primary:hover { background: var(--accent-d); }
+  .primary:disabled { opacity: .55; cursor: wait; }
+  .row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
+  .link { background: none; border: 0; color: var(--accent); font-size: 14px; cursor: pointer; padding: 0;
+          text-align: left; }
+  .link:hover { text-decoration: underline; }
+  .status { font-size: 14px; color: var(--muted); margin-top: 12px; min-height: 1.5em; }
+  .status.ok { color: var(--ok); } .status.err { color: var(--err); }
+
+  dialog { border: 0; border-radius: 14px; padding: 0; width: min(520px, calc(100% - 24px));
+           background: var(--bg); color: var(--text); margin: auto; }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .dlg { padding: 18px; max-height: 85vh; overflow: auto; }
+  .dlg h2 { font-size: 18px; margin-bottom: 12px; }
+  .opt { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin: 6px 0; cursor: pointer; }
+  .opt input { margin-top: 4px; accent-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; white-space: pre-line; }
+  .preview { font-family: Consolas, Menlo, monospace; font-size: 12px; color: var(--muted);
+             white-space: pre-line; }
+  footer { font-size: 12px; color: var(--muted); text-align: center; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1 data-t="app"></h1>
+    <button class="ghost" id="lang"></button>
+  </header>
+  <p class="tagline" data-t="tagline"></p>
+  <p class="what" data-t="what"></p>
+
+  <div class="card">
+    <div class="step" data-t="step1"></div>
+    <div class="grid">
+      <label class="f"><span data-t="name"></span> <span class="req">*</span><input id="name" autocomplete="name" data-ph="name_ph"></label>
+      <label class="f"><span data-t="title"></span> <span class="req">*</span><input id="title" data-ph="title_ph"></label>
+      <label class="f"><span data-t="instructor"></span><input id="instructor" data-ph="instructor_ph"></label>
+      <label class="f"><span data-t="course"></span><input id="course" data-ph="course_ph"></label>
+      <label class="f"><span data-t="date"></span><input id="date" value="{{ today }}"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step" data-t="step2"></div>
+    <div class="drop" id="drop" tabindex="0" role="button"></div>
+    <input type="file" id="file" accept=".docx,.txt,.md" hidden>
+  </div>
+
+  <button class="primary" id="convert" data-t="convert"></button>
+  <div class="row">
+    <button class="link" id="blank" data-t="blank"></button>
+    <button class="ghost" id="adv-open" data-t="advanced"></button>
+  </div>
+  <div class="status" id="status"></div>
+  <footer>MLA Formatter v{{ version }} · <span data-t="disclaimer"></span></footer>
+</div>
+
+<!-- Advanced options (secondary menu) -->
+<dialog id="adv">
+  <div class="dlg">
+    <h2 data-t="adv_title"></h2>
+    <div class="card">
+      <div class="step" data-t="adv_header"></div>
+      <label class="f"><span data-t="lastname"></span><input id="lname" data-ph="lastname_ph"></label>
+      <div class="hint" data-t="lastname_hint"></div>
+    </div>
+    <div class="card">
+      <div class="step" data-t="adv_txt"></div>
+      <label class="opt"><input type="radio" name="mode" value="blank_line" checked><span data-t="mode_blank"></span></label>
+      <label class="opt"><input type="radio" name="mode" value="line_by_line"><span data-t="mode_line"></span></label>
+      <label class="opt"><input type="checkbox" id="o-md" checked><span data-t="md"></span></label>
+    </div>
+    <div class="card">
+      <div class="step" data-t="adv_body"></div>
+      <label class="opt"><input type="checkbox" id="o-strip" checked><span data-t="strip"></span></label>
+      <label class="opt"><input type="checkbox" id="o-head"><span data-t="headings"></span></label>
+      <label class="opt"><input type="checkbox" id="o-bq"><span data-t="bq"></span></label>
+    </div>
+    <div class="card">
+      <div class="step" data-t="adv_preview"></div>
+      <div class="preview" id="preview"></div>
+    </div>
+    <button class="primary" id="adv-close" data-t="close"></button>
+  </div>
+</dialog>
+
+<script>
+const T = {
+  zh: {
+    app: "MLA 一键排版",
+    tagline: "把你的英文作文草稿，一键变成符合 MLA 第 9 版格式的 Word 文档。",
+    what: "自动设置：Times New Roman 12 号 · 双倍行距 · 1 英寸页边距 · 右上角“姓 页码” · 左上角个人信息 · 标题居中 · 首行缩进 · Works Cited 另起一页并按字母排序",
+    step1: "① 填写信息", step2: "② 选择草稿",
+    name: "你的姓名", title: "作文标题", instructor: "老师", course: "课程", date: "日期",
+    name_ph: "例：Jane Doe", title_ph: "例：The Role of Memory in Hamlet",
+    instructor_ph: "例：Professor Smith", course_ph: "例：ENG 101",
+    drop: "把草稿拖到这里，或点击选择文件", drop_sub: "支持 .docx / .txt / .md",
+    convert: "转换为 MLA 格式并下载", blank: "还没写？下载空白 MLA 模板", advanced: "⚙ 高级选项",
+    lang: "English", ready: "填好姓名和标题，选择草稿即可。",
+    need_file: "请先选择或拖入一个草稿文件。", missing_fields: "请填写姓名和作文标题。",
+    unsupported: "只支持 .docx、.txt、.md 文件（.doc / Pages / Google Docs 请先另存为 .docx）。",
+    too_large: "文件太大（上限 20 MB）。", bad_doc: "无法读取这个文档，文件可能已损坏。",
+    failed: "转换失败：", net: "连接失败：", working: "正在生成…",
+    done: (f, b, w, r) => `✓ 已下载 ${f}（${b} 段正文，${w} 条参考文献${r ? `，已去掉 ${r} 行重复抬头` : ""}）`,
+    done_blank: f => `✓ 已下载空白模板 ${f}`,
+    disclaimer: "斜体/粗体/下划线会保留；图片、脚注、表格可能丢失，提交前请检查。",
+    adv_title: "高级选项", adv_header: "页眉", lastname: "页眉里的姓", lastname_ph: "留空 = 自动",
+    lastname_hint: "留空则自动取姓名最后一个词（会自动忽略 Jr. / III 等）。\n特殊情况手动填写，例如 “Smith-Jones”。",
+    adv_txt: "纯文本（.txt / .md）草稿", mode_blank: "空一行算一段（推荐）", mode_line: "每一行都算一段",
+    md: "用 *星号* 包住的文字变斜体（书名、期刊名）",
+    adv_body: "正文处理", strip: "去掉草稿里已有的姓名/标题抬头，避免重复",
+    headings: "自动识别小标题并加粗（实验性）", bq: "以 > 开头的段落作为长引文缩进 0.5 英寸",
+    adv_preview: "将应用的格式", close: "完成",
+  },
+  en: {
+    app: "MLA Formatter",
+    tagline: "Turn your essay draft into a correctly formatted MLA (9th ed.) Word document in one click.",
+    what: "Sets up automatically: Times New Roman 12 pt · double spacing · 1-inch margins · \"LastName page#\" header · heading block · centered title · indents · Works Cited on a new page, alphabetized",
+    step1: "① Your info", step2: "② Your draft",
+    name: "Your name", title: "Essay title", instructor: "Instructor", course: "Course", date: "Date",
+    name_ph: "e.g. Jane Doe", title_ph: "e.g. The Role of Memory in Hamlet",
+    instructor_ph: "e.g. Professor Smith", course_ph: "e.g. ENG 101",
+    drop: "Drag your draft here, or click to choose a file", drop_sub: ".docx / .txt / .md",
+    convert: "Convert to MLA & download", blank: "No draft yet? Download a blank MLA template", advanced: "⚙ Advanced",
+    lang: "中文", ready: "Enter your name and title, then choose a draft.",
+    need_file: "Please choose or drop a draft file first.", missing_fields: "Please enter your name and essay title.",
+    unsupported: "Only .docx, .txt and .md are supported (save .doc / Pages / Google Docs as .docx first).",
+    too_large: "File too large (20 MB max).", bad_doc: "Can't read that document — it may be damaged.",
+    failed: "Conversion failed: ", net: "Connection failed: ", working: "Working…",
+    done: (f, b, w, r) => `✓ Downloaded ${f} (${b} paragraphs, ${w} Works Cited entries${r ? `, removed ${r} duplicate heading line(s)` : ""})`,
+    done_blank: f => `✓ Downloaded blank template ${f}`,
+    disclaimer: "Italic/bold/underline are kept; images, footnotes and tables may be lost. Always proofread.",
+    adv_title: "Advanced options", adv_header: "Page header", lastname: "Last name in header", lastname_ph: "Blank = automatic",
+    lastname_hint: "Blank = last word of your name (Jr., III etc. are skipped).\nFill in for special cases, e.g. \"Smith-Jones\".",
+    adv_txt: "Plain-text (.txt / .md) drafts", mode_blank: "Blank line between paragraphs (recommended)", mode_line: "Every line is a paragraph",
+    md: "*Asterisks* make italics (titles of books, journals)",
+    adv_body: "Body text", strip: "Remove a name/title heading already in the draft (no duplicates)",
+    headings: "Detect section headings and bold them (experimental)", bq: "Paragraphs starting with > become block quotes (0.5 in)",
+    adv_preview: "Formatting that will be applied", close: "Done",
+  },
+};
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+let lang = store.get("mlafmt.lang") || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
+let file = null;
+let lastStatus = ["ready", ""];
+
+function t(k) { return T[lang][k] ?? T.en[k]; }
+
+function render() {
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.title = t("app");
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll("[data-ph]").forEach(el => { el.placeholder = t(el.dataset.ph); });
+  $("lang").textContent = t("lang");
+  renderDrop();
+  setStatus(...lastStatus.length === 2 && T.en[lastStatus[0]] ? [t(lastStatus[0]), lastStatus[1]] : lastStatus, false);
+}
+
+function renderDrop() {
+  const d = $("drop");
+  if (file) {
+    d.classList.add("has");
+    d.innerHTML = "";
+    d.append("📄 " + file.name);
+    const s = document.createElement("small"); s.textContent = (file.size / 1024).toFixed(1) + " KB"; d.append(s);
+  } else {
+    d.classList.remove("has");
+    d.innerHTML = "";
+    d.append(t("drop"));
+    const s = document.createElement("small"); s.textContent = t("drop_sub"); d.append(s);
+  }
+}
+
+function setStatus(msg, cls, remember = true) {
+  const el = $("status");
+  el.textContent = msg; el.className = "status" + (cls ? " " + cls : "");
+  if (remember) lastStatus = [msg, cls || ""];
+}
+
+$("lang").onclick = () => { lang = lang === "zh" ? "en" : "zh"; store.set("mlafmt.lang", lang); render(); };
+
+// remember name / instructor / course between visits
+["name", "instructor", "course"].forEach(id => {
+  const v = store.get("mlafmt." + id); if (v) $(id).value = v;
+  $(id).addEventListener("change", () => store.set("mlafmt." + id, $(id).value));
+});
+
+// ---- file pick / drop ----
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); };
+$("file").onchange = e => { if (e.target.files[0]) pick(e.target.files[0]); };
+
+function pick(f) {
+  const ext = f.name.split(".").pop().toLowerCase();
+  if (!["docx", "txt", "md"].includes(ext)) { setStatus(t("unsupported"), "err"); return; }
+  file = f; renderDrop(); setStatus("📄 " + f.name);
+}
+
+// ---- advanced dialog ----
+const adv = $("adv");
+$("adv-open").onclick = () => { refreshPreview(); adv.showModal ? adv.showModal() : adv.setAttribute("open", ""); };
+$("adv-close").onclick = () => adv.close ? adv.close() : adv.removeAttribute("open");
+adv.addEventListener("click", e => { if (e.target === adv) adv.close(); });
+
+let pv;
+function refreshPreview() {
+  clearTimeout(pv);
+  pv = setTimeout(() => {
+    fetch("/api/summary", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: $("name").value, last_name_override: $("lname").value || null }) })
+      .then(r => r.json()).then(l => { $("preview").textContent = l.join("\n"); })
+      .catch(() => { $("preview").textContent = ""; });
+  }, 250);
+}
+$("lname").addEventListener("input", refreshPreview);
+
+// ---- actions ----
+function fields() {
+  return { name: $("name").value.trim(), title: $("title").value.trim(), instructor: $("instructor").value.trim(),
+           course: $("course").value.trim(), date: $("date").value.trim(), last_name_override: $("lname").value.trim() };
+}
+
+async function handle(r) {
+  if (!r.ok) {
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    const code = d.error || (r.status === 413 ? "too_large" : "failed");
+    setStatus((T[lang][code] ? t(code) : t("failed")) + (code === "failed" && d.detail ? d.detail : ""), "err");
+    return null;
+  }
+  const name = decodeURIComponent(r.headers.get("X-Filename") || "MLA_Essay.docx");
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return { name, h: r.headers };
+}
+
+function busy(on) { $("convert").disabled = on; $("blank").disabled = on; if (on) setStatus(t("working")); }
+
+$("convert").onclick = async () => {
+  if (!file) { setStatus(t("need_file"), "err"); $("file").click(); return; }
+  const f = fields();
+  if (!f.name || !f.title) { setStatus(t("missing_fields"), "err"); (f.name ? $("title") : $("name")).focus(); return; }
+  const fd = new FormData();
+  fd.append("file", file);
+  Object.entries(f).forEach(([k, v]) => fd.append(k, v));
+  fd.append("txt_mode", document.querySelector("input[name=mode]:checked").value);
+  fd.append("markdown", $("o-md").checked);
+  fd.append("strip_heading", $("o-strip").checked);
+  fd.append("heading_detect", $("o-head").checked);
+  fd.append("block_quote", $("o-bq").checked);
+  busy(true);
+  try {
+    const res = await handle(await fetch("/api/convert", { method: "POST", body: fd }));
+    if (res) setStatus(T[lang].done(res.name, res.h.get("X-Stat-body"), res.h.get("X-Stat-works-cited"),
+                                    +res.h.get("X-Stat-removed-heading-lines")), "ok");
+  } catch (e) { setStatus(t("net") + e.message, "err"); }
+  busy(false);
+};
+
+$("blank").onclick = async () => {
+  const f = fields();
+  if (!f.name || !f.title) { setStatus(t("missing_fields"), "err"); (f.name ? $("title") : $("name")).focus(); return; }
+  busy(true);
+  try {
+    const res = await handle(await fetch("/api/blank", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) }));
+    if (res) setStatus(T[lang].done_blank(res.name), "ok");
+  } catch (e) { setStatus(t("net") + e.message, "err"); }
+  busy(false);
+};
+
+lastStatus = ["ready", ""];
+render();
+</script>
+</body>
+</html>

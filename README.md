@@ -1,101 +1,101 @@
-# MLAFMT - One-Click MLA Essay Formatter
+# MLAFMT — One-Click MLA Formatter · MLA 一键排版
 
-Convert plain text or Word drafts into properly formatted MLA (9th Edition) documents with a single click.
+**English** | [中文](#中文说明)
 
-## What It Does
+Turn an essay draft (`.docx`, `.txt` or `.md`) into a correctly formatted **MLA 9th edition** Word document in one click.
 
-MLAFMT takes a `.txt` or `.docx` draft and reformats it with common MLA 9th edition layout conventions:
+<p>
+<b>Desktop app</b> (Windows / macOS / Linux) · <b>Web app</b> (any browser, incl. Android) · <b>Python library</b> · <b>CLI</b>
+</p>
 
-- **Page setup**: 8.5 x 11 inch, 1-inch margins
-- **Typography**: Times New Roman 12 pt throughout
-- **Spacing**: Double-spaced, 0 pt before/after
-- **Alignment**: Left-aligned (not justified)
-- **Heading block**: Student Name / Instructor / Course / Date (top-left)
-- **Title**: Centered, same font, no bold or extra styling
-- **Body paragraphs**: 0.5-inch first-line indent, double-spaced
-- **Page header**: LastName + auto page number (top-right)
-- **Works Cited**: New page, centered heading, entries sorted alphabetically, hanging indent
-- **PAGE field**: Auto-updates on open in Microsoft Word
+## What it does
 
-## Quick Start
+| | |
+|---|---|
+| Page | 8.5 × 11 in, 1-inch margins, header 0.5 in from top |
+| Text | Times New Roman 12 pt everywhere (incl. CJK), double-spaced, 0 pt before/after, left-aligned |
+| Header | `LastName 1` flush right, live page number (Jr./Sr./III are skipped automatically) |
+| First page | Name / Instructor / Course / Date block, centered title |
+| Body | 0.5-inch first-line indent; italic / bold / underline from your draft are **kept** |
+| Works Cited | New page, centered heading, alphabetized (ignores *A/An/The* and quotes), hanging indent |
 
-### Option A: Use the EXE (Windows, no Python required)
+## Quick start
 
-1. Download `MLAFMT.exe`
-2. Double-click to launch the GUI
-3. Fill in your paper information
-4. Drag and drop a `.docx` or `.txt` draft — or click **Browse**
-5. Click **Convert & Save** to generate the MLA-formatted `.docx`
+### Windows
+Download **MLAFMT.exe** from [Releases](../../releases) and double-click it.
 
-### Option B: Run from Source (requires Python 3.10+)
+1. Enter your name and essay title
+2. Drag in your draft (or click to choose)
+3. Click **Convert to MLA**
 
+Click **中文 / English** in the top-right corner to switch language. Rarely-needed settings are under **⚙ Advanced**.
+
+### From source (Python 3.10+)
 ```bash
-pip install python-docx
-# Optional: pip install tkinterdnd2 (enables drag-and-drop support)
-python mla_gui.py
+pip install -r requirements.txt
+python mla_gui.py          # desktop app
+python mla_web.py          # web app at http://127.0.0.1:8600  (add --lan to use from your phone)
 ```
 
-Or use the engine directly in your own code:
+### Command line
+```bash
+python mla_formatter.py draft.docx --name "Jane Doe" --title "On Memory" --instructor "Prof. Smith" --course "ENG 101"
+python mla_formatter.py --blank --name "Jane Doe" --title "On Memory"      # blank template
+```
 
+### As a library
 ```python
-from mla_formatter import convert_draft_to_mla, create_blank_template
-
-# Convert a draft
-convert_draft_to_mla(
-    "my_draft.txt", "my_essay.docx",
-    name="Alice Johnson", instructor="Prof. Smith",
-    course="ENG 101", date_str="11 August 2026",
-    title="The Role of Visual Rhetoric"
-)
-
-# Create a blank MLA template
-create_blank_template("blank_essay.docx")
+from mla_formatter import convert_draft_to_mla
+stats = convert_draft_to_mla("draft.txt", "essay.docx", name="Jane Doe", instructor="Prof. Smith",
+                             course="ENG 101", date_str="", title="On Memory")   # date "" = today
 ```
 
-## Features
+## Writing tips for your draft
+- Put a line **`Works Cited`** after your essay, then one source per paragraph — it is moved to a new page, sorted and indented for you. (`Work Cited`, `Bibliography`, `References` are recognised too.)
+- In a plain-text draft, write `*Hamlet*` to get *Hamlet* in italics.
+- If your draft already starts with your name/title, it is removed so it isn't duplicated (can be turned off in ⚙ Advanced).
 
-| Feature | Description |
-|---------|-------------|
-| Drag & Drop | Supports `.docx` and `.txt` files |
-| Header override | Manual last-name field for edge cases (e.g. "Mary Jane Smith Jr.") |
-| TXT paragraph modes | Blank-line splitting or line-by-line |
-| Opt-in heading detection | Auto-detect section headings (disabled by default) |
-| Opt-in block quotes | Treat `>`-prefixed lines as MLA block quotes (0.5 in indent) |
-| Format preview | Real-time display of formatting specs |
-| Auto filename | Generates `LastName_MLA_Essay.docx` |
-| Input validation | Required fields checked before conversion |
-
-## MLA 9th Layout Support Checklist
-
-- [x] 8.5 x 11 inch paper, 1-inch margins
-- [x] Times New Roman 12 pt (including CJK)
-- [x] Double spacing, 0 pt before/after
-- [x] Left-aligned (not justified)
-- [x] Paragraph first-line indent 0.5 inch
-- [x] LastName + PAGE header (auto-update)
-- [x] First-page heading block
-- [x] Centered title (no bold, no underline)
-- [x] Block quote indent 0.5 inch
-- [x] Works Cited: new page, centered, alphabetical, hanging indent
+## Advanced options (⚙)
+Header last-name override · TXT paragraph mode (blank-line / line-by-line) · `*asterisk*` italics · remove duplicate heading · heading detection (experimental) · `>` block quotes · open file after saving.
 
 ## Limitations
+Images, tables, footnotes, comments and tracked changes are not carried over. Always proofread before submitting.
 
-This tool reformats **plain essay text** into MLA format. The following are **not preserved** from source documents:
-- Images, tables, charts
-- Footnotes and endnotes
-- Complex character formatting (bold, italic within paragraphs)
-- Track changes and comments
-- Lists and bullet points
-
-## Building from Source
-
+## Development
 ```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name "MLAFMT" mla_gui.py
+pip install -r requirements.txt pytest
+pytest -q
 ```
+Windows EXE is built automatically by GitHub Actions (`.github/workflows/build.yml`) — push a tag like `v2.0.0` to publish a release. Android / macOS build scripts are in `platforms/`.
 
-The output EXE will be in `dist/MLAFMT.exe`.
+---
+
+## 中文说明
+
+把英文作文草稿（`.docx` / `.txt` / `.md`）一键变成符合 **MLA 第 9 版** 格式的 Word 文档。
+
+### 怎么用（Windows）
+1. 从 [Releases](../../releases) 下载 **MLAFMT.exe**，双击打开
+2. 填写 **姓名** 和 **作文标题**（老师、课程可选，日期默认今天）
+3. 把草稿拖进窗口，或点击选择文件
+4. 点 **转换为 MLA 格式**
+
+右上角可切换 **中文 / English**；不常用的设置都在 **⚙ 高级选项** 里。
+
+### 会自动设置
+- Times New Roman 12 号、双倍行距、1 英寸页边距、左对齐
+- 右上角“姓 + 页码”（自动忽略 Jr. / III 等后缀）
+- 左上角姓名 / 老师 / 课程 / 日期，标题居中
+- 正文首行缩进 0.5 英寸，**保留草稿里的斜体、粗体、下划线**
+- Works Cited 另起一页、居中标题、按字母排序、悬挂缩进
+
+### 写草稿的小技巧
+- 正文后写一行 **`Works Cited`**，下面每段一条参考文献，会自动处理
+- 纯文本里用 `*书名*` 表示斜体
+- 草稿开头已经写了姓名/标题也没关系，会自动去重
+
+### 注意
+图片、表格、脚注、批注不会保留。提交前请自己检查一遍。
 
 ## License
-
-MIT License — see [LICENSE](LICENSE) file.
+MIT — see [LICENSE](LICENSE).

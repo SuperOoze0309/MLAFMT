@@ -1,5 +1,9 @@
 __pycache__/
 *.pyc
 build/
-dist/
+/dist/
 *.spec
+.buildozer/
+platforms/*/bin/
+platforms/*/mla_*.py
+platforms/*/templates/

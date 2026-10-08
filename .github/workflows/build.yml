@@ -1,0 +1,39 @@
+name: test-and-build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install python-docx flask pytest
+      - run: pytest -q
+
+  windows-exe:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install python-docx tkinterdnd2 pyinstaller
+      - run: pyinstaller --onefile --windowed --name MLAFMT --collect-all tkinterdnd2 mla_gui.py
+      - uses: actions/upload-artifact@v4
+        with: { name: MLAFMT-windows, path: dist/MLAFMT.exe }
+      - name: Attach to GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/MLAFMT.exe
+          generate_release_notes: true
