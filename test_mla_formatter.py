@@ -5,8 +5,14 @@ Run:  python -m pytest test_mla_formatter.py -q      (or)   python test_mla_form
 import io
 import os
 import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.shared import Inches
 
 import mla_formatter as m
@@ -156,6 +162,54 @@ def test_docx_keeps_italics_and_strips_tabs():
     assert [r.italic for r in body.runs] == [None, True, None]
 
 
+def test_docx_keeps_hyperlink_text_in_order():
+    src = Document()
+    p = src.add_paragraph("Read ")
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), p.part.relate_to("https://example.com", RT.HYPERLINK,
+                                             is_external=True))
+    run = OxmlElement("w:r")
+    properties = OxmlElement("w:rPr")
+    properties.append(OxmlElement("w:i"))
+    run.append(properties)
+    text = OxmlElement("w:t")
+    text.text = "Hamlet"
+    run.append(text)
+    hyperlink.append(run)
+    p._p.append(hyperlink)
+    p.add_run(" today.")
+    path = os.path.join(TMP, "hyperlink.docx")
+    src.save(path)
+
+    doc, _ = _convert(path)
+    assert doc.paragraphs[5].text == "Read Hamlet today."
+    assert any(r.text == "Hamlet" and r.italic for r in doc.paragraphs[5].runs)
+
+
+def test_docx_keeps_inherited_emphasis_and_explicit_off():
+    src = Document()
+    parent = src.styles.add_style("Essay Emphasis", WD_STYLE_TYPE.CHARACTER)
+    parent.font.italic = True
+    child = src.styles.add_style("Inherited Emphasis", WD_STYLE_TYPE.CHARACTER)
+    child.base_style = parent
+    paragraph_style = src.styles.add_style("Essay Body", WD_STYLE_TYPE.PARAGRAPH)
+    paragraph_style.font.bold = True
+    p = src.add_paragraph()
+    p.style = paragraph_style
+    run = p.add_run("Hamlet")
+    run.style = child
+    run = p.add_run(" stays plain.")
+    run.bold = False
+    run.italic = False
+    path = os.path.join(TMP, "styled.docx")
+    src.save(path)
+
+    doc, _ = _convert(path)
+    runs = doc.paragraphs[5].runs
+    assert runs[0].text == "Hamlet" and runs[0].italic and runs[0].bold
+    assert runs[1].text == " stays plain." and not runs[1].italic and not runs[1].bold
+
+
 def test_existing_heading_block_removed():
     src = Document()
     for t in ["Jane Doe", "Professor Smith", "ENG 101", "8 October 2026", "On Reading",
@@ -172,6 +226,22 @@ def test_existing_heading_block_removed():
 def test_existing_heading_kept_when_disabled():
     doc, st = _convert(_txt("Jane Doe\n\nBody."), strip_existing_heading=False)
     assert _texts(doc).count("Jane Doe") == 2
+
+
+def test_single_matching_title_or_name_is_kept_as_body():
+    for first in (META["name"], META["title"], META["title"] + "."):
+        doc, stats = _convert(_txt(first + "\n\nBody."))
+        assert _texts(doc)[5:] == [first, "Body."]
+        assert stats["removed_heading_lines"] == 0
+
+
+def test_existing_heading_with_running_header_and_italic_title():
+    text = "\n\n".join(["Doe 1", META["name"], META["instructor"], META["course"],
+                          META["date_str"], "On Hamlet", "Body."])
+    doc, stats = _convert(_txt(text), title="On *Hamlet*")
+    assert stats["removed_heading_lines"] == 6
+    assert _texts(doc)[5:] == ["Body."]
+    assert any(r.text == "Hamlet" and r.italic for r in doc.paragraphs[4].runs)
 
 
 # ---------------- Works Cited ----------------
@@ -240,6 +310,66 @@ def test_stream_output_and_blank_template():
     doc = Document(io.BytesIO(buf.getvalue()))
     assert doc.paragraphs[3].text == m.today_mla()
     assert doc.paragraphs[-1].text.startswith("[Start writing")
+
+
+def test_conversion_rejects_replacing_original_draft():
+    source = Path(TMP) / "original.docx"
+    doc = Document()
+    doc.add_paragraph("Original text.")
+    doc.save(source)
+    original = source.read_bytes()
+    try:
+        m.convert_draft_to_mla(source, source, **META)
+    except ValueError as error:
+        assert "different file" in str(error)
+    else:
+        raise AssertionError("expected source-overwrite protection")
+    assert source.read_bytes() == original
+
+
+def test_conversion_rejects_hardlink_to_original_draft():
+    source = Path(_txt("Original text.", name="original-hardlink.txt"))
+    target = Path(TMP) / "original-hardlink-alias.docx"
+    try:
+        os.link(source, target)
+    except OSError:  # Some filesystems do not support hard links.
+        return
+    try:
+        m.convert_draft_to_mla(source, target, **META)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("expected source-alias protection")
+    assert source.read_text(encoding="utf-8") == "Original text."
+
+
+def test_failed_save_preserves_existing_output_and_removes_temporary_file():
+    source = _txt("Body.", name="save-failure.txt")
+    target = Path(TMP) / "preserved-output.docx"
+    original = b"existing document bytes"
+    target.write_bytes(original)
+    files_before = set(os.listdir(TMP))
+
+    def fail_after_partial_write(path):
+        Path(path).write_bytes(b"incomplete output")
+        raise OSError("simulated save failure")
+
+    with patch("docx.document.Document.save", side_effect=fail_after_partial_write):
+        try:
+            m.convert_draft_to_mla(source, target, **META)
+        except OSError:
+            pass
+        else:
+            raise AssertionError("expected simulated save failure")
+    assert target.read_bytes() == original
+    assert set(os.listdir(TMP)) == files_before
+
+
+def test_completed_save_replaces_existing_output():
+    target = Path(TMP) / "replace-output.docx"
+    target.write_bytes(b"old output")
+    m.convert_draft_to_mla(_txt("New body."), target, **META)
+    assert Document(target).paragraphs[5].text == "New body."
 
 
 def test_unsupported_extension():

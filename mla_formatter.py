@@ -1,5 +1,5 @@
 """
-mla_formatter.py  (v2.0)
+mla_formatter.py  (v2.1)
 Core engine for one-click MLA formatting (MLA Handbook, 9th Edition).
 
 Two entry points:
@@ -17,14 +17,16 @@ Command line:
 import datetime
 import os
 import re
+import tempfile
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt
+from docx.text.run import Run
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 FONT_NAME = "Times New Roman"
 FONT_SIZE = 12
@@ -386,24 +388,79 @@ def _new_mla_document(name, instructor, course, date_str, title, last_name_overr
     return doc
 
 
+def _ensure_distinct_output(input_path, output):
+    """Never replace the original draft, including aliases to the same file."""
+    output_path = output if isinstance(output, (str, os.PathLike)) else getattr(output, "name", None)
+    if not isinstance(output_path, (str, os.PathLike)):
+        return
+    source = os.path.normcase(os.path.realpath(input_path))
+    target = os.path.normcase(os.path.realpath(output_path))
+    same_file = source == target
+    if not same_file:
+        try:
+            same_file = os.path.samefile(input_path, output_path)
+        except (FileNotFoundError, OSError):
+            pass
+    if same_file:
+        raise ValueError("Output must be a different file from the original draft.")
+
+
+def _save_document(doc, output):
+    """Finish writing a file before replacing an existing output document."""
+    if not isinstance(output, (str, os.PathLike)):
+        doc.save(output)
+        return
+    target = os.path.abspath(os.fspath(output))
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(prefix=".mlafmt-", suffix=".docx",
+                                         dir=os.path.dirname(target), delete=False) as temporary:
+            temporary_path = temporary.name
+        doc.save(temporary_path)
+        os.replace(temporary_path, target)
+    finally:
+        if temporary_path and os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+
+
 def create_blank_template(output, name="Your Name", instructor="Instructor Name",
                           course="Course Number", date_str="",
                           title="Title of Your Paper", last_name_override=None):
     """Write a blank MLA template. `output` is a path or a binary stream."""
     doc = _new_mla_document(name, instructor, course, date_str, title, last_name_override)
     add_body_paragraph(doc, "[Start writing your essay here.]")
-    doc.save(output)
+    _save_document(doc, output)
 
 
 # ======================================================================
 # Entry point 2: convert an existing draft
 # ======================================================================
 
+def _effective_emphasis(run, paragraph, attribute):
+    """Resolve direct formatting and character/paragraph style inheritance."""
+    value = getattr(run, attribute)
+    if value is not None:
+        return bool(value)
+    for style in (run.style, paragraph.style):
+        seen = set()
+        while style is not None and style.style_id not in seen:
+            seen.add(style.style_id)
+            value = getattr(style.font, attribute)
+            if value is not None:
+                return bool(value)
+            style = style.base_style
+    return False
+
+
 def _docx_paragraph_segments(paragraph):
     segs = []
-    for run in paragraph.runs:
+    # paragraph.runs omits runs nested inside hyperlinks. Preserve their visible
+    # text in document order even though conversion does not retain link targets.
+    for element in paragraph._p.iter(qn("w:r")):
+        run = Run(element, paragraph)
         if run.text:
-            segs.append(_seg(run.text, run.bold, run.italic, run.underline))
+            segs.append(_seg(run.text, *(_effective_emphasis(run, paragraph, attr)
+                                         for attr in ("bold", "italic", "underline"))))
     return segs
 
 
@@ -417,7 +474,8 @@ def _extract_paragraphs(input_path, txt_paragraph_mode="blank_line",
         return [p for p in paras if p]
 
     # .txt / .md  - try UTF-8 first, fall back to common Windows/Chinese encodings
-    raw = open(input_path, "rb").read()
+    with open(input_path, "rb") as source:
+        raw = source.read()
     for enc in ("utf-8-sig", "utf-16", "gb18030", "cp1252"):
         try:
             text = raw.decode(enc)
@@ -460,16 +518,22 @@ def _strip_existing_heading(paragraphs, name, instructor, course, date_str, titl
                             last_name):
     """Drop a heading block / title / running header the draft already has,
     so it is not duplicated. Only looks at the first few paragraphs."""
-    known = {_canon(x) for x in (name, instructor, course, date_str, title) if _canon(x)}
-    header_re = re.compile(rf"^{re.escape(_canon(last_name))} \d+$") if last_name else None
-    removed = 0
-    while paragraphs and removed < 6:
-        c = _canon(_plain(paragraphs[0]))
-        if c in known or (header_re and header_re.match(c)):
-            paragraphs.pop(0)
-            removed += 1
-        else:
-            break
+    # A single paragraph that matches the name or title can be actual prose.
+    # Only remove a complete, ordered metadata block; leave ambiguous text alone.
+    def key(text):
+        return " ".join((text or "").split()).casefold()
+
+    metadata = [key(text) for text in (name, instructor, course, date_str) if key(text)]
+    header_re = re.compile(rf"^{re.escape(key(last_name))} \d+$") if last_name else None
+    offset = int(bool(paragraphs and header_re and header_re.fullmatch(key(_plain(paragraphs[0])))))
+    actual = [key(_plain(p)) for p in paragraphs[offset:offset + len(metadata)]]
+    if len(metadata) < 2 or actual != metadata:
+        return 0
+    removed = offset + len(metadata)
+    title_text = key(_plain(_parse_markdown_emphasis(title)))
+    if len(paragraphs) > removed and key(_plain(paragraphs[removed])) == title_text:
+        removed += 1
+    del paragraphs[:removed]
     return removed
 
 
@@ -487,6 +551,7 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
     ext = os.path.splitext(input_path)[1].lower()
     if ext not in SUPPORTED_EXTS:
         raise ValueError(f"Unsupported file type '{ext}'. Use .docx, .txt or .md.")
+    _ensure_distinct_output(input_path, output)
 
     paragraphs = _extract_paragraphs(input_path, txt_paragraph_mode, markdown_emphasis)
     last_name = extract_last_name(name, last_name_override)
@@ -535,7 +600,7 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
         for entry in sorted(wc_entries, key=_wc_sort_key):
             add_body_paragraph(doc, entry, works_cited_entry=True)
 
-    doc.save(output)
+    _save_document(doc, output)
     return {"body": body_count, "works_cited": len(wc_entries),
             "removed_heading_lines": removed}
 

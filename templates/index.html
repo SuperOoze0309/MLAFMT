@@ -1,335 +1,1594 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MLA Formatter</title>
-<style>
-  :root {
-    --accent: #2f6fdb; --accent-d: #2459b3; --bg: #f6f7f9; --card: #fff; --border: #d7dbe2;
-    --text: #1f2937; --muted: #6b7280; --ok: #15803d; --err: #b91c1c; --soft: #f2f6fd;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #14161a; --card: #1d2026; --border: #323742; --text: #e5e7eb;
-            --muted: #9aa1ad; --soft: #1b2638; --ok: #4ade80; --err: #f87171; }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC",
-         Roboto, sans-serif; background: var(--bg); color: var(--text);
-         padding: 24px 16px 40px; line-height: 1.5; }
-  .app { max-width: 560px; margin: 0 auto; }
-  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  h1 { font-size: 26px; }
-  .tagline { font-size: 16px; margin-top: 6px; }
-  .what { font-size: 13px; color: var(--muted); margin: 4px 0 18px; }
-  .ghost { white-space: nowrap; background: var(--card); border: 1px solid var(--border); color: var(--text);
-           border-radius: 8px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
-  .ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-          padding: 16px; margin-bottom: 12px; }
-  .step { color: var(--accent); font-weight: 700; font-size: 15px; margin-bottom: 10px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
-  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
-  label.f { display: block; font-size: 14px; }
-  label.f input { display: block; width: 100%; margin-top: 3px; padding: 9px 10px; font-size: 15px;
-                  border: 1px solid var(--border); border-radius: 8px; background: var(--card);
-                  color: var(--text); }
-  label.f input:focus { outline: none; border-color: var(--accent);
-                        box-shadow: 0 0 0 3px rgba(47,111,219,.15); }
-  .req { color: var(--err); }
-
-  .drop { border: 2px dashed #b9cdf3; background: var(--soft); color: var(--accent); border-radius: 10px;
-          padding: 26px 12px; text-align: center; cursor: pointer; font-size: 15px; transition: .15s; }
-  .drop:hover, .drop.over { border-color: var(--accent); }
-  .drop.has { border-style: solid; color: var(--text); }
-  .drop small { display: block; color: var(--muted); margin-top: 4px; font-size: 13px; }
-
-  .primary { width: 100%; background: var(--accent); color: #fff; border: 0; border-radius: 10px;
-             padding: 14px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 4px; }
-  .primary:hover { background: var(--accent-d); }
-  .primary:disabled { opacity: .55; cursor: wait; }
-  .row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
-  .link { background: none; border: 0; color: var(--accent); font-size: 14px; cursor: pointer; padding: 0;
-          text-align: left; }
-  .link:hover { text-decoration: underline; }
-  .status { font-size: 14px; color: var(--muted); margin-top: 12px; min-height: 1.5em; }
-  .status.ok { color: var(--ok); } .status.err { color: var(--err); }
-
-  dialog { border: 0; border-radius: 14px; padding: 0; width: min(520px, calc(100% - 24px));
-           background: var(--bg); color: var(--text); margin: auto; }
-  dialog::backdrop { background: rgba(0,0,0,.35); }
-  .dlg { padding: 18px; max-height: 85vh; overflow: auto; }
-  .dlg h2 { font-size: 18px; margin-bottom: 12px; }
-  .opt { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin: 6px 0; cursor: pointer; }
-  .opt input { margin-top: 4px; accent-color: var(--accent); }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; white-space: pre-line; }
-  .preview { font-family: Consolas, Menlo, monospace; font-size: 12px; color: var(--muted);
-             white-space: pre-line; }
-  footer { font-size: 12px; color: var(--muted); text-align: center; margin-top: 18px; }
-</style>
-</head>
-<body>
-<div class="app">
-  <header>
-    <h1 data-t="app"></h1>
-    <button class="ghost" id="lang"></button>
-  </header>
-  <p class="tagline" data-t="tagline"></p>
-  <p class="what" data-t="what"></p>
-
-  <div class="card">
-    <div class="step" data-t="step1"></div>
-    <div class="grid">
-      <label class="f"><span data-t="name"></span> <span class="req">*</span><input id="name" autocomplete="name" data-ph="name_ph"></label>
-      <label class="f"><span data-t="title"></span> <span class="req">*</span><input id="title" data-ph="title_ph"></label>
-      <label class="f"><span data-t="instructor"></span><input id="instructor" data-ph="instructor_ph"></label>
-      <label class="f"><span data-t="course"></span><input id="course" data-ph="course_ph"></label>
-      <label class="f"><span data-t="date"></span><input id="date" value="{{ today }}"></label>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>MLAFMT · MLA Formatter</title>
+    <style>
+      :root {
+        --ink: #242843;
+        --muted: #717386;
+        --accent: #5755cc;
+        --accent-dark: #4140a9;
+        --bg: #f6f5f1;
+        --line: #e6e5ed;
+        --soft: #f2f1fc;
+        --ok: #257454;
+        --error: #af3c49;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input {
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button {
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 3px solid #a29ef4;
+        outline-offset: 3px;
+      }
+      button:disabled {
+        cursor: wait;
+        opacity: 0.6;
+      }
+      .shell {
+        width: min(1120px, calc(100% - 64px));
+        margin: auto;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        padding: 27px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        font-size: 20px;
+        font-weight: 760;
+        letter-spacing: -0.5px;
+      }
+      .mark {
+        width: 35px;
+        height: 35px;
+        display: grid;
+        place-items: center;
+        color: white;
+        background: var(--ink);
+        border-radius: 10px;
+      }
+      .mark svg {
+        width: 21px;
+        height: 21px;
+      }
+      .brand small {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        padding: 3px 7px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        margin-left: 3px;
+      }
+      .languages {
+        display: flex;
+        padding: 3px;
+        background: #ebeaf0;
+        border-radius: 9px;
+      }
+      .languages button {
+        border: 0;
+        padding: 5px 12px;
+        border-radius: 6px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .languages button[aria-pressed="true"] {
+        background: white;
+        color: var(--ink);
+        box-shadow: 0 1px 4px #25274412;
+      }
+      .hero {
+        padding: 36px 0 29px;
+      }
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 3.3vw, 39px);
+        letter-spacing: -1.3px;
+        line-height: 1.25;
+        font-weight: 720;
+      }
+      .hero p:last-child {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 11px 0 0;
+        max-width: 640px;
+      }
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+      }
+      .panel {
+        border: 1px solid var(--line);
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+      }
+      .section-heading {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .step {
+        width: 25px;
+        height: 25px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--soft);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      h2,
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 680;
+        letter-spacing: -0.25px;
+      }
+      .section-heading .aside {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 14px;
+      }
+      .field {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .field.full {
+        grid-column: 1/-1;
+      }
+      .required {
+        color: var(--accent);
+        margin-left: 3px;
+      }
+      .field input {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        margin-top: 7px;
+        border: 1px solid var(--line);
+        background: #fcfcfd;
+        padding: 10px 12px;
+        border-radius: 8px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 400;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .field input::placeholder {
+        color: #a3a3b0;
+      }
+      .field input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px #5755cc0d;
+      }
+      .field input[aria-invalid="true"] {
+        border-color: var(--error);
+      }
+      .field-note {
+        margin: 7px 0 0;
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .divider {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 24px 0;
+      }
+      .draft-heading {
+        margin-bottom: 13px;
+      }
+      .drop {
+        width: 100%;
+        border: 1.5px dashed #cecced;
+        background: #faf9ff;
+        border-radius: 12px;
+        color: var(--ink);
+        padding: 23px 16px;
+        text-align: center;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .drop:hover,
+      .drop.over {
+        background: var(--soft);
+        border-color: var(--accent);
+      }
+      .drop.has {
+        border-style: solid;
+        background: #f8faf9;
+        border-color: #cce1d6;
+      }
+      .upload-icon {
+        width: 33px;
+        height: 33px;
+        margin: 0 auto 8px;
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+      }
+      .upload-icon svg {
+        width: 27px;
+        height: 27px;
+      }
+      .drop-title {
+        font-size: 13px;
+        font-weight: 600;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .drop-sub {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 5px;
+      }
+      .file-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 7px;
+      }
+      .file-actions[hidden] {
+        display: none;
+      }
+      .text-button {
+        border: 0;
+        background: transparent;
+        color: var(--accent);
+        padding: 2px 0;
+        font-size: 12px;
+      }
+      .text-button:hover {
+        text-decoration: underline;
+      }
+      .actions {
+        margin-top: 21px;
+      }
+      .primary {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        border: 0;
+        border-radius: 9px;
+        color: white;
+        background: var(--accent);
+        padding: 12px 16px;
+        font-size: 13px;
+        font-weight: 650;
+        transition: background 0.15s;
+      }
+      .primary svg {
+        width: 17px;
+        height: 17px;
+      }
+      .primary:hover {
+        background: var(--accent-dark);
+      }
+      .secondary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .secondary .text-button {
+        text-align: left;
+      }
+      .ghost {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: white;
+        padding: 6px 9px;
+        color: var(--ink);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .ghost:hover {
+        border-color: #b2aedf;
+      }
+      .status {
+        padding: 10px 12px;
+        margin-top: 18px;
+        background: #f8f8fa;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        overflow-wrap: anywhere;
+        min-height: 39px;
+      }
+      .status.ok {
+        background: #f0f8f3;
+        color: var(--ok);
+      }
+      .status.err {
+        background: #fff2f2;
+        color: var(--error);
+      }
+      .status.working::before {
+        content: "";
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 8px;
+        border: 2px solid #bdbbeb;
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: -2px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .privacy {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        margin: 13px 0 0;
+        text-align: center;
+      }
+      .privacy svg {
+        width: 13px;
+        height: 13px;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+      .preview-column {
+        position: sticky;
+        top: 24px;
+      }
+      .preview-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0 2px 12px;
+      }
+      .preview-top h2 {
+        font-size: 13px;
+      }
+      .preview-tag {
+        color: var(--muted);
+        font-size: 10px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 2px 6px;
+      }
+      .paper-stage {
+        background: #eae9e5;
+        padding: 25px 32px;
+        border: 1px solid #e3e2df;
+        border-radius: 14px;
+      }
+      .paper {
+        position: relative;
+        min-height: 407px;
+        aspect-ratio: 8.5/11;
+        background: white;
+        padding: 16.5% 12% 12%;
+        box-shadow: 0 6px 16px #27284310;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12px;
+        line-height: 1.9;
+        color: #353544;
+        overflow-wrap: anywhere;
+        overflow: hidden;
+      }
+      .paper-header {
+        position: absolute;
+        top: 5.5%;
+        left: 12%;
+        right: 12%;
+        text-align: right;
+        font-size: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .paper-heading {
+        line-height: 1.9;
+      }
+      .paper-title {
+        text-align: center;
+        line-height: 1.6;
+        margin: 9px 0 6px;
+      }
+      .paper-body {
+        text-indent: 2em;
+        font-size: 11px;
+        line-height: 1.95;
+        margin: 0;
+        color: #777785;
+      }
+      .paper-lines {
+        margin-top: 8px;
+        opacity: 0.55;
+      }
+      .paper-lines i {
+        display: block;
+        background: #e1e1e7;
+        height: 4px;
+        margin: 15px 0;
+        border-radius: 1px;
+      }
+      .paper-lines i:first-child {
+        margin-left: 24px;
+      }
+      .paper-lines i:last-child {
+        width: 65%;
+      }
+      .preview-note {
+        text-align: center;
+        color: var(--muted);
+        font-size: 10px;
+        margin: 11px 0 21px;
+      }
+      .specs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 11px 18px;
+        padding: 0 3px;
+      }
+      .spec {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .check {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .spec strong {
+        display: block;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .disclaimer {
+        font-size: 10px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        margin: 19px 3px 0;
+        padding-top: 12px;
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        border-top: 1px solid var(--line);
+        margin: 31px 0 0;
+        padding: 18px 0 24px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        padding: 0;
+        width: min(520px, calc(100% - 32px));
+        background: var(--bg);
+        color: var(--ink);
+      }
+      dialog::backdrop {
+        background: #22243d66;
+        backdrop-filter: blur(3px);
+      }
+      .dialog-content {
+        padding: 25px;
+        max-height: 85vh;
+        overflow: auto;
+      }
+      .dialog-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .dialog-heading h2 {
+        font-size: 20px;
+      }
+      .dialog-section {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 17px;
+        margin-bottom: 12px;
+      }
+      .dialog-section h3 {
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .option {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin: 11px 0;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .option input {
+        accent-color: var(--accent);
+        margin: 3px 0 0;
+        flex-shrink: 0;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 11px;
+        margin: 8px 0 0;
+        white-space: pre-line;
+      }
+      .format-summary {
+        padding-left: 17px;
+        color: var(--muted);
+        font-size: 11px;
+        margin: 0;
+      }
+      .format-summary li {
+        padding: 3px 0;
+      }
+      .no-script {
+        border: 1px solid var(--error);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 12px 0;
+        font-size: 13px;
+      }
+      @media (max-width: 900px) {
+        .shell {
+          width: calc(100% - 40px);
+        }
+        .workspace {
+          gap: 20px;
+        }
+        .panel {
+          padding: 20px;
+        }
+        .paper-stage {
+          padding: 22px;
+        }
+        .paper {
+          min-height: 350px;
+          font-size: 10px;
+        }
+        .paper-body {
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 720px) {
+        .shell {
+          max-width: 540px;
+          width: calc(100% - 32px);
+        }
+        .topbar {
+          padding: 19px 0;
+        }
+        .hero {
+          padding: 27px 0 24px;
+        }
+        h1 {
+          letter-spacing: -0.8px;
+        }
+        .hero p:last-child {
+          font-size: 13px;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .preview-column {
+          position: static;
+        }
+        .paper-stage {
+          padding: 25px 40px;
+        }
+        .paper {
+          min-height: 0;
+          font-size: 12px;
+        }
+        .paper-body {
+          font-size: 11px;
+        }
+        footer {
+          margin-top: 25px;
+        }
+      }
+      @media (max-width: 380px) {
+        .fields {
+          grid-template-columns: 1fr;
+        }
+        .brand small {
+          display: none;
+        }
+        .panel {
+          padding: 17px;
+        }
+        .languages button {
+          padding: 5px 9px;
+        }
+        .paper-stage {
+          padding: 20px;
+        }
+        .secondary {
+          gap: 8px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            >
+              <path d="M5 19V5h3l4 8 4-8h3v14M8 19V9m8 10V9" /></svg></span
+          >MLAFMT <small>v{{ version }}</small>
+        </div>
+        <div class="languages" role="group" data-label="language">
+          <button type="button" id="lang-zh" lang="zh-CN" aria-pressed="false">
+            中文</button
+          ><button type="button" id="lang-en" lang="en" aria-pressed="true">
+            English
+          </button>
+        </div>
+      </header>
+      <main>
+        <section class="hero" aria-labelledby="hero-title">
+          <p class="eyebrow" data-t="eyebrow">
+            A little less formatting. A little more writing.
+          </p>
+          <h1 id="hero-title" data-t="hero">
+            Your words. Beautifully formatted.
+          </h1>
+          <p data-t="tagline">
+            Give your essay the finishing touch. Turn a draft into an MLA 9 Word
+            document in seconds.
+          </p>
+        </section>
+        <noscript
+          ><p class="no-script">
+            请启用 JavaScript 使用排版工具。 Enable JavaScript to use the
+            formatter.
+          </p></noscript
+        >
+        <div class="workspace">
+          <section class="panel" aria-labelledby="info-heading">
+            <form id="essay-form" novalidate>
+              <div class="section-heading">
+                <span class="step" aria-hidden="true">01</span>
+                <h2 id="info-heading" data-t="step1">Make it yours</h2>
+                <span class="aside" data-t="required">* Required</span>
+              </div>
+              <div class="fields">
+                <label class="field"
+                  ><span data-t="name">Your name</span
+                  ><span class="required">*</span
+                  ><input
+                    id="name"
+                    name="name"
+                    required
+                    autocomplete="name"
+                    data-ph="name_ph"
+                    placeholder="Jane Doe"
+                /></label>
+                <label class="field"
+                  ><span data-t="instructor">Instructor</span
+                  ><input
+                    id="instructor"
+                    name="instructor"
+                    data-ph="instructor_ph"
+                    placeholder="Professor Smith"
+                /></label>
+                <label class="field full"
+                  ><span data-t="title">Essay title</span
+                  ><span class="required">*</span
+                  ><input
+                    id="title"
+                    name="title"
+                    required
+                    data-ph="title_ph"
+                    placeholder="The Role of Memory in Hamlet"
+                /></label>
+                <label class="field"
+                  ><span data-t="course">Course</span
+                  ><input
+                    id="course"
+                    name="course"
+                    data-ph="course_ph"
+                    placeholder="ENG 101"
+                /></label>
+                <label class="field"
+                  ><span data-t="date">Date</span
+                  ><input
+                    id="date"
+                    name="date"
+                    value="{{ today }}"
+                    aria-describedby="date-hint"
+                  /><span class="field-note" id="date-hint" data-t="date_hint"
+                    >Day Month Year</span
+                  ></label
+                >
+              </div>
+              <hr class="divider" />
+              <div class="section-heading draft-heading">
+                <span class="step" aria-hidden="true">02</span>
+                <h2 data-t="step2">Add your draft</h2>
+              </div>
+              <button
+                type="button"
+                class="drop"
+                id="drop"
+                aria-describedby="drop-sub"
+              >
+                <span class="upload-icon" aria-hidden="true"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M12 16V3m-4 4 4-4 4 4M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"
+                    /></svg></span
+                ><span class="drop-title" id="drop-title" data-t="drop"
+                  >Drop your draft here, or browse files</span
+                ><span class="drop-sub" id="drop-sub" data-t="drop_sub"
+                  >DOCX, TXT or Markdown · up to 20 MB</span
+                >
+              </button>
+              <input type="file" id="file" accept=".docx,.txt,.md" hidden />
+              <div class="file-actions" id="file-actions" hidden>
+                <button
+                  type="button"
+                  class="text-button"
+                  id="remove-file"
+                  data-t="remove_file"
+                >
+                  Remove file
+                </button>
+              </div>
+              <div class="actions">
+                <button type="submit" class="primary" id="convert">
+                  <span data-t="convert">Format & download</span
+                  ><svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" />
+                  </svg>
+                </button>
+                <div class="secondary">
+                  <button
+                    type="button"
+                    class="text-button"
+                    id="blank"
+                    data-t="blank"
+                  >
+                    Start with a blank MLA template</button
+                  ><button
+                    type="button"
+                    class="ghost"
+                    id="adv-open"
+                    aria-haspopup="dialog"
+                    data-t="advanced"
+                  >
+                    Advanced options
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div
+              class="status"
+              id="status"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            ></div>
+            <p class="privacy">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+                <rect x="5" y="10" width="14" height="11" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg
+              ><span data-t="privacy"
+                >Processed by this local server. No cloud upload.</span
+              >
+            </p>
+          </section>
+          <aside class="preview-column" aria-labelledby="preview-heading">
+            <div class="preview-top">
+              <h2 id="preview-heading" data-t="preview_title">
+                A first look at your paper
+              </h2>
+              <span class="preview-tag" data-t="preview_tag"
+                >MLA 9 · Letter</span
+              >
+            </div>
+            <div class="paper-stage">
+              <div class="paper" id="paper-preview" data-label="preview_label">
+                <div class="paper-header" id="paper-header">Doe 1</div>
+                <div class="paper-heading">
+                  <div id="paper-name"></div>
+                  <div id="paper-instructor"></div>
+                  <div id="paper-course"></div>
+                  <div id="paper-date"></div>
+                </div>
+                <div class="paper-title" id="paper-title"></div>
+                <p class="paper-body" data-t="preview_body">
+                  Your ideas belong here. We take care of the margins, spacing
+                  and headings, so you can focus on what you want to say.
+                </p>
+                <div class="paper-lines" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i>
+                </div>
+              </div>
+            </div>
+            <p class="preview-note" data-t="preview_note">
+              Layout illustration · your draft appears in the downloaded
+              document
+            </p>
+            <div class="specs">
+              <div class="spec">
+                <span class="check" aria-hidden="true">✓</span>
+                <div>
+                  <strong>Times New Roman</strong
+                  ><span data-t="spec_font">12 pt · double spacing</span>
+                </div>
+              </div>
+              <div class="spec">
+                <span class="check" aria-hidden="true">✓</span>
+                <div>
+                  <strong data-t="spec_margins">Room to breathe</strong
+                  ><span data-t="spec_margins_sub"
+                    >1-inch margins · 0.5-inch indents</span
+                  >
+                </div>
+              </div>
+              <div class="spec">
+                <span class="check" aria-hidden="true">✓</span>
+                <div>
+                  <strong data-t="spec_header">Your name, every page</strong
+                  ><span data-t="spec_header_sub"
+                    >Surname & automatic page number</span
+                  >
+                </div>
+              </div>
+              <div class="spec">
+                <span class="check" aria-hidden="true">✓</span>
+                <div>
+                  <strong data-t="spec_cited">Works Cited, sorted</strong
+                  ><span data-t="spec_cited_sub"
+                    >New page · hanging indents</span
+                  >
+                </div>
+              </div>
+            </div>
+            <p class="disclaimer" data-t="disclaimer">
+              Bold, italic and underline are kept. Images, footnotes, tables and
+              special styles may be lost. Please review the result before
+              submitting.
+            </p>
+          </aside>
+        </div>
+      </main>
+      <footer>
+        <span>MLAFMT v{{ version }}</span
+        ><span data-t="footer">Made for the words that matter.</span>
+      </footer>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="step" data-t="step2"></div>
-    <div class="drop" id="drop" tabindex="0" role="button"></div>
-    <input type="file" id="file" accept=".docx,.txt,.md" hidden>
-  </div>
-
-  <button class="primary" id="convert" data-t="convert"></button>
-  <div class="row">
-    <button class="link" id="blank" data-t="blank"></button>
-    <button class="ghost" id="adv-open" data-t="advanced"></button>
-  </div>
-  <div class="status" id="status"></div>
-  <footer>MLA Formatter v{{ version }} · <span data-t="disclaimer"></span></footer>
-</div>
-
-<!-- Advanced options (secondary menu) -->
-<dialog id="adv">
-  <div class="dlg">
-    <h2 data-t="adv_title"></h2>
-    <div class="card">
-      <div class="step" data-t="adv_header"></div>
-      <label class="f"><span data-t="lastname"></span><input id="lname" data-ph="lastname_ph"></label>
-      <div class="hint" data-t="lastname_hint"></div>
-    </div>
-    <div class="card">
-      <div class="step" data-t="adv_txt"></div>
-      <label class="opt"><input type="radio" name="mode" value="blank_line" checked><span data-t="mode_blank"></span></label>
-      <label class="opt"><input type="radio" name="mode" value="line_by_line"><span data-t="mode_line"></span></label>
-      <label class="opt"><input type="checkbox" id="o-md" checked><span data-t="md"></span></label>
-    </div>
-    <div class="card">
-      <div class="step" data-t="adv_body"></div>
-      <label class="opt"><input type="checkbox" id="o-strip" checked><span data-t="strip"></span></label>
-      <label class="opt"><input type="checkbox" id="o-head"><span data-t="headings"></span></label>
-      <label class="opt"><input type="checkbox" id="o-bq"><span data-t="bq"></span></label>
-    </div>
-    <div class="card">
-      <div class="step" data-t="adv_preview"></div>
-      <div class="preview" id="preview"></div>
-    </div>
-    <button class="primary" id="adv-close" data-t="close"></button>
-  </div>
-</dialog>
-
-<script>
-const T = {
-  zh: {
-    app: "MLA 一键排版",
-    tagline: "把你的英文作文草稿，一键变成符合 MLA 第 9 版格式的 Word 文档。",
-    what: "自动设置：Times New Roman 12 号 · 双倍行距 · 1 英寸页边距 · 右上角“姓 页码” · 左上角个人信息 · 标题居中 · 首行缩进 · Works Cited 另起一页并按字母排序",
-    step1: "① 填写信息", step2: "② 选择草稿",
-    name: "你的姓名", title: "作文标题", instructor: "老师", course: "课程", date: "日期",
-    name_ph: "例：Jane Doe", title_ph: "例：The Role of Memory in Hamlet",
-    instructor_ph: "例：Professor Smith", course_ph: "例：ENG 101",
-    drop: "把草稿拖到这里，或点击选择文件", drop_sub: "支持 .docx / .txt / .md",
-    convert: "转换为 MLA 格式并下载", blank: "还没写？下载空白 MLA 模板", advanced: "⚙ 高级选项",
-    lang: "English", ready: "填好姓名和标题，选择草稿即可。",
-    need_file: "请先选择或拖入一个草稿文件。", missing_fields: "请填写姓名和作文标题。",
-    unsupported: "只支持 .docx、.txt、.md 文件（.doc / Pages / Google Docs 请先另存为 .docx）。",
-    too_large: "文件太大（上限 20 MB）。", bad_doc: "无法读取这个文档，文件可能已损坏。",
-    failed: "转换失败：", net: "连接失败：", working: "正在生成…",
-    done: (f, b, w, r) => `✓ 已下载 ${f}（${b} 段正文，${w} 条参考文献${r ? `，已去掉 ${r} 行重复抬头` : ""}）`,
-    done_blank: f => `✓ 已下载空白模板 ${f}`,
-    disclaimer: "斜体/粗体/下划线会保留；图片、脚注、表格可能丢失，提交前请检查。",
-    adv_title: "高级选项", adv_header: "页眉", lastname: "页眉里的姓", lastname_ph: "留空 = 自动",
-    lastname_hint: "留空则自动取姓名最后一个词（会自动忽略 Jr. / III 等）。\n特殊情况手动填写，例如 “Smith-Jones”。",
-    adv_txt: "纯文本（.txt / .md）草稿", mode_blank: "空一行算一段（推荐）", mode_line: "每一行都算一段",
-    md: "用 *星号* 包住的文字变斜体（书名、期刊名）",
-    adv_body: "正文处理", strip: "去掉草稿里已有的姓名/标题抬头，避免重复",
-    headings: "自动识别小标题并加粗（实验性）", bq: "以 > 开头的段落作为长引文缩进 0.5 英寸",
-    adv_preview: "将应用的格式", close: "完成",
-  },
-  en: {
-    app: "MLA Formatter",
-    tagline: "Turn your essay draft into a correctly formatted MLA (9th ed.) Word document in one click.",
-    what: "Sets up automatically: Times New Roman 12 pt · double spacing · 1-inch margins · \"LastName page#\" header · heading block · centered title · indents · Works Cited on a new page, alphabetized",
-    step1: "① Your info", step2: "② Your draft",
-    name: "Your name", title: "Essay title", instructor: "Instructor", course: "Course", date: "Date",
-    name_ph: "e.g. Jane Doe", title_ph: "e.g. The Role of Memory in Hamlet",
-    instructor_ph: "e.g. Professor Smith", course_ph: "e.g. ENG 101",
-    drop: "Drag your draft here, or click to choose a file", drop_sub: ".docx / .txt / .md",
-    convert: "Convert to MLA & download", blank: "No draft yet? Download a blank MLA template", advanced: "⚙ Advanced",
-    lang: "中文", ready: "Enter your name and title, then choose a draft.",
-    need_file: "Please choose or drop a draft file first.", missing_fields: "Please enter your name and essay title.",
-    unsupported: "Only .docx, .txt and .md are supported (save .doc / Pages / Google Docs as .docx first).",
-    too_large: "File too large (20 MB max).", bad_doc: "Can't read that document — it may be damaged.",
-    failed: "Conversion failed: ", net: "Connection failed: ", working: "Working…",
-    done: (f, b, w, r) => `✓ Downloaded ${f} (${b} paragraphs, ${w} Works Cited entries${r ? `, removed ${r} duplicate heading line(s)` : ""})`,
-    done_blank: f => `✓ Downloaded blank template ${f}`,
-    disclaimer: "Italic/bold/underline are kept; images, footnotes and tables may be lost. Always proofread.",
-    adv_title: "Advanced options", adv_header: "Page header", lastname: "Last name in header", lastname_ph: "Blank = automatic",
-    lastname_hint: "Blank = last word of your name (Jr., III etc. are skipped).\nFill in for special cases, e.g. \"Smith-Jones\".",
-    adv_txt: "Plain-text (.txt / .md) drafts", mode_blank: "Blank line between paragraphs (recommended)", mode_line: "Every line is a paragraph",
-    md: "*Asterisks* make italics (titles of books, journals)",
-    adv_body: "Body text", strip: "Remove a name/title heading already in the draft (no duplicates)",
-    headings: "Detect section headings and bold them (experimental)", bq: "Paragraphs starting with > become block quotes (0.5 in)",
-    adv_preview: "Formatting that will be applied", close: "Done",
-  },
-};
-
-const $ = id => document.getElementById(id);
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
-};
-let lang = store.get("mlafmt.lang") || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
-let file = null;
-let lastStatus = ["ready", ""];
-
-function t(k) { return T[lang][k] ?? T.en[k]; }
-
-function render() {
-  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
-  document.title = t("app");
-  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
-  document.querySelectorAll("[data-ph]").forEach(el => { el.placeholder = t(el.dataset.ph); });
-  $("lang").textContent = t("lang");
-  renderDrop();
-  setStatus(...lastStatus.length === 2 && T.en[lastStatus[0]] ? [t(lastStatus[0]), lastStatus[1]] : lastStatus, false);
-}
-
-function renderDrop() {
-  const d = $("drop");
-  if (file) {
-    d.classList.add("has");
-    d.innerHTML = "";
-    d.append("📄 " + file.name);
-    const s = document.createElement("small"); s.textContent = (file.size / 1024).toFixed(1) + " KB"; d.append(s);
-  } else {
-    d.classList.remove("has");
-    d.innerHTML = "";
-    d.append(t("drop"));
-    const s = document.createElement("small"); s.textContent = t("drop_sub"); d.append(s);
-  }
-}
-
-function setStatus(msg, cls, remember = true) {
-  const el = $("status");
-  el.textContent = msg; el.className = "status" + (cls ? " " + cls : "");
-  if (remember) lastStatus = [msg, cls || ""];
-}
-
-$("lang").onclick = () => { lang = lang === "zh" ? "en" : "zh"; store.set("mlafmt.lang", lang); render(); };
-
-// remember name / instructor / course between visits
-["name", "instructor", "course"].forEach(id => {
-  const v = store.get("mlafmt." + id); if (v) $(id).value = v;
-  $(id).addEventListener("change", () => store.set("mlafmt." + id, $(id).value));
-});
-
-// ---- file pick / drop ----
-const drop = $("drop");
-drop.onclick = () => $("file").click();
-drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
-drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
-drop.ondragleave = () => drop.classList.remove("over");
-drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); };
-$("file").onchange = e => { if (e.target.files[0]) pick(e.target.files[0]); };
-
-function pick(f) {
-  const ext = f.name.split(".").pop().toLowerCase();
-  if (!["docx", "txt", "md"].includes(ext)) { setStatus(t("unsupported"), "err"); return; }
-  file = f; renderDrop(); setStatus("📄 " + f.name);
-}
-
-// ---- advanced dialog ----
-const adv = $("adv");
-$("adv-open").onclick = () => { refreshPreview(); adv.showModal ? adv.showModal() : adv.setAttribute("open", ""); };
-$("adv-close").onclick = () => adv.close ? adv.close() : adv.removeAttribute("open");
-adv.addEventListener("click", e => { if (e.target === adv) adv.close(); });
-
-let pv;
-function refreshPreview() {
-  clearTimeout(pv);
-  pv = setTimeout(() => {
-    fetch("/api/summary", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: $("name").value, last_name_override: $("lname").value || null }) })
-      .then(r => r.json()).then(l => { $("preview").textContent = l.join("\n"); })
-      .catch(() => { $("preview").textContent = ""; });
-  }, 250);
-}
-$("lname").addEventListener("input", refreshPreview);
-
-// ---- actions ----
-function fields() {
-  return { name: $("name").value.trim(), title: $("title").value.trim(), instructor: $("instructor").value.trim(),
-           course: $("course").value.trim(), date: $("date").value.trim(), last_name_override: $("lname").value.trim() };
-}
-
-async function handle(r) {
-  if (!r.ok) {
-    let d = {}; try { d = await r.json(); } catch (e) {}
-    const code = d.error || (r.status === 413 ? "too_large" : "failed");
-    setStatus((T[lang][code] ? t(code) : t("failed")) + (code === "failed" && d.detail ? d.detail : ""), "err");
-    return null;
-  }
-  const name = decodeURIComponent(r.headers.get("X-Filename") || "MLA_Essay.docx");
-  const blob = await r.blob();
-  const url = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-  return { name, h: r.headers };
-}
-
-function busy(on) { $("convert").disabled = on; $("blank").disabled = on; if (on) setStatus(t("working")); }
-
-$("convert").onclick = async () => {
-  if (!file) { setStatus(t("need_file"), "err"); $("file").click(); return; }
-  const f = fields();
-  if (!f.name || !f.title) { setStatus(t("missing_fields"), "err"); (f.name ? $("title") : $("name")).focus(); return; }
-  const fd = new FormData();
-  fd.append("file", file);
-  Object.entries(f).forEach(([k, v]) => fd.append(k, v));
-  fd.append("txt_mode", document.querySelector("input[name=mode]:checked").value);
-  fd.append("markdown", $("o-md").checked);
-  fd.append("strip_heading", $("o-strip").checked);
-  fd.append("heading_detect", $("o-head").checked);
-  fd.append("block_quote", $("o-bq").checked);
-  busy(true);
-  try {
-    const res = await handle(await fetch("/api/convert", { method: "POST", body: fd }));
-    if (res) setStatus(T[lang].done(res.name, res.h.get("X-Stat-body"), res.h.get("X-Stat-works-cited"),
-                                    +res.h.get("X-Stat-removed-heading-lines")), "ok");
-  } catch (e) { setStatus(t("net") + e.message, "err"); }
-  busy(false);
-};
-
-$("blank").onclick = async () => {
-  const f = fields();
-  if (!f.name || !f.title) { setStatus(t("missing_fields"), "err"); (f.name ? $("title") : $("name")).focus(); return; }
-  busy(true);
-  try {
-    const res = await handle(await fetch("/api/blank", { method: "POST",
-      headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) }));
-    if (res) setStatus(T[lang].done_blank(res.name), "ok");
-  } catch (e) { setStatus(t("net") + e.message, "err"); }
-  busy(false);
-};
-
-lastStatus = ["ready", ""];
-render();
-</script>
-</body>
+    <dialog id="adv" aria-labelledby="adv-title">
+      <div class="dialog-content">
+        <div class="dialog-heading">
+          <h2 id="adv-title" data-t="adv_title">Make the details work</h2>
+          <button
+            type="button"
+            class="ghost"
+            id="adv-x"
+            data-label="close_dialog"
+          >
+            ×
+          </button>
+        </div>
+        <section class="dialog-section">
+          <h3 data-t="adv_header">Page header</h3>
+          <label class="field"
+            ><span data-t="lastname">Surname in header</span
+            ><input
+              id="lname"
+              data-ph="lastname_ph"
+              aria-describedby="lastname-hint"
+              placeholder="Automatic"
+          /></label>
+          <p class="hint" id="lastname-hint" data-t="lastname_hint">
+            Uses the last word in your name, ignoring suffixes like Jr. or III.
+            Set a custom surname when needed, e.g. Smith-Jones.
+          </p>
+        </section>
+        <section class="dialog-section">
+          <h3 data-t="adv_txt">TXT & Markdown drafts</h3>
+          <label class="option"
+            ><input type="radio" name="mode" value="blank_line" checked /><span
+              data-t="mode_blank"
+              >Blank line between paragraphs (recommended)</span
+            ></label
+          ><label class="option"
+            ><input type="radio" name="mode" value="line_by_line" /><span
+              data-t="mode_line"
+              >Every line is a paragraph</span
+            ></label
+          ><label class="option"
+            ><input type="checkbox" id="o-md" checked /><span data-t="md"
+              >Use *asterisks* for italics and **double asterisks** for
+              bold</span
+            ></label
+          >
+        </section>
+        <section class="dialog-section">
+          <h3 data-t="adv_body">Body text</h3>
+          <label class="option"
+            ><input type="checkbox" id="o-strip" checked /><span data-t="strip"
+              >Remove a name/title heading already in the draft</span
+            ></label
+          ><label class="option"
+            ><input type="checkbox" id="o-head" /><span data-t="headings"
+              >Detect section headings and make them bold (experimental)</span
+            ></label
+          ><label class="option"
+            ><input type="checkbox" id="o-bq" /><span data-t="bq"
+              >Indent paragraphs starting with > as block quotes</span
+            ></label
+          >
+        </section>
+        <section class="dialog-section">
+          <h3 data-t="adv_preview">Formatting at a glance</h3>
+          <ul class="format-summary" id="format-summary"></ul>
+        </section>
+        <button type="button" class="primary" id="adv-close" data-t="close">
+          Save options
+        </button>
+      </div>
+    </dialog>
+    <script>
+      "use strict";
+      const T = {
+        zh: {
+          language: "界面语言",
+          eyebrow: "让排版更轻松，让写作更专注",
+          hero: "专注表达，排版交给我们。",
+          tagline:
+            "为你的英文论文收好尾。上传草稿，即可生成 MLA 第 9 版格式的 Word 文档。",
+          step1: "填写论文信息",
+          step2: "添加你的草稿",
+          required: "* 为必填项",
+          name: "你的姓名",
+          title: "论文标题",
+          instructor: "任课教师",
+          course: "课程",
+          date: "日期",
+          date_hint: "日 月（英文） 年",
+          name_ph: "例如 Jane Doe",
+          title_ph: "例如 The Role of Memory in Hamlet",
+          instructor_ph: "例如 Professor Smith",
+          course_ph: "例如 ENG 101",
+          drop: "拖入草稿，或点击选择文件",
+          drop_sub: "DOCX、TXT 或 Markdown · 最大 20 MB",
+          remove_file: "移除文件",
+          convert: "生成 MLA 文档并下载",
+          blank: "从空白 MLA 模板开始",
+          advanced: "高级选项",
+          privacy: "文件由当前本地服务处理，无需上传云端。",
+          preview_title: "你的论文，初见模样",
+          preview_tag: "MLA 9 · Letter 纸张",
+          preview_label: "论文版式示意预览",
+          preview_body:
+            "你的观点将在这里展开。我们帮你设置页边距、行距和抬头，让你专注于表达。",
+          preview_note: "版式示意 · 草稿正文会出现在下载的文档中",
+          preview_name: "你的姓名",
+          preview_instructor: "任课教师",
+          preview_course: "课程名称",
+          preview_essay: "你的论文标题",
+          preview_surname: "姓氏",
+          spec_font: "12 磅字号 · 双倍行距",
+          spec_margins: "舒展的页面",
+          spec_margins_sub: "1 英寸页边距 · 0.5 英寸缩进",
+          spec_header: "每一页都有你的名字",
+          spec_header_sub: "姓氏与自动页码",
+          spec_cited: "有序的参考文献",
+          spec_cited_sub: "另起一页 · 悬挂缩进",
+          disclaimer:
+            "保留粗体、斜体与下划线。图片、脚注、表格和特殊样式可能丢失，提交前请检查生成文档。",
+          footer: "为每一段认真写下的文字。",
+          ready: "填写姓名与标题，添加草稿，就可以开始了。",
+          file_ready: (f, size) => `已选择 ${f} · ${size}`,
+          need_file: "请先添加一个草稿文件。",
+          missing_fields: "请填写姓名和论文标题。",
+          unsupported:
+            "支持 .docx、.txt 和 .md 文件。请先将 .doc、Pages 或 Google Docs 另存为 .docx。",
+          too_large: "文件超过 20 MB，请缩小后重试。",
+          empty_file: "这个文件是空的，请选择有内容的草稿。",
+          no_file: "请先添加一个草稿文件。",
+          bad_doc:
+            "无法读取该 Word 文档，请检查文件是否损坏或重新另存为 .docx。",
+          invalid_json: "提交内容无法读取，请重试。",
+          invalid_fields: "请检查论文信息，所有字段都应为文字。",
+          invalid_options: "排版选项无效，请重新选择。",
+          failed: "生成失败，请检查草稿后重试。",
+          net: "无法连接本地服务，请确认程序仍在运行。",
+          working: "正在排版，即将准备好下载…",
+          done: (f, b, w, r) =>
+            `下载已开始：${f} · ${b} 段正文 · ${w} 条参考文献${r ? ` · 已移除 ${r} 行重复抬头` : ""}`,
+          done_blank: (f) => `空白模板下载已开始：${f}`,
+          adv_title: "调整每一个细节",
+          adv_header: "页眉",
+          lastname: "页眉中的姓氏",
+          lastname_ph: "自动识别",
+          lastname_hint:
+            "默认使用姓名的最后一个词，自动忽略 Jr.、III 等后缀。如需使用复合姓氏，可手动填写，例如 Smith-Jones。",
+          adv_txt: "TXT 与 Markdown 草稿",
+          mode_blank: "以空行划分段落（推荐）",
+          mode_line: "每一行作为一个段落",
+          md: "用 *星号* 标记斜体，用 **双星号** 标记粗体",
+          adv_body: "正文处理",
+          strip: "移除草稿中已有的姓名与标题抬头",
+          headings: "自动识别小标题并加粗（实验性）",
+          bq: "将以 > 开头的段落设为长引文缩进",
+          adv_preview: "将应用的格式",
+          close: "保存选项",
+          close_dialog: "关闭高级选项",
+          summary_header: (ln) => `页眉：${ln} 1（右上角，距顶部 0.5 英寸）`,
+          summary_paper: "纸张：Letter，8.5 × 11 英寸",
+          summary_font: "字体：Times New Roman，12 磅",
+          summary_margins: "页边距：四周 1 英寸",
+          summary_spacing: "双倍行距，段前段后 0 磅",
+          summary_indent: "首行缩进 0.5 英寸，左对齐",
+          summary_block: "长引文缩进 0.5 英寸",
+          summary_cited: "Works Cited：另起一页，标题居中，条目按字母排序",
+          summary_hanging: "参考文献条目：悬挂缩进 0.5 英寸",
+        },
+        en: {
+          language: "Interface language",
+          eyebrow: "A little less formatting. A little more writing.",
+          hero: "Your words. Beautifully formatted.",
+          tagline:
+            "Give your essay the finishing touch. Turn a draft into an MLA 9 Word document in seconds.",
+          step1: "Make it yours",
+          step2: "Add your draft",
+          required: "* Required",
+          name: "Your name",
+          title: "Essay title",
+          instructor: "Instructor",
+          course: "Course",
+          date: "Date",
+          date_hint: "Day Month Year",
+          name_ph: "Jane Doe",
+          title_ph: "The Role of Memory in Hamlet",
+          instructor_ph: "Professor Smith",
+          course_ph: "ENG 101",
+          drop: "Drop your draft here, or browse files",
+          drop_sub: "DOCX, TXT or Markdown · up to 20 MB",
+          remove_file: "Remove file",
+          convert: "Format & download",
+          blank: "Start with a blank MLA template",
+          advanced: "Advanced options",
+          privacy: "Processed by this local server. No cloud upload.",
+          preview_title: "A first look at your paper",
+          preview_tag: "MLA 9 · Letter",
+          preview_label: "Illustrative paper layout preview",
+          preview_body:
+            "Your ideas belong here. We take care of the margins, spacing and headings, so you can focus on what you want to say.",
+          preview_note:
+            "Layout illustration · your draft appears in the downloaded document",
+          preview_name: "Your Name",
+          preview_instructor: "Instructor Name",
+          preview_course: "Course Number",
+          preview_essay: "Title of Your Paper",
+          preview_surname: "LastName",
+          spec_font: "12 pt · double spacing",
+          spec_margins: "Room to breathe",
+          spec_margins_sub: "1-inch margins · 0.5-inch indents",
+          spec_header: "Your name, every page",
+          spec_header_sub: "Surname & automatic page number",
+          spec_cited: "Works Cited, sorted",
+          spec_cited_sub: "New page · hanging indents",
+          disclaimer:
+            "Bold, italic and underline are kept. Images, footnotes, tables and special styles may be lost. Please review the result before submitting.",
+          footer: "Made for the words that matter.",
+          ready: "Enter your name and title, add a draft, and you're ready.",
+          file_ready: (f, size) => `Selected ${f} · ${size}`,
+          need_file: "Please add a draft file first.",
+          missing_fields: "Please enter your name and essay title.",
+          unsupported:
+            "Choose a .docx, .txt or .md file. Save .doc, Pages or Google Docs as .docx first.",
+          too_large: "This file exceeds 20 MB. Please use a smaller draft.",
+          empty_file: "This file is empty. Please choose a draft with content.",
+          no_file: "Please add a draft file first.",
+          bad_doc:
+            "This Word document could not be read. Check the file or save it again as .docx.",
+          invalid_json: "Your submission could not be read. Please try again.",
+          invalid_fields:
+            "Check your paper details; all fields must contain text.",
+          invalid_options: "Please select valid formatting options.",
+          failed:
+            "The document could not be generated. Check your draft and try again.",
+          net: "Could not connect to the local server. Check that the app is still running.",
+          working:
+            "Formatting your paper. Your download will be ready shortly…",
+          done: (f, b, w, r) =>
+            `Download started: ${f} · ${b} paragraphs · ${w} Works Cited entries${r ? ` · removed ${r} duplicate heading lines` : ""}`,
+          done_blank: (f) => `Blank template download started: ${f}`,
+          adv_title: "Make the details work",
+          adv_header: "Page header",
+          lastname: "Surname in header",
+          lastname_ph: "Automatic",
+          lastname_hint:
+            "Uses the last word in your name, ignoring suffixes like Jr. or III. Set a custom surname when needed, e.g. Smith-Jones.",
+          adv_txt: "TXT & Markdown drafts",
+          mode_blank: "Blank line between paragraphs (recommended)",
+          mode_line: "Every line is a paragraph",
+          md: "Use *asterisks* for italics and **double asterisks** for bold",
+          adv_body: "Body text",
+          strip: "Remove a name/title heading already in the draft",
+          headings: "Detect section headings and make them bold (experimental)",
+          bq: "Indent paragraphs starting with > as block quotes",
+          adv_preview: "Formatting at a glance",
+          close: "Save options",
+          close_dialog: "Close advanced options",
+          summary_header: (ln) =>
+            `Header: ${ln} 1 (upper right, 0.5 in from top)`,
+          summary_paper: "Paper: 8.5 × 11 in (Letter)",
+          summary_font: "Font: Times New Roman, 12 pt",
+          summary_margins: "Margins: 1 in on all sides",
+          summary_spacing: "Double spacing, 0 pt before/after",
+          summary_indent: "First-line indent: 0.5 in; left aligned",
+          summary_block: "Block quote indent: 0.5 in",
+          summary_cited:
+            "Works Cited: new page, centered title, alphabetical entries",
+          summary_hanging: "Works Cited entries: hanging indent 0.5 in",
+        },
+      };
+      const $ = (id) => document.getElementById(id);
+      const store = {
+        get(key) {
+          try {
+            return localStorage.getItem("mlafmt." + key);
+          } catch (_) {
+            return null;
+          }
+        },
+        set(key, value) {
+          try {
+            localStorage.setItem("mlafmt." + key, value);
+          } catch (_) {}
+        },
+      };
+      const savedLanguage = store.get("lang");
+      let lang = ["zh", "en"].includes(savedLanguage)
+        ? savedLanguage
+        : (navigator.language || "").toLowerCase().startsWith("zh")
+          ? "zh"
+          : "en";
+      let file = null,
+        inProgress = false;
+      let lastStatus = { key: "ready", args: [], tone: "" };
+      const t = (key, ...args) => {
+        const value = T[lang][key] ?? T.en[key] ?? T.en.failed;
+        return typeof value === "function" ? value(...args) : value;
+      };
+      function renderStatus() {
+        $("status").textContent = t(lastStatus.key, ...lastStatus.args);
+        $("status").className =
+          "status" + (lastStatus.tone ? " " + lastStatus.tone : "");
+      }
+      function setStatus(key, tone = "", ...args) {
+        lastStatus = { key, args, tone };
+        renderStatus();
+      }
+      function fileSize(size) {
+        return (
+          new Intl.NumberFormat(lang === "zh" ? "zh-CN" : "en", {
+            maximumFractionDigits: 1,
+          }).format(size / (size >= 1048576 ? 1048576 : 1024)) +
+          (size >= 1048576 ? " MB" : " KB")
+        );
+      }
+      function renderDrop() {
+        $("drop").classList.toggle("has", Boolean(file));
+        $("drop-title").textContent = file ? file.name : t("drop");
+        $("drop-sub").textContent = file
+          ? fileSize(file.size) + " · " + t("drop_sub")
+          : t("drop_sub");
+        $("file-actions").hidden = !file;
+        if (lastStatus.key === "file_ready" && file)
+          lastStatus.args = [file.name, fileSize(file.size)];
+      }
+      function surname() {
+        if ($("lname").value.trim()) return $("lname").value.trim();
+        const words = $("name")
+          .value.trim()
+          .split(/\s+/)
+          .map((word) => word.replace(/^,+|,+$/g, ""))
+          .filter(Boolean);
+        while (
+          words.length > 1 &&
+          /^(jr|sr|ii|iii|iv|v|phd|md|esq)$/i.test(
+            words[words.length - 1].replace(/[.,]/g, ""),
+          )
+        )
+          words.pop();
+        return words[words.length - 1] || t("preview_surname");
+      }
+      function refreshPreview() {
+        for (const id of ["name", "instructor", "course", "title"])
+          $("paper-" + id).textContent =
+            $(id).value.trim() ||
+            t(id === "title" ? "preview_essay" : "preview_" + id);
+        $("paper-date").textContent =
+          $("date").value.trim() || $("date").defaultValue;
+        $("paper-header").textContent = surname() + " 1";
+        const summary = [
+          t("summary_header", surname()),
+          ...[
+            "paper",
+            "font",
+            "margins",
+            "spacing",
+            "indent",
+            "block",
+            "cited",
+            "hanging",
+          ].map((key) => t("summary_" + key)),
+        ];
+        $("format-summary").replaceChildren(
+          ...summary.map((text) => {
+            const item = document.createElement("li");
+            item.textContent = text;
+            return item;
+          }),
+        );
+      }
+      function render() {
+        document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+        document.title =
+          lang === "zh" ? "MLAFMT · MLA 论文排版" : "MLAFMT · MLA Formatter";
+        document.querySelectorAll("[data-t]").forEach((el) => {
+          el.textContent = t(el.dataset.t);
+        });
+        document.querySelectorAll("[data-ph]").forEach((el) => {
+          el.placeholder = t(el.dataset.ph);
+        });
+        document.querySelectorAll("[data-label]").forEach((el) => {
+          el.setAttribute("aria-label", t(el.dataset.label));
+        });
+        for (const code of ["zh", "en"])
+          $("lang-" + code).setAttribute("aria-pressed", String(lang === code));
+        renderDrop();
+        refreshPreview();
+        renderStatus();
+      }
+      for (const code of ["zh", "en"])
+        $("lang-" + code).addEventListener("click", () => {
+          lang = code;
+          store.set("lang", lang);
+          render();
+        });
+      for (const id of ["name", "instructor", "course", "lname"]) {
+        const value = store.get(id);
+        if (value !== null) $(id).value = value;
+        $(id).addEventListener("input", () => {
+          store.set(id, $(id).value);
+        });
+      }
+      for (const id of [
+        "name",
+        "title",
+        "instructor",
+        "course",
+        "date",
+        "lname",
+      ])
+        $(id).addEventListener("input", () => {
+          $(id).removeAttribute("aria-invalid");
+          refreshPreview();
+        });
+      for (const id of ["o-md", "o-strip", "o-head", "o-bq"]) {
+        const saved = store.get(id);
+        if (["true", "false"].includes(saved)) $(id).checked = saved === "true";
+        $(id).addEventListener("change", () =>
+          store.set(id, String($(id).checked)),
+        );
+      }
+      const savedMode = store.get("txt_mode");
+      if (["blank_line", "line_by_line"].includes(savedMode))
+        document.querySelector(
+          `input[name=mode][value="${savedMode}"]`,
+        ).checked = true;
+      document
+        .querySelectorAll("input[name=mode]")
+        .forEach((input) =>
+          input.addEventListener("change", () =>
+            store.set("txt_mode", input.value),
+          ),
+        );
+      function pick(candidate) {
+        if (!candidate) return;
+        const ext = candidate.name
+          .slice(candidate.name.lastIndexOf("."))
+          .toLowerCase();
+        if (![".docx", ".txt", ".md"].includes(ext)) {
+          setStatus("unsupported", "err");
+          $("file").value = "";
+          return;
+        }
+        if (candidate.size > 20 * 1024 * 1024) {
+          setStatus("too_large", "err");
+          $("file").value = "";
+          return;
+        }
+        if (candidate.size === 0) {
+          setStatus("empty_file", "err");
+          $("file").value = "";
+          return;
+        }
+        file = candidate;
+        renderDrop();
+        setStatus("file_ready", "", file.name, fileSize(file.size));
+      }
+      const drop = $("drop");
+      drop.addEventListener("click", () => $("file").click());
+      drop.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        drop.classList.add("over");
+      });
+      drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+      drop.addEventListener("drop", (event) => {
+        event.preventDefault();
+        drop.classList.remove("over");
+        pick(event.dataTransfer.files[0]);
+      });
+      $("file").addEventListener("change", (event) =>
+        pick(event.target.files[0]),
+      );
+      $("remove-file").addEventListener("click", () => {
+        file = null;
+        $("file").value = "";
+        renderDrop();
+        if (!inProgress) setStatus("ready");
+      });
+      const adv = $("adv");
+      $("adv-open").addEventListener("click", () => {
+        refreshPreview();
+        adv.showModal();
+      });
+      function closeDialog() {
+        adv.close();
+        $("adv-open").focus();
+      }
+      $("adv-close").addEventListener("click", closeDialog);
+      $("adv-x").addEventListener("click", closeDialog);
+      adv.addEventListener("click", (event) => {
+        if (event.target !== adv) return;
+        const rect = adv.getBoundingClientRect();
+        if (
+          event.clientX < rect.left ||
+          event.clientX > rect.right ||
+          event.clientY < rect.top ||
+          event.clientY > rect.bottom
+        )
+          closeDialog();
+      });
+      function fields() {
+        return Object.fromEntries(
+          [
+            ["name", "name"],
+            ["title", "title"],
+            ["instructor", "instructor"],
+            ["course", "course"],
+            ["date", "date"],
+            ["last_name_override", "lname"],
+          ].map(([key, id]) => [key, $(id).value.trim()]),
+        );
+      }
+      function validate() {
+        const data = fields();
+        for (const id of ["name", "title"])
+          $(id).setAttribute("aria-invalid", String(!data[id]));
+        if (!data.name || !data.title) {
+          setStatus("missing_fields", "err");
+          $(data.name ? "title" : "name").focus();
+          return null;
+        }
+        return data;
+      }
+      function busy(on) {
+        inProgress = on;
+        for (const id of ["convert", "blank"]) $(id).disabled = on;
+        $("essay-form").setAttribute("aria-busy", String(on));
+        if (on) setStatus("working", "working");
+      }
+      async function download(response) {
+        if (!response.ok) {
+          let data = {};
+          try {
+            data = await response.json();
+          } catch (_) {}
+          const key =
+            data &&
+            typeof data.error === "string" &&
+            Object.hasOwn(T.en, data.error)
+              ? data.error
+              : response.status === 413
+                ? "too_large"
+                : "failed";
+          setStatus(key, "err");
+          return null;
+        }
+        let name = "MLA_Essay.docx";
+        try {
+          name = decodeURIComponent(response.headers.get("X-Filename") || name);
+        } catch (_) {}
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob),
+          anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = name;
+        document.body.appendChild(anchor);
+        try {
+          anchor.click();
+        } finally {
+          anchor.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 30000);
+        }
+        return { name, headers: response.headers };
+      }
+      async function generate(isBlank) {
+        if (inProgress) return;
+        const data = validate();
+        if (!data) return;
+        if (!isBlank && !file) {
+          setStatus("need_file", "err");
+          drop.focus();
+          return;
+        }
+        let options;
+        if (isBlank)
+          options = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          };
+        else {
+          const body = new FormData();
+          body.append("file", file);
+          Object.entries(data).forEach(([key, value]) =>
+            body.append(key, value),
+          );
+          body.append(
+            "txt_mode",
+            document.querySelector("input[name=mode]:checked").value,
+          );
+          for (const [key, id] of [
+            ["markdown", "o-md"],
+            ["strip_heading", "o-strip"],
+            ["heading_detect", "o-head"],
+            ["block_quote", "o-bq"],
+          ])
+            body.append(key, String($(id).checked));
+          options = { method: "POST", body };
+        }
+        const controller = new AbortController(),
+          timeout = setTimeout(() => controller.abort(), 120000);
+        options.signal = controller.signal;
+        busy(true);
+        try {
+          const result = await download(
+            await fetch(isBlank ? "/api/blank" : "/api/convert", options),
+          );
+          if (result) {
+            if (isBlank) setStatus("done_blank", "ok", result.name);
+            else
+              setStatus(
+                "done",
+                "ok",
+                result.name,
+                Number(result.headers.get("X-Stat-body") || 0),
+                Number(result.headers.get("X-Stat-works-cited") || 0),
+                Number(result.headers.get("X-Stat-removed-heading-lines") || 0),
+              );
+          }
+        } catch (_) {
+          setStatus("net", "err");
+        } finally {
+          clearTimeout(timeout);
+          busy(false);
+        }
+      }
+      $("essay-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        generate(false);
+      });
+      $("blank").addEventListener("click", () => generate(true));
+      render();
+    </script>
+  </body>
 </html>

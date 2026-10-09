@@ -1,5 +1,5 @@
 """
-mla_web.py  (v2.0)
+mla_web.py  (v2.1)
 Local web UI for MLAFMT -> http://127.0.0.1:8600
 Works on Windows / macOS / Linux / Android (Termux or bundled in the APK).
 
@@ -12,8 +12,11 @@ import os
 import sys
 import tempfile
 from urllib.parse import quote
+from zipfile import BadZipFile
 
+from docx.opc.exceptions import PackageNotFoundError
 from flask import Flask, jsonify, render_template, request, send_file
+from lxml.etree import XMLSyntaxError
 
 from mla_formatter import (
     SUPPORTED_EXTS,
@@ -28,13 +31,26 @@ from mla_formatter import (
 
 BASE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
 app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "templates"))
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024   # 20 MB upload cap
+MAX_FILE_SIZE = 20 * 1024 * 1024
+# Leave room for multipart boundaries and form fields; validate the file itself below.
+app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE + 1024 * 1024
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override")
+
+
+def _json_fields():
+    """Reject malformed/non-object JSON and unexpected field types as client errors."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None, (jsonify({"error": "invalid_json"}), 400)
+    if any(data.get(key) is not None and not isinstance(data[key], str) for key in TEXT_FIELDS):
+        return None, (jsonify({"error": "invalid_fields"}), 400)
+    return data, None
 
 
 def _form(src, key, default=""):
     v = src.get(key, default)
-    return v.strip() if isinstance(v, str) else v
+    return v.strip() if isinstance(v, str) else default
 
 
 def _flag(src, key, default):
@@ -71,13 +87,17 @@ def index():
 
 @app.route("/api/summary", methods=["POST"])
 def api_summary():
-    data = request.get_json(silent=True) or {}
-    return jsonify(format_summary(data.get("name", ""), data.get("last_name_override") or None))
+    data, error = _json_fields()
+    if error is not None:
+        return error
+    return jsonify(format_summary(_form(data, "name"), _form(data, "last_name_override") or None))
 
 
 @app.route("/api/blank", methods=["POST"])
 def api_blank():
-    data = request.get_json(silent=True) or {}
+    data, error = _json_fields()
+    if error is not None:
+        return error
     name, title = _form(data, "name"), _form(data, "title")
     if validate_inputs(name, title):
         return jsonify({"error": "missing_fields"}), 400
@@ -102,6 +122,8 @@ def api_convert():
         return jsonify({"error": "unsupported"}), 400
 
     form = request.form
+    if form.get("txt_mode", "blank_line") not in ("blank_line", "line_by_line"):
+        return jsonify({"error": "invalid_options"}), 400
     name, title = _form(form, "name"), _form(form, "title")
     if validate_inputs(name, title):
         return jsonify({"error": "missing_fields"}), 400
@@ -112,6 +134,11 @@ def api_convert():
     buf = io.BytesIO()
     try:
         f.save(in_path)
+        size = os.path.getsize(in_path)
+        if size > MAX_FILE_SIZE:
+            return jsonify({"error": "too_large"}), 413
+        if not size:
+            return jsonify({"error": "empty_file"}), 400
         stats = convert_draft_to_mla(
             in_path, buf, name=name, instructor=_form(form, "instructor"),
             course=_form(form, "course"), date_str=_form(form, "date"), title=title,
@@ -123,9 +150,10 @@ def api_convert():
             strip_existing_heading=_flag(form, "strip_heading", True),
         )
     except Exception as e:  # noqa
-        msg = str(e).lower()
-        code = "bad_doc" if ("package not found" in msg or "zip" in msg) else "failed"
-        return jsonify({"error": code, "detail": str(e)}), 500
+        invalid_docx = ext == ".docx" and isinstance(
+            e, (BadZipFile, PackageNotFoundError, KeyError, ValueError, XMLSyntaxError))
+        code = "bad_doc" if invalid_docx else "failed"
+        return jsonify({"error": code, "detail": str(e)}), 400 if code == "bad_doc" else 500
     finally:
         try:
             os.remove(in_path)
