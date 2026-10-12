@@ -26,7 +26,7 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt
 from docx.text.run import Run
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 FONT_NAME = "Times New Roman"
 FONT_SIZE = 12

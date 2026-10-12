@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.1.1 — 2026-10-12
+
+### 下载 / Download
+
+- [Windows 应用 / Windows app: MLAFMT.exe](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.1.1/MLAFMT.exe) — 下载后双击运行 / Download and double-click to run.
+- [便携 ZIP / Portable ZIP](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.1.1/MLAFMT-v2.1.1-windows-x64.zip) — 含说明文件 / Includes guides.
+
+### 中文
+
+- 修正单条文献时的 Works Cited 标题，并确保论文标题不使用粗体。
+- 简化下载选择：直接运行 `MLAFMT.exe`，或下载包含说明文档的 ZIP。
+
+### English
+
+- Fix MLA formatting for one-entry Works Cited lists and paper titles.
+- Simplify downloads: use `MLAFMT.exe` or the portable ZIP with documentation.
+
 ## v2.1.0 — 2026-10-08
 
 ### 中文

@@ -8,7 +8,7 @@
 
 ### Windows 快速开始
 
-1. 从 [最新版本](https://github.com/SuperOoze0309/MLAFMT/releases/latest) 下载 `MLAFMT.exe`，或解压 `MLAFMT-v2.1.0-windows-x64.zip`。
+1. 从[最新版本](https://github.com/SuperOoze0309/MLAFMT/releases/latest)下载 `MLAFMT.exe`；需要说明文件时选择 ZIP。
 2. 双击打开，填写姓名、作文标题；老师和课程可选，日期留空会使用今天。
 3. 拖入草稿，或点击选择文件，然后转换并保存 `.docx`。
 
@@ -53,25 +53,23 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 # Windows 打包使用 Python 3.12 x64 和独立环境
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.1.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.1.1
 ```
 
-`requirements-build.txt` 锁定打包依赖。脚本生成应用图标与版本信息，收集拖放所需的 tkDnD 原生库，输出至 `dist/release/`：
+`requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.1.0-windows-x64.zip`：应用、双语说明、更新记录、许可证与构建信息。
-- `SHA256SUMS.txt`：EXE、ZIP 和构建信息的 SHA-256 校验和。
-- `build-info.json`：源码提交、源码哈希、Python 与依赖版本。
+- `MLAFMT-v2.1.1-windows-x64.zip`：应用、双语说明、更新记录、许可证与构建信息。
 
-校验下载文件可运行 `Get-FileHash .\MLAFMT.exe -Algorithm SHA256`，与 `SHA256SUMS.txt` 对照。记录的构建环境便于复现；不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
+ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
 GitHub Actions 在 push、pull request 和 tag 时测试并构建，上传构建产物；**发布由维护者通过命令行明确创建**。确认测试、构建和试运行通过后：
 
 ```powershell
 git push origin main
-git tag v2.1.0
-git push origin v2.1.0
-gh release create v2.1.0 --verify-tag --title "MLAFMT v2.1.0" --notes-file build/windows/release-notes.md dist/release/MLAFMT.exe dist/release/MLAFMT-v2.1.0-windows-x64.zip dist/release/SHA256SUMS.txt dist/release/build-info.json
+git tag v2.1.1
+git push origin v2.1.1
+gh release create v2.1.1 --verify-tag --title "MLAFMT v2.1.1" --notes-file build/windows/release-notes.md dist/release/MLAFMT.exe dist/release/MLAFMT-v2.1.1-windows-x64.zip
 ```
 
 Release 中的应用是当前发布版本。仓库根目录的旧 `MLAFMT.exe` 已停止跟踪，构建脚本不会使用它。
@@ -82,7 +80,7 @@ Turn an essay draft into a Word document with common **MLA 9th edition layout co
 
 ### Windows quick start
 
-1. Download `MLAFMT.exe` or `MLAFMT-v2.1.0-windows-x64.zip` from the [latest release](https://github.com/SuperOoze0309/MLAFMT/releases/latest).
+1. Download `MLAFMT.exe` from the [latest release](https://github.com/SuperOoze0309/MLAFMT/releases/latest); choose the ZIP if you also want the guides.
 2. Open the app and enter your name and essay title. Instructor and course are optional; a blank date uses today.
 3. Choose or drag in a `.docx`, `.txt`, or `.md` draft, then convert and save.
 
@@ -142,14 +140,14 @@ Run `python -m pytest -q` after installing `pytest` and `requirements.txt` in a 
 
 ```powershell
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.1.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.1.1
 ```
 
-The script installs the locked `requirements-build.txt` into that virtual environment, bundles the tkDnD native libraries, embeds the source version and app icon, and creates the EXE, versioned ZIP, `SHA256SUMS.txt` and `build-info.json` in `dist/release/`. Build information records the commit, source hashes, Python and dependencies. This makes the process repeatable; byte-for-byte identity across operating system or Python patch versions is not guaranteed.
+The script installs the locked `requirements-build.txt` into that virtual environment, bundles the tkDnD native libraries and creates the EXE and versioned ZIP in `dist/release/`. The ZIP includes build information for the source commit, source hashes, Python and dependencies. Byte-for-byte identity across operating system or Python patch versions is not guaranteed.
 
-Compare `Get-FileHash .\MLAFMT.exe -Algorithm SHA256` with the checksum manifest to verify a download. Executables are distributed through GitHub Releases. The old root-level executable is no longer tracked or used by the build.
+The EXE is the simplest download; the ZIP adds the guides, changelog, license and build information. The old root-level executable is no longer tracked or used by the build.
 
-GitHub Actions tests and uploads build artifacts for pushes, pull requests and tags. It does not create releases. Maintainers push the verified source and version tag, then explicitly run `gh release create` with `--verify-tag`, `--notes-file build/windows/release-notes.md` and the four release assets, as shown above.
+GitHub Actions tests and uploads the two download files for pushes, pull requests and tags. It does not create releases. Maintainers publish the verified EXE and ZIP with `gh release create`, as shown above.
 
 ## License / 许可证
 

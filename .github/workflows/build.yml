@@ -64,7 +64,5 @@ jobs:
           path: |
             dist/release/MLAFMT.exe
             dist/release/MLAFMT-v*-windows-x64.zip
-            dist/release/SHA256SUMS.txt
-            dist/release/build-info.json
           if-no-files-found: error
           retention-days: 14

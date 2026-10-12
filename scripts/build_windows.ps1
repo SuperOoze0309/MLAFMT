@@ -52,20 +52,14 @@ try {
 $taskExe = Join-Path $taskDist 'MLAFMT.exe'
 $taskExeVersion = (Get-Item -LiteralPath $taskExe).VersionInfo.FileVersion
 if ($taskExeVersion -ne $taskVersion) { throw "Executable has unexpected version: $taskExeVersion" }
-Copy-Item -LiteralPath (Join-Path $taskBuild 'build-info.json') -Destination $taskDist -Force
 
 # Each run stages only the intended files in a fresh directory.
 $taskStage = Join-Path $taskBuild ('package-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $taskStage | Out-Null
-foreach ($taskFile in @($taskExe, (Join-Path $taskDist 'build-info.json'),
+foreach ($taskFile in @($taskExe, (Join-Path $taskBuild 'build-info.json'),
         (Join-Path $taskRoot 'README.md'), (Join-Path $taskRoot 'CHANGELOG.md'), (Join-Path $taskRoot 'LICENSE'))) {
     Copy-Item -LiteralPath $taskFile -Destination $taskStage
 }
 $taskZip = Join-Path $taskDist "MLAFMT-v$taskVersion-windows-x64.zip"
 Compress-Archive -Path (Join-Path $taskStage '*') -DestinationPath $taskZip -CompressionLevel Optimal -Force
-$taskChecksums = foreach ($taskFile in @($taskExe, $taskZip, (Join-Path $taskDist 'build-info.json'))) {
-    $taskHash = (Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash.ToLowerInvariant()
-    "$taskHash  $([IO.Path]::GetFileName($taskFile))"
-}
-$taskChecksums | Set-Content -LiteralPath (Join-Path $taskDist 'SHA256SUMS.txt') -Encoding ascii
 Write-Output "Release assets ready: $taskDist (v$taskVersion)"
