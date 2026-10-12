@@ -96,6 +96,14 @@ def test_heading_block_and_title():
     assert doc.paragraphs[5].paragraph_format.first_line_indent == Inches(0.5)
 
 
+def test_paper_title_does_not_preserve_bold_but_keeps_italic_work_title():
+    doc, _ = _convert(_txt("Body text."), title="**On** *Hamlet*")
+    title = doc.paragraphs[4]
+    assert title.text == "On Hamlet"
+    assert not any(run.bold for run in title.runs)
+    assert any(run.text == "Hamlet" and run.italic for run in title.runs)
+
+
 def test_blank_date_defaults_to_today():
     out = os.path.join(TMP, "x.docx")
     m.convert_draft_to_mla(_txt("Body."), out, **dict(META, date_str=""))
@@ -262,6 +270,13 @@ def test_works_cited_new_page_no_blank_line():
     assert st["works_cited"] == 4
 
 
+def test_single_works_cited_entry_uses_singular_heading():
+    doc, st = _convert(_txt("Body.\n\nWorks Cited\n\nSmith, John. A Source."))
+    idx = _texts(doc).index("Work Cited")
+    assert st["works_cited"] == 1
+    assert doc.paragraphs[idx].paragraph_format.page_break_before is True
+
+
 def test_works_cited_sorted_ignoring_quotes_and_articles():
     doc, _ = _convert(_txt(WC_DRAFT))
     t = _texts(doc)
@@ -281,7 +296,7 @@ def test_works_cited_hanging_indent_and_italic():
 def test_works_cited_variants():
     for h in ("Work Cited", "WORKS CITED.", "Bibliography", "References"):
         doc, st = _convert(_txt(f"Body.\n\n{h}\n\nA, B. C. 2020."))
-        assert st["works_cited"] == 1 and "Works Cited" in _texts(doc), h
+        assert st["works_cited"] == 1 and "Work Cited" in _texts(doc), h
     doc, _ = _convert(_txt("Body.\n\nWorks Consulted\n\nA, B. C."))
     assert "Works Consulted" in _texts(doc)
 

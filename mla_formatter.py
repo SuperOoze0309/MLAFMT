@@ -275,7 +275,13 @@ def add_mla_heading_block(doc, name, instructor, course, date_str, title):
         p.alignment = WD_ALIGN_PARAGRAPH.LEFT
         set_double_spacing(p)
     title_p = doc.add_paragraph()
-    _add_segments(title_p, _parse_markdown_emphasis(title))  # *Hamlet* in a title
+    # MLA paper titles are not bolded. Keep italic markup for titles of works
+    # embedded in the paper title, but treat Markdown bold as plain text.
+    title_segments = [
+        (text, False, italic, underline)
+        for text, _bold, italic, underline in _parse_markdown_emphasis(title)
+    ]
+    _add_segments(title_p, title_segments)
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     set_double_spacing(title_p)
 
@@ -593,6 +599,8 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
         body_count += 1
 
     if wc_title is not None:
+        if wc_title == "Works Cited" and len(wc_entries) == 1:
+            wc_title = "Work Cited"
         title_p = doc.add_paragraph(wc_title)
         title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         set_double_spacing(title_p)
