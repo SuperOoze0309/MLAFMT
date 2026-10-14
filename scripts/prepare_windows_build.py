@@ -88,15 +88,19 @@ def main():
     args = parser.parse_args()
     root, output = args.root.resolve(), args.output.resolve()
     if args.verify_dependencies:
+        from packaging.requirements import Requirement
         for line in (root / "requirements-build.txt").read_text(encoding="utf-8").splitlines():
-            if not line or line.startswith("#") or ('sys_platform == "win32"' in line and sys.platform != "win32"):
+            if not line or line.startswith("#"):
                 continue
-            name, expected = line.split(";", 1)[0].strip().split("==", 1)
+            requirement = Requirement(line)
+            if requirement.marker and not requirement.marker.evaluate():
+                continue
+            name, expected = requirement.name, str(requirement.specifier)
             try:
                 actual = importlib.metadata.version(name)
             except importlib.metadata.PackageNotFoundError:
                 actual = "missing"
-            if actual != expected:
+            if actual == "missing" or not requirement.specifier.contains(actual, prereleases=True):
                 raise SystemExit(f"{name}: expected {expected}, found {actual}. Rebuild with -InstallDependencies.")
     output.mkdir(parents=True, exist_ok=True)
     version = source_version(root)

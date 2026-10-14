@@ -280,7 +280,7 @@
         justify-content: flex-end;
         margin-top: 7px;
       }
-      .file-actions[hidden] {
+      .file-actions[hidden], #native-actions[hidden] {
         display: none;
       }
       .text-button {
@@ -678,6 +678,63 @@
           transition: none !important;
         }
       }
+      /* Native fold coordinates come from Jetpack WindowManager, not screen size guesses. */
+      .native-fold-vertical .shell { width: calc(100% - 32px); max-width: none; }
+      .native-fold-vertical .workspace {
+        grid-template-columns: minmax(0, calc(var(--fold-left) - 32px)) minmax(0, 1fr);
+        gap: calc(var(--fold-size) + 32px);
+        height: calc(100dvh - var(--fold-workspace-top) - 16px); overflow: hidden;
+      }
+      .native-fold-vertical body { overflow: hidden; }
+      .native-fold-vertical .topbar { padding: 12px 0; }
+      .native-fold-vertical .hero { max-width: calc(var(--fold-left) - 32px); }
+      .native-fold-vertical .panel, .native-fold-vertical .preview-column {
+        height: 100%; overflow: auto; overscroll-behavior: contain;
+      }
+      .native-fold-vertical .preview-column { position: static; }
+      .native-fold-vertical footer { display: none; }
+      @media (max-height: 600px) { .native-fold-vertical .hero { display: none; } }
+      .native-fold-vertical dialog {
+        margin: 16px; width: calc(var(--fold-left) - 32px); max-width: none;
+        max-height: calc(100dvh - 32px);
+      }
+      .native-fold-single .shell {
+        width: var(--fold-pane-width); margin-left: var(--fold-pane-left); max-width: none;
+      }
+      .native-fold-single .workspace { grid-template-columns: minmax(0, 1fr); }
+      .native-fold-single .fields { grid-template-columns: minmax(0, 1fr); }
+      .native-fold-single .topbar { flex-wrap: wrap; }
+      .native-fold-single dialog {
+        margin-left: var(--fold-pane-left); width: var(--fold-pane-width); max-width: none;
+      }
+      .native-fold-horizontal { overflow: hidden; }
+      .native-fold-horizontal .shell, .native-fold-horizontal .workspace { display: contents; }
+      .native-fold-horizontal .topbar, .native-fold-horizontal .hero, .native-fold-horizontal footer { display: none; }
+      .native-fold-horizontal .panel {
+        position: fixed; top: 12px; left: 16px; right: 16px;
+        height: calc(var(--fold-top) - 24px); overflow: auto; overscroll-behavior: contain;
+      }
+      .native-fold-horizontal .preview-column {
+        position: fixed; top: calc(var(--fold-bottom) + 12px); bottom: 12px; left: 16px; right: 16px;
+        overflow: auto; overscroll-behavior: contain;
+      }
+      .native-fold-horizontal dialog {
+        margin: 12px 16px; width: calc(100% - 32px); max-width: none;
+        max-height: calc(var(--fold-top) - 24px); overflow: auto;
+      }
+      .native-fold-horizontal-single body { overflow: hidden; }
+      .native-fold-horizontal-single .shell {
+        position: fixed; left: 16px; right: 16px; width: auto; max-width: none;
+        top: var(--fold-pane-top); height: var(--fold-pane-height); overflow: auto;
+      }
+      .native-fold-horizontal-single .topbar, .native-fold-horizontal-single .hero,
+      .native-fold-horizontal-single footer { display: none; }
+      .native-fold-horizontal-single .workspace { grid-template-columns: minmax(0, 1fr); }
+      .native-fold-horizontal-single .preview-column { position: static; }
+      .native-fold-horizontal-single dialog {
+        margin: 0 16px; top: var(--fold-pane-top); width: calc(100% - 32px);
+        max-height: var(--fold-pane-height); overflow: auto;
+      }
     </style>
   </head>
   <body>
@@ -861,6 +918,11 @@
               aria-live="polite"
               aria-atomic="true"
             ></div>
+            <div id="native-actions" class="secondary" hidden>
+              <button type="button" class="ghost" id="native-save" data-t="native_save">Save Word document</button>
+              <button type="button" class="ghost" id="native-open" data-t="native_open">Open</button>
+              <button type="button" class="ghost" id="native-share" data-t="native_share">Share</button>
+            </div>
             <p class="privacy">
               <svg
                 aria-hidden="true"
@@ -1031,6 +1093,9 @@
     </dialog>
     <script>
       "use strict";
+      const native = typeof window.MLAFMTAndroid?.postMessage === "function";
+      const nativeSend = (action, data) =>
+        window.MLAFMTAndroid.postMessage(JSON.stringify({ action, data }));
       const T = {
         zh: {
           language: "界面语言",
@@ -1058,6 +1123,20 @@
           blank: "从空白 MLA 模板开始",
           advanced: "高级选项",
           privacy: "文件由当前本地服务处理，无需上传云端。",
+          native_privacy: "全程在手机本地处理，无需联网或上传文件。",
+          native_convert: "生成 MLA 文档",
+          native_drop: "点击选择手机中的草稿文件",
+          native_save: "保存 Word 文档",
+          native_open: "打开",
+          native_share: "分享",
+          native_done: (f) => `文档已生成：${f}。请选择保存、打开或分享。`,
+          importing: "正在读取草稿…",
+          saving: "正在保存文档…",
+          saved: "Word 文档已保存。",
+          save_failed: "无法保存文档，请重新选择保存位置。",
+          unreadable_file: "无法读取该文件，请重新选择草稿。",
+          no_document_app: "请安装可以打开 Word 文档的应用，或使用分享。",
+          interrupted: "系统中断了处理，请重新生成文档。",
           preview_title: "你的论文，初见模样",
           preview_tag: "MLA 9 · Letter 纸张",
           preview_label: "论文版式示意预览",
@@ -1152,6 +1231,20 @@
           blank: "Start with a blank MLA template",
           advanced: "Advanced options",
           privacy: "Processed by this local server. No cloud upload.",
+          native_privacy: "Processed entirely on your phone. No network or cloud upload.",
+          native_convert: "Format document",
+          native_drop: "Choose a draft from your phone",
+          native_save: "Save Word document",
+          native_open: "Open",
+          native_share: "Share",
+          native_done: (f) => `Document ready: ${f}. Save, open or share it below.`,
+          importing: "Reading your draft…",
+          saving: "Saving your document…",
+          saved: "Word document saved.",
+          save_failed: "Could not save the document. Please choose a location again.",
+          unreadable_file: "Could not read this file. Please select your draft again.",
+          no_document_app: "Install an app that opens Word documents, or use Share.",
+          interrupted: "Android interrupted processing. Please generate the document again.",
           preview_title: "A first look at your paper",
           preview_tag: "MLA 9 · Letter",
           preview_label: "Illustrative paper layout preview",
@@ -1252,6 +1345,7 @@
         inProgress = false;
       let lastStatus = { key: "ready", args: [], tone: "" };
       const t = (key, ...args) => {
+        if (native && ["privacy", "convert", "drop"].includes(key)) key = "native_" + key;
         const value = T[lang][key] ?? T.en[key] ?? T.en.failed;
         return typeof value === "function" ? value(...args) : value;
       };
@@ -1352,7 +1446,7 @@
           store.set("lang", lang);
           render();
         });
-      for (const id of ["name", "instructor", "course", "lname"]) {
+      for (const id of ["name", "instructor", "course", "lname", ...(native ? ["title", "date"] : [])]) {
         const value = store.get(id);
         if (value !== null) $(id).value = value;
         $(id).addEventListener("input", () => {
@@ -1415,7 +1509,11 @@
         setStatus("file_ready", "", file.name, fileSize(file.size));
       }
       const drop = $("drop");
-      drop.addEventListener("click", () => $("file").click());
+      drop.addEventListener("click", () => {
+        if (inProgress) return;
+        if (native) nativeSend("pick");
+        else $("file").click();
+      });
       drop.addEventListener("dragover", (event) => {
         event.preventDefault();
         drop.classList.add("over");
@@ -1430,6 +1528,10 @@
         pick(event.target.files[0]),
       );
       $("remove-file").addEventListener("click", () => {
+        if (native) {
+          nativeSend("clear");
+          return;
+        }
         file = null;
         $("file").value = "";
         renderDrop();
@@ -1483,6 +1585,8 @@
       function busy(on) {
         inProgress = on;
         for (const id of ["convert", "blank"]) $(id).disabled = on;
+        if (native)
+          for (const id of ["native-save", "native-open", "native-share", "remove-file"]) $(id).disabled = on;
         $("essay-form").setAttribute("aria-busy", String(on));
         if (on) setStatus("working", "working");
       }
@@ -1528,6 +1632,15 @@
         if (!isBlank && !file) {
           setStatus("need_file", "err");
           drop.focus();
+          return;
+        }
+        if (native) {
+          data.kind = isBlank ? "blank" : "convert";
+          data.txt_mode = document.querySelector("input[name=mode]:checked").value;
+          for (const [key, id] of [["markdown", "o-md"], ["strip_heading", "o-strip"], ["heading_detect", "o-head"], ["block_quote", "o-bq"]])
+            data[key] = $(id).checked;
+          busy(true);
+          nativeSend("generate", data);
           return;
         }
         let options;
@@ -1588,7 +1701,73 @@
         generate(false);
       });
       $("blank").addEventListener("click", () => generate(true));
+      if (native) {
+        // Native only: document bytes and private paths stay outside JavaScript.
+        window.MLAFMTNative = {
+          receive(message) {
+            if (message.type === "layout") {
+              const root = document.documentElement;
+              const fold = message.fold;
+              for (const mode of ["vertical", "horizontal", "single", "horizontal-single"])
+                root.classList.remove("native-fold-" + mode);
+              root.dataset.nativeWidth = String(message.width);
+              root.dataset.nativeHeight = String(message.height);
+              root.dataset.nativeFold = JSON.stringify(fold || null);
+              if (!fold?.separating) return;
+              if (fold.vertical) {
+                const left = Math.max(0, fold.left), right = Math.max(0, message.width - left - fold.width);
+                root.style.setProperty("--fold-left", left + "px");
+                root.style.setProperty("--fold-size", Math.max(0, fold.width) + "px");
+                if (Math.min(left, right) >= 280) {
+                  root.classList.add("native-fold-vertical");
+                  window.scrollTo(0, 0);
+                  root.style.setProperty("--fold-workspace-top", (document.querySelector(".workspace").getBoundingClientRect().top + window.scrollY) + "px");
+                }
+                else {
+                  root.style.setProperty("--fold-pane-left", (left >= right ? 16 : left + fold.width + 16) + "px");
+                  root.style.setProperty("--fold-pane-width", Math.max(0, Math.max(left, right) - 32) + "px");
+                  root.classList.add("native-fold-single");
+                }
+              } else if (fold.top > 100 && message.height - fold.top - fold.height > 100) {
+                root.style.setProperty("--fold-top", fold.top + "px");
+                root.style.setProperty("--fold-bottom", (fold.top + Math.max(0, fold.height)) + "px");
+                root.classList.add("native-fold-horizontal");
+              } else {
+                const top = Math.max(0, Math.min(message.height, fold.top));
+                const bottom = Math.max(top, Math.min(message.height, fold.top + Math.max(0, fold.height)));
+                const lower = Math.max(0, message.height - bottom);
+                root.style.setProperty("--fold-pane-top", ((top >= lower ? 0 : bottom) + 12) + "px");
+                root.style.setProperty("--fold-pane-height", Math.max(0, Math.max(top, lower) - 24) + "px");
+                root.style.setProperty("--fold-top", top + "px");
+                root.classList.add("native-fold-horizontal-single");
+              }
+              return;
+            }
+            if (message.type === "init") {
+              $("date").defaultValue = message.today;
+              if (!$("date").value.trim()) $("date").value = message.today;
+              refreshPreview();
+              return;
+            }
+            if (message.type !== "state") return;
+            file = message.file || null;
+            renderDrop();
+            busy(Boolean(message.busy));
+            $("native-actions").hidden = !message.result;
+            if (message.error) setStatus(message.error, "err");
+            else if (message.message === "file_ready" && file)
+              setStatus("file_ready", "", file.name, fileSize(file.size));
+            else if (message.message === "native_done" && message.result)
+              setStatus("native_done", "ok", message.result.name);
+            else if (message.message)
+              setStatus(message.message, message.busy ? "working" : message.message === "saved" ? "ok" : "");
+          },
+        };
+        for (const action of ["save", "open", "share"])
+          $("native-" + action).addEventListener("click", () => nativeSend(action));
+      }
       render();
+      if (native) nativeSend("ready");
     </script>
   </body>
 </html>

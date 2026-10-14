@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+APP_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$APP_DIRECTORY/usr/bin/MLAFMT" "$@"

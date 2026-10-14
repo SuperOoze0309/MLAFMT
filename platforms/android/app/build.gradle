@@ -1,0 +1,164 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.chaquo.python'
+}
+
+def projectRoot = rootProject.file('../..')
+def versionMatch = projectRoot.toPath().resolve('mla_formatter.py').toFile().text =~ /(?m)^__version__ = "([0-9]+\.[0-9]+\.[0-9]+)"/
+if (!versionMatch.find()) throw new GradleException('Cannot read MLAFMT version')
+def appVersion = versionMatch.group(1)
+def expectedVersion = System.getenv('MLAFMT_EXPECTED_VERSION')?.replaceFirst('^v', '')
+if (expectedVersion && expectedVersion != appVersion) throw new GradleException('Expected tag version does not match the formatter version')
+def parts = appVersion.split('\\.').collect { it.toInteger() }
+def signing = new Properties()
+def signingFile = rootProject.file('keystore.properties')
+if (signingFile.exists()) signingFile.withInputStream { signing.load(it) }
+def signingValue = { String env, String key -> System.getenv(env) ?: signing.getProperty(key) }
+def keyPath = signingValue('MLAFMT_ANDROID_KEYSTORE', 'storeFile')
+def keyStorePass = signingValue('MLAFMT_ANDROID_STORE_PASSWORD', 'storePassword')
+def keyAliasValue = signingValue('MLAFMT_ANDROID_KEY_ALIAS', 'keyAlias')
+def keyPass = signingValue('MLAFMT_ANDROID_KEY_PASSWORD', 'keyPassword')
+def canSign = [keyPath, keyStorePass, keyAliasValue, keyPass].every { it }
+def nativeWheelDirectory = System.getenv('MLAFMT_ANDROID_NATIVE_WHEELS')
+def generatedPython = layout.buildDirectory.dir('generated/mlafmt/python')
+def generatedAssets = layout.buildDirectory.dir('generated/mlafmt/assets')
+def provenanceFiles = [projectRoot.toPath().resolve('mla_formatter.py').toFile(), projectRoot.toPath().resolve('templates/index.html').toFile(), projectRoot.toPath().resolve('LICENSE').toFile()]
+provenanceFiles.addAll(fileTree('src/main') { exclude '**/__pycache__/**', '**/*.pyc' }.files)
+provenanceFiles.addAll(rootProject.fileTree('licenses').files)
+provenanceFiles.addAll(['app/build.gradle', 'build.gradle', 'settings.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar'].collect { rootProject.file(it) })
+
+android {
+    namespace 'com.superooze.mlafmt'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.superooze.mlafmt'
+        minSdk 24
+        targetSdk 35
+        versionCode parts[0] * 1000000 + parts[1] * 1000 + parts[2]
+        versionName appVersion
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    signingConfigs {
+        release {
+            if (canSign) {
+                storeFile rootProject.file(keyPath)
+                storePassword keyStorePass
+                keyAlias keyAliasValue
+                keyPassword keyPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (canSign) signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+    sourceSets.main.assets.srcDir(generatedAssets)
+    buildFeatures { buildConfig true }
+    packaging { jniLibs.useLegacyPackaging = false }
+}
+
+chaquopy {
+    defaultConfig {
+        version '3.12'
+        extractPackages 'docx'
+        if (System.getenv('MLAFMT_BUILD_PYTHON')) buildPython System.getenv('MLAFMT_BUILD_PYTHON')
+        pip {
+            if (nativeWheelDirectory) {
+                options '--find-links', nativeWheelDirectory
+            }
+            install 'python-docx==1.1.2'
+            install 'lxml==5.3.0'
+            install 'typing-extensions==4.12.2'
+            install nativeWheelDirectory ? 'chaquopy-libxml2==2.9.8+mlafmt16k1' : 'chaquopy-libxml2==2.9.8'
+            install nativeWheelDirectory ? 'chaquopy-libxslt==1.1.32+mlafmt16k1' : 'chaquopy-libxslt==1.1.32'
+        }
+    }
+    sourceSets.main.srcDir(generatedPython)
+}
+
+tasks.register('prepareMlafmtSources') {
+    inputs.file projectRoot.toPath().resolve('mla_formatter.py')
+    inputs.file projectRoot.toPath().resolve('templates/index.html')
+    inputs.files provenanceFiles
+    outputs.dirs generatedPython, generatedAssets
+    // Git provenance must be refreshed even when source bytes are unchanged.
+    outputs.upToDateWhen { false }
+    doLast {
+        copy {
+            from projectRoot
+            include 'mla_formatter.py'
+            into generatedPython
+        }
+        def html = projectRoot.toPath().resolve('templates/index.html').toFile().getText('UTF-8')
+        html = html.replace('{{ version }}', appVersion).replace('{{ today }}', '')
+        def destination = generatedAssets.get().file('index.html').asFile
+        destination.parentFile.mkdirs()
+        destination.setText(html, 'UTF-8')
+        def licenseCatalog = new groovy.json.JsonSlurper().parse(rootProject.file('licenses/sources.json'))
+        def notices = 'MLAFMT for Android — Third-party copyright and license notices\n\n'
+        licenseCatalog.each { entry ->
+            def license = rootProject.file("licenses/${entry.file}")
+            def digest = java.security.MessageDigest.getInstance('SHA-256').digest(license.bytes).encodeHex().toString()
+            if (digest != entry.sha256) throw new GradleException("License snapshot checksum mismatch: ${entry.file}")
+            notices += "\n============================================================\n${entry.name} ${entry.version}\nSource: ${entry.source}\n============================================================\n\n" + license.getText('UTF-8') + '\n'
+        }
+        generatedAssets.get().file('THIRD-PARTY-NOTICES.txt').asFile.setText(notices, 'UTF-8')
+        generatedAssets.get().file('LICENSE.txt').asFile.setText(projectRoot.toPath().resolve('LICENSE').toFile().getText('UTF-8'), 'UTF-8')
+        def gitText = { List arguments ->
+            def process = new ProcessBuilder(['git'] + arguments).directory(projectRoot).redirectErrorStream(true).start()
+            def output = process.inputStream.getText('UTF-8').trim()
+            if (process.waitFor() != 0) throw new GradleException('Git provenance could not be read')
+            output
+        }
+        def info = [application: 'MLAFMT', version: appVersion, platform: 'android',
+            commit: gitText(['rev-parse', 'HEAD']),
+            working_tree_dirty: !gitText(['status', '--porcelain', '--untracked-files=normal']).isEmpty(),
+            python: '3.12', abis: ['arm64-v8a', 'x86_64'], source_sha256: [:]]
+        provenanceFiles.sort { it.toString() }.each { source ->
+            def name = projectRoot.toPath().relativize(source.toPath()).toString().replace('\\', '/')
+            info.source_sha256[name] = java.security.MessageDigest.getInstance('SHA-256').digest(source.bytes).encodeHex().toString()
+        }
+        generatedAssets.get().file('build-info.json').asFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(info)) + '\n', 'UTF-8')
+    }
+}
+tasks.configureEach {
+    if (name.startsWith('generate') && name.endsWith('PythonSources')) dependsOn 'prepareMlafmtSources'
+    if (name.startsWith('merge') && name.endsWith('Assets')) dependsOn 'prepareMlafmtSources'
+    if (name.startsWith('merge') && name.endsWith('PythonSources')) dependsOn 'prepareMlafmtSources'
+    if (name.toLowerCase().contains('release') && (name.startsWith('package') || name.startsWith('validateSigning'))) {
+        doFirst {
+            if (!canSign) throw new GradleException('Release signing is required: set MLAFMT_ANDROID_KEYSTORE, MLAFMT_ANDROID_STORE_PASSWORD, MLAFMT_ANDROID_KEY_ALIAS and MLAFMT_ANDROID_KEY_PASSWORD (or keystore.properties).')
+            if (!nativeWheelDirectory || !file(nativeWheelDirectory).isDirectory()) throw new GradleException('Release requires the 16 KB native wheels in MLAFMT_ANDROID_NATIVE_WHEELS')
+        }
+    }
+}
+tasks.register('exportRelease', Copy) {
+    dependsOn 'assembleRelease'
+    from layout.buildDirectory.file('outputs/apk/release/app-release.apk')
+    into projectRoot.toPath().resolve('dist/release').toFile()
+    rename { "MLAFMT-v${appVersion}-android.apk" }
+}
+
+dependencies {
+    implementation 'androidx.activity:activity-ktx:1.10.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.1'
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.core:core-ktx:1.16.0'
+    implementation 'androidx.window:window:1.4.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.1'
+    androidTestImplementation 'androidx.window:window-testing:1.4.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
+}

@@ -1,7 +1,7 @@
 """
-mla_web.py  (v2.1)
+mla_web.py  (v2.2)
 Local web UI for MLAFMT -> http://127.0.0.1:8600
-Works on Windows / macOS / Linux / Android (Termux or bundled in the APK).
+Works on Windows / macOS / Linux. The Android APK embeds the formatter separately.
 
     python mla_web.py            # local only (safe default)
     python mla_web.py --lan      # also reachable from other devices on your Wi-Fi

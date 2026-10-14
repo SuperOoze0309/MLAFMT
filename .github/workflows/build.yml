@@ -2,7 +2,7 @@ name: test-and-build
 
 on:
   push:
-    branches: [main]
+    branches: [main, "codex/**"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -28,6 +28,7 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-build.txt
+      - run: sudo apt-get update && sudo apt-get install -y xvfb libtcl8.6 libtk8.6
       - run: python -m pip install -r requirements.txt -r requirements-build.txt pytest==9.1.1
       - run: xvfb-run -a python -m pytest -q
 
@@ -56,13 +57,183 @@ jobs:
         timeout-minutes: 2
         run: |
           $taskExe = Join-Path $env:GITHUB_WORKSPACE 'dist/release/MLAFMT.exe'
-          $taskSmoke = Start-Process -FilePath $taskExe -ArgumentList '--smoke-test' -Wait -PassThru -WindowStyle Hidden
+          $taskSmoke = Start-Process -FilePath $taskExe -ArgumentList '--smoke-test', '--require-dnd' -Wait -PassThru -WindowStyle Hidden
           if ($taskSmoke.ExitCode -ne 0) { throw "Packaged app smoke test failed ($($taskSmoke.ExitCode))." }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: MLAFMT-windows-${{ github.ref_name }}
+          name: MLAFMT-windows-${{ github.run_id }}
           path: |
             dist/release/MLAFMT.exe
             dist/release/MLAFMT-v*-windows-x64.zip
           if-no-files-found: error
           retention-days: 14
+
+  macos-dmg:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: arm64
+          - runner: macos-15-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-build.txt
+      - name: Build and smoke-test native macOS package
+        shell: bash
+        run: |
+          expected=""
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then expected="$GITHUB_REF_NAME"; fi
+          bash platforms/macos/build_macos.sh --python python --architecture "${{ matrix.architecture }}" --expected-version "$expected"
+          version="$(python scripts/prepare_desktop_build.py --root . --version-only)"
+          arch="${{ matrix.architecture }}"
+          file_arch="$arch"
+          if [[ "$arch" == x86_64 ]]; then file_arch=x64; fi
+          python scripts/record_build_assets.py --metadata "build/macos/$arch/build-info.json" --output "dist/release/MLAFMT-v$version-macos-$file_arch.build-info.json" dist/release/*.dmg
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: MLAFMT-macos-${{ matrix.architecture }}-${{ github.run_id }}
+          path: |
+            dist/release/MLAFMT-v*-macos-*.dmg
+            dist/release/MLAFMT-v*-macos-*.build-info.json
+          if-no-files-found: error
+          retention-days: 14
+
+  linux-appimage:
+    needs: test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-build.txt
+      - name: Install desktop packaging dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb squashfs-tools libx11-6 libxext6 libxrender1 libxft2 fontconfig libtcl8.6 libtk8.6
+      - name: Build and smoke-test AppImage and portable bundle
+        shell: bash
+        run: |
+          expected=""
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then expected="$GITHUB_REF_NAME"; fi
+          bash platforms/linux/build_linux.sh --python python --expected-version "$expected"
+          version="$(python scripts/prepare_desktop_build.py --root . --version-only)"
+          python scripts/record_build_assets.py --metadata build/linux/x64/build-info.json --output "dist/release/MLAFMT-v$version-linux-x64.build-info.json" dist/release/*.AppImage dist/release/*.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: MLAFMT-linux-x64-${{ github.run_id }}
+          path: |
+            dist/release/MLAFMT-v*-linux-x64.AppImage
+            dist/release/MLAFMT-v*-linux-x64.tar.gz
+            dist/release/MLAFMT-v*-linux-x64.build-info.json
+          if-no-files-found: error
+          retention-days: 14
+
+  android-native:
+    needs: test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install native build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config curl xz-utils
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358"
+      - name: Rebuild native XML dependencies for 16 KiB Android
+        run: bash scripts/build_android_native.sh --ndk "$ANDROID_HOME/ndk/28.2.13676358"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-native-wheels-${{ github.run_id }}
+          path: build/android-native/wheels/*
+          if-no-files-found: error
+          retention-days: 14
+
+  android-apk:
+    needs: [test, android-native]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      MLAFMT_EXPECTED_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+      MLAFMT_ANDROID_STORE_PASSWORD: ${{ secrets.MLAFMT_ANDROID_STORE_PASSWORD }}
+      MLAFMT_ANDROID_KEY_ALIAS: ${{ secrets.MLAFMT_ANDROID_KEY_ALIAS }}
+      MLAFMT_ANDROID_KEY_PASSWORD: ${{ secrets.MLAFMT_ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: android-native-wheels-${{ github.run_id }}
+          path: build/android-native/wheels
+      - name: Verify transferred native wheels
+        working-directory: build/android-native/wheels
+        run: sha256sum --check SHA256SUMS
+      - name: Prepare release signing
+        shell: bash
+        env:
+          MLAFMT_ANDROID_KEYSTORE_BASE64: ${{ secrets.MLAFMT_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$MLAFMT_ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$MLAFMT_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mlafmt-release.p12"
+          chmod 600 "$RUNNER_TEMP/mlafmt-release.p12"
+          printf 'MLAFMT_ANDROID_KEYSTORE=%s\n' "$RUNNER_TEMP/mlafmt-release.p12" >> "$GITHUB_ENV"
+          printf 'MLAFMT_BUILD_PYTHON=%s\n' "$(command -v python)" >> "$GITHUB_ENV"
+          printf 'MLAFMT_ANDROID_NATIVE_WHEELS=%s\n' "$GITHUB_WORKSPACE/build/android-native/wheels" >> "$GITHUB_ENV"
+      - name: Build signed APK and run static checks
+        working-directory: platforms/android
+        shell: bash
+        run: |
+          bash ./gradlew :app:lintDebug :app:testDebugUnitTest :app:exportRelease
+          python ../../scripts/verify_android_apk.py ../../dist/release/MLAFMT-v*-android.apk
+      - name: Enable emulator acceleration
+        run: |
+          printf '%s\n' 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify offline conversion and native file operations
+        uses: reactivecircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808 # v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: default
+          disable-animations: true
+          working-directory: platforms/android
+          script: bash ./gradlew :app:connectedDebugAndroidTest
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: MLAFMT-android-${{ github.run_id }}
+          path: dist/release/MLAFMT-v*-android.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Retain Android test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-test-reports-${{ github.run_id }}
+          path: |
+            platforms/android/app/build/reports
+            platforms/android/app/build/outputs/androidTest-results
+          if-no-files-found: ignore

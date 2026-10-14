@@ -1,4 +1,4 @@
-"""Include the Tcl scripts and native tkDnD libraries in the Windows EXE."""
+"""Include the Tcl scripts and native tkDnD libraries in desktop bundles."""
 
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 

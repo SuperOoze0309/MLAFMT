@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.2.0 — 2026-10-13
+
+### 中文
+
+- 新增 macOS 14+ 的 Apple silicon / Intel DMG，以及 Linux x64 AppImage / 便携 tar.gz。
+- 新增 Android 7+ 的 64 位离线 APK，使用系统文件选择器导入草稿，保存、打开和分享生成的 Word 文档。
+- 适配折叠屏展开、合拢、半折叠和分屏窗口；避让折痕并保留填写信息、草稿和转换结果。
+- 所有平台复用同一 MLA 排版核心；保持 Works Cited 新页、双倍行距、页码和悬挂缩进规则。
+- 适配各桌面系统的设置目录、滚轮和 macOS 快捷键；构建时验证实际打包的拖放库和文档转换。
+- 增加各平台构建与测试流程、固定 Android 发布签名、依赖版本和下载校验和。
+- README 加入中英文实际界面截图，并用简明平台下载表组织 Release。
+- macOS 包使用临时签名，尚未经过 Apple 公证；首次打开可能需要系统确认。
+
+### English
+
+- Add macOS 14+ DMGs for Apple silicon and Intel, plus Linux x64 AppImage and portable tar.gz packages.
+- Add a fully offline 64-bit Android 7+ APK with system draft selection, document saving, opening and sharing.
+- Adapt foldable and multi-window layouts, avoid separating hinges and retain paper details, drafts and generated documents.
+- Share the same MLA engine across platforms, including a new Works Cited page, double spacing, page fields and hanging indents.
+- Adapt desktop settings locations, scrolling and macOS shortcuts; verify the bundled drag-and-drop library and actual conversion.
+- Add platform build/test jobs, a stable Android release signature, locked dependencies and download checksums.
+- Add bilingual interface screenshots to the README and simplify Releases with a platform download table.
+- macOS builds are ad-hoc signed and not Apple-notarized; first launch may require system confirmation.
+
 ## v2.1.1 — 2026-10-12
 
 ### 下载 / Download

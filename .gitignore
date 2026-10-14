@@ -10,3 +10,8 @@ build/
 platforms/*/bin/
 platforms/*/mla_*.py
 platforms/*/templates/
+.secrets/
+.gradle/
+local.properties
+*.jks
+*.keystore

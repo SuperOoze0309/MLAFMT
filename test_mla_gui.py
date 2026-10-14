@@ -33,6 +33,41 @@ class ConfigTests(unittest.TestCase):
         self.legacy = Path(self.temporary.name) / "legacy.json"
         self._patch(patch.object(gui, "CONFIG_PATH", str(self.config)))
         self._patch(patch.object(gui, "LEGACY_CONFIG_PATH", str(self.legacy)))
+        self._patch(patch.object(gui, "PREVIOUS_CONFIG_PATH", None))
+
+    def test_platform_settings_locations(self):
+        user_folder = Path(self.temporary.name)
+        with self.subTest(platform="macOS"):
+            self.assertEqual(Path(gui._config_file("darwin", {}, user_folder)),
+                             user_folder / "Library" / "Application Support" / "MLAFMT" / "settings.json")
+        with self.subTest(platform="Linux"):
+            self.assertEqual(Path(gui._config_file("linux", {}, user_folder)),
+                             user_folder / ".config" / "MLAFMT" / "settings.json")
+            configured = user_folder / "custom-settings"
+            self.assertEqual(Path(gui._config_file("linux", {"XDG_CONFIG_HOME": str(configured)}, user_folder)),
+                             configured / "MLAFMT" / "settings.json")
+            self.assertEqual(Path(gui._config_file("linux", {"XDG_CONFIG_HOME": "relative"}, user_folder)),
+                             user_folder / ".config" / "MLAFMT" / "settings.json")
+        with self.subTest(platform="Windows"):
+            self.assertEqual(Path(gui._config_file("win32", {}, user_folder)),
+                             user_folder / "AppData" / "Roaming" / "MLAFMT" / "settings.json")
+
+    def test_previous_macos_settings_are_migrated(self):
+        previous = self.config.parent / "previous-settings.json"
+        previous.write_text(json.dumps({"lang": "en", "name": "Jane"}), encoding="utf-8")
+        with patch.object(gui, "PREVIOUS_CONFIG_PATH", str(previous)):
+            self.assertEqual(gui._load_config(), {"lang": "en", "name": "Jane"})
+            self.assertTrue(gui._save_config(gui._load_config()))
+        self.assertEqual(json.loads(self.config.read_text(encoding="utf-8")),
+                         {"lang": "en", "name": "Jane"})
+
+    def test_wheel_supports_all_desktop_event_forms(self):
+        for event, expected in [(SimpleNamespace(num=4), -1), (SimpleNamespace(num=5), 1),
+                                (SimpleNamespace(delta=120), -1), (SimpleNamespace(delta=-240), 2),
+                                (SimpleNamespace(delta=2), -1), (SimpleNamespace(delta=-1), 1),
+                                (SimpleNamespace(delta=0), 0)]:
+            with self.subTest(event=event):
+                self.assertEqual(gui._wheel_units(event), expected)
 
     def test_corrupt_config_falls_back_to_legacy(self):
         self.config.write_text("{invalid json", encoding="utf-8")
@@ -76,6 +111,7 @@ class DesktopTests(unittest.TestCase):
         self.config = self.folder / "isolated-settings.json"
         self._patch(patch.object(gui, "CONFIG_PATH", str(self.config)))
         self._patch(patch.object(gui, "LEGACY_CONFIG_PATH", str(self.folder / "legacy.json")))
+        self._patch(patch.object(gui, "PREVIOUS_CONFIG_PATH", None))
         self.save_config = self._patch(patch.object(gui, "_save_config", return_value=True))
         self._patch(patch.object(gui, "_default_lang", return_value="en"))
         self._patch(patch.object(gui, "HAS_DND", False))
@@ -128,7 +164,8 @@ class DesktopTests(unittest.TestCase):
                 command = root.tk.splitlist(script)[0]
                 if command in (root._tclCommands or ()):
                     root.after_cancel(callback)
-            root.unbind_all("<MouseWheel>")
+            for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                root.unbind_all(sequence)
             root.destroy()
         # bind_all registers callbacks on the interpreter's root. Remove only
         # commands introduced by this test, after destroying its own windows.

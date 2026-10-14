@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=MLAFMT
+Comment=Offline MLA essay formatter
+Exec=MLAFMT
+Icon=mlafmt
+Categories=Office;Education;
+Terminal=false
+StartupNotify=true

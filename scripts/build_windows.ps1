@@ -60,6 +60,7 @@ foreach ($taskFile in @($taskExe, (Join-Path $taskBuild 'build-info.json'),
         (Join-Path $taskRoot 'README.md'), (Join-Path $taskRoot 'CHANGELOG.md'), (Join-Path $taskRoot 'LICENSE'))) {
     Copy-Item -LiteralPath $taskFile -Destination $taskStage
 }
+Copy-Item -LiteralPath (Join-Path $taskRoot 'docs') -Destination (Join-Path $taskStage 'docs') -Recurse
 $taskZip = Join-Path $taskDist "MLAFMT-v$taskVersion-windows-x64.zip"
 Compress-Archive -Path (Join-Path $taskStage '*') -DestinationPath $taskZip -CompressionLevel Optimal -Force
 Write-Output "Release assets ready: $taskDist (v$taskVersion)"

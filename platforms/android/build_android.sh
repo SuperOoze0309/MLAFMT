@@ -1,46 +1,24 @@
-#!/bin/bash
-# ============================================================
-# MLAFMT Android .apk build script
-#
-# PREREQUISITES (run once on Ubuntu/Debian):
-#   sudo apt install python3-pip openjdk-17-jdk git zip unzip
-#   pip install buildozer cython
-#
-# USAGE (on Linux or WSL):
-#   chmod +x build_android.sh
-#   ./build_android.sh
-# ============================================================
-set -e
-
-echo "=== MLAFMT Android .apk Builder ==="
-
-# ---- 1. Copy source files into android/ ----
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR=""
-for d in "${SCRIPT_DIR}/../.." "${SCRIPT_DIR}/../../.."; do
-    if [ -f "$d/mla_formatter.py" ]; then PROJECT_DIR="$(cd "$d" && pwd)"; break; fi
+#!/usr/bin/env bash
+# Android SDK 35, Java 17+, Python 3.12; release requires the signing variables
+# described in README.md. Run with "debug" to make a development APK.
+set -euo pipefail
+cd "$(dirname "$0")"
+mode=release
+expected_version=""
+while (($#)); do
+    case "$1" in
+        --debug|debug) mode=debug; shift ;;
+        --release|release) mode=release; shift ;;
+        --expected-version) expected_version="${2:?Missing expected version}"; shift 2 ;;
+        *) echo "Unknown argument: $1" >&2; exit 2 ;;
+    esac
 done
-[ -n "$PROJECT_DIR" ] || { echo "mla_formatter.py not found above ${SCRIPT_DIR}"; exit 1; }
-
-echo "[1/3] Copying source files..."
-cp "${PROJECT_DIR}/mla_formatter.py" "${SCRIPT_DIR}/"
-cp "${PROJECT_DIR}/mla_web.py" "${SCRIPT_DIR}/"
-cp -r "${PROJECT_DIR}/templates" "${SCRIPT_DIR}/"
-
-cd "${SCRIPT_DIR}"
-
-# ---- 2. Build with Buildozer ----
-echo "[2/3] Building .apk (this will take 15-30 min first time)..."
-buildozer -v android debug
-
-# ---- 3. Locate the apk ----
-echo "[3/3] Done!"
-APK=$(find bin -name "*.apk" 2>/dev/null | head -1)
-if [ -n "$APK" ]; then
-    cp "$APK" ./MLAFMT.apk
-    echo ""
-    echo "=== APK ready: $(pwd)/MLAFMT.apk ==="
-    echo "  Transfer to your Android device and install."
+if [[ -n "$expected_version" ]]; then
+    actual_version=$(sed -n 's/^__version__ = "\([^"]*\)"/\1/p' ../../mla_formatter.py)
+    [[ "${expected_version#v}" == "$actual_version" ]] || { echo "Version mismatch" >&2; exit 1; }
+fi
+if [[ "$mode" == debug ]]; then
+    ./gradlew --no-daemon assembleDebug
 else
-    echo "APK not found. Check buildozer logs above for errors."
+    ./gradlew --no-daemon exportRelease
 fi

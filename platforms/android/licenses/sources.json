@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Python",
+    "version": "3.12",
+    "file": "python-license.txt",
+    "source": "https://raw.githubusercontent.com/python/cpython/v3.12.15/LICENSE",
+    "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+  },
+  {
+    "name": "lxml",
+    "version": "5.3.0",
+    "file": "lxml-license.txt",
+    "source": "https://raw.githubusercontent.com/lxml/lxml/lxml-5.3.0/LICENSE.txt",
+    "sha256": "69edb445c1335a8312d4c09271847e9956d84f0d9f724d125340cc3fad767b2a"
+  },
+  {
+    "name": "lxml exceptions",
+    "version": "5.3.0",
+    "file": "lxml-licenses.txt",
+    "source": "https://raw.githubusercontent.com/lxml/lxml/lxml-5.3.0/LICENSES.txt",
+    "sha256": "41d49dd406aa0e1548a6d5f21a30d6bf638b3cd96eb7289dd348d83ed2e40392"
+  },
+  {
+    "name": "ElementTree in lxml",
+    "version": "5.3.0",
+    "file": "elementtree-license.txt",
+    "source": "https://raw.githubusercontent.com/lxml/lxml/lxml-5.3.0/doc/licenses/elementtree.txt",
+    "sha256": "0497ae8138811ef4466ede653bab7a59feb3d3c14f9ed50fc33a00aeb5bec32e"
+  },
+  {
+    "name": "python-docx",
+    "version": "1.1.2",
+    "file": "python-docx-license.txt",
+    "source": "https://raw.githubusercontent.com/python-openxml/python-docx/v1.1.2/LICENSE",
+    "sha256": "7652f271e46d0d533e9dc463f3b5fcbdcacf4d6a9c8d6b554d15efd0f37f6132"
+  },
+  {
+    "name": "typing-extensions",
+    "version": "4.12.2",
+    "file": "typing-extensions-license.txt",
+    "source": "https://raw.githubusercontent.com/python/typing_extensions/4.12.2/LICENSE",
+    "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+  },
+  {
+    "name": "libxml2",
+    "version": "2.9.8",
+    "file": "libxml2-copying.txt",
+    "source": "https://raw.githubusercontent.com/GNOME/libxml2/v2.9.8/Copyright",
+    "sha256": "c5c63674f8a83c4d2e385d96d1c670a03cb871ba2927755467017317878574bd"
+  },
+  {
+    "name": "XZ/liblzma",
+    "version": "5.2.4",
+    "file": "xz-copying.txt",
+    "source": "https://raw.githubusercontent.com/tukaani-project/xz/v5.2.4/COPYING",
+    "sha256": "bcb02973ef6e87ea73d331b3a80df7748407f17efdb784b61b47e0e610d3bb5c"
+  },
+  {
+    "name": "AndroidX / Kotlin / OpenSSL 3",
+    "version": "bundled runtime",
+    "file": "apache-2.0.txt",
+    "source": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "name": "Chaquopy",
+    "version": "17.0.0",
+    "file": "chaquopy-license.txt",
+    "source": "https://raw.githubusercontent.com/chaquo/chaquopy/17.0.0/LICENSE.txt",
+    "sha256": "345a9fdfeed355d37b18569ef277ba56eb0ab7c0b17a08a90163ce8d33d2b862"
+  },
+  {
+    "name": "libxslt/libexslt",
+    "version": "1.1.32",
+    "file": "libxslt-copying.txt",
+    "source": "https://raw.githubusercontent.com/GNOME/libxslt/v1.1.32/Copyright",
+    "sha256": "7e48e290b6bfccc2ec1b297023a1d77f2fd87417f71fbb9f50aabef40a851819"
+  },
+  {
+    "name": "OpenSSL",
+    "version": "3.0.18 (Chaquopy 17.0 Python runtime)",
+    "file": "openssl-license.txt",
+    "source": "https://raw.githubusercontent.com/openssl/openssl/openssl-3.0.18/LICENSE.txt",
+    "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a"
+  }
+]

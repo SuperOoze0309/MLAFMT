@@ -1,5 +1,5 @@
 """
-mla_gui.py  (v2.1)
+mla_gui.py  (v2.2)
 Desktop app for one-click MLA formatting.  中英双语 / Chinese-English UI.
 
 Home screen = only what most people need:
@@ -18,6 +18,7 @@ from pathlib import Path
 import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from tkinter import font as tkfont
 
 from mla_formatter import (
     MLG_DISCLAIMER,
@@ -38,10 +39,36 @@ try:  # optional drag-and-drop
 except ImportError:
     HAS_DND = False
 
-CONFIG_PATH = os.path.join(
-    os.environ.get("APPDATA") or os.environ.get("XDG_CONFIG_HOME")
-    or os.path.join(os.path.expanduser("~"), ".config"), "MLAFMT", "settings.json")
+def _config_file(platform_name=None, environ=None, user_home=None):
+    """Use each desktop's normal per-user application settings location."""
+    platform_name = sys.platform if platform_name is None else platform_name
+    environ = os.environ if environ is None else environ
+    user_home = Path.home() if user_home is None else Path(user_home)
+    if platform_name.startswith("win"):
+        base = Path(environ.get("APPDATA") or user_home / "AppData" / "Roaming")
+    elif platform_name == "darwin":
+        base = user_home / "Library" / "Application Support"
+    else:
+        configured = Path(environ.get("XDG_CONFIG_HOME", ""))
+        base = configured if configured.is_absolute() else user_home / ".config"
+    return str(base / "MLAFMT" / "settings.json")
+
+
+def _wheel_units(event):
+    """Normalize Linux mouse buttons and macOS/Windows wheel deltas."""
+    number = getattr(event, "num", None)
+    if number in (4, 5):
+        return -1 if number == 4 else 1
+    delta = getattr(event, "delta", 0)
+    if not delta:
+        return 0
+    return int(-delta / 120) if abs(delta) >= 120 else (-1 if delta > 0 else 1)
+
+
+CONFIG_PATH = _config_file()
 LEGACY_CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".mlafmt.json")
+PREVIOUS_CONFIG_PATH = (str(Path.home() / ".config" / "MLAFMT" / "settings.json")
+                        if sys.platform == "darwin" else None)
 
 # ──────────────────────────────────────────────────────────────────────
 #  Strings
@@ -282,7 +309,9 @@ def _default_lang():
 
 
 def _load_config():
-    for path in (CONFIG_PATH, LEGACY_CONFIG_PATH):
+    for path in (CONFIG_PATH, PREVIOUS_CONFIG_PATH, LEGACY_CONFIG_PATH):
+        if path is None:
+            continue
         try:
             with open(path, encoding="utf-8") as f:
                 cfg = json.load(f)
@@ -366,6 +395,9 @@ class MLAGui:
             var.trace_add("write", self._draw_preview)
         self.root.bind("<Control-o>", lambda _e: self._on_browse())
         self.root.bind("<Control-Return>", lambda _e: self._on_convert())
+        if sys.platform == "darwin":
+            self.root.bind("<Command-o>", lambda _e: self._on_browse())
+            self.root.bind("<Command-Return>", lambda _e: self._on_convert())
         self.root.after(80, self._poll_results)
 
     def t(self, key, **kw):
@@ -375,7 +407,9 @@ class MLAGui:
     def _style(self):
         st = ttk.Style(self.root)
         st.theme_use("clam")
-        self.font = ("Microsoft YaHei UI" if sys.platform.startswith("win") else "Arial", 10)
+        family = ("Microsoft YaHei UI" if sys.platform.startswith("win") else
+                  tkfont.nametofont("TkDefaultFont", root=self.root).actual("family"))
+        self.font = (family, 10)
         st.configure(".", font=self.font, background=BG, foreground=TEXT)
         st.configure("Card.TFrame", background=CARD)
         st.configure("Card.TLabel", background=CARD)
@@ -417,9 +451,11 @@ class MLAGui:
         main.bind("<Configure>", lambda _e: canvas.configure(scrollregion=canvas.bbox("all")))
         def wheel(event):
             if event.widget.winfo_toplevel() == self.root:
-                amount = int(-event.delta / 120) if abs(event.delta) >= 120 else (-1 if event.delta > 0 else 1)
-                canvas.yview_scroll(amount, "units")
-        self.root.bind_all("<MouseWheel>", wheel)
+                amount = _wheel_units(event)
+                if amount:
+                    canvas.yview_scroll(amount, "units")
+        for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            self.root.bind_all(sequence, wheel)
 
         top = ttk.Frame(main)
         top.pack(fill=tk.X, pady=(0, 16))
@@ -603,7 +639,8 @@ class MLAGui:
         item = canvas.create_window(0, 0, window=body, anchor="nw")
         canvas.bind("<Configure>", lambda e: canvas.itemconfigure(item, width=e.width))
         body.bind("<Configure>", lambda _e: canvas.configure(scrollregion=canvas.bbox("all")))
-        w.bind("<MouseWheel>", lambda e: canvas.yview_scroll(int(-e.delta / 120), "units"))
+        for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            w.bind(sequence, lambda e: canvas.yview_scroll(_wheel_units(e), "units"))
         def section(key):
             card = self._card(body)
             ttk.Label(card, text=self.t(key), style="Step.TLabel").pack(anchor=tk.W, pady=(0, 6))
@@ -803,15 +840,53 @@ class MLAGui:
         self.root.mainloop()
 
 
-if __name__ == "__main__":
-    if "--smoke-test" in sys.argv:
-        app = MLAGui(remember=False)
+def _smoke_test(require_dnd=False):
+    """Exercise the installed GUI and actual document engine in a clean folder."""
+    from docx import Document
+    from docx.oxml.ns import qn
+
+    app = MLAGui(remember=False)
+    try:
+        if require_dnd and not app.has_dnd:
+            raise RuntimeError("The packaged tkDnD library could not load")
         app.root.withdraw()
         for language in ("zh", "en"):
             app._set_lang(language)
             app.root.update_idletasks()
         with tempfile.TemporaryDirectory(prefix="mlafmt-smoke-") as folder:
-            create_blank_template(Path(folder) / "smoke.docx", name="MLAFMT", title="Smoke test")
+            folder = Path(folder)
+            blank = folder / "blank.docx"
+            create_blank_template(blank, name="Jane Doe", title="Smoke test")
+            assert Document(blank).paragraphs[0].text == "Jane Doe"
+            draft = folder / "Draft with spaces, 中文.txt"
+            draft.write_text("A paragraph about *Hamlet*.\n\nWorks Cited\n\n"
+                             "Zed. Last source.\n\nAlpha. First source.", encoding="utf-8")
+            result = folder / "MLA result, 中文.docx"
+            stats = convert_draft_to_mla(draft, result, name="Jane Doe", title="Smoke test",
+                                        instructor="", course="", date_str="")
+            document = Document(result)
+            paragraphs = document.paragraphs
+            heading = next(p for p in paragraphs if p.text == "Works Cited")
+            assert heading.paragraph_format.page_break_before
+            assert stats["body"] == 1 and stats["works_cited"] == 2
+            assert paragraphs[-2].text.startswith("Alpha.")
+            assert paragraphs[-1].paragraph_format.left_indent.inches == 0.5
+            assert paragraphs[-1].paragraph_format.first_line_indent.inches == -0.5
+            section = document.sections[0]
+            assert section.page_width.inches == 8.5 and section.page_height.inches == 11
+            assert section.left_margin.inches == section.right_margin.inches == 1
+            normal = document.styles["Normal"]
+            assert normal.font.name == "Times New Roman" and normal.font.size.pt == 12
+            assert paragraphs[5].paragraph_format.line_spacing == 2
+            assert paragraphs[-1].paragraph_format.line_spacing == 2
+            assert any("PAGE" in (node.text or "") for node in
+                       section.header._element.iter(qn("w:instrText")))
+    finally:
         app.root.destroy()
+
+
+if __name__ == "__main__":
+    if "--smoke-test" in sys.argv:
+        _smoke_test(require_dnd="--require-dnd" in sys.argv)
     else:
         MLAGui().run()
