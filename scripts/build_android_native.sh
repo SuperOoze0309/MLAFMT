@@ -78,6 +78,7 @@ for ABI in arm64-v8a x86_64; do
         make install-libLTLIBRARIES install-binSCRIPTS install-pkgconfigDATA
         make -C include install
         cd "$WORK_DIRECTORY/libxslt-1.1.32"
+        "$PYTHON" "$SCRIPT_DIRECTORY/prepare_android_native_wheels.py" patch-source --source-directory "$WORK_DIRECTORY/libxslt-1.1.32"
         ./configure --host="$TARGET" --prefix="$PREFIX" --without-python --without-crypto --disable-static --enable-shared --with-libxml-prefix="$PREFIX" --with-libxml-include-prefix="$PREFIX/include/libxml2"
         "$PYTHON" "$SCRIPT_DIRECTORY/prepare_android_native_wheels.py" configure-sonames --source-directory "$WORK_DIRECTORY/libxslt-1.1.32"
         make -C libxslt -j "$(nproc)"

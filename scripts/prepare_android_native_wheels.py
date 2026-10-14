@@ -26,6 +26,12 @@ SOURCE_HASHES = {
     "libxslt-1.1.32.tar.xz": "b7da90eaa6b0dae9e9a3769e29a757342eef0edb9a7b431424814375414422af",
     "xz-5.2.4.tar.xz": "9717ae363760dedf573dad241420c5fea86256b65bc21d2cf71b2b12f0544f4b",
 }
+SOURCE_PATCHES = [{
+    "source": "libxslt-1.1.32/libxslt/extensions.c",
+    "function": "xsltHashScannerModuleFree",
+    "change": "The unused private callback name parameter is const xmlChar *, matching xmlHashScanner.",
+    "reason": "Clang 19 enforces function pointer compatibility; public ABI and callback behavior are unchanged.",
+}]
 
 
 def download_baselines(directory):
@@ -111,6 +117,22 @@ def configure_sonames(source):
         raise SystemExit(f"No expected native library linker rule found in {source}")
 
 
+def patch_source(source):
+    path = source / "libxslt/extensions.c"
+    text = path.read_text(encoding="utf-8")
+    old = ("xsltHashScannerModuleFree(void *payload ATTRIBUTE_UNUSED,\n"
+           "                          void *data ATTRIBUTE_UNUSED,\n"
+           "                          xmlChar * name ATTRIBUTE_UNUSED)")
+    new = old.replace("xmlChar * name", "const xmlChar * name")
+    if text.count(old) != 1:
+        raise SystemExit("The locked XSLT callback signature no longer matches the reviewed source patch.")
+    function_start = text.index(old) + len(old)
+    body = text[function_start:text.index("\n}", function_start)]
+    if re.search(r"\bname\b", body):
+        raise SystemExit("The callback name parameter is unexpectedly used; re-review const safety.")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+
 def write_wheel(output, name, version, abi, files, requires):
     tag = f"py3-none-android_24_{abi.replace('-', '_')}"
     normalized = name.replace("-", "_")
@@ -172,6 +194,7 @@ def package(args):
     report = {"abi": args.abi, "ndk": "28.2.13676358", "minimum_api": 24,
               "linker_flags": ["-z max-page-size=16384", "-z common-page-size=16384", "--undefined-version"],
               "source_sha256": SOURCE_HASHES, "baseline_wheel_sha256": BASELINES,
+              "source_patches": SOURCE_PATCHES,
               "libraries": reports, "method": "Original source compiled and linked; unversioned SONAME emitted by libtool -avoid-version"}
     (args.output / f"native-build-{args.abi}.json").write_text(json.dumps(report, indent=2) + "\n")
 
@@ -183,6 +206,8 @@ def main():
     download.add_argument("--directory", type=Path, required=True)
     configure = subparsers.add_parser("configure-sonames")
     configure.add_argument("--source-directory", type=Path, required=True)
+    patch = subparsers.add_parser("patch-source")
+    patch.add_argument("--source-directory", type=Path, required=True)
     build = subparsers.add_parser("package")
     for name in ("prefix", "source-directory", "output", "baseline-directory", "ndk"):
         build.add_argument("--" + name, type=Path, required=True)
@@ -194,6 +219,8 @@ def main():
         download_baselines(args.directory)
     elif args.command == "configure-sonames":
         configure_sonames(args.source_directory)
+    elif args.command == "patch-source":
+        patch_source(args.source_directory)
     elif args.command == "package":
         package(args)
     else:
