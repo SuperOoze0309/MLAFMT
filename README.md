@@ -108,7 +108,7 @@ py -3.12 -m venv .venv-build
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
-GitHub Actions 在 push、pull request 和 tag 时测试并构建各平台安装包，上传构建产物；**发布由维护者通过命令行明确创建**。收集同一次成功构建的所有平台文件后，按[维护者指南](docs/RELEASING.md)检查来源、生成校验和并发布。
+GitHub Actions 在 push、pull request 和 tag 时测试并构建各平台安装包，上传构建产物（外部 fork 的 pull request 不生成签名 Android 包）；**发布由维护者通过命令行明确创建**。收集同一次成功构建的所有平台文件后，按[维护者指南](docs/RELEASING.md)检查来源、生成校验和并发布。
 
 Release 中的应用是当前发布版本。仓库根目录的旧 `MLAFMT.exe` 已停止跟踪，构建脚本不会使用它。
 
@@ -209,7 +209,7 @@ The script installs the locked `requirements-build.txt` into that virtual enviro
 
 The EXE is the simplest download; the ZIP adds the guides, changelog, license and build information. The old root-level executable is no longer tracked or used by the build.
 
-GitHub Actions tests and uploads all platform packages for pushes, pull requests and tags. Maintainers gather the files from one successful run, verify provenance and publish explicitly as described in the [maintainer guide](docs/RELEASING.md).
+GitHub Actions tests and uploads platform packages for pushes, pull requests and tags; pull requests from external forks do not produce signed Android packages. Maintainers gather the files from one successful run, verify provenance and publish explicitly as described in the [maintainer guide](docs/RELEASING.md).
 
 ## License / 许可证
 

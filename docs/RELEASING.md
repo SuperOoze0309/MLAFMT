@@ -24,7 +24,7 @@ py -3.12 -m venv .venv-build
 .\dist\release\MLAFMT.exe --smoke-test --require-dnd
 ```
 
-The EXE and versioned ZIP include the app version and build provenance. The ZIP includes the README and its image assets.
+The EXE includes the app version. The versioned ZIP adds build provenance, the README and its image assets.
 
 ## macOS
 
