@@ -56,7 +56,10 @@ for ABI in arm64-v8a x86_64; do
         export AR="$TOOLCHAIN/llvm-ar" RANLIB="$TOOLCHAIN/llvm-ranlib"
         export NM="$TOOLCHAIN/llvm-nm" STRIP="$TOOLCHAIN/llvm-strip"
         export CFLAGS='-O2 -fPIC' CPPFLAGS="-I$PREFIX/include"
-        export LDFLAGS="-L$PREFIX/lib -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
+        # The upstream symbol maps also list disabled DocBook and Windows-only
+        # entry points. Match GNU ld's historical handling of those map entries;
+        # the packaging step still requires every original exported ABI symbol.
+        export LDFLAGS="-L$PREFIX/lib -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384 -Wl,--undefined-version"
         export PKG_CONFIG_LIBDIR="$WORK_DIRECTORY/empty-pkgconfig"
         export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
         export CONFIG_SITE=/dev/null

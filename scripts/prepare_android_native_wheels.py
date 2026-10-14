@@ -170,7 +170,7 @@ def package(args):
                     files[f"{name.replace('-', '_')}-{version}.dist-info/licenses/xz-{path.name}"] = path.read_bytes()
         write_wheel(args.output, name, version, args.abi, files, requires)
     report = {"abi": args.abi, "ndk": "28.2.13676358", "minimum_api": 24,
-              "linker_flags": ["-z max-page-size=16384", "-z common-page-size=16384"],
+              "linker_flags": ["-z max-page-size=16384", "-z common-page-size=16384", "--undefined-version"],
               "source_sha256": SOURCE_HASHES, "baseline_wheel_sha256": BASELINES,
               "libraries": reports, "method": "Original source compiled and linked; unversioned SONAME emitted by libtool -avoid-version"}
     (args.output / f"native-build-{args.abi}.json").write_text(json.dumps(report, indent=2) + "\n")

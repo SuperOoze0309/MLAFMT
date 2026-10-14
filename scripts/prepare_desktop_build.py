@@ -175,7 +175,8 @@ def main():
     status = git_output(root, "status", "--porcelain", "--untracked-files=normal")
     sources = [root / "mla_gui.py", root / "mla_formatter.py", root / "requirements-build.txt",
                root / "scripts/prepare_desktop_build.py", root / "scripts/prepare_windows_build.py",
-               root / "scripts/hooks-desktop/hook-tkinterdnd2.py"]
+               root / "scripts/hooks-desktop/hook-tkinterdnd2.py",
+               root / "scripts/hooks-desktop/hook-docx.py"]
     sources += sorted((root / "platforms" / args.platform).rglob("*"))
     metadata = {
         "application": "MLAFMT", "version": version, "target_platform": args.platform,
