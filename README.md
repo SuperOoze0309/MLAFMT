@@ -8,15 +8,17 @@
 
 **Free, no account required. Your draft stays in your browser.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
+**网页版尚未更新，目前仍为 v2.4.0。** 使用新增中文预设或西班牙语界面，请先下载 v2.5.0。**Website update pending:** use the v2.5.0 offline apps for Chinese presets and Spanish. [部署状态 / Deployment status](docs/DEPLOYMENT.md)
+
 ## 三步开始 / Get started
 
 1. 打开 [formcapy.com](https://formcapy.com/)，选择格式并填写论文信息。Open the site, choose a format and enter your paper details.
 2. 选入草稿；DOCX 可选多段保留原格式。Choose a draft; optionally keep selected DOCX paragraphs unchanged.
 3. 点 **生成 Word 文档 → 下载 Word**。Select **Format document → Download Word**.
 
-![FormCapy 已上线中文网页版：虚构示例信息、选入的 DOCX 草稿和生成后的 Word 下载入口](docs/images/formcapy-live-zh.png)
+![FormCapy v2.4.0 已上线中文网页版：虚构示例信息、选入的 DOCX 草稿和生成后的 Word 下载入口](docs/images/formcapy-live-zh.png)
 
-*真实公网操作截图，使用虚构信息与测试文稿。Live-site screenshot using fictional details and a synthetic draft.*
+*v2.4.0 真实公网操作截图，使用虚构信息与测试文稿。v2.4.0 live-site screenshot using fictional details and a synthetic draft.*
 
 首次使用需要联网下载程序。iPhone/iPad 的保存步骤见 [Apple 指南 / Apple guide](docs/APPLE.md)；Safari 与 Apple 实机流程尚未验证。First use needs an internet connection; Safari and Apple device workflows remain unverified.
 
@@ -24,15 +26,15 @@
 
 ## 下载 / Downloads
 
-**[FormCapy v2.4.0 已发布 / Released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)** · 2026-10-21
+**[FormCapy v2.5.0 已发布 / Released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)** · 2026-10-21
 
-| 设备 / Device | v2.4.0 下载 / Download | 安装 / Install |
+| 设备 / Device | v2.5.0 下载 / Download | 安装 / Install |
 | --- | --- | --- |
-| Windows 10/11 · x64 | [Windows 应用](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT.exe) | 双击运行 / Open the EXE |
-| macOS 14+ · M 系列 / Apple silicon | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-macos-arm64.dmg) | 拖入应用程序 / Drag to Applications |
-| macOS 14+ · Intel | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-macos-x64.dmg) | 拖入应用程序 / Drag to Applications |
-| Linux · x64 · Ubuntu 22.04+ 或兼容系统 / or compatible | [Linux AppImage](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-linux-x64.AppImage) | 允许执行后运行 / Mark executable and open |
-| Android 7+ · 64 位 / 64-bit | [Android APK](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-android.apk) | 下载后安装 / Download and install |
+| Windows 10/11 · x64 | [Windows 应用](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT.exe) | 双击运行 / Open the EXE |
+| macOS 14+ · M 系列 / Apple silicon | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT-v2.5.0-macos-arm64.dmg) | 拖入应用程序 / Drag to Applications |
+| macOS 14+ · Intel | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT-v2.5.0-macos-x64.dmg) | 拖入应用程序 / Drag to Applications |
+| Linux · x64 · Ubuntu 22.04+ 或兼容系统 / or compatible | [Linux AppImage](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT-v2.5.0-linux-x64.AppImage) | 允许执行后运行 / Mark executable and open |
+| Android 7+ · 64 位 / 64-bit | [Android APK](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT-v2.5.0-android.apk) | 下载后安装 / Download and install |
 
 macOS 包目前未经过 Apple 公证。首次打开若被系统阻止，可在“系统设置 → 隐私与安全”确认打开。macOS builds are not Apple-notarized; if blocked on first launch, confirm the app in System Settings → Privacy & Security.
 
@@ -41,15 +43,15 @@ macOS 包目前未经过 Apple 公证。首次打开若被系统阻止，可在�
 <details>
 <summary>其他下载 / Other downloads</summary>
 
-- [Windows ZIP（包含图文说明）/ Windows ZIP with illustrated guide](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-windows-x64.zip)
-- [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz for systems without FUSE](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-linux-x64.tar.gz)
-- [SHA-256 校验和 / Checksums](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/SHA256SUMS.txt)
+- [Windows ZIP（包含图文说明）/ Windows ZIP with illustrated guide](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT-v2.5.0-windows-x64.zip)
+- [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz for systems without FUSE](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/MLAFMT-v2.5.0-linux-x64.tar.gz)
+- [SHA-256 校验和 / Checksums](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.5.0/SHA256SUMS.txt)
 
 </details>
 
 ## 功能 / Features
 
-v2.4.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板**。
+v2.5.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板**。
 
 - **APA 7 学生论文**：选择格式后填写学校/院系、课程、教师和截止日期；自动生成独立标题页、正文标题、页码和新页 References。保留 DOCX Heading 1–3 和 Markdown `#`–`###` 的标题层级；标题大小写保持原文，请按课程要求核对。
 - **自定义课程模板**：选择该格式，打开模板设置，调整老师要求的纸张、字体、行距和页边距，再保存为命名模板；下次直接选择使用。桌面和网页可导入/导出 JSON 文件，Android 可复制/粘贴同一份 JSON。
@@ -62,17 +64,25 @@ v2.4.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板
 
 APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)。
 
-### v2.5.0 开发中：中文预设与西班牙语 / In development
+### v2.5.0 本版新增：中文预设与西班牙语 / New in this version
 
-当前源码新增 **中文课程论文（通用）** 和 **中文毕业论文（基础版）**，放在自定义课程模板的内置预设中：A4、宋体小四、首行缩进 2 字符、两端对齐和页脚居中页码；毕业论文基础版使用固定 20 pt 行距和不编号的基础封面。可选中后继续修改并保存为自己的模板。
+v2.5.0 新增 **中文课程论文（通用）** 和 **中文毕业论文（基础版）**，放在 **中文预设 / 自定义模板** 的内置预设中：A4、宋体小四、首行缩进 2 字符、两端对齐和页脚居中页码；毕业论文基础版使用固定 20 pt 行距和不编号的基础封面。可选中后继续修改并保存为自己的模板。
 
-这部分尚未发布到上方 v2.4.0 下载或公网网站。预设不生成目录、摘要或学校专用封面，不自动转换 GB/T 7714 引用格式；学校要求优先。详情与可导入 JSON 见[格式指南](docs/FORMATS.md)。
+预设不生成目录、摘要或学校专用封面，不自动转换 GB/T 7714 引用格式；学校要求优先。公网网站仍为 v2.4.0，尚待更新；请使用 v2.5.0 源码或上方新版下载。详情与可导入 JSON 见[格式指南](docs/FORMATS.md)。
 
-Current source adds two editable built-in Chinese presets for course papers and basic theses, including separate Chinese/Latin fonts, character indentation and exact point spacing. They are not yet in the published v2.4.0 packages or public website. See the [format guide](docs/FORMATS.md) for settings and scope.
+1. 选择 **中文预设 / 自定义模板**。
+2. 展开 **选择预设或定制模板**，选择课程论文或毕业论文基础版；需要时进入 **高级定制** 调整字体、缩进和行距。
+3. 填写论文信息、选择草稿，再生成并保存 Word；查看结果中的保留数量，并对照原稿核对图片、表格和引用。
 
-本轮还加入 **Español** 界面，覆盖网页、桌面和 Android；切换语言不会翻译文稿或个人模板名。下一版的[课程模板分享与参考文献方案](docs/SHARING-DESIGN.md)采用纯静态设计，目前未实现分享链接或引用条目转换。
+![FormCapy v2.5 中文课程论文预设本地预览，含虚构信息及段落、图片和表格保留结果](docs/images/formcapy-v2.5-chinese.png)
 
-This iteration also adds Spanish to the web, desktop and Android interfaces. Changing the interface language does not translate drafts or personal template names. Self-contained course-template links and structured references are [planned separately](docs/SHARING-DESIGN.md); neither feature is implemented yet.
+*v2.5静态本地预览，虚构测试信息。Local static preview with fictional test details; this is not a public-site screenshot.*
+
+v2.5.0 includes two editable built-in Chinese presets for course papers and basic theses, with separate Chinese/Latin fonts, character indentation and exact point spacing. Choose **Chinese presets / Custom template**, select a built-in preset, adjust it if needed, and generate Word. The public website still runs v2.4.0 and awaits deployment; use the v2.5.0 source or the new packages above. See the [format guide](docs/FORMATS.md) for settings and scope.
+
+v2.5.0 还加入 **Español** 界面，覆盖静态网页构建、桌面和 Android；切换语言不会翻译文稿或个人模板名。下一版的[课程模板分享与参考文献方案](docs/SHARING-DESIGN.md)采用纯静态设计，目前未实现分享链接或引用条目转换。
+
+v2.5.0 also includes Spanish in the static web build, desktop and Android interfaces. Changing the interface language does not translate drafts or personal template names. Self-contained course-template links and structured references are [planned separately](docs/SHARING-DESIGN.md); neither feature is implemented yet.
 
 ## 中文
 
@@ -84,7 +94,7 @@ This iteration also adds Spanish to the web, desktop and Android interfaces. Cha
 
 ### 桌面快速开始
 
-以下步骤适用于 v2.4.0 安装包；可选择 MLA、APA 或自定义模板。
+以下步骤适用于 v2.5.0 安装包；可选择 MLA、APA 或自定义模板。
 
 1. 下载与你的系统对应的文件，按上表安装并打开。
 2. 选择格式并填写姓名、论文标题及相应信息；MLA 的老师和课程可选，日期留空会使用今天。
@@ -108,7 +118,7 @@ Mac 也可以在 Finder 中选择“打开方式 → FormCapy”，或把草稿�
 
 ### Android 快速开始
 
-以下步骤对应 v2.4.0 APK。
+以下步骤对应 v2.5.0 APK。
 
 1. 安装 APK 后，填写姓名和论文标题。
 2. 点击选择草稿，通过系统文件选择器选入 `.docx`、`.txt` 或 `.md`。
@@ -141,7 +151,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前发布版本为 v2.4.0；源码运行方式如下。
+当前发布版本为 v2.5.0；源码运行方式如下。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -175,13 +185,13 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 # Windows 打包使用 Python 3.12 x64 和独立环境
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.4.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.5.0
 ```
 
 `requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.4.0-windows-x64.zip`：当前源码构建的应用、双语说明、更新记录、许可证与构建信息。
+- `MLAFMT-v2.5.0-windows-x64.zip`：当前源码构建的应用、双语说明、更新记录、许可证与构建信息。
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
@@ -191,7 +201,7 @@ Release 中的应用是当前发布版本。仓库根目录的旧 `MLAFMT.exe` �
 
 ## English
 
-Turn a `.docx`, `.txt` or `.md` draft into a Word document. The website and v2.4.0 apps support **MLA 9, APA 7 student papers and custom course templates**. Use the website or an offline desktop/Android app. Chinese and English interface settings are remembered; switching language leaves your essay text unchanged.
+Turn a `.docx`, `.txt` or `.md` draft into a Word document using **MLA 9, APA 7 student papers or custom course templates**. v2.5.0 adds built-in Chinese presets and Spanish alongside Chinese and English; switching language leaves your essay text unchanged. The public website remains v2.4.0 pending deployment of the new static build. Use the current website or an offline desktop/Android app.
 
 ### Use in your browser
 
@@ -205,7 +215,7 @@ See the [browser-local guide](docs/BROWSER-LOCAL.md) for program, cache and depe
 
 ### Desktop quick start
 
-These steps describe the v2.4.0 packages. Choose MLA, APA or a custom template.
+These steps describe the v2.5.0 packages. Choose MLA, APA or a custom template.
 
 1. Download the file for your system and install it as shown above.
 2. Choose a format and enter your name, paper title and the required details. For MLA, instructor and course are optional; a blank date uses today.
@@ -229,7 +239,7 @@ On Mac, Finder's **Open With → FormCapy** and Dock drops also load drafts. Aft
 
 ### Android quick start
 
-These steps describe the v2.4.0 APK.
+These steps describe the v2.5.0 APK.
 
 1. Install the APK, then enter your name and essay title.
 2. Tap to choose a `.docx`, `.txt`, or `.md` draft using the system file picker.
@@ -269,7 +279,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-The current release is v2.4.0. Run from source as follows.
+The current release is v2.5.0. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 
@@ -321,7 +331,7 @@ Run `python -m pytest -q` after installing `pytest` and `requirements.txt` in a 
 
 ```powershell
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.4.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.5.0
 ```
 
 The script installs the locked `requirements-build.txt` into that virtual environment, bundles the tkDnD native libraries and creates the EXE and versioned ZIP in `dist/release/`. The ZIP includes build information for the source commit, source hashes, Python and dependencies. Byte-for-byte identity across operating system or Python patch versions is not guaranteed.
@@ -336,6 +346,6 @@ GitHub Actions tests and uploads platform packages for pushes, pull requests and
 
 Project source is licensed under MIT; see [LICENSE](LICENSE). The project license does not replace dependency licenses.
 
-v2.4.0 安装包包含 `THIRD-PARTY-NOTICES.txt`、原始许可文本与依赖清单。桌面应用的 **帮助 → 第三方许可证** 可查看声明；附带对应源码包的 Windows 构建可通过 **保存对应源码…** 导出。许可与构建材料说明见[依赖分发说明](docs/DEPENDENCIES.md)。历史 v2.3.0 文件未被替换；请使用上方 v2.4.0 下载。
+v2.5.0 安装包包含 `THIRD-PARTY-NOTICES.txt`、原始许可文本与依赖清单。桌面应用的 **帮助 → 第三方许可证** 可查看声明；附带对应源码包的 Windows 构建可通过 **保存对应源码…** 导出。许可与构建材料说明见[依赖分发说明](docs/DEPENDENCIES.md)。历史 v2.3.0 文件未被替换；请使用上方 v2.5.0 下载。
 
-v2.4.0 packages include full third-party notices, original license texts and a dependency inventory. Use **Help → Third-party licenses** to read the notices; Windows builds carrying a corresponding source kit also offer **Save corresponding source…**. See [dependency distribution notes](docs/DEPENDENCIES.md). Historical v2.3.0 assets were not replaced; use the v2.4.0 downloads above.
+v2.5.0 packages include full third-party notices, original license texts and a dependency inventory. Use **Help → Third-party licenses** to read the notices; Windows builds carrying a corresponding source kit also offer **Save corresponding source…**. See [dependency distribution notes](docs/DEPENDENCIES.md). Historical v2.3.0 assets were not replaced; use the v2.5.0 downloads above.

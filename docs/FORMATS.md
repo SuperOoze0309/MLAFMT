@@ -1,10 +1,10 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：已发布的 FormCapy v2.4.0，以及当前源码中标为“开发中”的新增功能。** [v2.4.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)与[网页版](https://formcapy.com/)已开放。
+**适用版本 / Applies to：已发布的 FormCapy v2.5.0 源码及下载版本。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)现已开放。
 
-The v2.4.0 release and website are available. Chinese presets and the four additional typography fields described below are **in development in the current source**; they are not part of the published v2.4.0 packages or current public deployment.
+中文预设与四项新增排版字段已在 v2.5.0 中具备。**[公网网站](https://formcapy.com/)目前仍为 v2.4.0，新版静态产物尚待部署**；v2.4.0 下载和网站不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
-**中文预设及下列四项新增排版字段仍在本轮开发中，尚未包含在 v2.4.0 下载包或当前公网部署中。**
+The released v2.5.0 source and packages include the Chinese presets and four additional typography fields below. **The public website still runs v2.4.0 pending deployment** and, like the v2.4.0 packages, does not accept those four additional fields.
 
 ## 中文
 
@@ -59,7 +59,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 - 每个界面读取自己的本地设置；在桌面端创建的模板不会自动出现在网页端或 Android 上。
 - 导出的 JSON 只包含布局设置，不包含文档、草稿、引用或其他模板列表。
 
-#### 中文常用论文预设（开发中）
+#### 中文常用论文预设
 
 选择 **自定义课程模板**，在模板列表的内置预设中选择以下一种，再按学校或老师的要求修改。内置预设不占 20 个个人模板名额；编辑后可另存为个人模板，内置原件保留。新增内置项不会改写已有个人模板。
 
@@ -74,9 +74,9 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 各校要求确有差异：例如[南通大学马克思主义学院 2020 年说明](https://mkszyxy.ntu.edu.cn/2020/0315/c4202a112502/page.htm)采用 1.5 倍行距及字符缩进；[重庆师范大学 2012 年说明](https://graduate.cqnu.edu.cn/info/10656/103439.htm)采用固定磅值行距。这些历史文件用于说明差异，提交时应以本人学校和院系当前要求为准。
 
-可导入或查阅完整配置：[中文课程论文 JSON](../examples/chinese-course-paper.json) · [中文毕业论文 JSON](../examples/chinese-thesis-basic.json)。这些示例使用新增字段，需要本轮更新后的程序。
+可导入或查阅完整配置：[中文课程论文 JSON](../examples/chinese-course-paper.json) · [中文毕业论文 JSON](../examples/chinese-thesis-basic.json)。这些示例需要 v2.5.0 或更新版本；v2.4.0 不接受其中新增的中文排版字段。
 
-#### 高级定制：中文排版（开发中）
+#### 高级定制：中文排版
 
 选择中文排版后可分别设置中文正文字体和西文字体。字符缩进大于 `0` 时使用字符单位；设为 `0` 则使用原来的厘米缩进。固定行距大于 `0` 时使用该磅值；设为 `0` 则使用倍数行距。因此修改未启用的备用数值不会改变实际输出。
 
@@ -94,13 +94,13 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 | `paper_size` | `Letter` 或 `A4` | `Letter` | 纸张大小 |
 | `font_name` | `Times New Roman`、`Arial`、`Calibri`、`宋体`、`黑体` 之一 | `Times New Roman` | 正文字体 |
 | `font_size` | 数字，8–24 | `12` | 字号（pt） |
-| `typography`（开发中） | `western` 或 `chinese` | `western` | 中文排版启用分开的中西文字体、黑体标题和中文参考文献布局 |
-| `latin_font_name`（开发中） | `Times New Roman`、`Arial`、`Calibri` 之一 | `Times New Roman` | 中文排版中的西文和数字字体 |
+| `typography` | `western` 或 `chinese` | `western` | 中文排版启用分开的中西文字体、黑体标题和中文参考文献布局 |
+| `latin_font_name` | `Times New Roman`、`Arial`、`Calibri` 之一 | `Times New Roman` | 中文排版中的西文和数字字体 |
 | `line_spacing` | 数字，1–3 | `2` | 行距倍数；`line_spacing_pt` 为 `0` 时生效 |
-| `line_spacing_pt`（开发中） | 数字，0–60 | `0` | 大于 `0` 时使用固定磅值行距；`0` 使用倍数行距 |
+| `line_spacing_pt` | 数字，0–60 | `0` | 大于 `0` 时使用固定磅值行距；`0` 使用倍数行距 |
 | `margin_cm` | 数字，0.5–5.08 | `2.54` | 页边距（cm） |
 | `first_line_cm` | 数字，0–2.54 | `1.27` | 正文首行缩进（cm）；`first_line_chars` 为 `0` 时生效 |
-| `first_line_chars`（开发中） | 数字，0–4 | `0` | 大于 `0` 时使用字符缩进；`0` 使用厘米缩进 |
+| `first_line_chars` | 数字，0–4 | `0` | 大于 `0` 时使用字符缩进；`0` 使用厘米缩进 |
 | `alignment` | `left` 或 `justify` | `left` | 正文对齐方式 |
 | `header` | `surname_page`、`page` 或 `none` | `page` | 页码内容：姓氏加页码 / 仅页码 / 不显示；位置由下项决定 |
 | `page_number_position` | `top_right`、`bottom_center` 或 `bottom_right` | `top_right` | 页码位于右上角 / 页脚居中 / 页脚右侧 |
@@ -112,7 +112,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 #### JSON 示例
 
-下面是一个合法的裸 JSON 对象，使用当前源码的全部默认值，包括四项开发中的字段。顶层直接是模板字段，不要再包一层；已发布的 v2.4.0 程序尚不接受这四项字段。
+下面是一个合法的裸 JSON 对象，使用 v2.5.0 的全部默认值，包括四项新增中文排版字段。顶层直接是模板字段，不要再包一层；v2.4.0 下载及当前公网网站不接受这四项字段。
 
 ```json
 {
@@ -224,7 +224,7 @@ Custom templates save and reuse a set of layout settings:
 - Each interface reads its own local settings; a template created on desktop does not automatically appear on the web or Android.
 - Exported JSON contains layout settings only, not documents, drafts, citations or other preset lists.
 
-#### Common Chinese paper presets (in development)
+#### Common Chinese paper presets
 
 Choose **Custom course template**, then select a built-in preset from the template list and adjust it for your institution. Built-ins do not count toward the 20 personal-template limit. Save edits as a personal copy while retaining the built-in original. Adding the built-ins does not rewrite existing personal templates.
 
@@ -239,9 +239,9 @@ These are editable starting layouts, not official university templates or comple
 
 Institutional requirements differ. Historical guidance from [Nantong University (2020)](https://mkszyxy.ntu.edu.cn/2020/0315/c4202a112502/page.htm) uses multiple line spacing, while [Chongqing Normal University (2012)](https://graduate.cqnu.edu.cn/info/10656/103439.htm) specifies fixed point spacing. Consult your own department's current requirements before submission.
 
-Full configurations: [Chinese course paper JSON](../examples/chinese-course-paper.json) and [Chinese thesis JSON](../examples/chinese-thesis-basic.json). These examples use the new fields and require the current development update.
+Full configurations: [Chinese course paper JSON](../examples/chinese-course-paper.json) and [Chinese thesis JSON](../examples/chinese-thesis-basic.json). These examples require v2.5.0 or later; v2.4.0 does not accept their additional Chinese typography fields.
 
-#### Advanced customization: Chinese typography (in development)
+#### Advanced customization: Chinese typography
 
 Chinese typography allows separate Chinese and Latin body fonts. A positive character-indent value takes precedence over the centimeter value; `0` uses centimeters. A positive fixed line-spacing value takes precedence over the multiple; `0` uses multiple line spacing. Changing an inactive fallback value does not change the output.
 
@@ -259,13 +259,13 @@ Numbering options are disabled with `header: "none"`; cover numbering is disable
 | `paper_size` | `Letter` or `A4` | `Letter` | Paper size |
 | `font_name` | One of `Times New Roman`, `Arial`, `Calibri`, `宋体`, `黑体` | `Times New Roman` | Body font |
 | `font_size` | Number, 8–24 | `12` | Font size in pt |
-| `typography` (in development) | `western` or `chinese` | `western` | Chinese typography uses separate Chinese/Latin fonts, 黑体 headings and Chinese reference layout |
-| `latin_font_name` (in development) | `Times New Roman`, `Arial` or `Calibri` | `Times New Roman` | Latin text and digit font in Chinese typography |
+| `typography` | `western` or `chinese` | `western` | Chinese typography uses separate Chinese/Latin fonts, 黑体 headings and Chinese reference layout |
+| `latin_font_name` | `Times New Roman`, `Arial` or `Calibri` | `Times New Roman` | Latin text and digit font in Chinese typography |
 | `line_spacing` | Number, 1–3 | `2` | Line-spacing multiple; applies when `line_spacing_pt` is `0` |
-| `line_spacing_pt` (in development) | Number, 0–60 | `0` | A positive value selects exact point spacing; `0` uses the multiple |
+| `line_spacing_pt` | Number, 0–60 | `0` | A positive value selects exact point spacing; `0` uses the multiple |
 | `margin_cm` | Number, 0.5–5.08 | `2.54` | Page margin in cm |
 | `first_line_cm` | Number, 0–2.54 | `1.27` | Body first-line indent in cm; applies when `first_line_chars` is `0` |
-| `first_line_chars` (in development) | Number, 0–4 | `0` | A positive value selects a character indent; `0` uses centimeters |
+| `first_line_chars` | Number, 0–4 | `0` | A positive value selects a character indent; `0` uses centimeters |
 | `alignment` | `left` or `justify` | `left` | Body alignment |
 | `header` | `surname_page`, `page` or `none` | `page` | Number content: surname plus page / page only / no numbers; position is set below |
 | `page_number_position` | `top_right`, `bottom_center` or `bottom_right` | `top_right` | Position of the page number |
@@ -277,7 +277,7 @@ Numbering options are disabled with `header: "none"`; cover numbering is disable
 
 #### JSON example
 
-The following bare JSON object uses all current-source defaults, including the four fields in development. Its top level is the template fields themselves. Published v2.4.0 packages do not yet accept those four additional fields.
+The following bare JSON object uses all v2.5.0 defaults, including the four additional Chinese typography fields. Its top level is the template fields themselves. v2.4.0 packages and the current public website do not accept those four additional fields.
 
 ```json
 {

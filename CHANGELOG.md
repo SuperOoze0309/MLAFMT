@@ -2,25 +2,25 @@
 
 ## v2.5.0 — 2026-10-21
 
-发布准备中 / Release preparation: source changes are complete; website deployment and new download packages are pending verification.
+[FormCapy v2.5.0 下载已发布](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0) / Downloads released at **2026-10-21 08:33:08 UTC**. All 8 assets were verified against REST size/digest metadata from [CI run 39568529951](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39568529951) (7 jobs passed); the release tag targets `930d959bb4f5844ae81abb326b6d363c0c03334f`. **公网网站仍为 v2.4.0，待上传新版静态产物 / The public website remains v2.4.0 pending upload of the staged static build.**
 
 ### 中文
 
 - 在自定义课程模板中增加 **中文课程论文（通用）**、**中文毕业论文（基础版）** 两项内置预设；可修改并保存独立副本，不占个人模板名额。
 - 增加中文与西文字体分别设置、首行字符缩进和固定磅值行距；旧模板继续使用原来的倍数行距和厘米缩进。
 - 中文预设使用 A4、宋体小四、黑体标题、两端对齐和页脚居中页码；参考文献保留原顺序。毕业论文基础版采用固定 20 pt 行距和不编号的基础封面。
-- 补充中文模板 JSON 与格式说明。预设提供基础排版，不生成目录、摘要或学校专用封面，不自动改写 GB/T 7714 引用；尚未更新公网或 v2.4.0 下载文件。
-- 网页、桌面与 Android 新增西班牙语界面，保留显式语言选择；文稿、个人信息和个人模板名保持原文。
-- 静态网页版明确说明：排版在你的设备上完成，当前文稿不会自动上传。课程模板分享和结构化引用先记录为下一版静态设计，不新增账号、数据库或转换服务器。
+- 补充中文模板 JSON 与格式说明。预设提供基础排版，不生成目录、摘要或学校专用封面，不自动改写 GB/T 7714 引用。v2.5.0 源码及下载已具备这些功能；公网网站仍为 v2.4.0，新版静态产物尚待上传。
+- 静态网页构建、桌面与 Android 新增西班牙语界面，保留显式语言选择；文稿、个人信息和个人模板名保持原文。
+- v2.5.0 静态构建和本地预览更新隐私文案：排版在你的设备上完成，当前文稿不会自动上传；该文案尚待部署到公网。课程模板分享和结构化引用先记录为下一版静态设计，不新增账号、数据库或转换服务器。
 
 ### English
 
 - Add built-in Chinese course-paper and basic-thesis presets under custom course templates, with independent editable copies outside the personal-template limit.
 - Support separate Chinese/Latin fonts, character-based first-line indentation and exact point line spacing while retaining older profile defaults.
 - Use A4, 12 pt 宋体 body text, 黑体 headings, justified paragraphs and centered footer numbers; retain reference order. The basic-thesis preset uses exactly 20 pt spacing and an unnumbered basic cover.
-- Add Chinese JSON examples and scope documentation. These are starting layouts, without generated contents/abstracts/institutional covers or GB/T 7714 citation rewriting. The public website and v2.4.0 downloads have not been updated.
-- Add Spanish to web, desktop and Android interfaces, retaining explicit language choices and original draft text, paper details and personal template names.
-- Clarify browser-local privacy. Record self-contained template sharing and structured citations as a future static design; no accounts, database or conversion server are added.
+- Add Chinese JSON examples and scope documentation. These are starting layouts, without generated contents/abstracts/institutional covers or GB/T 7714 citation rewriting. These features are present in the v2.5.0 source and downloads. The public website remains v2.4.0 pending upload of the new static artifact.
+- Add Spanish to the static web build, desktop and Android interfaces, retaining explicit language choices and original draft text, paper details and personal template names.
+- Clarify browser-local privacy in the v2.5.0 static build and local preview; the public copy awaits deployment. Record self-contained template sharing and structured citations as a future static design; no accounts, database or conversion server are added.
 
 ## v2.4.0 — 2026-10-21
 

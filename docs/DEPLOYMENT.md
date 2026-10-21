@@ -1,6 +1,43 @@
 # FormCapy web deployment
 
-## Current launch status
+## v2.5.0 staged update — public deployment pending
+
+**The public website still runs v2.4.0.** The v2.5.0 source and local static
+artifact include Chinese presets, Spanish and revised privacy text, but no
+v2.5.0 production upload has been recorded. Upload is awaiting the owner's
+manual selection of the staged H-drive folder in the browser. Existing
+Cloudflare routes, DNS and HTTPS settings remain in place.
+
+| Item | v2.5.0 recorded state |
+| --- | --- |
+| Application source | `930d959bb4f5844ae81abb326b6d363c0c03334f` |
+| Platform CI | [Run 39568529951](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39568529951), all 7 jobs passed |
+| Downloads | [v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0), published `2026-10-21T08:33:08Z`; all 8 assets checked against REST size/digest metadata; tag targets the source commit above |
+| Staged static artifact | `dist/formcapy-v2.5.0/`, awaiting Cloudflare upload |
+| Staged cache version | `formcapy-2.5.0-pyodide-314.0.7-7d9b79703923` |
+| Python regression results | 161 pytest tests plus 159 subtests passed |
+| Node results | 65 cases passed |
+| Local browser | Codex in-app Chromium at `http://127.0.0.1:8606/` |
+| Local preservation result | Synthetic DOCX generation reported 2 preserved paragraphs, 1 body image and 1 table |
+| Offline check | Simulated offline reload and generation passed; online conditions were restored |
+| Download limitation | This round's generated browser DOCX was not downloaded; UI counts are not a fresh downloaded-file inspection |
+| Device limitation | Safari and physical Apple devices remain unverified; physical Android checks remain unverified |
+
+Saved local evidence is `build/chinese-presets/final-browser-verification.json`.
+It records the final source commit and cache version, Chinese course-preset
+generation, language switching that preserved fields, and an export containing
+all 19 template fields without paper details. The thesis preset was generated
+before the final copy polish. The offline run used CDP network simulation,
+not physical disconnection. Independent Python regression checks cover DOCX
+structure; they do not establish a new browser-download or Safari result.
+
+The [v2.5 local preview](images/formcapy-v2.5-chinese.png) uses fictional test
+information and is not a public-site screenshot. After upload, repeat the public
+manifest/hash, HTTPS, cache-update and browser/download checks against this
+artifact before recording the website as v2.5.0. The v2.4.0 launch evidence below
+remains the record for the current public deployment.
+
+## Current public deployment — v2.4.0
 
 The browser-local application is **live** at
 [formcapy.com](https://formcapy.com/) and
@@ -11,8 +48,9 @@ recorded on **21 October in both UTC and Los Angeles**. The deployed code is
 `f7c3444`; subsequent
 documentation edits do not change that deployed application code.
 
-The DSH browser-local refactor (`0e5e923`) was merged in `adeca89`. The final
-static artifact came from `dist/browser-local/`.
+The DSH browser-local refactor (`0e5e923`) was merged in `adeca89`. At the
+v2.4.0 launch, the uploaded static artifact came from `dist/browser-local/`.
+The v2.5.0 update uses the separate staging directory recorded above.
 
 | Item | Recorded state |
 | --- | --- |
@@ -31,7 +69,7 @@ static artifact came from `dist/browser-local/`.
 | Public Worker assets | 122/122 downloadable resources match local SHA-256 and size |
 | Public domain checks | 13/13 passed, including trusted TLS 1.3 and HTTP upgrade redirects |
 | Platform CI | Run `39559961737` for `f7c3444`: all jobs passed, including both Mac architectures and Android emulator checks |
-| Desktop/Android release | [v2.4.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0), published 21 October 2026; 8 verified assets |
+| v2.4.0 launch release (historical) | [v2.4.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0), published 21 October 2026; 8 verified assets |
 
 The `f7c3444` upload repairs the service-worker home-page redirect handling.
 The public script and cache digest match the local build, and all 18 related
@@ -83,7 +121,7 @@ new security-sensitive permission grant with its actual scope before accepting
 it; do not request repeated approval for routine deployment work already
 authorized by the owner.
 
-## Required public launch acceptance
+## v2.4.0 public launch acceptance and future check requirements
 
 The local results are documented in [BROWSER-LOCAL.md](BROWSER-LOCAL.md). DSH's
 headless Chrome evidence and the Codex in-app Chromium checks are separate from
@@ -100,9 +138,10 @@ Asset names, sizes and SHA-256 values were checked before publication.
 
 Completed public checks and remaining interactive/device checks are distinguished
 below. Keep the deployed commit, artifact manifest, date and browser/device
-details with each new result. The application release targets
-`f7c3444436b1bd11a06085c9ea202f7f5711e508`; later documentation-only commits do
-not change the code in the uploaded website or installers.
+details with each new result. The v2.4.0 launch release targets
+`f7c3444436b1bd11a06085c9ea202f7f5711e508`; later documentation-only commits did
+not change that public deployment. The v2.5.0 source and staged artifact are
+recorded separately above.
 
 - [ ] The finished static build loads its browser runtime and processes supported
   drafts without a Flask server. Inspect network requests during file selection,
