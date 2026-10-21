@@ -1,0 +1,609 @@
+{
+  "schema": 1,
+  "expected_runtime": {
+    "pyodide_version": "314.0.7",
+    "python_version": "3.14.2",
+    "emscripten_version": "5.0.3",
+    "abi_version": "2026_0",
+    "core_archive_sha256": "2abdcc2e35208af406e07724cffa85bc582ced97e9028383ecf5462541393f95",
+    "wasm_sha256": "cc36e3cab04fdfc9a63ff13eb52eae2b911bf46c025cc7b281f394bd3de1d5e6",
+    "packages": {
+      "lxml": {
+        "version": "6.1.3",
+        "sha256": "6a0b98f57a538cb6af4868c3499efec2bb52f7ed59fed94b7fbf195d6e40281f"
+      },
+      "typing-extensions": {
+        "version": "4.15.0",
+        "sha256": "4fec68770a05408e668a4fa53d6bf4f0f684b9dacf820c7c5d6e97d3ad225e29"
+      },
+      "python-docx": {
+        "version": "1.2.0",
+        "sha256": "3fd478f3250fbbbfd3b94fe1e985955737c145627498896a8a6bf81f4baf66c7"
+      }
+    }
+  },
+  "publication_file_limit_bytes": 26214400,
+  "split_part_bytes": 20971520,
+  "commits": {
+    "pyodide": "b1e4fcc2488962f6360a97f19b9982d6fdb5d16f",
+    "recipes": "fc8587207ecbf0fb54305d5da25ab7ed70f126d3",
+    "emscripten": "285c424dfa9e83b03cf8490c65ceadb7c45f28eb",
+    "hiwire": "6a1e67280a15d929ebeceee54a6358c9c8d5f697",
+    "pyodide_build_recipes": "26a30ea0c7274d0f99220c5d54e8938a28afb46c",
+    "pyodide_build_core": "79fb82b2a576a833a12f3889061ca976de2f4167"
+  },
+  "sources": [
+    {
+      "id": "lxml",
+      "version": "6.1.3",
+      "file": "lxml-6.1.3.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/source/l/lxml/lxml-6.1.3.tar.gz",
+      "sha256": "45222d94ddd511536f3b2f7d9deae3b2339b4ce0f075f1ca25703b07cad9dd21",
+      "size": 4211198,
+      "extract": [
+        {
+          "member": "LICENSE.txt",
+          "sha256": "8fc2b568133516e46845d2147917adeee1648e70ae9ab5ed6c5417afef4ce855",
+          "size": 1507
+        },
+        {
+          "member": "LICENSES.txt",
+          "sha256": "388fa99f3bde4447cd5a4cbb114037be026854db6cfe89e112691c1d8abdcf3c",
+          "size": 6221
+        },
+        {
+          "member": "doc/licenses/BSD.txt",
+          "sha256": "69edb445c1335a8312d4c09271847e9956d84f0d9f724d125340cc3fad767b2a",
+          "size": 1488
+        },
+        {
+          "member": "doc/licenses/GPL.txt",
+          "sha256": "32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670",
+          "size": 17992
+        },
+        {
+          "member": "doc/licenses/elementtree.txt",
+          "sha256": "0497ae8138811ef4466ede653bab7a59feb3d3c14f9ed50fc33a00aeb5bec32e",
+          "size": 1276
+        },
+        {
+          "member": "src/lxml/_elementpath.py",
+          "sha256": "6fcd213379dd0244ed457eafe78cdadcb92402a09c774ef4d016cc3d91e74c15",
+          "size": 10959
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "libiconv",
+      "version": "1.16",
+      "file": "libiconv-1.16.tar.gz",
+      "url": "https://github.com/ryanking13/lib-mirror/releases/download/1.0.0/libiconv-1.16.tar.gz",
+      "sha256": "e6a1b1b589654277ee790cce3734f07876ac4ccfaecbee8afa0b649cf529cc04",
+      "size": 5166734,
+      "extract": [
+        {
+          "member": "COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+          "size": 35147
+        },
+        {
+          "member": "COPYING.LIB",
+          "sha256": "56bdea73b6145ef6ac5259b3da390b981d840c24cb03b8e1cbc678de7ecfa18d",
+          "size": 25291
+        },
+        {
+          "member": "libcharset/COPYING.LIB",
+          "sha256": "56bdea73b6145ef6ac5259b3da390b981d840c24cb03b8e1cbc678de7ecfa18d",
+          "size": 25291
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "libxml2",
+      "version": "2.15.3",
+      "file": "libxml2-2.15.3.tar.xz",
+      "url": "https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.3.tar.xz",
+      "sha256": "78262a6e7ac170d6528ebfe2efccdf220191a5af6a6cd61ea4a9a9a5042c7a07",
+      "size": 3152452,
+      "extract": [
+        {
+          "member": "Copyright",
+          "sha256": "5d4873884a890122a4b9b20ad56ac6f7da1d796a5bfcf04a427970ac96217626",
+          "size": 1314
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "libxslt",
+      "version": "1.1.45",
+      "file": "libxslt-1.1.45.tar.xz",
+      "url": "https://download.gnome.org/sources/libxslt/1.1/libxslt-1.1.45.tar.xz",
+      "sha256": "9acfe68419c4d06a45c550321b3212762d92f41465062ca4ea19e632ee5d216e",
+      "size": 1519992,
+      "extract": [
+        {
+          "member": "Copyright",
+          "sha256": "7e48e290b6bfccc2ec1b297023a1d77f2fd87417f71fbb9f50aabef40a851819",
+          "size": 2968
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "zlib",
+      "version": "1.3.1",
+      "file": "zlib-1.3.1.tar.gz",
+      "url": "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz",
+      "sha256": "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+      "size": 1512791,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+          "size": 1002
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "pyodide",
+      "version": "314.0.7",
+      "file": "pyodide-b1e4fcc2488962f6360a97f19b9982d6fdb5d16f.tar.gz",
+      "url": "https://codeload.github.com/pyodide/pyodide/tar.gz/b1e4fcc2488962f6360a97f19b9982d6fdb5d16f",
+      "sha256": "a9c7ac66311ed7e0805b9970054ee5be4f69d02204d28bffe4b017310a24bad9",
+      "size": 1465591,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "size": 16725
+        },
+        {
+          "member": "Makefile.envs",
+          "sha256": "d257f9fdeca74f68791b1a37ef6b0a3c07dea523e5c9ee79826c399cb5516eb3",
+          "size": 7961
+        },
+        {
+          "member": "Makefile",
+          "sha256": "3df6235bfc8776d3b6fe82df0ed1cc37b187351e88e6aa14e7e203b14e34b313",
+          "size": 12027
+        },
+        {
+          "member": "cpython/Makefile",
+          "sha256": "fbeeebe3363fa9da54b6908c903a16bbf736af65647a9fbfe277c8e40eb785bf",
+          "size": 9466
+        },
+        {
+          "member": "cpython/Setup.local",
+          "sha256": "7fbbb0efe5497765122230c24ebc95861973bb985116f89705b6ff51cfcffa4c",
+          "size": 1313
+        },
+        {
+          "member": "cpython/patches/0001-Public-pymain_run_python.patch",
+          "sha256": "ad29aa6d748176b873846bf14d601b65a694d002743792ae226d737c8bf67d5d",
+          "size": 719
+        },
+        {
+          "member": "cpython/patches/0002-Fix-LONG_BIT-constant-to-be-always-32bit.patch",
+          "sha256": "e840dcb6c2f70ce7e2029ff51028fc980f0f98f6807c755a63ba1336c791ce08",
+          "size": 1020
+        },
+        {
+          "member": "cpython/patches/0003-Add-call-to-JsProxy_GetMethod-to-help-remove-tempora.patch",
+          "sha256": "a359c12516cc2f08720096d51f8cfb31d62ce57d096255beae0ca6848ede8cbe",
+          "size": 1968
+        },
+        {
+          "member": "cpython/patches/0004-Make-from-x-import-aware-of-jsproxy-modules.patch",
+          "sha256": "4297a7694d0f58e5c620f322b94bfdeef6ef5926bdf62d7dd9038c80d4f51720",
+          "size": 1181
+        },
+        {
+          "member": "cpython/patches/0005-Remove-JSPI-related-parts-in-emscripten_syscalls.c.patch",
+          "sha256": "5f7a57b74af22f3d2afd89d0cb99b8a44eed37d2b7a7cbbc28fe8f796c99d5cb",
+          "size": 10614
+        },
+        {
+          "member": "cpython/patches/0006-Teach-json-encoder.py-to-encode-jsnull.patch",
+          "sha256": "ba13244a5c1003f55c4ddfb4087c977c38b5fdeccf68f819deb0617bf04adc6a",
+          "size": 3415
+        },
+        {
+          "member": "cpython/patches/0007-Warn-if-ZoneInfo-is-imported-without-tzdata.patch",
+          "sha256": "bcf92273acce4b4b0ea8bed3fab3f375e944a2874a27b0f8e7b79ecb40f5a685",
+          "size": 1085
+        },
+        {
+          "member": "cpython/patches/0008-Export-_Py_emscripten_signal_clock-and-_Py_emscripte.patch",
+          "sha256": "7cf220d962a8a1f24d7c96a588d9c1f3d32849c3bc89329cbf76dff517ca737b",
+          "size": 1609
+        },
+        {
+          "member": "cpython/patches/0009-Fix-Emscripten-trampoline-with-emcc-4.0.19.patch",
+          "sha256": "e4de0006020fa3118da139e566a6eea3d747ef11d39785d1d7cc5e74c8638371",
+          "size": 9964
+        },
+        {
+          "member": "src/js/vendor/stackframe/LICENSE",
+          "sha256": "899da9d991cb211a3642b84e82a9ae0b4b4e44546fd207e34d7d4ec2eb40f420",
+          "size": 1080
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "recipes",
+      "version": "314-20260911",
+      "file": "pyodide-recipes-fc8587207ecbf0fb54305d5da25ab7ed70f126d3.tar.gz",
+      "url": "https://codeload.github.com/pyodide/pyodide-recipes/tar.gz/fc8587207ecbf0fb54305d5da25ab7ed70f126d3",
+      "sha256": "4006322b8bd37e52ec1464884576f18351741168f48c5f243da1d1bd11eb1fc2",
+      "size": 4442805,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "size": 16725
+        },
+        {
+          "member": ".gitmodules",
+          "sha256": "aee8bb7ac27894457992f05ffc74d2101bbed2c1ee04665d36eb84ec9407d63e",
+          "size": 98
+        },
+        {
+          "member": "pyproject.toml",
+          "sha256": "9628d194316ead786c3f9e70e21cca530c1c90fbb96ee044a99ae2f4967513a0",
+          "size": 2009
+        },
+        {
+          "member": "packages/lxml/meta.yaml",
+          "sha256": "9df9766d1d79d3d720407cbfe8ca4893afba0b586a11e22d581b8c5782800904",
+          "size": 692
+        },
+        {
+          "member": "packages/libiconv/meta.yaml",
+          "sha256": "3c6c3fcc876ed19a04a297e99b4c14db800f38c054d1d6073a6d3061364054da",
+          "size": 597
+        },
+        {
+          "member": "packages/libxml/meta.yaml",
+          "sha256": "66743142917988e57db0654e0169c832e80caab9cd91af449a7880bca41a9b26",
+          "size": 745
+        },
+        {
+          "member": "packages/libxslt/meta.yaml",
+          "sha256": "e8d4728e193fdceac6bd62c791e9714a29f1d545539f68fd6f11eef17d8df7cb",
+          "size": 722
+        },
+        {
+          "member": "packages/libzlib/meta.yaml",
+          "sha256": "6da434b8ca025b5075543fdb99b531b9528ad9a8f61032a6c600900195d9e3de",
+          "size": 1884
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "hiwire",
+      "version": "6a1e67280a15d929ebeceee54a6358c9c8d5f697",
+      "file": "hiwire-6a1e67280a15d929ebeceee54a6358c9c8d5f697.tar.gz",
+      "url": "https://codeload.github.com/pyodide/hiwire/tar.gz/6a1e67280a15d929ebeceee54a6358c9c8d5f697",
+      "sha256": "0d64144f149c0de3bd157551421833c6c16fdc0492c312a6325ffc25d185c93c",
+      "size": 27264,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "size": 16725
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "pyodide-build-recipes",
+      "version": "26a30ea0c7274d0f99220c5d54e8938a28afb46c",
+      "file": "pyodide-build-26a30ea0c7274d0f99220c5d54e8938a28afb46c.tar.gz",
+      "url": "https://codeload.github.com/pyodide/pyodide-build/tar.gz/26a30ea0c7274d0f99220c5d54e8938a28afb46c",
+      "sha256": "083f442bdd8eaeab453f84897f60e5e2c064b2692912970aed7f58ba39bff90c",
+      "size": 632074,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "size": 16725
+        },
+        {
+          "member": "pyproject.toml",
+          "sha256": "b4b3ac4e2b98e503c39d5af52cddabec67b1d413afcbfc9c83f099cc6174f105",
+          "size": 5807
+        },
+        {
+          "member": "pyodide_build/cli/build_recipes.py",
+          "sha256": "7db8e80acb7419df715c8b30fe95ea5afbf76998f4d44b0941f924028ca0f832",
+          "size": 11923
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "pyodide-build-core",
+      "version": "79fb82b2a576a833a12f3889061ca976de2f4167",
+      "file": "pyodide-build-79fb82b2a576a833a12f3889061ca976de2f4167.tar.gz",
+      "url": "https://codeload.github.com/pyodide/pyodide-build/tar.gz/79fb82b2a576a833a12f3889061ca976de2f4167",
+      "sha256": "c7409e2376725d36fbd8ed1229d1ec861c155bdfab8ddd707de6f89a9f0b9ca9",
+      "size": 632523,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+          "size": 16725
+        },
+        {
+          "member": "pyproject.toml",
+          "sha256": "70e19e4603c4c5b7ca901b12a3310a4e169807300b05386a7a768daa3651c06b",
+          "size": 5851
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "emscripten",
+      "version": "5.0.3",
+      "file": "emscripten-285c424dfa9e83b03cf8490c65ceadb7c45f28eb.tar.gz",
+      "url": "https://codeload.github.com/emscripten-core/emscripten/tar.gz/285c424dfa9e83b03cf8490c65ceadb7c45f28eb",
+      "sha256": "8c8c413026dd7b86b0acf7e4b48cb718956c21a053887f2a628168dd1ba2cb33",
+      "size": 34477324,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+          "size": 5093
+        },
+        {
+          "member": "system/lib/libc/musl/COPYRIGHT",
+          "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+          "size": 6204
+        },
+        {
+          "member": "system/lib/libcxx/LICENSE.TXT",
+          "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+          "size": 16703
+        },
+        {
+          "member": "system/lib/libcxxabi/LICENSE.TXT",
+          "sha256": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
+          "size": 16706
+        },
+        {
+          "member": "system/lib/compiler-rt/LICENSE.TXT",
+          "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d",
+          "size": 16708
+        },
+        {
+          "member": "system/lib/libunwind/LICENSE.TXT",
+          "sha256": "b5efebcaca80879234098e52d1725e6d9eb8fb96a19fce625d39184b705f7b6d",
+          "size": 16706
+        },
+        {
+          "member": "system/lib/mimalloc/LICENSE",
+          "sha256": "19c99805e7a44a34b297a75d1edea9985e300066dfc024d5c99d4236d4573b5d",
+          "size": 1096
+        },
+        {
+          "member": "tools/ports/zlib.py",
+          "sha256": "d3d8ca9a7caac82fa68e4984e47c03386093b8fa2b068e8e9eccedd3aa406926",
+          "size": 1506
+        },
+        {
+          "member": "tools/ports/bzip2.py",
+          "sha256": "8202632f46e4315ac192ac65cf2c536d181cccba365bfa6ae65715bada2d581b",
+          "size": 1214
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "cpython",
+      "version": "3.14.2",
+      "file": "Python-3.14.2.tgz",
+      "url": "https://www.python.org/ftp/python/3.14.2/Python-3.14.2.tgz",
+      "sha256": "c609e078adab90e2c6bacb6afafacd5eaf60cd94cf670f1e159565725fcd448d",
+      "size": 30601597,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "b0e25a78cffb43f4d92de8b61ccfa1f1f98ecbc22330b54b5251e7b6ba010231",
+          "size": 13804
+        },
+        {
+          "member": "Doc/license.rst",
+          "sha256": "c695d550b135e53e38807e76496d1db17d22c40e461d1f3f354c86188d3305dd",
+          "size": 57595
+        },
+        {
+          "member": "Modules/expat/COPYING",
+          "sha256": "122f2c27000472a201d337b9b31f7eb2b52d091b02857061a8880371612d9534",
+          "size": 1144
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "libffi",
+      "version": "f08493d249d2067c8b3207ba46693dd858f95db3",
+      "file": "libffi-f08493d249d2067c8b3207ba46693dd858f95db3.tar.gz",
+      "url": "https://codeload.github.com/libffi/libffi/tar.gz/f08493d249d2067c8b3207ba46693dd858f95db3",
+      "sha256": "0c4e5647b79e21b900eb872dd98a3e0a66be12b36ad89677f61fd901a2615778",
+      "size": 595072,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "2c9c2acb9743e6b007b91350475308aee44691d96aa20eacef8e199988c8c388",
+          "size": 1132
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "xz",
+      "version": "5.2.2",
+      "file": "xz-5.2.2.tar.gz",
+      "url": "https://github.com/xz-mirror/xz/releases/download/v5.2.2/xz-5.2.2.tar.gz",
+      "sha256": "73df4d5d34f0468bd57d09f2d8af363e95ed6cc3a4a86129d2f2c366259902a2",
+      "size": 1464228,
+      "extract": [
+        {
+          "member": "COPYING",
+          "sha256": "c4f8e14fafe458d84808a4cd8b69f94673ebe2bf8fc992291629a69ac12218f8",
+          "size": 2774
+        },
+        {
+          "member": "COPYING.LGPLv2.1",
+          "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+          "size": 26530
+        },
+        {
+          "member": "COPYING.GPLv3",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+          "size": 35147
+        },
+        {
+          "member": "COPYING.GPLv2",
+          "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+          "size": 18092
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "zstd",
+      "version": "1.5.7",
+      "file": "cpython-source-deps-zstd-1.5.7.tar.gz",
+      "url": "https://codeload.github.com/python/cpython-source-deps/tar.gz/refs/tags/zstd-1.5.7",
+      "sha256": "f24b52470d12f466e9fa4fcc94e6c530625ada51d7b36de7fdc6ed7e6f499c8e",
+      "size": 2440298,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8",
+          "size": 1549
+        },
+        {
+          "member": "COPYING",
+          "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505",
+          "size": 18091
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "sqlite",
+      "version": "3.39.0",
+      "file": "sqlite-autoconf-3390000.tar.gz",
+      "url": "https://www.sqlite.org/2022/sqlite-autoconf-3390000.tar.gz",
+      "sha256": "e90bcaef6dd5813fcdee4e867f6b65f3c9bfd0aec0f1017f9f3bbce1e4ed09e2",
+      "size": 3064015,
+      "extract": [
+        {
+          "member": "sqlite3.c",
+          "sha256": "64c79e7e73519ca8a863248aee0ee640ed16a05f6a202f13c39fe84d1a69584c",
+          "size": 8544646,
+          "byte_range": [
+            1434,
+            1861
+          ],
+          "selection": "Original copyright-disclaimer comment, byte slice of sqlite3.c; source member is retained in full archive.",
+          "selected_sha256": "49cf7bcb103eb3244150a23bb23d840370a4762914faf1b450072a4b03c14670",
+          "selected_size": 427,
+          "output_name": "sqlite3-public-domain-notice.txt"
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "bzip2",
+      "version": "1.0.6",
+      "file": "emscripten-bzip2-1.0.6.zip",
+      "url": "https://github.com/emscripten-ports/bzip2/archive/1.0.6.zip",
+      "sha256": "9628e7bc598719335ce1d1219c1a4fc241652c0a7b4d993fa82a9b98a6c5dec6",
+      "size": 806648,
+      "extract": [
+        {
+          "member": "LICENSE",
+          "sha256": "4919cfb14a73cd64fcef67b107613970cf1659a09aa675dba31314f373bc7204",
+          "size": 1901
+        }
+      ],
+      "kind": "source-archive"
+    },
+    {
+      "id": "lxml-published-wheel",
+      "version": "6.1.3",
+      "file": "lxml-6.1.3-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+      "url": "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/lxml-6.1.3-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+      "sha256": "6a0b98f57a538cb6af4868c3499efec2bb52f7ed59fed94b7fbf195d6e40281f",
+      "size": 2145850,
+      "kind": "published-wheel",
+      "strip_archive_root": false,
+      "extract": [
+        {
+          "member": "lxml-6.1.3.dist-info/licenses/LICENSE.txt",
+          "sha256": "8fc2b568133516e46845d2147917adeee1648e70ae9ab5ed6c5417afef4ce855",
+          "size": 1507
+        },
+        {
+          "member": "lxml-6.1.3.dist-info/licenses/LICENSES.txt",
+          "sha256": "388fa99f3bde4447cd5a4cbb114037be026854db6cfe89e112691c1d8abdcf3c",
+          "size": 6221
+        }
+      ]
+    },
+    {
+      "id": "typing-extensions-published-wheel",
+      "version": "4.15.0",
+      "file": "typing_extensions-4.15.0-py3-none-any.whl",
+      "url": "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/typing_extensions-4.15.0-py3-none-any.whl",
+      "sha256": "4fec68770a05408e668a4fa53d6bf4f0f684b9dacf820c7c5d6e97d3ad225e29",
+      "size": 44613,
+      "kind": "published-wheel",
+      "strip_archive_root": false,
+      "extract": [
+        {
+          "member": "typing_extensions-4.15.0.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf",
+          "size": 13936
+        }
+      ]
+    },
+    {
+      "id": "python-docx-published-wheel",
+      "version": "1.2.0",
+      "file": "python_docx-1.2.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/d0/00/1e03a4989fa5795da308cd774f05b704ace555a70f9bf9d3be057b680bcf/python_docx-1.2.0-py3-none-any.whl",
+      "sha256": "3fd478f3250fbbbfd3b94fe1e985955737c145627498896a8a6bf81f4baf66c7",
+      "size": 252987,
+      "kind": "published-wheel",
+      "strip_archive_root": false,
+      "extract": [
+        {
+          "member": "python_docx-1.2.0.dist-info/licenses/LICENSE",
+          "sha256": "7652f271e46d0d533e9dc463f3b5fcbdcacf4d6a9c8d6b554d15efd0f37f6132",
+          "size": 1104
+        }
+      ]
+    }
+  ],
+  "correspondence": {
+    "basis": "The local lxml wheel SHA256 matches the official pyodide-recipes 314-20260911 release lock; Pyodide 314.0.7 Makefile.envs names that release. Recipes statically build libiconv/libxml/libxslt/libzlib and link lxml with -liconv.",
+    "published_lock_url": "https://github.com/pyodide/pyodide-recipes/releases/download/314-20260911/pyodide-lock.json",
+    "recipe_patches": "No source.patches are declared for these five pinned recipes. Build/configuration changes are recorded in their original meta.yaml files.",
+    "limits": [
+      "No independent native build attestation is present in the published wheel.",
+      "The downloaded source archives and selected members were byte-hashed; the WASM dependency stack has not been rebuilt.",
+      "The SDK/compiler and host build requirements are external prerequisites.",
+      "This inventory is not a legal compliance certification."
+    ]
+  }
+}

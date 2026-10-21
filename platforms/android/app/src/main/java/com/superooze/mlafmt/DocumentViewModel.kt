@@ -22,7 +22,8 @@ data class DocumentState(
     val draft: Draft? = null,
     val result: JSONObject? = null,
     val error: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val requestId: Int? = null
 )
 
 /** Keeps processing alive across rotations without retaining an Activity or WebView. */
@@ -175,7 +176,8 @@ class DocumentViewModel(application: Application, private val saved: SavedStateH
     fun generate(request: JSONObject) {
         val old = state.value!!
         if (old.busy) return
-        publish(old.copy(busy = true, error = null, message = "working"))
+        val requestId = request.optInt("request_id", 0).takeIf { it > 0 }
+        publish(old.copy(busy = true, requestId = requestId, error = null, message = "working"))
         execute {
             try {
                 if (!Python.isStarted()) Python.start(AndroidPlatform(context))
@@ -186,12 +188,12 @@ class DocumentViewModel(application: Application, private val saved: SavedStateH
                 val result = JSONObject(response)
                 main.post {
                     if (result.optString("error") == "draft_changed") clearParagraphPreservation()
-                    if (result.has("error")) publish(old.copy(busy = false, error = result.getString("error"), message = null))
-                    else publish(old.copy(busy = false, result = result, error = null, message = "native_done"))
+                    if (result.has("error")) publish(old.copy(busy = false, requestId = requestId, error = result.getString("error"), message = null))
+                    else publish(old.copy(busy = false, requestId = requestId, result = result, error = null, message = "native_done"))
                 }
             } catch (error: Exception) {
                 android.util.Log.e("MLAFMT", "Offline formatter could not start", error)
-                main.post { publish(old.copy(busy = false, error = "failed", message = null)) }
+                main.post { publish(old.copy(busy = false, requestId = requestId, error = "failed", message = null)) }
             }
         }
     }

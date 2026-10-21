@@ -378,6 +378,57 @@ def _prefix_removals(records, profile, name, instructor, course, date_str, title
     return set() if selected.intersection(matches) else matches
 
 
+def _page_break_before(paragraph):
+    """Resolve an explicit or inherited paragraph page break."""
+    value = paragraph.paragraph_format.page_break_before
+    style, seen = paragraph.style, set()
+    while value is None and style is not None and style.style_id not in seen:
+        seen.add(style.style_id)
+        value = style.paragraph_format.page_break_before
+        style = style.base_style
+    return bool(value)
+
+
+def _edge_page_break(element, *, first=False):
+    """Recognize a hard break at the visible start/end of a paragraph."""
+    if element.tag != _P:
+        return False
+    content_tags = {qn(tag) for tag in (
+        "w:br", "w:cr", "w:tab", "w:sym", "w:drawing", "w:pict", "w:object",
+        "w:footnoteReference", "w:endnoteReference", "w:fldChar", "m:oMath",
+    )}
+    boundary = None
+    for node in element.iter():
+        if node.tag in content_tags or (node.tag in _TEXT_TAGS and (node.text or "").strip()):
+            boundary = node
+            if first:
+                break
+    return (boundary is not None and boundary.tag == qn("w:br")
+            and boundary.get(qn("w:type")) == "page")
+
+
+def _separate_preserved_reference_title(output_nodes, element, source, normal_id):
+    """Keep a selected title's XML intact while placing references on a new page."""
+    if _page_break_before(Paragraph(element, source._body)) or _edge_page_break(element, first=True):
+        return
+    if output_nodes:
+        previous = output_nodes[-1]
+        if (_edge_page_break(previous) or (previous.tag == _P and not _has_content(previous)
+                and _page_break_before(Paragraph(previous, source._body)))):
+            return
+    control = OxmlElement("w:p")
+    control.style = normal_id
+    paragraph = Paragraph(control, source._body)
+    paragraph.paragraph_format.space_before = paragraph.paragraph_format.space_after = Pt(0)
+    paragraph.paragraph_format.line_spacing = Pt(1)
+    run = paragraph.add_run()
+    run.font.size = Pt(1)
+    page_break = OxmlElement("w:br")
+    page_break.set(qn("w:type"), "page")
+    run._r.append(page_break)
+    output_nodes.append(control)
+
+
 def convert_docx_draft(input_path, output, name, instructor, course, date_str, title,
                        last_name_override=None, txt_paragraph_mode="blank_line",
                        enable_heading_detection=False, enable_block_quote=False,
@@ -445,7 +496,6 @@ def convert_docx_draft(input_path, output, name, instructor, course, date_str, t
         is_reference_label = bool(plain and core._profile_reference_title(plain, profile))
         if is_reference_label and not in_references and not references_finished:
             in_references = True
-            reference_start = len(output_nodes) + 1
             if not is_selected and _is_plain_sortable(original_element, paragraph):
                 label = profile["references_title"]
                 if profile["format_id"] == "mla":
@@ -454,10 +504,13 @@ def convert_docx_draft(input_path, output, name, instructor, course, date_str, t
                 temporary = core._add_profile_paragraph(generated, [core._seg(label)], profile, role="reference_title")
                 element = deepcopy(temporary._p)
                 _remap_generated(element, mapping, normal_id)
-                element.get_or_add_pPr().page_break_before = True
+                Paragraph(element, source._body).paragraph_format.page_break_before = True
                 generated_reference_label = (label, element)
             elif not is_selected:
                 _format_existing(element, paragraph, source, profile, mapping, core, role="reference_title")
+            else:
+                _separate_preserved_reference_title(output_nodes, element, source, normal_id)
+            reference_start = len(output_nodes) + 1
             output_nodes.append(element)
             continue
         if in_references and level:

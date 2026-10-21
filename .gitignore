@@ -5,6 +5,7 @@ build/
 /MLAFMT.exe
 .venv*/
 .pytest_cache/
+browser/.cache/
 *.spec
 .buildozer/
 platforms/*/bin/

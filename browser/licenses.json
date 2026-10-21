@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "entries": [
+    {
+      "name": "Pyodide",
+      "version": "314.0.7",
+      "license": "MPL-2.0",
+      "file": "pyodide-LICENSE.txt",
+      "source": "https://github.com/pyodide/pyodide/blob/314.0.7/LICENSE",
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+      "size": 16725
+    },
+    {
+      "name": "CPython",
+      "version": "3.14.2",
+      "license": "PSF-2.0",
+      "file": "cpython-LICENSE.txt",
+      "source": "https://github.com/python/cpython/blob/v3.14.2/LICENSE",
+      "sha256": "b0e25a78cffb43f4d92de8b61ccfa1f1f98ecbc22330b54b5251e7b6ba010231",
+      "size": 13804
+    },
+    {
+      "name": "Emscripten runtime",
+      "version": "bundled with Pyodide 314.0.7",
+      "license": "MIT and UIUC/NCSA",
+      "file": "emscripten-LICENSE.txt",
+      "source": "https://github.com/emscripten-core/emscripten",
+      "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+      "size": 5093
+    },
+    {
+      "name": "zlib",
+      "version": "bundled by the lxml wasm wheel",
+      "license": "Zlib",
+      "file": "zlib-license.txt",
+      "source": "https://github.com/madler/zlib/blob/v1.3.1/LICENSE",
+      "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+      "size": 1002
+    },
+    {
+      "name": "GNU LGPL 2.1",
+      "version": "2.1",
+      "license": "LGPL-2.1-only",
+      "file": "lgpl-2.1.txt",
+      "source": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt",
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
+      "size": 26419
+    }
+  ],
+  "wheel_licenses": true
+}
