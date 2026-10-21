@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light" />
+    <meta name="mlafmt-mode" content="server" />
+    <meta name="mlafmt-runtime" content="" />
+    <meta name="mlafmt-materials" content="none" />
     <title>FormCapy · Paper Formatter</title>
     <link rel="icon" type="image/png" sizes="64x64" href="static/capybara-64.png" />
     <style>
@@ -863,6 +866,18 @@
         margin: 0 16px; top: var(--fold-pane-top); width: calc(100% - 32px);
         max-height: var(--fold-pane-height); overflow: auto;
       }
+      .processing-head {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap;
+      }
+      .processing-head .processing-label { flex: 1 1 auto; }
+      .processing-head .text-button { flex: 0 0 auto; min-height: 32px; }
+      #browser-retry { margin-top: 8px; white-space: normal; }
+      .legal-links {
+        display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0;
+        font-size: 11px;
+      }
+      .legal-links a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
     </style>
   </head>
   <body data-public-server="{{ public_server }}">
@@ -1116,7 +1131,10 @@
               </div>
             </form>
             <div class="processing-progress" id="processing-progress" hidden>
-              <p class="processing-label" id="processing-label">Generating document…</p>
+              <div class="processing-head">
+                <p class="processing-label" id="processing-label">Generating document…</p>
+                <button type="button" class="text-button" id="cancel-processing" hidden data-t="cancel">Cancel</button>
+              </div>
               <div class="capy-track" id="processing-track" role="progressbar" aria-labelledby="processing-label">
                 <span class="capy-runner" aria-hidden="true"><span class="capy-direction">
                   <svg class="capy-pixel" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg">
@@ -1141,6 +1159,7 @@
               aria-live="polite"
               aria-atomic="true"
             ></div>
+            <button type="button" class="ghost" id="browser-retry" hidden data-t="retry_engine">Retry loading the local engine</button>
             <section class="result-card" id="web-result" aria-labelledby="result-heading" hidden>
               <h3 id="result-heading" data-t="result_heading">Latest document</h3>
               <p class="result-filename" id="result-filename"></p>
@@ -1258,6 +1277,10 @@
       <footer>
         <span>FormCapy v{{ version }}</span
         ><span data-t="footer">Made for the words that matter.</span>
+        <p class="legal-links" id="legal-links" hidden>
+          <a href="licenses/runtime-materials/index.html" data-t="runtime_sources">Runtime sources &amp; notices</a>
+          <a href="THIRD-PARTY-NOTICES.txt" data-t="third_party_notices">Third-party licenses</a>
+        </p>
       </footer>
     </div>
     <dialog id="adv" aria-labelledby="adv-title">
@@ -1369,13 +1392,17 @@
         <p class="hint" id="transfer-message" role="status" aria-live="polite"></p>
       </div>
     </dialog>
+    <script src="static/transport.js"></script>
     <script>
       "use strict";
-      const native = typeof window.MLAFMTAndroid?.postMessage === "function";
-      const publicServer = !native && document.body.dataset.publicServer === "true";
+      const MLAFMT_MODE = document.querySelector('meta[name="mlafmt-mode"]')?.content || "server";
+      const transport = window.MLAFMTTransport
+        ? window.MLAFMTTransport.create({ mode: MLAFMT_MODE })
+        : null;
+      const native = transport?.kind === "native";
+      const publicServer = transport?.kind === "server" && document.body.dataset.publicServer === "true";
       const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      const nativeSend = (action, data) =>
-        window.MLAFMTAndroid.postMessage(JSON.stringify({ action, data }));
+      const nativeSend = (action, data) => transport.send(action, data);
       const T = {
         zh: {
           language: "界面语言",
@@ -1631,6 +1658,20 @@
       Object.assign(T.zh, {
         mascot_alt: "FormCapy 水豚吉祥物",
         progress_generating: "正在生成文档…", progress_processing: "正在处理…", progress_sharing: "正在等待分享操作…",
+        browser_privacy: "全程在浏览器本地处理，草稿不会离开此设备，也不会自动上传。",
+        stage_runtime: "正在加载本地 Python 运行时…",
+        stage_packages: "正在加载文档处理库…",
+        stage_application: "正在启动排版程序…",
+        stage_reading: "正在本机读取草稿…",
+        stage_formatting: "正在排版…",
+        engine_ready: "本地排版程序已就绪，可以重新生成文档。",
+        browser_init_failed: "浏览器本地排版程序未能启动。请确认运行时文件可访问后重试；你的草稿仍只在此设备上。",
+        retry_engine: "重试加载本地引擎",
+        cancelled: "已取消处理，草稿未被修改。",
+        cancel: "取消",
+        native_timeout: "手机仍在处理上一份文档。请等它完成后再生成；当前草稿不会被改动。",
+        runtime_sources: "运行时源代码与声明",
+        third_party_notices: "第三方许可",
         tagline: "选择 MLA、APA 或课程模板，把草稿整理成可以继续编辑的 Word 文档。",
         format_label: "文档格式", format_mla: "MLA 9", format_apa: "APA 7 · 学生论文", format_custom: "自定义课程模板",
         format_note_mla: "MLA 第 9 版页面排版；已有引用内容保持原文。",
@@ -1692,6 +1733,20 @@
       Object.assign(T.en, {
         mascot_alt: "FormCapy capybara mascot",
         progress_generating: "Generating document…", progress_processing: "Processing…", progress_sharing: "Waiting for the share action…",
+        browser_privacy: "Runs entirely in your browser. Your draft never leaves this device and is never uploaded automatically.",
+        stage_runtime: "Loading the local Python runtime…",
+        stage_packages: "Loading document libraries…",
+        stage_application: "Starting the formatter…",
+        stage_reading: "Reading your draft on this device…",
+        stage_formatting: "Formatting your paper…",
+        engine_ready: "The local engine is ready. Generate the document again.",
+        browser_init_failed: "The in-browser formatter could not start. Check that the runtime files are reachable, then retry. Your draft stays on this device.",
+        retry_engine: "Retry loading the local engine",
+        cancelled: "Processing cancelled. Your draft was not changed.",
+        cancel: "Cancel",
+        native_timeout: "Your phone is still finishing the previous document. Wait for it to finish before starting another; the current draft is unchanged.",
+        runtime_sources: "Runtime sources & notices",
+        third_party_notices: "Third-party licenses",
         tagline: "Choose MLA, APA or a course template. Turn your draft into an editable Word document.",
         format_label: "Paper format", format_mla: "MLA 9", format_apa: "APA 7 · Student paper", format_custom: "Custom course template",
         format_note_mla: "MLA 9 page layout. Existing citation text is kept as written.",
@@ -1775,6 +1830,8 @@
       let file = null,
         inProgress = false;
       let processingMessage = null;
+      let stageKey = null;
+      let generationSeq = 0;
       let webResult = null,
         sharing = false;
       let nativeResultFormat = null,
@@ -1782,10 +1839,12 @@
         nativeResultWarnings = null, nativeResultRetained = null;
       let paragraphItems = [], preservedIds = new Set(), paragraphFingerprint = null;
       let paragraphLoading = false, paragraphRequestId = 0, paragraphController = null;
-      let paragraphNotice = null, paragraphRequestFileId = null, paragraphTimer = null;
+      let paragraphNotice = null, paragraphRequestFileId = null;
       let paragraphVisibleCount = 200;
       let lastStatus = { key: "ready", args: [], tone: "" };
       const t = (key, ...args) => {
+        if (transport?.kind === "browser" && key === "privacy")
+          return T[lang].browser_privacy ?? T.en.browser_privacy;
         if (native && ["privacy", "convert", "drop"].includes(key)) key = "native_" + key;
         else if (publicServer && key === "privacy") key = "public_privacy";
         const value = T[lang][key] ?? T.en[key] ?? T.en.failed;
@@ -1926,8 +1985,6 @@
       }
       function resetPreservation(persist = false) {
         paragraphController?.abort();
-        clearTimeout(paragraphTimer);
-        paragraphTimer = null;
         paragraphController = null;
         paragraphRequestId += 1;
         paragraphRequestFileId = null;
@@ -1961,6 +2018,11 @@
       }
       async function readParagraphs(restoration = null) {
         if (!isWordDraft() || paragraphLoading || inProgress || sharing) return;
+        if (!transport) {
+          paragraphNotice = "preserve_read_failed";
+          renderParagraphControls();
+          return;
+        }
         const selectedFile = file;
         resetPreservation(!restoration);
         if (restoration) {
@@ -1970,44 +2032,37 @@
         const requestId = paragraphRequestId;
         paragraphLoading = true;
         paragraphRequestFileId = native ? file.id : null;
-        renderParagraphControls();
-        if (native) {
-          if (typeof paragraphRequestFileId !== "string" || !paragraphRequestFileId) {
-            paragraphLoading = false;
-            paragraphNotice = "preserve_read_failed";
-            renderParagraphControls();
-            return;
-          }
-          paragraphTimer = setTimeout(() => {
-            if (requestId !== paragraphRequestId || !paragraphLoading) return;
-            paragraphLoading = false;
-            paragraphNotice = "preserve_read_failed";
-            renderParagraphControls();
-          }, 120000);
-          nativeSend("paragraphs", { request_id: requestId });
+        if (native && (typeof paragraphRequestFileId !== "string" || !paragraphRequestFileId)) {
+          paragraphLoading = false;
+          paragraphNotice = "preserve_read_failed";
+          renderParagraphControls();
           return;
         }
         const controller = new AbortController();
         paragraphController = controller;
-        const timeout = setTimeout(() => controller.abort(), 120000);
+        stageKey = null;
+        renderParagraphControls();
         try {
-          const body = new FormData();
-          body.append("file", selectedFile);
-          const response = await fetch("/api/paragraphs", { method: "POST", body, signal: controller.signal });
-          const data = await response.json();
+          const data = await transport.paragraphs({
+            file: selectedFile,
+            requestId,
+            signal: controller.signal,
+          });
           if (requestId !== paragraphRequestId || selectedFile !== file) return;
-          if (!response.ok) {
-            paragraphNotice = typeof data.error === "string" && Object.hasOwn(T.en, data.error)
-              ? data.error : "preserve_read_failed";
-          } else acceptParagraphs(data);
-        } catch (_) {
-          if (requestId === paragraphRequestId && selectedFile === file) paragraphNotice = "preserve_read_failed";
+          if (native && data.file_id && data.file_id !== paragraphRequestFileId) return;
+          acceptParagraphs(data);
+        } catch (error) {
+          if (requestId !== paragraphRequestId || selectedFile !== file) return;
+          const code = transport.errorCode(error);
+          if (code === "cancelled") return;
+          paragraphNotice = transportErrorKey(error);
         } finally {
-          clearTimeout(timeout);
           if (requestId === paragraphRequestId) {
             paragraphController = null;
             paragraphLoading = false;
+            stageKey = null;
             renderParagraphs();
+            renderProcessingProgress();
           }
         }
       }
@@ -2104,6 +2159,11 @@
         if (!selected || JSON.stringify(selected) !== JSON.stringify(customProfile())) selectedPreset = "";
       } catch (_) { selectedPreset = ""; }
       let defaultMlaDate = $("date").defaultValue;
+      if (!defaultMlaDate && window.MLAFMTTransport) {
+        defaultMlaDate = window.MLAFMTTransport.todayMla();
+        $("date").value = defaultMlaDate;
+        $("date").defaultValue = defaultMlaDate;
+      }
       function defaultDate(format) {
         const match = defaultMlaDate.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
         return format === "apa" && match ? `${match[2]} ${Number(match[1])}, ${match[3]}` : defaultMlaDate;
@@ -2118,15 +2178,35 @@
       function renderProcessingProgress() {
         const active = inProgress || sharing || paragraphLoading;
         $("processing-progress").hidden = !active;
+        $("cancel-processing").hidden = !active || !transport?.supportsCancel;
         $("essay-form").setAttribute("aria-busy", String(active));
         $("processing-track").setAttribute("aria-busy", String(active));
         if (!active) return;
-        const key = inProgress
+        const key = stageKey || (inProgress
           ? native && ["importing", "saving"].includes(processingMessage) ? processingMessage
             : native && processingMessage !== "working" ? "progress_processing" : "progress_generating"
-          : sharing ? "progress_sharing" : "preserve_reading";
+          : sharing ? "progress_sharing" : "preserve_reading");
         const text = t(key);
         if ($("processing-label").textContent !== text) $("processing-label").textContent = text;
+      }
+      function setStage(stage) {
+        const keys = {
+          runtime: "stage_runtime",
+          packages: "stage_packages",
+          application: "stage_application",
+          reading: "stage_reading",
+          formatting: "stage_formatting",
+        };
+        if (!keys[stage]) return;
+        stageKey = keys[stage];
+        renderProcessingProgress();
+      }
+      function transportErrorKey(error) {
+        let code = transport?.errorCode?.(error) || "failed";
+        if (code === "engine_init_failed") code = "browser_init_failed";
+        if (code === "timeout") code = "native_timeout";
+        if (code === "not_dispatched") code = "failed";
+        return Object.hasOwn(T.en, code) ? code : "failed";
       }
       function setStatus(key, tone = "", ...args) {
         lastStatus = { key, args, tone };
@@ -2320,6 +2400,9 @@
           $("lang-" + code).setAttribute("aria-pressed", String(lang === code));
         renderDrop();
         renderPresets();
+        if ($("legal-links") && transport?.kind === "browser" &&
+            document.querySelector('meta[name="mlafmt-materials"]')?.content === "included")
+          $("legal-links").hidden = false;
         if ($("template-message").dataset.message) templateMessage($("template-message").dataset.message);
         refreshPreview();
         renderStatus();
@@ -2635,69 +2718,34 @@
       function busy(on, message = "working") {
         inProgress = on;
         processingMessage = on ? message : null;
+        if (on) stageKey = null;
         for (const id of ["convert", "blank"]) $(id).disabled = on;
         if (native)
           for (const id of ["native-save", "native-open", "native-share", "remove-file"]) $(id).disabled = on;
         if (on) setStatus(native && ["importing", "saving"].includes(message) ? message : "working", "working");
         renderWebResult();
         renderParagraphControls();
+        renderProcessingProgress();
       }
-      async function prepareDownload(response, isBlank, format) {
-        if (!response.ok) {
-          let data = {};
-          try {
-            data = await response.json();
-          } catch (_) {}
-          const key =
-            data &&
-            typeof data.error === "string" &&
-            Object.hasOwn(T.en, data.error)
-              ? data.error
-              : response.status === 413
-                ? "too_large"
-                : "failed";
-          if (key === "draft_changed") resetPreservation();
-          setStatus(key, "err");
-          return null;
-        }
-        let name = "Formatted_Paper.docx";
-        try {
-          name = decodeURIComponent(response.headers.get("X-Filename") || name);
-        } catch (_) {}
-        name = name.replace(/[\\/\u0000-\u001f\u007f]/g, "_");
-        const blob = await response.blob();
-        let shareFile = null;
-        if (window.isSecureContext && typeof File === "function" &&
-            typeof navigator.share === "function" && typeof navigator.canShare === "function") {
-          try {
-            shareFile = new File([blob], name, { type: DOCX_MIME });
-          } catch (_) {}
-        }
+      function showWebResult(result, isBlank, requestedFormat) {
+        if (!result?.blob) throw new Error("missing document");
         const previous = webResult;
-        const responseFormat = response.headers.get("X-Format-Id");
-        if (["mla", "apa", "custom"].includes(responseFormat)) {
-          let label = format.label;
-          try { label = decodeURIComponent(response.headers.get("X-Format-Label") || label || ""); } catch (_) {}
-          format = { id: responseFormat, label };
-        }
+        const format = result.format || requestedFormat;
         webResult = {
-          name, blob, shareFile, isBlank, format,
-          url: URL.createObjectURL(blob),
-          stats: ["body", "works-cited", "removed-heading-lines"].map((key) =>
-            Number(response.headers.get("X-Stat-" + key) || 0)),
-          warnings: {
-            omitted: Number(response.headers.get("X-Stat-omitted-elements") || 0),
-            headings: Number(response.headers.get("X-Stat-unsupported-headings") || 0),
-            referenceSort: Number(response.headers.get("X-Stat-reference-sort-skipped") || 0),
-          },
-          retained: ["preserved-paragraphs", "retained-images", "retained-tables"].map((key) =>
-            Number(response.headers.get("X-Stat-" + key) || 0)),
+          ...result,
+          isBlank,
+          format,
+          url: URL.createObjectURL(result.blob),
         };
         renderWebResult();
         if (previous) URL.revokeObjectURL(previous.url);
         return webResult;
       }
       async function generate(isBlank) {
+        if (!transport) {
+          setStatus("failed", "err");
+          return;
+        }
         if (inProgress || sharing || paragraphLoading) return;
         const data = validate();
         if (!data) return;
@@ -2711,60 +2759,52 @@
           drop.focus();
           return;
         }
-        if (native) {
-          nativeGenerationFormat = format;
-          data.kind = isBlank ? "blank" : "convert";
-          data.txt_mode = document.querySelector("input[name=mode]:checked").value;
-          for (const [key, id] of [["markdown", "o-md"], ["strip_heading", "o-strip"], ["heading_detect", "o-head"], ["block_quote", "o-bq"]])
-            data[key] = $(id).checked;
-          busy(true);
-          nativeSend("generate", data);
-          return;
-        }
-        let options;
-        if (isBlank)
-          options = {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          };
-        else {
-          const body = new FormData();
-          body.append("file", file);
-          Object.entries(data).forEach(([key, value]) => {
-            if (value !== null) body.append(key, ["custom_profile", "preserve_paragraphs"].includes(key) ? JSON.stringify(value) : value);
-          });
-          body.append(
-            "txt_mode",
-            document.querySelector("input[name=mode]:checked").value,
-          );
-          for (const [key, id] of [
-            ["markdown", "o-md"],
-            ["strip_heading", "o-strip"],
-            ["heading_detect", "o-head"],
-            ["block_quote", "o-bq"],
-          ])
-            body.append(key, String($(id).checked));
-          options = { method: "POST", body };
-        }
-        const controller = new AbortController(),
-          timeout = setTimeout(() => controller.abort(), 120000);
-        options.signal = controller.signal;
+        if (native) nativeGenerationFormat = format;
+        const request = {
+          ...data,
+          kind: isBlank ? "blank" : "convert",
+          txt_mode: document.querySelector("input[name=mode]:checked").value,
+          markdown: $("o-md").checked,
+          strip_heading: $("o-strip").checked,
+          heading_detect: $("o-head").checked,
+          block_quote: $("o-bq").checked,
+        };
+        const runId = ++generationSeq;
         busy(true);
         try {
-          const result = await prepareDownload(
-            await fetch(isBlank ? "/api/blank" : "/api/convert", options),
-            isBlank, format,
-          );
-          if (result) {
-            if (isBlank) setStatus("done_blank", "ok", result.name);
-            else setStatus("done", "ok", result.name);
+          const result = await transport.generate({ isBlank, request, file });
+          if (runId !== generationSeq) return;
+          if (native) return;
+          showWebResult(result, isBlank, format);
+          setStatus(isBlank ? "done_blank" : "done", "ok", result.name);
+        } catch (error) {
+          if (runId !== generationSeq) return;
+          const code = transport.errorCode(error);
+          if (code === "cancelled") {
+            setStatus("cancelled");
+          } else if (native && code === "not_dispatched") {
+            // The message never reached Android; no Kotlin state will arrive.
+            setStatus("failed", "err");
+            busy(false);
+          } else if (native && code === "timeout") {
+            // Kotlin may still be formatting. Keep the native busy state and
+            // let the next Android state clear it; never unlock it here.
+            setStatus("native_timeout", "err");
+          } else if (native) {
+            // Android's state message already rendered the terminal error and
+            // cleared busy. Do not duplicate or override it.
+          } else if (transport.kind === "browser" &&
+                     code === "engine_init_failed") {
+            setStatus("browser_init_failed", "err");
+            $("browser-retry").hidden = false;
+          } else {
+            if (code === "draft_changed") resetPreservation();
+            setStatus(transportErrorKey(error), "err");
           }
-        } catch (_) {
-          setStatus("net", "err");
         } finally {
-          clearTimeout(timeout);
-          busy(false);
+          if (runId !== generationSeq) return;
+          stageKey = null;
+          if (!native) busy(false);
         }
       }
       $("essay-form").addEventListener("submit", (event) => {
@@ -2832,10 +2872,9 @@
           if (event.persisted) renderWebResult();
         });
       }
-      if (native) {
-        // Native only: document bytes and private paths stay outside JavaScript.
-        window.MLAFMTNative = {
-          receive(message) {
+      // Native only: document bytes and private paths stay outside JavaScript.
+      function receiveNativeMessage(message) {
+            if (!message || typeof message !== "object") return;
             if (message.type === "layout") {
               const root = document.documentElement;
               const fold = message.fold;
@@ -2898,24 +2937,8 @@
               else renderParagraphs();
               return;
             }
-            if (message.type === "paragraphs") {
-              if (!paragraphLoading || message.request_id !== paragraphRequestId ||
-                  file?.id !== paragraphRequestFileId || message.file_id !== paragraphRequestFileId) return;
-              clearTimeout(paragraphTimer);
-              paragraphTimer = null;
-              paragraphLoading = false;
-              if (message.error) {
-                paragraphNotice = typeof message.error === "string" && Object.hasOwn(T.en, message.error)
-                  ? message.error : "preserve_read_failed";
-              } else {
-                try { acceptParagraphs(message); }
-                catch (_) { paragraphNotice = "preserve_read_failed"; }
-              }
-              renderParagraphs();
-              return;
-            }
-            if (message.type !== "state") return;
-            const nextFile = message.file || null;
+            if (message.type === "state") {
+              const nextFile = message.file || null;
             const previousId = file?.id ?? (file ? file.name + ":" + file.size : null);
             const nextId = nextFile?.id ?? (nextFile ? nextFile.name + ":" + nextFile.size : null);
             file = nextFile;
@@ -2953,13 +2976,46 @@
               setStatus("native_done", "ok", message.result.name);
             else if (message.message)
               setStatus(message.message, message.busy ? "working" : message.message === "saved" ? "ok" : "");
-          },
-        };
+            }
+      }
+      if (native) {
+        transport.onNativeEvent(receiveNativeMessage);
         for (const action of ["save", "open", "share"])
           $("native-" + action).addEventListener("click", () => nativeSend(action));
       }
+      transport?.onStage?.(setStage);
+      $("cancel-processing").addEventListener("click", () => {
+        generationSeq += 1;
+        transport?.cancel?.();
+        paragraphController?.abort();
+        paragraphController = null;
+        paragraphLoading = false;
+        paragraphNotice = null;
+        stageKey = null;
+        busy(false);
+        renderParagraphs();
+        renderProcessingProgress();
+        setStatus("cancelled");
+      });
+      $("browser-retry").addEventListener("click", async () => {
+        $("browser-retry").hidden = true;
+        stageKey = "stage_runtime";
+        setStatus("stage_runtime", "working");
+        renderProcessingProgress();
+        try {
+          await transport.init();
+          setStatus("engine_ready", "ok");
+        } catch (_) {
+          setStatus("browser_init_failed", "err");
+          $("browser-retry").hidden = false;
+        } finally {
+          stageKey = null;
+          renderProcessingProgress();
+        }
+      });
       render();
-      if (native) nativeSend("ready");
+      if (!transport) setStatus("failed", "err");
+      if (native) transport.init();
     </script>
   </body>
 </html>
