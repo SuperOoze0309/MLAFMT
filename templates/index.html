@@ -96,6 +96,7 @@
         padding: 3px;
         background: #ebeaf0;
         border-radius: 9px;
+        flex-wrap: wrap;
       }
       .languages button {
         border: 0;
@@ -883,6 +884,11 @@
         font-size: 11px;
       }
       .legal-links a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+      @media (max-width: 560px) {
+        .topbar { flex-wrap: wrap; align-items: flex-start; }
+        .languages { margin-left: auto; }
+        .languages button { padding: 5px 8px; }
+      }
     </style>
   </head>
   <body data-public-server="{{ public_server }}">
@@ -896,7 +902,9 @@
           <button type="button" id="lang-zh" lang="zh-CN" aria-pressed="false">
             中文</button
           ><button type="button" id="lang-en" lang="en" aria-pressed="true">
-            English
+            English</button
+          ><button type="button" id="lang-es" lang="es" aria-pressed="false">
+            Español
           </button>
         </div>
       </header>
@@ -916,7 +924,7 @@
         <noscript
           ><p class="no-script">
             请启用 JavaScript 使用排版工具。 Enable JavaScript to use the
-            formatter.
+            formatter. Activa JavaScript para usar el formateador.
           </p></noscript
         >
         <div class="workspace">
@@ -1683,7 +1691,7 @@
       Object.assign(T.zh, {
         mascot_alt: "FormCapy 水豚吉祥物",
         progress_generating: "正在生成文档…", progress_processing: "正在处理…", progress_sharing: "正在等待分享操作…",
-        browser_privacy: "全程在浏览器本地处理，草稿不会离开此设备，也不会自动上传。",
+        browser_privacy: "排版在你的设备上完成，当前文稿不会自动上传。",
         stage_runtime: "正在加载本地 Python 运行时…",
         stage_packages: "正在加载文档处理库…",
         stage_application: "正在启动排版程序…",
@@ -1856,6 +1864,248 @@
         indent_summary: (p) => p.first_line_chars > 0 ? `${p.first_line_chars}-character first-line indent` : `${p.first_line_cm} cm first-line indent`,
         reference_original: "Original entry order · no hanging indent", builtin_copy: "Copy",
       });
+      Object.assign(T.zh, {
+        page_title: "FormCapy · 论文与报告排版",
+        unit_pt: "磅", unit_cm: "厘米",
+        spec_header_template: "按课程模板设置",
+        spec_cited_sorted_chinese: "按条目排序 · 无悬挂缩进",
+        summary_paper_line: (size) => `纸张：${size}`,
+        summary_font_line: (font, latin, size, chinese) => `字体：${font}${chinese ? " / " + latin : ""}，${size} 磅`,
+        summary_margins_line: (margin) => `四周页边距：${margin} 厘米`,
+        summary_spacing_line: (spacing) => `${spacing}；段前段后：0 磅`,
+        summary_indent_line: (indent, alignment) => `${indent}；${alignment}`,
+        summary_page_number_line: (content) => `页码内容：${content}`,
+        summary_references_line: (title, chinese, sorted) =>
+          `${title}：${chinese ? "新页、居中标题、无悬挂缩进" : "新页、居中标题、悬挂缩进 1.27 cm"}；${sorted ? "按条目排序" : "保留原始顺序"}`,
+      });
+      Object.assign(T.en, {
+        page_title: "FormCapy · Paper Formatter",
+        unit_pt: "pt", unit_cm: "cm",
+        spec_header_template: "As set in your course template",
+        spec_cited_sorted_chinese: "Sorted entries · no hanging indent",
+        summary_paper_line: (size) => `Paper: ${size}`,
+        summary_font_line: (font, latin, size, chinese) => `Font: ${font}${chinese ? " / " + latin : ""}, ${size} pt`,
+        summary_margins_line: (margin) => `Margins on all sides: ${margin} cm`,
+        summary_spacing_line: (spacing) => `${spacing}; before/after: 0 pt`,
+        summary_indent_line: (indent, alignment) => `${indent}; ${alignment}`,
+        summary_page_number_line: (content) => `Page number content: ${content}`,
+        summary_references_line: (title, chinese, sorted) =>
+          `${title}: ${chinese ? "new page, centered title, no hanging indent" : "new page, centered title, 1.27 cm hanging indent"}; ${sorted ? "sorted entries" : "original entry order"}`,
+      });
+      T.es = { ...T.en };
+      Object.assign(T.es, {
+        language: "Idioma de la interfaz",
+        eyebrow: "Menos formato. Más escritura.",
+        hero: "Tus palabras, bien presentadas.",
+        tagline: "Elige MLA, APA o una plantilla de curso y convierte tu borrador en un documento Word editable.",
+        step1: "Hazlo tuyo",
+        step2: "Añade tu borrador",
+        required: "* Obligatorio",
+        name: "Tu nombre",
+        title: "Título del trabajo",
+        instructor: "Profesor/a",
+        course: "Curso",
+        date: "Fecha",
+        date_hint: "Día Mes (en inglés) Año",
+        name_ph: "p. ej., Jane Doe",
+        title_ph: "p. ej., The Role of Memory in Hamlet",
+        instructor_ph: "p. ej., Professor Smith",
+        course_ph: "p. ej., ENG 101",
+        drop: "Arrastra tu borrador aquí o elige un archivo",
+        drop_sub: "DOCX, TXT o Markdown · hasta 20 MB",
+        remove_file: "Quitar archivo",
+        convert: "Formatear documento",
+        blank: "Empezar con una plantilla MLA vacía",
+        advanced: "Opciones avanzadas",
+        privacy: "Lo procesa el equipo que ejecuta el servicio de esta página. Los borradores temporales se eliminan después.",
+        public_privacy: "Los borradores se envían a este servidor para aplicar el formato. Los archivos temporales se eliminan después. Sin cuentas ni almacenamiento de documentos.",
+        try_demo: "Probar un borrador de ejemplo",
+        demo_hint: "Ejemplos editables; tus datos y tu borrador actuales no cambian.",
+        demo_ready: "Ejemplo listo. Edita los datos y formatea el documento. Tus datos y tu borrador actuales se han conservado.",
+        demo_unavailable: "Este navegador no pudo cargar el ejemplo. Elige un borrador o empieza con una plantilla vacía.",
+        result_heading: "Último documento",
+        download_word: "Descargar Word",
+        share_word: "Compartir / Guardar en Archivos",
+        result_hint: "Mantén esta página abierta para volver a descargarlo. Si la recargas o la cierras, tendrás que generarlo de nuevo.",
+        apple_save_hint: "iPhone / iPad: toca Descargar Word y busca el archivo en Descargas de Safari o en la app Archivos. Si se abre una vista previa, usa Compartir → Guardar en Archivos.",
+        result_details: (size, b, w, r) => `Word · ${size} · ${b} párrafos · ${w} entradas de Works Cited${r ? ` · ${r} líneas de encabezado duplicadas eliminadas` : ""}`,
+        result_blank: (size) => `Word · ${size} · Plantilla MLA vacía`,
+        share_closed: "Se cerró el panel de compartir. Puedes guardar el documento con Descargar Word.",
+        share_handed_off: "Se ha enviado a la app elegida. La ubicación de guardado depende de tu selección.",
+        share_failed: "No se pudo compartir. Usa Descargar Word para guardar el documento.",
+        native_privacy: "Se procesa por completo en tu teléfono. Sin red ni subida a la nube.",
+        native_convert: "Formatear documento",
+        native_drop: "Elige un borrador de tu teléfono",
+        native_save: "Guardar documento Word",
+        native_open: "Abrir",
+        native_share: "Compartir",
+        native_done: (f) => `Documento listo: ${f}. Guárdalo, ábrelo o compártelo abajo.`,
+        importing: "Leyendo tu borrador…",
+        saving: "Guardando tu documento…",
+        saved: "Documento Word guardado.",
+        save_failed: "No se pudo guardar el documento. Elige de nuevo una ubicación.",
+        unreadable_file: "No se pudo leer este archivo. Vuelve a elegir el borrador.",
+        no_document_app: "Instala una app que abra documentos Word o usa Compartir.",
+        interrupted: "Android interrumpió el procesamiento. Vuelve a generar el documento.",
+        preview_title: "Un primer vistazo a tu trabajo",
+        preview_tag: "MLA 9 · Carta",
+        preview_label: "Vista ilustrativa del diseño del trabajo",
+        preview_body: "Tus ideas van aquí. Nos ocupamos de los márgenes, el interlineado y los encabezados para que te centres en lo que quieres decir.",
+        preview_note: "Ilustración del diseño · tu borrador aparece en el documento descargado",
+        preview_name: "Tu nombre",
+        preview_instructor: "Nombre del profesor/a",
+        preview_course: "Nombre del curso",
+        preview_essay: "Título de tu trabajo",
+        preview_surname: "Apellido",
+        spec_font: "12 pt · interlineado doble",
+        spec_margins: "Espacio para respirar",
+        spec_margins_sub: "Márgenes de 1 pulgada · sangrías de 0,5 pulgadas",
+        spec_header: "Tu nombre en cada página",
+        spec_header_sub: "Apellido y número de página automático",
+        spec_cited: "Works Cited, ordenado",
+        spec_cited_sub: "Página nueva · sangría francesa",
+        disclaimer: "Se conservan negrita, cursiva y subrayado. Pueden perderse imágenes, notas al pie, tablas y estilos especiales. Revisa el resultado antes de entregarlo.",
+        footer: "Hecho para las palabras que importan.",
+        ready: "Escribe tu nombre y el título, añade un borrador y estarás listo.",
+        file_ready: (f, size) => `Seleccionado ${f} · ${size}`,
+        need_file: "Añade primero un borrador.",
+        missing_fields: "Escribe tu nombre y el título del trabajo.",
+        unsupported: "Elige un archivo .docx, .txt o .md. Guarda antes .doc, Pages o Google Docs como .docx.",
+        too_large: "El archivo supera los 20 MB. Usa un borrador más pequeño.",
+        empty_file: "El archivo está vacío. Elige un borrador con contenido.",
+        no_file: "Añade primero un borrador.",
+        bad_doc: "No se pudo leer este documento Word. Comprueba el archivo o vuelve a guardarlo como .docx.",
+        invalid_json: "No se pudo leer el envío. Inténtalo de nuevo.",
+        invalid_fields: "Revisa los datos del trabajo; todos los campos deben contener texto.",
+        invalid_options: "Elige opciones de formato válidas.",
+        failed: "No se pudo generar el documento. Revisa el borrador e inténtalo de nuevo.",
+        net: "No se pudo conectar con el equipo que sirve esta página. Comprueba que el equipo y el servicio siguen activos.",
+        working: "Aplicando el formato. Podrás guardar el documento Word cuando esté listo…",
+        done: (f) => `Documento listo: ${f}. Descárgalo o guárdalo abajo.`,
+        done_blank: (f) => `Plantilla vacía lista: ${f}. Descárgala o guárdala abajo.`,
+        adv_title: "Ajusta los detalles",
+        adv_header: "Encabezado de página",
+        lastname: "Apellido en el encabezado",
+        lastname_ph: "Automático",
+        lastname_hint: "Usa la última palabra de tu nombre e ignora sufijos como Jr. o III. Si necesitas un apellido compuesto, escríbelo, p. ej., Smith-Jones.",
+        adv_txt: "Borradores TXT y Markdown",
+        mode_blank: "Línea en blanco entre párrafos (recomendado)",
+        mode_line: "Cada línea es un párrafo",
+        md: "Usa *asteriscos* para cursiva y **dobles asteriscos** para negrita",
+        adv_body: "Texto del cuerpo",
+        strip: "Quitar del borrador el encabezado con nombre y título",
+        headings: "Detectar títulos de sección y ponerlos en negrita (experimental)",
+        bq: "Aplicar sangría a los párrafos que empiezan por > como citas en bloque",
+        adv_preview: "Formato que se aplicará",
+        close: "Guardar opciones",
+        close_dialog: "Cerrar opciones avanzadas",
+        summary_header: (ln) => `Encabezado: ${ln} 1 (arriba a la derecha, a 0,5 pulgadas del borde)`,
+        summary_paper: "Papel: 8,5 × 11 pulgadas (Carta)",
+        summary_font: "Fuente: Times New Roman, 12 pt",
+        summary_margins: "Márgenes: 1 pulgada en todos los lados",
+        summary_spacing: "Interlineado doble, 0 pt antes/después",
+        summary_indent: "Sangría de primera línea: 0,5 pulgadas; alineado a la izquierda",
+        summary_block: "Sangría de cita en bloque: 0,5 pulgadas",
+        summary_cited: "Works Cited: página nueva, título centrado, entradas alfabéticas",
+        summary_hanging: "Entradas de Works Cited: sangría francesa de 0,5 pulgadas",
+      });
+      Object.assign(T.es, {
+        mascot_alt: "Mascota capibara de FormCapy",
+        progress_generating: "Generando documento…", progress_processing: "Procesando…", progress_sharing: "Esperando la acción de compartir…",
+        browser_privacy: "El formato se aplica en tu dispositivo. El borrador actual no se sube automáticamente.",
+        stage_runtime: "Cargando el entorno de ejecución local de Python…",
+        stage_packages: "Cargando las bibliotecas de documentos…",
+        stage_application: "Iniciando el formateador…",
+        stage_reading: "Leyendo tu borrador en este dispositivo…",
+        stage_formatting: "Aplicando el formato…",
+        engine_ready: "El motor local está listo. Vuelve a generar el documento.",
+        browser_init_failed: "No se pudo iniciar el formateador en el navegador. Comprueba que los archivos del entorno estén accesibles y vuelve a intentarlo. Tu borrador sigue en este dispositivo.",
+        retry_engine: "Reintentar la carga del motor local",
+        cancelled: "Procesamiento cancelado. El borrador no ha cambiado.",
+        cancel: "Cancelar",
+        native_timeout: "El teléfono sigue terminando el documento anterior. Espera a que acabe antes de empezar otro; el borrador actual no ha cambiado.",
+        runtime_sources: "Fuentes y avisos del entorno",
+        third_party_notices: "Licencias de terceros",
+        format_label: "Formato del documento", format_mla: "MLA 9", format_apa: "APA 7 · Trabajo de estudiante", format_custom: "Plantilla de curso personalizada",
+        format_note_mla: "Diseño de página MLA 9. El texto de las citas se conserva tal como se escribió.",
+        format_note_apa: "Diseño APA 7 de trabajo de estudiante con portada independiente. Añade tu institución, curso y profesor/a; el texto de las citas se conserva.",
+        format_note_custom: "Ajusta el formato a los requisitos del profesor/a y guarda la plantilla para reutilizarla.",
+        affiliation: "Escuela / departamento", affiliation_ph: "p. ej., Department of Psychology, Example University",
+        template_details: "Ajustar y guardar una plantilla de curso", saved_templates: "Plantillas guardadas", preset_unsaved: "Configuración actual (sin plantilla guardada)",
+        template_name: "Nombre de la plantilla", paper_size: "Tamaño del papel", font_name: "Fuente", font_size: "Tamaño de fuente (pt)", line_spacing: "Interlineado (múltiplo)",
+        margin_cm: "Márgenes en todos los lados (cm)", first_line_cm: "Sangría de primera línea (cm)", alignment: "Alineación del cuerpo", align_left: "Izquierda", align_justify: "Justificado",
+        header_style: "Contenido del número de página", header_page: "Solo número de página", header_surname: "Apellido + número de página", header_none: "Sin números de página",
+        spec_header: "Tu apellido y el número de página",
+        references_title: "Título de la página de referencias", title_page: "Portada independiente", sort_references: "Ordenar alfabéticamente las referencias",
+        advanced_customization: "Personalización avanzada", page_number_position: "Posición del número de página", page_number_start: "Número de página inicial",
+        position_top_right: "Arriba a la derecha", position_bottom_center: "Pie centrado", position_bottom_right: "Pie a la derecha",
+        show_cover_page_number: "Mostrar número en la portada",
+        numbering_hint: "Si ocultas el número de la portada, el número inicial se aplica a la primera página del cuerpo. Las opciones de numeración se aplican cuando los números están activos.",
+        numbering_summary: (position, start) => `Números de página: ${position} · empieza en ${start}`,
+        cover_number_shown: "Mostrar número en la portada", cover_number_hidden: "Ocultar número en la portada; empezar en la primera página del cuerpo",
+        open_preserve_options: "Mantener el formato de párrafos de este borrador…", paragraph_more: "Mostrar más párrafos",
+        preserve_title: "Mantener sin cambios los párrafos seleccionados", preserve_hint: "Solo para este borrador Word. Conserva fuente, tamaño, interlineado y sangría de los párrafos elegidos. El tamaño de papel, los márgenes y la numeración siguen la plantilla del documento. Las imágenes y tablas del cuerpo se conservan automáticamente. La selección no se guarda en las plantillas de curso.",
+        load_paragraphs: "Leer párrafos de Word", select_all_paragraphs: "Seleccionar todo", clear_preserved: "Borrar selección", preserve_range: "Seleccionar por número de párrafo",
+        preserve_range_hint: "Usa números o rangos, p. ej., 2, 4-6. Al aplicarlos se sustituye la selección actual. Los párrafos vacíos no se muestran.", apply_preserve_range: "Aplicar números",
+        preserve_docx_only: "Elige un borrador Word (.docx) para seleccionar los párrafos que deben conservar su formato.", preserve_reading: "Leyendo párrafos…",
+        preserve_unread: "Elige Leer párrafos de Word para ver los números y el texto.", preserve_empty: "No hay párrafos que mostrar.",
+        preserve_count: (selected, total) => `${selected} de ${total} párrafos seleccionados.`, preserve_invalid_range: "Introduce números o rangos de la lista de párrafos, p. ej., 2, 4-6.",
+        preserve_restored_count: (selected) => `Se han restaurado ${selected} selecciones de párrafos. Vuelve a leer los párrafos para revisar la lista.`,
+        preserve_image: "(Párrafo con imagen)", preserve_read_failed: "No se pudieron leer los párrafos. Inténtalo de nuevo.",
+        unsupported_document: "El documento supera los límites de procesamiento. Reduce el contenido o divídelo en archivos más pequeños.",
+        draft_changed: "El borrador ha cambiado. Vuelve a leer sus párrafos y elige qué conservar.",
+        preset_save: "Guardar plantilla", preset_delete: "Eliminar plantilla seleccionada", preset_import: "Importar plantilla", preset_export: "Exportar plantilla",
+        template_local: "Las plantillas se guardan en este navegador de este dispositivo. Exporta una copia para tener una copia de seguridad o usarla en otro sitio.",
+        template_saved: "Plantilla guardada.", template_deleted: "Plantilla guardada eliminada. Tu configuración actual se ha conservado.", template_none: "Selecciona primero una plantilla guardada.",
+        template_limit: "Puedes guardar hasta 20 plantillas. Elimina una antes de añadir otra.", template_storage: "Este navegador no pudo guardar la plantilla. Exporta una copia de seguridad.",
+        invalid_template: "Revisa la configuración de la plantilla: los nombres y títulos no pueden estar vacíos y los números deben estar dentro de los rangos mostrados.",
+        invalid_profile: "Esta plantilla no es válida. Usa una plantilla exportada desde FormCapy.", template_applied: "Plantilla importada. Elige Guardar plantilla para conservarla.",
+        template_transfer: "Mover una plantilla entre dispositivos", close_transfer: "Cerrar importación y exportación de plantillas", template_text: "Texto de la plantilla",
+        transfer_hint: "Importa un archivo de plantilla o pega su texto. Las plantillas exportadas solo contienen ajustes de formato, sin datos del trabajo ni borradores.",
+        choose_template_file: "Elegir archivo JSON", apply_template: "Aplicar plantilla importada", copy_template: "Copiar texto de la plantilla", download_template: "Descargar JSON",
+        template_copied: "Texto de la plantilla copiado.", template_copy_manual: "Texto de la plantilla seleccionado. Usa la acción Copiar del sistema.", template_file_large: "El archivo de plantilla no puede superar los 32 KB.",
+        native_transfer_hint: "Pega abajo el texto de la plantilla para importarla. Para exportar, copia el texto y pégalo en el otro dispositivo.",
+        result_format: (label) => `Generado con: ${label}. Cambiar la configuración actual no modifica este documento.`,
+        date_hint_apa: "Mes (en inglés) D, AAAA; ajústalo a los requisitos del curso", date_hint_custom: "Usa el formato de fecha de tu curso; si lo dejas vacío, se usa hoy",
+        convert: "Crear documento Word", native_convert: "Crear documento Word", blank: "Empezar con una plantilla vacía",
+        spec_header_page: "Números de página automáticos", spec_header_none: "Sin números de página", spec_cited_apa: "References, en una página nueva",
+        spec_cited_custom: (title) => `${title}, en una página nueva`, spec_cited_keep: "Orden original de las entradas · sangría francesa",
+        summary_cover_apa: "Portada independiente: título, nombre, institución, curso, profesor/a y fecha de entrega",
+        summary_apa_title: "El cuerpo empieza en una página nueva con el título en negrita y centrado; se conservan los niveles de título 1–3 explícitos",
+        summary_citations: "El texto de las citas se conserva tal como está; comprueba autor, año y datos de la fuente según el estilo elegido",
+        summary_custom_cover: "Portada independiente; el cuerpo empieza en una página nueva", summary_inline_title: "Datos personales y título centrado en la primera página del cuerpo",
+        template_unavailable: "No se pudo leer la plantilla. Inténtalo de nuevo.",
+        warning_omitted: (count) => `${count} estructuras del borrador no se conservaron. Compáralas con el original.`,
+        warning_headings: (count) => `${count} títulos de nivel 4 o superior se conservaron como texto normal. Revisa sus niveles.`,
+        warning_reference_sort: "Las referencias contienen párrafos u objetos con formato conservado, así que solo se ordenaron las entradas normales consecutivas. Revisa manualmente el orden.",
+        result_retained: (paragraphs, images, tables) => `${paragraphs} párrafos sin cambios · ${images} imágenes del cuerpo · ${tables} tablas conservadas`,
+        disclaimer: "Se conservan las imágenes y tablas del cuerpo DOCX. El tamaño de papel, los márgenes y la numeración siguen la plantilla elegida. La sintaxis de imágenes de TXT/MD no inserta imágenes. Revisa documentos complejos y citas.",
+      });
+      Object.assign(T.es, {
+        format_custom: "Preajustes chinos / Plantilla personalizada", template_details: "Elegir un preajuste o personalizar una plantilla",
+        saved_templates: "Preajustes y plantillas guardadas", builtin_templates: "Preajustes chinos integrados", my_templates: "Mis plantillas",
+        typography: "Tipografía", typography_western: "Occidental", typography_chinese: "Trabajo en chino",
+        latin_font_name: "Fuente para letras latinas y números", spacing_mode: "Modo de interlineado", spacing_multiple: "Múltiplo", spacing_exact: "Exacto (pt)",
+        line_spacing_pt: "Interlineado exacto (pt)", indent_mode: "Unidad de sangría de primera línea", indent_cm: "Centímetros", indent_chars: "Caracteres",
+        first_line_chars: "Sangría de primera línea (caracteres)", chinese_course: "Trabajo de curso en chino (general)", chinese_thesis: "Trabajo de fin de estudios en chino (básico)",
+        chinese_typography_hint: "Tipografía china: títulos y encabezados de referencias en Heiti de 16 pt; niveles de título 1–3 en Heiti de 16/14/12 pt. La fuente del cuerpo se puede editar.",
+        chinese_preset_hint: "Diseños básicos habituales; sigue los requisitos de tu institución. No genera índice, resumen, portadas específicas de la institución ni reescribe citas GB/T 7714.",
+        spacing_summary: (p) => p.line_spacing_pt > 0 ? `Interlineado exacto de ${p.line_spacing_pt} pt` : `Interlineado de ${p.line_spacing}×`,
+        indent_summary: (p) => p.first_line_chars > 0 ? `Sangría de primera línea de ${p.first_line_chars} caracteres` : `Sangría de primera línea de ${p.first_line_cm} cm`,
+        reference_original: "Orden original de las entradas · sin sangría francesa", builtin_copy: "Copia",
+        page_title: "FormCapy · Formato de trabajos",
+        unit_pt: "pt", unit_cm: "cm",
+        spec_header_template: "Según la plantilla de tu curso",
+        spec_cited_sorted_chinese: "Entradas ordenadas · sin sangría francesa",
+        summary_paper_line: (size) => `Papel: ${size}`,
+        summary_font_line: (font, latin, size, chinese) => `Fuente: ${font}${chinese ? " / " + latin : ""}, ${size} pt`,
+        summary_margins_line: (margin) => `Márgenes en todos los lados: ${margin} cm`,
+        summary_spacing_line: (spacing) => `${spacing}; antes/después: 0 pt`,
+        summary_indent_line: (indent, alignment) => `${indent}; ${alignment}`,
+        summary_page_number_line: (content) => `Contenido del número de página: ${content}`,
+        summary_references_line: (title, chinese, sorted) =>
+          `${title}: ${chinese ? "página nueva, título centrado, sin sangría francesa" : "página nueva, título centrado, sangría francesa de 1,27 cm"}; ${sorted ? "entradas ordenadas" : "orden original"}`,
+      });
       const $ = (id) => document.getElementById(id);
       const store = {
         get(key) {
@@ -1873,11 +2123,16 @@
         },
       };
       const savedLanguage = store.get("lang");
-      let lang = ["zh", "en"].includes(savedLanguage)
+      const LANGUAGES = ["zh", "en", "es"];
+      const LANGUAGE_LOCALES = { zh: "zh-CN", en: "en", es: "es-ES" };
+      const browserLanguage = (navigator.language || "").toLowerCase();
+      let lang = LANGUAGES.includes(savedLanguage)
         ? savedLanguage
-        : (navigator.language || "").toLowerCase().startsWith("zh")
+        : browserLanguage.startsWith("zh")
           ? "zh"
-          : "en";
+          : browserLanguage.startsWith("es")
+            ? "es"
+            : "en";
       let file = null,
         inProgress = false;
       let processingMessage = null;
@@ -1988,8 +2243,11 @@
       }
       function formatLabel(snapshot) {
         if (!snapshot) return "";
-        return snapshot.id === "custom" ? snapshot.label || t("format_custom")
-          : t(snapshot.id === "apa" ? "format_apa" : "format_mla");
+        if (snapshot.id === "custom") {
+          const preset = BUILTIN_PRESETS.find((item) => item.profile.label === snapshot.label);
+          return preset ? t(preset.translation) : snapshot.label || t("format_custom");
+        }
+        return t(snapshot.id === "apa" ? "format_apa" : "format_mla");
       }
       function currentFormat() { return $("format-id").value; }
       function syncPageControls() {
@@ -2350,7 +2608,7 @@
       }
       function fileSize(size) {
         return (
-          new Intl.NumberFormat(lang === "zh" ? "zh-CN" : "en", {
+          new Intl.NumberFormat(LANGUAGE_LOCALES[lang] || "en", {
             maximumFractionDigits: 1,
           }).format(size / (size >= 1048576 ? 1048576 : 1024)) +
           (size >= 1048576 ? " MB" : " KB")
@@ -2444,7 +2702,6 @@
         catch (_) { profile = { ...CUSTOM_DEFAULT }; }
         if (format === "mla") profile.header = "surname_page";
         if (format === "apa") profile.title_page = true;
-        const zh = lang === "zh";
         const paper = $("paper-preview");
         const chineseTypography = profile.typography === "chinese";
         paper.classList.toggle("cover-layout", profile.title_page);
@@ -2483,35 +2740,35 @@
         $("date-hint").textContent = t(format === "mla" ? "date_hint" : "date_hint_" + format);
         document.querySelector("[data-t=preview_tag]").textContent = `${formatLabel({ id: format, label: profile.label })} · ${profile.paper_size}`;
         $("spec-font-name").textContent = chineseTypography ? `${profile.font_name} / ${profile.latin_font_name}` : profile.font_name;
-        document.querySelector("[data-t=spec_font]").textContent = `${profile.font_size} ${zh ? "磅字号" : "pt"} · ${t("spacing_summary", profile)}`;
-        document.querySelector("[data-t=spec_margins_sub]").textContent = `${profile.margin_cm} ${zh ? "厘米页边距" : "cm margins"} · ${t("indent_summary", profile)}`;
+        document.querySelector("[data-t=spec_font]").textContent = `${profile.font_size} ${t("unit_pt")} · ${t("spacing_summary", profile)}`;
+        document.querySelector("[data-t=spec_margins_sub]").textContent = `${profile.margin_cm} ${t("unit_cm")} · ${t("indent_summary", profile)}`;
         document.querySelector("[data-t=spec_header]").textContent = profile.header === "surname_page"
           ? t("spec_header") : t(profile.header === "page" ? "spec_header_page" : "spec_header_none");
         document.querySelector("[data-t=spec_header_sub]").textContent = profile.header === "none"
-          ? (zh ? "按课程模板设置" : "As set in your course template") : numberingSummary(profile);
+          ? t("spec_header_template") : numberingSummary(profile);
         const references = format === "mla" ? "Works Cited" : format === "apa" ? "References" : profile.references_title;
         document.querySelector("[data-t=spec_cited]").textContent = format === "mla" ? t("spec_cited")
           : format === "apa" ? t("spec_cited_apa") : t("spec_cited_custom", references);
         document.querySelector("[data-t=spec_cited_sub]").textContent = chineseTypography
-          ? (profile.sort_references ? (zh ? "按条目排序 · 无悬挂缩进" : "Sorted entries · no hanging indent") : t("reference_original"))
+          ? (profile.sort_references ? t("spec_cited_sorted_chinese") : t("reference_original"))
           : profile.sort_references ? t("spec_cited_sub") : t("spec_cited_keep");
         const summary = format === "mla" ? [
           t("summary_header", surname()),
           ...["paper", "font", "margins", "spacing", "indent", "block", "cited", "hanging"].map((key) => t("summary_" + key)),
         ] : [
           formatLabel({ id: format, label: profile.label }),
-          `${zh ? "纸张" : "Paper"}: ${profile.paper_size}`,
-          `${zh ? "字体" : "Font"}: ${profile.font_name}${chineseTypography ? " / " + profile.latin_font_name : ""}, ${profile.font_size} ${zh ? "磅" : "pt"}`,
+          t("summary_paper_line", profile.paper_size),
+          t("summary_font_line", profile.font_name, profile.latin_font_name, profile.font_size, chineseTypography),
           ...(chineseTypography ? [t("chinese_typography_hint")] : []),
-          `${zh ? "四周页边距" : "Margins on all sides"}: ${profile.margin_cm} cm`,
-          `${t("spacing_summary", profile)}; ${zh ? "段前段后" : "before/after"}: 0 pt`,
-          `${t("indent_summary", profile)}; ${t(profile.alignment === "left" ? "align_left" : "align_justify")}`,
-          `${zh ? "页码内容" : "Page number content"}: ${t("header_" + (profile.header === "surname_page" ? "surname" : profile.header))}`,
+          t("summary_margins_line", profile.margin_cm),
+          t("summary_spacing_line", t("spacing_summary", profile)),
+          t("summary_indent_line", t("indent_summary", profile), t(profile.alignment === "left" ? "align_left" : "align_justify")),
+          t("summary_page_number_line", t("header_" + (profile.header === "surname_page" ? "surname" : profile.header))),
           ...(profile.header === "none" ? [] : [numberingSummary(profile),
             ...(profile.title_page ? [t(profile.show_cover_page_number ? "cover_number_shown" : "cover_number_hidden")] : [])]),
           format === "apa" ? t("summary_cover_apa") : t(profile.title_page ? "summary_custom_cover" : "summary_inline_title"),
           ...(format === "apa" ? [t("summary_apa_title")] : []),
-          `${references}: ${chineseTypography ? (zh ? "新页、居中标题、无悬挂缩进" : "new page, centered title, no hanging indent") : (zh ? "新页、居中标题、悬挂缩进 1.27 cm" : "new page, centered title, 1.27 cm hanging indent")}; ${profile.sort_references ? (zh ? "按条目排序" : "sorted entries") : (zh ? "保留原始顺序" : "original entry order")}`,
+          t("summary_references_line", references, chineseTypography, profile.sort_references),
           ...(chineseTypography ? [t("chinese_preset_hint")] : []),
         ];
         summary.push(t("summary_citations"));
@@ -2524,9 +2781,8 @@
         );
       }
       function render() {
-        document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
-        document.title =
-          lang === "zh" ? "FormCapy · 论文与报告排版" : "FormCapy · Paper Formatter";
+        document.documentElement.lang = LANGUAGE_LOCALES[lang] || "en";
+        document.title = t("page_title");
         $("brand-mascot").alt = t("mascot_alt");
         document.querySelectorAll("[data-t]").forEach((el) => {
           el.textContent = t(el.dataset.t);
@@ -2537,7 +2793,7 @@
         document.querySelectorAll("[data-label]").forEach((el) => {
           el.setAttribute("aria-label", t(el.dataset.label));
         });
-        for (const code of ["zh", "en"])
+        for (const code of LANGUAGES)
           $("lang-" + code).setAttribute("aria-pressed", String(lang === code));
         renderDrop();
         renderPresets();
@@ -2553,7 +2809,7 @@
         renderWarnings("native-result-warning", nativeResultWarnings);
         renderRetained("native-result-retained", nativeResultRetained);
       }
-      for (const code of ["zh", "en"])
+      for (const code of LANGUAGES)
         $("lang-" + code).addEventListener("click", () => {
           lang = code;
           store.set("lang", lang);

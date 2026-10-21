@@ -1,6 +1,6 @@
 """
 mla_gui.py  (v2.4)
-Desktop paper and course formatter.  中英双语 / Chinese-English UI.
+Desktop paper and course formatter.  中英西三语 / Chinese-English-Spanish UI.
 
 Home screen = only what most people need:
     1. fill in name + title   2. drop the draft   3. click Convert
@@ -372,6 +372,22 @@ T["zh"].update({
     "about": "FormCapy v{v}\n支持 MLA 9、APA 7 学生论文和自定义课程模板。\n\n"
              "保留 DOCX 正文图片和表格；页面布局按当前格式设置。\n"
              "选中段落保留字体、字号与段落格式；原分页位置可能改变。复杂文档请核对结果与引用。",
+    "chinese_course": "中文课程论文（通用）", "chinese_thesis": "中文毕业论文（基础版）",
+    "list_separator": "；", "preview_affiliation": "学校 / 院系",
+    "preview_instructor_default": "Professor Smith", "preview_course_default": "ENG 101",
+    "spec_apa_font": "Times New Roman · 12 号",
+    "spec_apa_spacing": "双倍行距 · Letter · 1 英寸页边距",
+    "spec_apa_titlepage": "独立封面 · 右上角自动页码",
+    "spec_apa_references": "References 新页 · 悬挂缩进 0.5 英寸",
+    "spacing_exact_line": "固定 {pt:g} 磅行距",
+    "spacing_multiple_line": "{spacing:g} 倍行距",
+    "custom_spacing_margin": "{spacing} · 页边距 {margin:g} cm",
+    "custom_first_line": "首行缩进 {indent} · {alignment}",
+    "indent_chars": "{n:g} 字符",
+    "title_page_suffix": " · 独立封面",
+    "reference_new_page": "{title} · 另起一页",
+    "reference_sorted": " · 字母排序",
+    "reference_original_gui": " · 保留顺序",
 })
 T["en"].update({
     "app": "Paper and Course Formatter", "tagline": "Choose a format, add your details, and get a clean Word document.",
@@ -444,8 +460,284 @@ T["en"].update({
     "about": "FormCapy v{v}\nMLA 9, APA 7 student papers, and custom course templates.\n\n"
              "DOCX body images and tables are retained; page layout follows the selected format.\n"
              "Selected paragraphs keep their font, size and paragraph formatting; page breaks may move. Review complex documents and citations.",
+    "chinese_course": "Chinese course paper · General", "chinese_thesis": "Chinese graduation paper · Basic",
+    "list_separator": "; ", "preview_affiliation": "School / Department",
+    "preview_instructor_default": "Professor Smith", "preview_course_default": "ENG 101",
+    "spec_apa_font": "Times New Roman · 12 pt",
+    "spec_apa_spacing": "Double spacing · Letter · 1-inch margins",
+    "spec_apa_titlepage": "Title page · automatic page-number header",
+    "spec_apa_references": "References: new page · 0.5-inch hanging indents",
+    "spacing_exact_line": "Exactly {pt:g} pt",
+    "spacing_multiple_line": "{spacing:g}× spacing",
+    "custom_spacing_margin": "{spacing} · {margin:g} cm margins",
+    "custom_first_line": "First-line indent: {indent} · {alignment}",
+    "indent_chars": "{n:g} characters",
+    "title_page_suffix": " · title page",
+    "reference_new_page": "{title} · new page",
+    "reference_sorted": " · alphabetical",
+    "reference_original_gui": " · original order",
 })
 
+T["es"] = {
+    **T["en"],
+    "app": "Formato de trabajos y cursos",
+    "tagline": "Elige un formato, añade tus datos y obtén un documento Word limpio.",
+    "what": "Configura automáticamente: Times New Roman 12 pt · interlineado doble · márgenes de 1 pulgada · "
+            "encabezado «apellido página» · bloque de datos · título centrado · sangrías · "
+            "Works Cited en página nueva y por orden alfabético",
+    "step1": "① Tus datos",
+    "step2": "② Tu borrador",
+    "step3": "③ Crear",
+    "name": "Tu nombre *",
+    "title": "Título del trabajo *",
+    "instructor": "Profesor/a",
+    "course": "Curso",
+    "date": "Fecha",
+    "name_ph": "p. ej., Jane Doe",
+    "title_ph": "p. ej., The Role of Memory in Hamlet",
+    "instructor_ph": "p. ej., Professor Smith",
+    "course_ph": "p. ej., ENG 101",
+    "drop": "Arrastra tu borrador aquí o haz clic para elegir un archivo\n.docx / .txt / .md",
+    "drop_nodnd": "Haz clic aquí para elegir tu borrador\n.docx / .txt / .md",
+    "convert": "Convertir a MLA",
+    "blank": "¿Aún no tienes borrador? Crear una plantilla MLA vacía",
+    "advanced": "⚙ Opciones avanzadas",
+    "lang_btn": "Español",
+    "ready": "Listo: escribe tu nombre y el título y elige un borrador.",
+    "loaded": "Seleccionado: {f}",
+    "need_file": "Elige o arrastra primero un borrador.",
+    "need_name": "Escribe tu nombre.",
+    "need_title": "Escribe el título del trabajo.",
+    "date_tip": "Las fechas MLA usan el orden día mes año, p. ej., «{d}».\n\n¿Continuar de todos modos?",
+    "date_tip_title": "Comprobar fecha",
+    "unsupported": "Solo se admiten archivos .docx, .txt y .md.\n"
+                   "(Para .doc / Pages / Google Docs, guárdalos antes como .docx).",
+    "not_found": "Ese archivo no existe.",
+    "save_as": "Guardar el documento MLA como…",
+    "save_blank": "Guardar la plantilla vacía como…",
+    "same_file": "Eso sobrescribiría tu borrador; elige otro nombre.",
+    "working": "Generando…",
+    "done": "✓ Guardado: {f} ({b} párrafos, {w} referencias{r})",
+    "removed": ", se eliminaron {n} líneas de encabezado duplicadas",
+    "done_blank": "✓ Plantilla vacía guardada: {f}",
+    "empty": "No se encontró texto en el borrador. Revisa el archivo.",
+    "perm": "No se puede escribir ese archivo. Si está abierto en Word, ciérralo e inténtalo de nuevo, "
+            "o elige otra carpeta.",
+    "bad_doc": "No se puede leer ese documento; puede estar dañado o no ser un .docx real.",
+    "error": "Algo salió mal: {e}",
+    "menu_file": "Archivo",
+    "menu_open": "Elegir borrador…",
+    "menu_blank": "Crear plantilla vacía…",
+    "menu_quit": "Salir",
+    "menu_settings": "Ajustes",
+    "menu_help": "Ayuda",
+    "menu_howto": "Cómo se usa",
+    "menu_about": "Acerca de",
+    "adv_title": "Opciones avanzadas",
+    "adv_header": "Encabezado de página",
+    "lastname": "Apellido en el encabezado",
+    "lastname_hint": "Vacío = última palabra de tu nombre (se omiten Jr., III, etc.).\n"
+                     "Rellénalo en casos especiales, p. ej., «Smith-Jones».",
+    "adv_txt": "Borradores de texto (.txt / .md)",
+    "mode_blank": "Línea en blanco entre párrafos (recomendado)",
+    "mode_line": "Cada línea es un párrafo",
+    "md": "*Los asteriscos* crean cursiva (títulos de libros, revistas)",
+    "adv_body": "Texto del cuerpo",
+    "strip": "Quitar el encabezado de nombre/título que ya tenga el borrador (sin duplicados)",
+    "headings": "Detectar títulos de sección y ponerlos en negrita (experimental)",
+    "bq": "Los párrafos que empiezan por > se convierten en citas en bloque (0,5 pulgadas)",
+    "adv_after": "Después de guardar",
+    "open_after": "Abrir el documento automáticamente",
+    "adv_preview": "Formato que se aplicará",
+    "close": "Listo",
+    "howto": "1. Escribe tu nombre y el título del trabajo (profesor/a y curso son opcionales; la fecha es hoy por defecto).\n"
+             "2. Arrastra tu borrador .docx o .txt a la ventana, o haz clic para elegirlo.\n"
+             "3. Pulsa «Convertir a MLA» y elige dónde guardarlo.\n\n"
+             "Consejos:\n"
+             "• Termina el borrador con una línea «Works Cited» y una fuente por párrafo: irá a una página nueva, ordenada y con sangría francesa.\n"
+             "• La cursiva de un borrador Word se conserva; en texto plano escribe *Título*.\n"
+             "• Todo lo demás está en «⚙ Opciones avanzadas».",
+    "about": "Formato de trabajos FormCapy v{v}\nSigue el MLA Handbook, 9.ª edición.\n\n" + MLG_DISCLAIMER,
+}
+T["es"].update({
+    "hero": "Tus palabras, bien ordenadas.",
+    "eyebrow": "CÉNTRATE EN ESCRIBIR",
+    "tagline": "Añade tus datos y un borrador. Obtén un documento Word MLA limpio en segundos.",
+    "step1": "01  Datos del trabajo",
+    "step2": "02  Añade tu borrador",
+    "advanced": "Opciones avanzadas",
+    "name": "Tu nombre *",
+    "title": "Título del trabajo *",
+    "blank": "Crear plantilla vacía",
+    "preview": "Vista del trabajo",
+    "preview_hint": "Ilustración del diseño · el documento contendrá tu borrador",
+    "preview_name": "Tu nombre",
+    "preview_title": "Título de tu trabajo",
+    "spec_font": "Times New Roman · 12 pt",
+    "spec_spacing": "Interlineado doble · márgenes de 1 pulgada",
+    "spec_header": "Apellido + número de página automático",
+    "spec_cited": "Works Cited · ordenado y con sangría francesa",
+    "local": "Se procesa en tu dispositivo. No hace falta subir nada.",
+    "draft_types": "Borradores Word / texto / Markdown",
+    "word_type": "Documentos Word",
+    "text_type": "Texto / Markdown",
+    "choose": "Elige tu borrador",
+    "remove": "Quitar archivo",
+    "selected": "Borrador seleccionado",
+    "file_size": "{size} KB · haz clic para cambiar",
+    "limit": ".docx / .txt / .md · hasta 20 MB",
+    "too_large": "El archivo supera los 20 MB. Elige un borrador más pequeño.",
+    "status_ready": "Listo · añade tu nombre y el título y elige un borrador.",
+    "done": "Guardado {f} · {b} párrafos · {w} referencias{r}",
+    "done_blank": "Plantilla vacía guardada: {f}",
+    "working": "Generando documento…",
+    "done_removed": "Guardado {f} · {b} párrafos · {w} referencias · {r} líneas de encabezado eliminadas",
+    "open_result": "Abrir documento",
+    "view_folder": "Mostrar en la carpeta",
+    "menu_language": "Idioma / Language",
+    "reveal_result": "Mostrar en Finder",
+    "empty_file": "El archivo está vacío. Elige un borrador con texto.",
+    "queued_file": "Este borrador se abrirá al terminar la operación actual: {f}",
+    "saved_next": "Guardado {f}; siguiente borrador cargado: {next}",
+    "one_draft": "Seleccionado {f}; se procesa un borrador a la vez.",
+    "missing_source": "Tu borrador se movió o se eliminó. Vuelve a seleccionarlo.",
+    "preview_header": "Encabezado: {name} 1",
+    "preview_specs": "Times New Roman 12 pt\nInterlineado doble · márgenes de 1 pulgada\nSangría de primera línea: 0,5 pulgadas\nWorks Cited: página nueva, sangría francesa",
+    "convert": "Crear documento Word",
+    "save_as": "Guardar documento con formato como…",
+    "format": "Formato del documento",
+    "format_mla": "MLA 9",
+    "format_apa": "APA 7 · Trabajo de estudiante",
+    "format_custom": "Preajustes chinos / Plantilla personalizada",
+    "affiliation": "Escuela / departamento",
+    "template": "Plantilla de curso",
+    "edit_template": "Editar / crear plantilla",
+    "template_title": "Ajustes de la plantilla de curso",
+    "template_hint": "Guarda el diseño que pida tu profesor/a. Guardar con un nombre existente lo actualiza. Máximo: 20 plantillas.",
+    "builtin_prefix": "Integrada",
+    "saved_prefix": "Mis plantillas",
+    "template_copy": "copia",
+    "builtin_hint": "Los preajustes chinos ofrecen un diseño básico. Sigue los requisitos de tu centro; no se genera índice, resumen ni portada específica, y el texto de las referencias no cambia. Edita y guarda una copia personal.",
+    "builtin_readonly": "Los preajustes integrados no se pueden eliminar. Edita uno y guarda una copia personal.",
+    "typography": "Composición del texto",
+    "typography_western": "Occidental",
+    "typography_chinese": "Trabajo en chino",
+    "latin_font_name": "Fuente latina / numérica",
+    "line_spacing_pt": "Interlineado exacto (pt; 0 usa múltiplo)",
+    "first_line_chars": "Sangría de primera línea (caracteres; 0 usa cm)",
+    "chinese_controls_hint": "Un valor positivo en puntos usa interlineado exacto; un valor positivo en caracteres usa sangría por caracteres. La composición china usa fuentes china/latina separadas y títulos en Heiti.",
+    "profile_label": "Nombre de la plantilla",
+    "paper_size": "Tamaño del papel",
+    "font_name": "Fuente",
+    "font_size": "Tamaño de fuente (pt)",
+    "line_spacing": "Interlineado (múltiplo)",
+    "margin_cm": "Márgenes de página (cm)",
+    "first_line_cm": "Sangría de primera línea del cuerpo (cm)",
+    "alignment": "Alineación del cuerpo",
+    "align_left": "Izquierda",
+    "align_justify": "Justificado",
+    "header": "Contenido del número de página",
+    "header_surname_page": "Apellido + número de página",
+    "header_page": "Solo número de página",
+    "header_none": "Sin números de página",
+    "title_page": "Portada independiente",
+    "references_title": "Título de la página de referencias",
+    "sort_references": "Ordenar alfabéticamente las referencias",
+    "save_template": "Guardar y usar",
+    "import_template": "Importar JSON",
+    "export_template": "Exportar JSON",
+    "delete_template": "Eliminar plantilla actual",
+    "template_invalid": "Revisa los ajustes de la plantilla: {e}",
+    "template_limit": "Puedes guardar hasta 20 plantillas. Elimina una o usa el nombre de una existente.",
+    "template_saved": "Plantilla de curso guardada: {label}",
+    "template_imported": "Plantilla de curso importada: {label}",
+    "template_session_only": "Se usa {label}, pero no se pudieron guardar los ajustes. Este cambio puede perderse al cerrar la aplicación.",
+    "template_io": "No se pudo leer o escribir la plantilla: {e}",
+    "template_json": "Plantilla de FormCapy (JSON)",
+    "template_too_large": "La plantilla supera los 64 KB. Elige un archivo JSON de plantilla de curso.",
+    "advanced_custom": "Personalización avanzada…",
+    "advanced_custom_title": "Personalización avanzada",
+    "advanced_custom_hint": "La composición, la sangría, el interlineado y los números de página se guardan con la plantilla de curso.",
+    "page_number_position": "Posición del número de página",
+    "page_number_top_right": "Arriba a la derecha",
+    "page_number_bottom_center": "Pie centrado",
+    "page_number_bottom_right": "Pie a la derecha",
+    "show_cover_page_number": "Mostrar número en la portada",
+    "page_number_start": "Número de página inicial",
+    "page_number_hint": "Si ocultas el número de la portada, este número inicia la primera página del cuerpo. Sin portada independiente, inicia la primera página del documento.",
+    "page_number_summary": "{position} · empieza en {start}",
+    "cover_unnumbered": "Portada sin número",
+    "page_number_invalid": "El número de página inicial debe ser un entero entre 1 y 9999.",
+    "preserve_title": "Mantener sin cambios los párrafos seleccionados",
+    "preserve_choose": "Elegir párrafos que mantener sin cambios…",
+    "preserve_hint": "Los párrafos Word seleccionados conservan su fuente, tamaño, interlineado y sangrías. El papel, los márgenes y los números de página siguen la plantilla elegida.",
+    "preserve_scope": "Esta selección pertenece al borrador actual y no se guarda en una plantilla de curso.",
+    "preserve_docx_only": "Elige un borrador Word (.docx) antes de seleccionar párrafos que mantener sin cambios.",
+    "preserve_count": "Borrador actual: mantener {n} párrafos sin cambios",
+    "preserve_none": "Borrador actual: aplicar el formato elegido a todos los párrafos",
+    "preserve_column": "Mantener",
+    "preserve_text": "Párrafo original del borrador",
+    "preserve_images": "Incluye una imagen",
+    "preserve_toggle": "Haz clic en una fila o pulsa Espacio para cambiarla. Los números de párrafo originales pueden tener huecos.",
+    "preserve_ranges": "Seleccionar números (p. ej., 2, 4-6)",
+    "preserve_apply_ranges": "Aplicar números",
+    "preserve_select_all": "Seleccionar todo",
+    "preserve_clear": "Borrar selección",
+    "preserve_apply": "Usar párrafos seleccionados",
+    "preserve_invalid_ranges": "Introduce números o rangos de la lista, como 2, 4-6.",
+    "preserve_empty": "Este borrador Word no tiene párrafos que seleccionar.",
+    "preserve_loading_error": "No se pudieron leer los párrafos del borrador: {e}",
+    "draft_changed": "El borrador ha cambiado. Vuelve a abrir la selección de párrafos y confirma qué conservar.",
+    "format_preview": "Ajustes de formato",
+    "spec_title": "Formato de este documento",
+    "apa_hint": "Diseño APA 7 de estudiante: portada, números de página y título repetido. Añade tu institución, curso y profesor/a. El texto de las citas no cambia.",
+    "custom_hint": "Aplica la plantilla de curso elegida. El texto de las referencias no cambia.",
+    "mla_hint": "MLA 9: encabezado apellido/página, datos en la primera página y Works Cited en página nueva.",
+    "citation_hint": "El texto de las citas y referencias no cambia. Compruébalo con los requisitos de tu curso.",
+    "review_result": "Compara con tu borrador original: {items}",
+    "review_omitted": "{n} elementos de contenido no se conservaron",
+    "review_headings": "{n} títulos no admitidos se conservaron como texto del cuerpo",
+    "retained_result": "Conservado: {items}",
+    "retained_paragraphs": "{n} párrafos con su formato original",
+    "retained_images": "{n} imágenes del cuerpo",
+    "retained_tables": "{n} tablas del cuerpo",
+    "review_reference_order": "Solo se ordenaron las referencias normales consecutivas entre párrafos u objetos conservados; revisa el orden completo",
+    "menu_notices": "Licencias de terceros",
+    "notices_missing": "No se encontró el archivo de licencias de esta compilación. Genera THIRD-PARTY-NOTICES.txt con el script de compilación.",
+    "menu_source_kit": "Guardar el código fuente correspondiente…",
+    "source_kit_saved": "Código fuente correspondiente e instrucciones de recompilación guardados: {path}",
+    "unsupported_document": "El documento supera los límites de procesamiento. Reduce el contenido o divídelo en archivos más pequeños.",
+    "disclaimer": "Se conservan las imágenes y tablas del cuerpo DOCX; el diseño de página sigue el formato elegido. Revisa los documentos complejos.",
+    "howto": "1. Elige MLA, APA de estudiante o una plantilla de curso personalizada.\n"
+             "2. Añade tu nombre y el título, y elige un borrador .docx / .txt / .md.\n"
+             "3. Crea y guarda tu documento Word.\n\n"
+             "Guarda, importa o exporta plantillas para los requisitos de tu profesor/a. APA y las plantillas personalizadas incluyen un campo de escuela / departamento.\n"
+             "Usa Opciones avanzadas para elegir párrafos Word que conserven su formato original.\n"
+             "Termina el borrador con Works Cited / References / Bibliography y una fuente por párrafo.\n"
+             "La herramienta ajusta el diseño; no convierte el texto de las citas o referencias entre estilos.",
+    "about": "Formato de trabajos FormCapy v{v}\nMLA 9, trabajos APA 7 de estudiante y plantillas de curso personalizadas.\n\n"
+             "Se conservan las imágenes y tablas del cuerpo DOCX; el diseño de página sigue el formato elegido.\n"
+             "Los párrafos seleccionados conservan fuente, tamaño y formato de párrafo; los saltos de página pueden cambiar. Revisa documentos complejos y citas.",
+    "chinese_course": "Trabajo de curso en chino (general)",
+    "chinese_thesis": "Trabajo de fin de estudios en chino (básico)",
+    "list_separator": "; ",
+    "preview_affiliation": "Escuela / Departamento",
+    "preview_instructor_default": "Profesor/a Ejemplo",
+    "preview_course_default": "CURSO 101",
+    "spec_apa_font": "Times New Roman · 12 pt",
+    "spec_apa_spacing": "Interlineado doble · Letter · márgenes de 1 pulgada",
+    "spec_apa_titlepage": "Portada · encabezado automático de página",
+    "spec_apa_references": "References: página nueva · sangría francesa de 0,5 pulgadas",
+    "spacing_exact_line": "Interlineado exacto de {pt:g} pt",
+    "spacing_multiple_line": "Interlineado de {spacing:g}×",
+    "custom_spacing_margin": "{spacing} · márgenes de {margin:g} cm",
+    "custom_first_line": "Sangría de primera línea: {indent} · {alignment}",
+    "indent_chars": "{n:g} caracteres",
+    "title_page_suffix": " · portada independiente",
+    "reference_new_page": "{title} · página nueva",
+    "reference_sorted": " · orden alfabético",
+    "reference_original_gui": " · orden original",
+})
 ACCENT = "#4446a6"
 ACCENT_DARK = "#303278"
 MUTED = "#686a77"
@@ -462,9 +754,17 @@ def _default_lang():
         loc = (locale.getlocale()[0] or "") + os.environ.get("LANG", "")
         if sys.platform.startswith("win"):
             import ctypes
-            if (ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF) == 0x04:
+            language_id = ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF
+            if language_id == 0x04:
                 return "zh"
-        return "zh" if "zh" in loc.lower() or "chinese" in loc.lower() else "en"
+            if language_id == 0x0A:
+                return "es"
+        lowered = loc.lower()
+        if "zh" in lowered or "chinese" in lowered:
+            return "zh"
+        if "spanish" in lowered or re.search(r"(^|[^a-z])es([_-]|$)", lowered):
+            return "es"
+        return "en"
     except Exception:
         return "en"
 
@@ -698,7 +998,7 @@ class MLAGui:
         ttk.Label(top, text=f"v{__version__}", foreground=MUTED, font=(self.font[0], 9)).pack(side=tk.LEFT)
         self._lang_var = tk.StringVar(self.root, value=self.lang)
         self._language_buttons = []
-        for value, label in (("en", "English"), ("zh", "中文")):
+        for value, label in (("es", "Español"), ("en", "English"), ("zh", "中文")):
             button = ttk.Radiobutton(top, text=label, value=value, variable=self._lang_var,
                                      style="Lang.TRadiobutton", command=lambda: self._set_lang(self._lang_var.get()))
             button.pack(side=tk.RIGHT)
@@ -810,7 +1110,8 @@ class MLAGui:
         self._set_busy(self._busy)
 
     def _template_choices(self):
-        choices = [(f"{self.t('builtin_prefix')} · {preset['label_zh' if self.lang == 'zh' else 'label_en']}",
+        names = {"zh_course": "chinese_course", "zh_thesis": "chinese_thesis"}
+        choices = [(f"{self.t('builtin_prefix')} · {self.t(names[preset['id']])}",
                     preset["id"], "") for preset in BUILTIN_CUSTOM_PRESETS]
         choices.extend((f"{self.t('saved_prefix')} · {profile['label']}", "", profile["label"])
                        for profile in self.custom_profiles)
@@ -869,9 +1170,8 @@ class MLAGui:
         if kind == "mla":
             return [self.t(key) for key in ("spec_font", "spec_spacing", "spec_header", "spec_cited")]
         if kind == "apa":
-            return (["Times New Roman · 12 号", "双倍行距 · Letter · 1 英寸页边距", "独立封面 · 右上角自动页码", "References 新页 · 悬挂缩进 0.5 英寸"]
-                    if self.lang == "zh" else
-                    ["Times New Roman · 12 pt", "Double spacing · Letter · 1-inch margins", "Title page · automatic page-number header", "References: new page · 0.5-inch hanging indents"])
+            return [self.t(key) for key in
+                    ("spec_apa_font", "spec_apa_spacing", "spec_apa_titlepage", "spec_apa_references")]
         p = self._custom_profile()
         font = f"{p['font_name']} · {p['font_size']:g} pt · {p['paper_size']}"
         if p.get("typography") == "chinese":
@@ -882,19 +1182,19 @@ class MLAGui:
                                            start=p.get("page_number_start", 1))
             if p["title_page"] and not p.get("show_cover_page_number", True):
                 page_numbers += " · " + self.t("cover_unnumbered")
-        if self.lang == "zh":
-            spacing = f"固定 {p['line_spacing_pt']:g} 磅行距" if p.get("line_spacing_pt", 0) else f"{p['line_spacing']:g} 倍行距"
-            indent = f"{p['first_line_chars']:g} 字符" if p.get("first_line_chars", 0) else f"{p['first_line_cm']:g} cm"
-            return [font, f"{spacing} · 页边距 {p['margin_cm']:g} cm",
-                    f"首行缩进 {indent} · {self.t('align_' + p['alignment'])}",
-                    page_numbers + (" · 独立封面" if p["title_page"] else ""),
-                    p["references_title"] + " · 另起一页" + (" · 字母排序" if p["sort_references"] else " · 保留顺序")]
-        spacing = f"Exactly {p['line_spacing_pt']:g} pt" if p.get("line_spacing_pt", 0) else f"{p['line_spacing']:g}× spacing"
-        indent = f"{p['first_line_chars']:g} characters" if p.get("first_line_chars", 0) else f"{p['first_line_cm']:g} cm"
-        return [font, f"{spacing} · {p['margin_cm']:g} cm margins",
-                f"First-line indent: {indent} · {self.t('align_' + p['alignment'])}",
-                page_numbers + (" · title page" if p["title_page"] else ""),
-                p["references_title"] + " · new page" + (" · alphabetical" if p["sort_references"] else " · original order")]
+        spacing = (self.t("spacing_exact_line", pt=p["line_spacing_pt"])
+                   if p.get("line_spacing_pt", 0)
+                   else self.t("spacing_multiple_line", spacing=p["line_spacing"]))
+        indent = (self.t("indent_chars", n=p["first_line_chars"])
+                  if p.get("first_line_chars", 0) else f"{p['first_line_cm']:g} cm")
+        return [
+            font,
+            self.t("custom_spacing_margin", spacing=spacing, margin=p["margin_cm"]),
+            self.t("custom_first_line", indent=indent, alignment=self.t("align_" + p["alignment"])),
+            page_numbers + (self.t("title_page_suffix") if p["title_page"] else ""),
+            self.t("reference_new_page", title=p["references_title"])
+            + (self.t("reference_sorted") if p["sort_references"] else self.t("reference_original_gui")),
+        ]
 
     def _draw_preview(self, *_):
         if not hasattr(self, "_paper") or not self._paper.winfo_exists():
@@ -933,7 +1233,7 @@ class MLAGui:
             top = max(128, c.bbox(title_item)[3] + 24)
             details = [name]
             if kind == "apa":
-                details.append(self.affiliation.get().strip() or "School / Department")
+                details.append(self.affiliation.get().strip() or self.t("preview_affiliation"))
             elif self.affiliation.get().strip():
                 details.append(self.affiliation.get().strip())
             details.extend(self.v[key].get().strip() for key in ("course", "instructor", "date"))
@@ -955,8 +1255,8 @@ class MLAGui:
                               width=right-left, font=(font, text_size), fill=TEXT)
             body_top = detail_top + len(details) * 20 + 16
         else:
-            details.extend((self.v["instructor"].get().strip() or "Professor Smith",
-                            self.v["course"].get().strip() or "ENG 101",
+            details.extend((self.v["instructor"].get().strip() or self.t("preview_instructor_default"),
+                            self.v["course"].get().strip() or self.t("preview_course_default"),
                             self.v["date"].get().strip() or today_mla()))
             for index, value in enumerate(details):
                 c.create_text(left, 52 + index * 20, text=value[:52], anchor="w", width=right-left,
@@ -991,7 +1291,7 @@ class MLAGui:
         settings = tk.Menu(mb, tearoff=0)
         settings.add_command(label=self.t("advanced"), command=self._open_advanced)
         language = tk.Menu(settings, tearoff=0)
-        for lang, label in (("zh", "中文"), ("en", "English")):
+        for lang, label in (("es", "Español"), ("en", "English"), ("zh", "中文")):
             language.add_command(label=label, command=lambda lg=lang: self._set_lang(lg))
         settings.add_cascade(label=self.t("menu_language"), menu=language)
         mb.add_cascade(label=self.t("menu_settings"), menu=settings)
@@ -1803,14 +2103,14 @@ class MLAGui:
         if self._reference_sort_skipped:
             items.append(self.t("review_reference_order"))
         if items:
-            self._review_note.configure(text=self.t("review_result", items=("；" if self.lang == "zh" else "; ").join(items)))
+            self._review_note.configure(text=self.t("review_result", items=self.t("list_separator").join(items)))
             self._review_note.pack(fill=tk.X, pady=(8, 0))
         else:
             self._review_note.pack_forget()
         retained = [self.t(key, n=count) for key, count in zip(
             ("retained_paragraphs", "retained_images", "retained_tables"), self._retained_counts) if count]
         if retained:
-            self._retained_note.configure(text=self.t("retained_result", items=("；" if self.lang == "zh" else "; ").join(retained)))
+            self._retained_note.configure(text=self.t("retained_result", items=self.t("list_separator").join(retained)))
             self._retained_note.pack(fill=tk.X, pady=(8, 0))
         else:
             self._retained_note.pack_forget()
