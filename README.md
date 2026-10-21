@@ -62,13 +62,17 @@ v2.4.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板
 
 APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)。
 
-### 下一版开发中：中文论文预设 / In development: Chinese paper presets
+### v2.5.0 开发中：中文预设与西班牙语 / In development
 
 当前源码新增 **中文课程论文（通用）** 和 **中文毕业论文（基础版）**，放在自定义课程模板的内置预设中：A4、宋体小四、首行缩进 2 字符、两端对齐和页脚居中页码；毕业论文基础版使用固定 20 pt 行距和不编号的基础封面。可选中后继续修改并保存为自己的模板。
 
 这部分尚未发布到上方 v2.4.0 下载或公网网站。预设不生成目录、摘要或学校专用封面，不自动转换 GB/T 7714 引用格式；学校要求优先。详情与可导入 JSON 见[格式指南](docs/FORMATS.md)。
 
 Current source adds two editable built-in Chinese presets for course papers and basic theses, including separate Chinese/Latin fonts, character indentation and exact point spacing. They are not yet in the published v2.4.0 packages or public website. See the [format guide](docs/FORMATS.md) for settings and scope.
+
+本轮还加入 **Español** 界面，覆盖网页、桌面和 Android；切换语言不会翻译文稿或个人模板名。下一版的[课程模板分享与参考文献方案](docs/SHARING-DESIGN.md)采用纯静态设计，目前未实现分享链接或引用条目转换。
+
+This iteration also adds Spanish to the web, desktop and Android interfaces. Changing the interface language does not translate drafts or personal template names. Self-contained course-template links and structured references are [planned separately](docs/SHARING-DESIGN.md); neither feature is implemented yet.
 
 ## 中文
 

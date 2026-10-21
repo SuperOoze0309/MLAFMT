@@ -144,7 +144,15 @@ def main():
     manifest = "".join(f"{hashlib.sha256((release / name).read_bytes()).hexdigest()}  {name}\n" for name in assets)
     (release / "SHA256SUMS.txt").write_text(manifest, encoding="utf-8")
     base = f"https://github.com/SuperOoze0309/MLAFMT/releases/download/{tag}"
-    notes = f"""## 下载 / Downloads
+    notes = f"""## 直接使用 / Use online
+
+**[打开 FormCapy / Open FormCapy](https://formcapy.com/)** — 免费、无需注册。文稿在浏览器本地排版，不会自动上传。支持中文、English、Español。
+Free, no account required. Formatting runs on your device; drafts are not uploaded automatically.
+
+本版新增中文课程论文、毕业论文基础预设，以及西班牙语界面。中文预设支持中西文字体、首行字符缩进和固定磅值行距；学校具体要求仍需自行核对。引用条目文字保持原样。
+New: Chinese course-paper and basic-thesis presets, plus a Spanish interface. Chinese typography supports separate Latin fonts, character indentation and exact point spacing. Reference wording is preserved; institutional requirements still take precedence.
+
+## 离线应用 / Offline apps
 
 选择你的设备，下载对应文件。所有版本在设备上离线排版，无需安装 Python。
 Choose your device. All apps format documents offline; no Python installation is needed.
@@ -163,12 +171,8 @@ Mac: drag to Applications. These builds are not Apple-notarized; confirm first l
 Linux：允许执行后打开。Android：安装后选择草稿，生成并保存或分享 Word 文档。
 Linux: mark executable and open. Android: install, choose your draft, then save or share the formatted Word document.
 
-本版新增 APA 7 学生论文版式与自定义课程模板：可保存多套老师要求，并用 JSON 在设备间交换模板。
-桌面、网页和 Android 共用格式设置；APA 支持封面、页码、1–3 级标题与新页 References。引用文字保持原样。
-iPhone/iPad 继续使用本地网页预览。文档包含图片、表格、脚注或公式时，请对照原稿检查。
-This release adds APA 7 student paper layouts and custom course templates, with named presets and JSON transfer between devices.
-Desktop, web and Android share the layout engine. APA includes a title page, page numbers, heading levels 1–3 and a new References page; citation text is unchanged.
-iPhone/iPad continue to use the local web preview. Compare documents containing images, tables, notes or equations with the original.
+iPhone/iPad 使用上方 HTTPS 网页。文档包含图片、表格、脚注或公式时，请对照原稿检查。
+Use the HTTPS website on iPhone/iPad. Compare documents containing images, tables, notes or equations with the original.
 
 <details>
 <summary>其他下载 / Other downloads</summary>
