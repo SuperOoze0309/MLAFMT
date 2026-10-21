@@ -6,6 +6,11 @@ Complete and accept the browser-local document-processing refactor, then publish
 its static build on **Cloudflare** with **HTTPS required**. The existing Flask
 version will not be launched on Render as an interim release.
 
+The public website is open to everyone without registration, sign-in, or a
+required email address. Cloudflare accounts are for the owner's hosting and DNS
+administration only. Do not add visitor accounts or put the public app behind
+Cloudflare Access or another sign-in gate.
+
 Cloudflare Pages and Workers Static Assets remain hosting options. Select the
 product and deployment settings after checking the finished static artifact,
 runtime files, asset limits, and domain configuration; neither option is recorded
@@ -16,9 +21,12 @@ The Render files (`render.yaml`, `requirements-web.txt`, `gunicorn.conf.py`) and
 the instructions below are retained as a **fallback only**. They do not represent
 the current launch procedure or evidence that a public service is running.
 
-When registration, sign-in, repository authorization, or an account permission
-screen is required, stop on that screen and wait for the user to complete it.
-Continue deployment after the user has completed the required account step.
+Reuse existing authenticated sessions and complete routine one-click sign-in
+when possible. Hand off steps that require the owner, such as entering a new
+password, completing a verification challenge, or supplying a code. Confirm any
+new security-sensitive permission grant with its actual scope before accepting
+it; do not request repeated approval for routine deployment work already
+authorized by the owner.
 
 ## Required launch acceptance
 
