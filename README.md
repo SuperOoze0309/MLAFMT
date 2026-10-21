@@ -8,7 +8,7 @@
 
 **Free, no account required. Formatting runs on your device; the current draft is not uploaded automatically.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
-**网页版与下载版本均已更新至 v2.5.0。** 中文预设和西班牙语界面现已上线。**The website and offline apps now run v2.5.0**, including Chinese presets and Spanish. [部署状态 / Deployment status](docs/DEPLOYMENT.md)
+**当前公网网站和离线下载为 v2.5.0；v2.6.0 静态网页版已进入上线准备，尚未部署。** v2.6.0 新增课程模板码与分享 JSON，现有下载包不包含这两项功能。**The public site and offline downloads remain v2.5.0; the v2.6.0 static website is being prepared for deployment**, adding template codes and sharing JSON. Existing packages do not include these features. [部署状态 / Deployment status](docs/DEPLOYMENT.md)
 
 ## 三步开始 / Get started
 
@@ -29,6 +29,8 @@
 ## 下载 / Downloads
 
 **[FormCapy v2.5.0 已发布 / Released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)** · 2026-10-21
+
+本轮 v2.6.0 面向静态网页版，不发布新的桌面或 Android 安装包；以下 v2.5.0 下载不含模板码／分享 JSON，仍可用兼容裸 JSON 交换排版设置。This v2.6.0 update targets the static website. The v2.5.0 packages below do not support template codes or sharing JSON; compatible bare layout JSON remains available.
 
 | 设备 / Device | v2.5.0 下载 / Download | 安装 / Install |
 | --- | --- | --- |
@@ -66,7 +68,7 @@ v2.5.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板
 
 APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)。
 
-### v2.5.0 本版新增：中文预设与西班牙语 / New in this version
+### v2.5.0 新增：中文预设与西班牙语 / Added in v2.5.0
 
 v2.5.0 新增 **中文课程论文（通用）** 和 **中文毕业论文（基础版）**，放在 **中文预设 / 自定义模板** 的内置预设中：A4、宋体小四、首行缩进 2 字符、两端对齐和页脚居中页码；毕业论文基础版使用固定 20 pt 行距和不编号的基础封面。可选中后继续修改并保存为自己的模板。
 
@@ -82,9 +84,25 @@ v2.5.0 新增 **中文课程论文（通用）** 和 **中文毕业论文（基�
 
 v2.5.0 includes two editable built-in Chinese presets for course papers and basic theses, with separate Chinese/Latin fonts, character indentation and exact point spacing. Choose **Chinese presets / Custom template**, select a built-in preset, adjust it if needed, and generate Word. These presets are available on the public website and in the v2.5.0 source and packages above. See the [format guide](docs/FORMATS.md) for settings and scope.
 
-v2.5.0 还加入 **Español** 界面，覆盖静态网页构建、桌面和 Android；切换语言不会翻译文稿或个人模板名。下一版的[课程模板分享与参考文献方案](docs/SHARING-DESIGN.md)采用纯静态设计，目前未实现分享链接或引用条目转换。
+v2.5.0 还加入 **Español** 界面，覆盖静态网页构建、桌面和 Android；切换语言不会翻译文稿或个人模板名。
 
-v2.5.0 also includes Spanish in the static web build, desktop and Android interfaces. Changing the interface language does not translate drafts or personal template names. Self-contained course-template links and structured references are [planned separately](docs/SHARING-DESIGN.md); neither feature is implemented yet.
+v2.5.0 also includes Spanish in the static web build, desktop and Android interfaces. Changing the interface language does not translate drafts or personal template names.
+
+### v2.6.0 待上线：课程模板分享 / Awaiting deployment: course-template sharing
+
+**本节描述待上线的 v2.6.0 静态网页版；当前公网网站与安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
+
+![课程模板码本地开发预览：完整设置自带在 FC1 模板码中](docs/images/formcapy-template-code-preview.png)
+
+*本地开发预览；课程标签仅为用户自填的示例，不代表学校官方模板。Local development preview; the labels are user-entered examples, without institutional verification.*
+
+- 学校全名、学校简称、课程代码、校区／学期可分别填写，不根据 `UCSBLING36` 等代码猜学校，也不声明课程标签唯一或官方认证。
+- 分享内容包含模板名称、排版设置及主动填写的课程标签；不会自动带入文稿、姓名、论文标题、教师、段落保留选择或生成结果。可选 **本次分享使用通用名称**，不修改当前模板名；持有码或文件的人可以读取其中的名称和标签。
+- 模板码完整自带设置，不使用链接、服务器、账号或后台查码。设置修改后需重新复制；旧码不会更新或撤销。保存到 **我的模板** 仅保存排版设置，课程标签需用模板码或分享 JSON 留存。
+
+**This section describes the v2.6.0 static website awaiting deployment; the public site and packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
+
+操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。参考文献结构化编辑和 MLA/APA/GB/T 条目转换仍仅为设计，未实现。
 
 ## 中文
 
@@ -153,7 +171,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前发布版本为 v2.5.0；源码运行方式如下。
+当前离线下载为 v2.5.0；仓库源码正准备 v2.6.0 静态网页版。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -187,13 +205,13 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 # Windows 打包使用 Python 3.12 x64 和独立环境
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.5.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.6.0
 ```
 
 `requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.5.0-windows-x64.zip`：当前源码构建的应用、双语说明、更新记录、许可证与构建信息。
+- `MLAFMT-v2.6.0-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
@@ -281,7 +299,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-The current release is v2.5.0. Run from source as follows.
+Current offline downloads remain v2.5.0; the source is being prepared for the v2.6.0 static website. This round does not provide newly verified desktop or Android packages. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 
@@ -333,7 +351,7 @@ Run `python -m pytest -q` after installing `pytest` and `requirements.txt` in a 
 
 ```powershell
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.5.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.6.0
 ```
 
 The script installs the locked `requirements-build.txt` into that virtual environment, bundles the tkDnD native libraries and creates the EXE and versioned ZIP in `dist/release/`. The ZIP includes build information for the source commit, source hashes, Python and dependencies. Byte-for-byte identity across operating system or Python patch versions is not guaranteed.

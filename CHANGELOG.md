@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.6.0 — 2026-10-21
+
+- 网页版新增课程模板码：复制完整的 `FC1.` 模板码，在“导入模板”粘贴、预览后应用；不需要分享网址、服务器、账号或模板数据库。
+- 新增独立的分享 JSON，包含完整排版设置与自填学校／课程标签；保留现有裸模板 JSON 导入导出。不会自动带入文稿、论文信息、段落选择或生成结果。
+- 应用分享模板不自动保存、不改写论文日期，也不覆盖当前文稿和已有结果。课程标签可通过模板码或分享 JSON 留存；“我的模板”和兼容 JSON 仍仅保存排版设置。
+- Add self-contained course-template codes and sharing JSON to the web UI, with review before applying and no server lookup. Existing layout-only JSON remains compatible. Website deployment is being prepared; existing offline downloads remain v2.5.0.
+
 ## v2.5.0 — 2026-10-21
 
 [FormCapy v2.5.0 下载已发布](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0) / Downloads released at **2026-10-21 08:33:08 UTC**. All 8 assets were verified against REST size/digest metadata from [CI run 39568529951](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39568529951) (7 jobs passed); the release tag targets `930d959bb4f5844ae81abb326b6d363c0c03334f`. **[公网网站](https://formcapy.com/)已更新至 v2.5.0 / The public website has been updated to v2.5.0.** See the [deployment record](docs/DEPLOYMENT.md).

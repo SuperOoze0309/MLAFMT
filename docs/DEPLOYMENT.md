@@ -1,6 +1,23 @@
 # FormCapy web deployment
 
-## Current public deployment — v2.5.0
+## v2.6.0 website update — awaiting production upload
+
+The v2.6.0 source adds self-contained `FC1.` course-template codes, versioned
+sharing JSON and review before applying. The existing layout-only JSON remains
+compatible with v2.5.0 offline apps. No share-link service, server, database or
+visitor account is added. Current downloadable apps remain v2.5.0; this is a
+static-website update.
+
+The source and static artifact are being checked before upload to the existing
+Cloudflare Worker. Production still serves v2.5.0 until the upload is verified.
+The previous production record below remains historical evidence for that build.
+
+Local development observations are recorded in
+`build/template-sharing/acceptance.md`; automated release checks for this update
+are kept under `build/v2.6-web-release/`. Do not describe Safari, physical devices
+or native v2.6 installers as verified by this web deployment.
+
+## Public v2.5.0 deployment record
 
 **v2.5.0 is live** at [formcapy.com](https://formcapy.com/) and
 [www.formcapy.com](https://www.formcapy.com/). The owner uploaded the final

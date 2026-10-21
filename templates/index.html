@@ -252,6 +252,12 @@
       .paragraph-range { margin-top: 12px; }
       .template-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
       .template-tools button { white-space: normal; }
+      .template-sharing { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+      .share-preview { margin: 14px 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px 12px; font-size: 13px; }
+      .share-preview dt { color: var(--muted); }
+      .share-preview dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .share-full-settings { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 14px 0; }
+      #share-output { overflow-wrap: anywhere; width: 100%; }
       .template-message { color: var(--muted); font-size: 11px; margin: 9px 0 0; }
       .field textarea { resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
       #paper-preview { font-size: calc(var(--preview-base, 12px) * var(--preview-scale, 1)); }
@@ -961,16 +967,16 @@
                     <select id="c-font_name"><option>Times New Roman</option><option>Arial</option><option>Calibri</option><option>宋体</option><option>黑体</option></select>
                   </label>
                   <label class="field"><span data-t="font_size">Font size (pt)</span>
-                    <input id="c-font_size" type="number" min="8" max="24" step="0.5" value="12" inputmode="decimal" />
+                    <input id="c-font_size" type="number" min="8" max="24" step="any" value="12" inputmode="decimal" />
                   </label>
                   <label class="field"><span data-t="line_spacing">Line spacing</span>
-                    <input id="c-line_spacing" type="number" min="1" max="3" step="0.05" value="2" inputmode="decimal" />
+                    <input id="c-line_spacing" type="number" min="1" max="3" step="any" value="2" inputmode="decimal" />
                   </label>
                   <label class="field"><span data-t="margin_cm">Margins, all sides (cm)</span>
-                    <input id="c-margin_cm" type="number" min="0.5" max="5.08" step="0.01" value="2.54" inputmode="decimal" />
+                    <input id="c-margin_cm" type="number" min="0.5" max="5.08" step="any" value="2.54" inputmode="decimal" />
                   </label>
                   <label class="field"><span data-t="first_line_cm">First-line indent (cm)</span>
-                    <input id="c-first_line_cm" type="number" min="0" max="2.54" step="0.01" value="1.27" inputmode="decimal" />
+                    <input id="c-first_line_cm" type="number" min="0" max="2.54" step="any" value="1.27" inputmode="decimal" />
                   </label>
                   <label class="field"><span data-t="alignment">Body alignment</span>
                     <select id="c-alignment"><option value="left" data-t="align_left">Left</option><option value="justify" data-t="align_justify">Justified</option></select>
@@ -1027,6 +1033,23 @@
                   <button class="ghost" type="button" id="preset-import" data-t="preset_import">Import template</button>
                   <button class="ghost" type="button" id="preset-export" data-t="preset_export">Export template</button>
                 </div>
+                <details class="template-sharing" id="template-sharing" hidden>
+                  <summary data-share-t="sharing">Share a course template</summary>
+                  <p class="hint" data-share-t="labels_hint">Optional labels describe this template. They do not fill in your paper details.</p>
+                  <div class="fields">
+                    <label class="field"><span data-share-t="school_name">School name</span><input id="share-school_name" maxlength="240" /></label>
+                    <label class="field"><span data-share-t="school_abbr">School abbreviation</span><input id="share-school_abbr" maxlength="48" /></label>
+                    <label class="field"><span data-share-t="course_code">Course code</span><input id="share-course_code" maxlength="128" /></label>
+                    <label class="field"><span data-share-t="campus_term">Campus / term</span><input id="share-campus_term" maxlength="160" /></label>
+                  </div>
+                  <label class="option"><input id="share-generic-name" type="checkbox" /><span data-share-t="generic_name">Use a generic name in this share</span></label>
+                  <div class="template-tools">
+                    <button class="ghost" type="button" id="preset-share-code" data-share-t="copy_code">Copy template code</button>
+                    <button class="ghost" type="button" id="preset-share-json" data-share-t="export_json">Export sharing JSON</button>
+                  </div>
+                  <p class="hint" data-share-t="privacy">Codes and sharing JSON contain the template name, layout settings and entered course labels. Anyone with a copy can read them. Drafts and paper details are not included automatically.</p>
+                  <p class="hint" id="share-editor-message" role="status" aria-live="polite"></p>
+                </details>
                 <p class="template-message" id="template-message" role="status" aria-live="polite"></p>
                 <p class="hint" id="chinese-template-hint" data-t="chinese_preset_hint" hidden>Common basic layouts; follow your institution's requirements. Does not generate contents, abstracts, institution-specific covers or rewrite GB/T 7714 citations.</p>
                 <p class="hint" data-t="template_local">Templates are saved in this browser on this device. Export one to keep a copy or use it elsewhere.</p>
@@ -1425,7 +1448,32 @@
         <p class="hint" id="transfer-message" role="status" aria-live="polite"></p>
       </div>
     </dialog>
+    <dialog id="template-share-preview" aria-labelledby="share-title">
+      <div class="dialog-content">
+        <div class="dialog-heading">
+          <h2 id="share-title" data-share-t="preview">Review template</h2>
+          <button class="ghost" type="button" id="share-x" data-share-label="close">×</button>
+        </div>
+        <p class="hint" id="share-preview-hint"></p>
+        <dl class="share-preview" id="share-preview-overview"></dl>
+        <details class="share-full-settings" id="share-full-settings">
+          <summary data-share-t="full_settings">All 19 layout settings</summary>
+          <dl class="share-preview" id="share-preview-settings"></dl>
+        </details>
+        <p class="hint" data-share-t="privacy">Codes and sharing JSON contain template settings and entered labels, without automatically including drafts or paper details.</p>
+        <label class="field" id="share-output-row" hidden><span id="share-output-label"></span><textarea id="share-output" rows="5" readonly spellcheck="false"></textarea></label>
+        <div class="template-tools">
+          <button class="primary" type="button" id="share-apply" data-share-t="apply">Apply this template</button>
+          <button class="ghost" type="button" id="share-copy" data-share-t="copy_code">Copy template code</button>
+          <button class="ghost" type="button" id="share-download" data-share-t="download_json">Download sharing JSON</button>
+          <button class="ghost" type="button" id="share-dismiss" data-share-t="close">Close</button>
+        </div>
+        <p class="hint" id="share-message" role="status" aria-live="polite"></p>
+      </div>
+    </dialog>
     <script src="static/transport.js"></script>
+    <script src="static/template-share.js"></script>
+    <script src="static/template-sharing-ui.js"></script>
     <script>
       "use strict";
       const MLAFMT_MODE = document.querySelector('meta[name="mlafmt-mode"]')?.content || "server";
@@ -2164,6 +2212,7 @@
         page_number_position: "top_right", show_cover_page_number: true, page_number_start: 1,
         typography: "western", latin_font_name: "Times New Roman", first_line_chars: 0, line_spacing_pt: 0,
       });
+      let templateSharing = null;
       const BUILTIN_PRESETS = Object.freeze([
         { id: "zh_course", translation: "chinese_course", profile: Object.freeze({ ...CUSTOM_DEFAULT,
           label: "中文课程论文（通用）", paper_size: "A4", font_name: "宋体", font_size: 12,
@@ -2195,14 +2244,15 @@
         error.field = field;
         return error;
       }
-      function normalizeProfile(value) {
+      let sharedExactProfile = false;
+      function normalizeProfile(value, preserveText = false) {
         if (!value || typeof value !== "object" || Array.isArray(value) ||
             Object.keys(value).some((key) => !Object.hasOwn(CUSTOM_DEFAULT, key))) throw profileError();
         const result = { ...CUSTOM_DEFAULT, ...value };
         for (const [key, max] of [["label", 60], ["references_title", 80]]) {
-          if (typeof result[key] !== "string" || !result[key].trim() || Array.from(result[key].trim()).length > max ||
+          if (typeof result[key] !== "string" || !result[key].trim() || Array.from(preserveText ? result[key] : result[key].trim()).length > max ||
               /[\u0000-\u001f\u007f-\u009f\ud800-\udfff\ufffe\uffff]/u.test(result[key])) throw profileError(key);
-          result[key] = result[key].trim();
+          if (!preserveText) result[key] = result[key].trim();
         }
         for (const [key, range] of Object.entries(PROFILE_NUMBERS))
           if (typeof result[key] !== "number" || !Number.isFinite(result[key]) || result[key] < range[0] || result[key] > range[1]) throw profileError(key);
@@ -2224,10 +2274,11 @@
         }
         if ($("spacing-mode").value === "exact" && value.line_spacing_pt <= 0) throw profileError("line_spacing_pt");
         if ($("indent-mode").value === "chars" && value.first_line_chars <= 0) throw profileError("first_line_chars");
-        return normalizeProfile(value);
+        return normalizeProfile(value, sharedExactProfile);
       }
-      function writeProfile(profile) {
-        const value = normalizeProfile(profile);
+      function writeProfile(profile, preserveText = false) {
+        const value = normalizeProfile(profile, preserveText);
+        sharedExactProfile = preserveText;
         for (const [key, setting] of Object.entries(value)) {
           const input = $("c-" + key);
           if (PROFILE_FLAGS.includes(key)) input.checked = setting;
@@ -2241,7 +2292,7 @@
       function profileSnapshot(data) {
         if (data.format_id !== "custom")
           return { id: data.format_id, label: null, builtin_id: null };
-        const profile = normalizeProfile(data.custom_profile);
+        const profile = normalizeProfile(data.custom_profile, true);
         const preset = BUILTIN_PRESETS.find((item) => selectedPreset === "builtin:" + item.id &&
           Object.keys(CUSTOM_DEFAULT).every((key) => profile[key] === item.profile[key]));
         return { id: "custom", label: profile.label, builtin_id: preset?.id || null };
@@ -2472,7 +2523,7 @@
         if (Array.isArray(saved)) {
           for (const value of saved.slice(0, 20)) {
             try {
-              const profile = normalizeProfile(value);
+              const profile = normalizeProfile(value, true);
               if (!presets.some((p) => p.label === profile.label)) presets.push(profile);
             } catch (_) {}
           }
@@ -2522,6 +2573,7 @@
       function persistCurrentProfile() {
         try {
           store.set("custom_profile", JSON.stringify(customProfile()));
+          store.set("custom_profile_exact", String(sharedExactProfile));
           store.set("builtin_working_copy", builtinWorkingCopy);
         } catch (_) {}
       }
@@ -2533,11 +2585,11 @@
       if (["mla", "apa", "custom"].includes(savedFormat)) $("format-id").value = savedFormat;
       try {
         const saved = store.get("custom_profile");
-        if (saved) writeProfile(JSON.parse(saved));
+        if (saved) writeProfile(JSON.parse(saved), store.get("custom_profile_exact") === "true");
       } catch (_) {}
       try {
         const selected = builtinPreset(selectedPreset)?.profile || savedPreset(selectedPreset);
-        if (!selected || JSON.stringify(normalizeProfile(selected)) !== JSON.stringify(customProfile())) selectedPreset = "";
+        if (!selected || JSON.stringify(normalizeProfile(selected, true)) !== JSON.stringify(customProfile())) selectedPreset = "";
       } catch (_) { selectedPreset = ""; }
       // Native date values already stored before this feature are treated as user-entered.
       // Browser dates remain session-only, matching the existing persistence behavior.
@@ -2844,6 +2896,7 @@
         if (nativeResultFormat) $("native-result-format").textContent = t("result_format", formatLabel(nativeResultFormat));
         renderWarnings("native-result-warning", nativeResultWarnings);
         renderRetained("native-result-retained", nativeResultRetained);
+        templateSharing?.render(lang);
       }
       for (const code of LANGUAGES)
         $("lang-" + code).addEventListener("click", () => {
@@ -2885,7 +2938,8 @@
         const automaticDate = hasAutomaticDate();
         if (builtin) builtinWorkingCopy = builtin.id;
         else if (selected) builtinWorkingCopy = "";
-        if (selected) writeProfile(selected);
+        if (selected) writeProfile(selected, !builtin);
+        templateSharing?.clearLabels();
         if (automaticDate) updateAutomaticDate();
         selectPreset(selected ? value : "");
         persistCurrentProfile();
@@ -2915,7 +2969,7 @@
           for (let number = 2; presets.some((p) => p.label === copyLabel); number += 1)
             copyLabel = `${base} (${t("builtin_copy")} ${number})`;
           profile.label = copyLabel;
-          writeProfile(profile);
+          writeProfile(profile, sharedExactProfile);
         }
         const index = presets.findIndex((p) => p.label === profile.label);
         if (index < 0 && presets.length >= 20) return templateMessage("template_limit");
@@ -2951,11 +3005,12 @@
         }
         transferOpener = $(exporting ? "preset-export" : "preset-import");
         $("transfer-text").value = text;
-        $("transfer-message").textContent = native ? t("native_transfer_hint") : "";
+        $("transfer-message").textContent = native ? (templateSharing?.nativeImportHint() || t("native_transfer_hint")) : "";
         $("transfer-file").hidden = native || exporting;
         $("transfer-apply").hidden = exporting;
         $("transfer-copy").hidden = !exporting;
         $("transfer-download").hidden = native || !exporting;
+        templateSharing?.transferMode(exporting);
         transfer.showModal();
       }
       $("preset-import").addEventListener("click", () => openTransfer(false));
@@ -2971,6 +3026,12 @@
             $("transfer-message").textContent = t("template_file_large");
             return;
           }
+          if (templateSharing) {
+            const envelope = templateSharing.parseImport(text);
+            transfer.close();
+            templateSharing.preview(envelope, $("preset-import"));
+            return;
+          }
           const data = JSON.parse(text);
           const profile = normalizeProfile(data && Object.hasOwn(data, "custom_profile") ? data.custom_profile : data);
           const automaticDate = hasAutomaticDate();
@@ -2983,7 +3044,7 @@
           templateMessage("template_applied");
           transfer.close();
           $("preset-save").focus();
-        } catch (_) { $("transfer-message").textContent = t("invalid_profile"); }
+        } catch (error) { $("transfer-message").textContent = templateSharing?.errorMessage(error) || t("invalid_profile"); }
       });
       $("transfer-file").addEventListener("click", () => $("template-file").click());
       $("template-file").addEventListener("change", async (event) => {
@@ -2992,7 +3053,7 @@
         try {
           if (candidate.size > 32768) $("transfer-message").textContent = t("template_file_large");
           else {
-            $("transfer-text").value = await candidate.text();
+            $("transfer-text").value = new TextDecoder("utf-8", { fatal: true }).decode(await candidate.arrayBuffer());
             $("transfer-message").textContent = "";
           }
         } catch (_) { $("transfer-message").textContent = t("template_unavailable"); }
@@ -3012,7 +3073,7 @@
       $("transfer-download").addEventListener("click", () => {
         try {
           const data = JSON.parse($("transfer-text").value);
-          const profile = normalizeProfile(data && Object.hasOwn(data, "custom_profile") ? data.custom_profile : data);
+          const profile = normalizeProfile(data && Object.hasOwn(data, "custom_profile") ? data.custom_profile : data, true);
           const url = URL.createObjectURL(new Blob([JSON.stringify(profile, null, 2)], { type: "application/json" }));
           const link = document.createElement("a");
           link.href = url;
@@ -3023,6 +3084,22 @@
           setTimeout(() => URL.revokeObjectURL(url), 60000);
         } catch (_) { $("transfer-message").textContent = t("invalid_profile"); }
       });
+      templateSharing = window.FormCapyTemplateSharing?.attach({
+        getProfile: checkedProfile, normalizeLegacy: normalizeProfile, translate: t, native,
+        applyProfile(profile) {
+          // Applying is explicit, but saving remains a separate action. Do not
+          // dispatch format-change handlers: they can rewrite the paper date.
+          writeProfile(profile, true);
+          builtinWorkingCopy = "";
+          selectedPreset = "";
+          $("format-id").value = "custom";
+          $("custom-editor").open = true;
+          renderPresets();
+          refreshPreview();
+          $("template-message").dataset.message = "";
+          $("template-message").textContent = "";
+        },
+      }) || null;
       for (const id of ["name", "instructor", "course", "affiliation", "lname", ...(native ? ["title", "date"] : [])]) {
         const value = store.get(id);
         if (value !== null) $(id).value = value;

@@ -43,7 +43,7 @@ PYTHON_MODULES = (
     "docx_preserve.py",
     "browser_bridge.py",
 )
-STATIC_ASSETS = ("transport.js", "capybara-64.png")
+STATIC_ASSETS = ("transport.js", "template-share.js", "template-sharing-ui.js", "capybara-64.png")
 MAX_FILE_SIZE = 20 * 1024 * 1024
 MAX_DOCX_EXPANDED = 80 * 1024 * 1024
 MAX_DOCX_ENTRIES = 2000

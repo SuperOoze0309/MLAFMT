@@ -31,6 +31,14 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y xvfb libtcl8.6 libtk8.6
       - run: python -m pip install -r requirements.txt -r requirements-build.txt pytest==9.1.1
       - run: xvfb-run -a python -m pytest -q
+      - name: Check browser state and template-code protocol
+        run: |
+          node browser/test/chinese_preset_state_test.mjs
+          node browser/test/spanish_catalog_test.mjs
+          node browser/test/transport_lifecycle_test.mjs
+          node browser/test/service_worker_redirect_test.mjs
+          node browser/test/template_share_codec_test.mjs
+          node browser/test/template_sharing_state_test.mjs
 
   windows-exe:
     needs: test

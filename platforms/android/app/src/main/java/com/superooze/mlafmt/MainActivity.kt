@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = request.url.toString() != PAGE
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
-                if (request.url.toString() in setOf(PAGE, MASCOT, TRANSPORT)) {
+                if (request.url.toString() in setOf(PAGE, MASCOT, TRANSPORT, TEMPLATE_SHARE, TEMPLATE_SHARING)) {
                     val response = assets.shouldInterceptRequest(request.url)
                     if (response != null) {
                         if (request.url.toString() == PAGE)
@@ -228,6 +228,8 @@ class MainActivity : ComponentActivity() {
         const val PAGE = "$ORIGIN/assets/index.html"
         const val MASCOT = "$ORIGIN/assets/static/capybara-64.png"
         const val TRANSPORT = "$ORIGIN/assets/static/transport.js"
+        const val TEMPLATE_SHARE = "$ORIGIN/assets/static/template-share.js"
+        const val TEMPLATE_SHARING = "$ORIGIN/assets/static/template-sharing-ui.js"
         const val DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     }
 }

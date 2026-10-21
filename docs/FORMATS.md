@@ -1,10 +1,12 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：FormCapy v2.5.0 网页版、源码及下载版本。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)现已开放。
+**适用版本 / Applies to：v2.5.0 的现有排版与下载，以及待上线 v2.6.0 静态网页版的课程模板分享。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码或分享 JSON。
 
 中文预设与四项新增排版字段已在 v2.5.0 中具备，**[公网网站](https://formcapy.com/)现已更新至 v2.5.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
 The v2.5.0 public website, source and packages include the Chinese presets and four additional typography fields below. Older v2.4.0 builds do not accept those four additional fields.
+
+**上线状态 / Deployment status：**下方“课程模板分享”描述待上线的 v2.6.0 静态网页版，不属于当前公网 v2.5.0 或现有安装包。本轮没有新发布、已验证的桌面或 Android 包。The sharing section describes the v2.6.0 static website awaiting deployment, without a new desktop or Android package release; the public site and downloads remain v2.5.0.
 
 ## 中文
 
@@ -148,6 +150,33 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 - 当前源码读取旧模板时，四项中文排版字段补为 `western`、`Times New Roman`、`0`、`0`，保留原来的倍数行距和厘米缩进。
 - 清理浏览器站点数据可能移除网页端模板；可先复制或导出 JSON 作为备份。
 - 生成后仍需人工检查页眉、标题页和参考文献页。
+
+#### 课程模板分享
+
+本节描述待上线的 v2.6.0 静态网页版功能。分享只传递模板，不需要服务器、注册或集中保存模板。
+
+| 方式 | 内容 | 使用范围 |
+| --- | --- | --- |
+| **导出 JSON**（现有兼容格式） | 顶层直接是排版字段的裸 profile；不含课程标签 | 可在支持相应字段的网页、桌面和 Android 端导入 |
+| **复制模板码** | 以 `FC1.` 开头，完整携带排版设置与四个课程标签 | 在支持模板码的新网页版中粘贴，先预览、再应用 |
+| **导出分享 JSON** | 同一份设置和标签，使用 `schema`、`v`、`settings`、`labels` 包装 | 在支持分享协议的新网页版中导入，便于保留课程标签 |
+
+发送模板：
+
+1. 选择 **中文预设 / 自定义模板**，调整或选好排版。
+2. 展开 **分享课程模板**，按需填写学校名称、学校简称、课程代码、校区／学期。四项独立，可留空，不从论文信息自动填入，不根据代码推测学校。
+3. 若不想分享当前模板名，可选 **本次分享使用通用名称（不修改当前模板名）**。
+4. 点击 **复制模板码** 或 **导出分享 JSON**，核对待分享的设置和标签后发给对方。剪贴板复制失败时，可手动复制显示的内容。
+
+接收模板：点击 **导入模板**，粘贴模板码或任一种模板 JSON，也可选择 JSON 文件；点 **预览模板** 后核对只读预览，再点 **应用此模板** 才改变后续生成使用的模板设置。不会自动保存或覆盖已保存模板；当前文稿、论文信息、段落保留选择和已有生成结果保持原状。
+
+点 **保存模板** 可将排版设置保留到 **我的模板**，四项课程标签不会随之保存，刷新或关闭页面后不保留。要连同标签留存，请保留模板码或导出分享 JSON；兼容裸 JSON 始终不含标签。
+
+分享内容不会自动带入文稿、姓名、论文标题、教师、文件字节、段落选择或生成结果。模板名称和主动填写的标签会进入码／文件，持有者可以读取。模板码不是加密或随机短 ID：其中包含完整设置，长度随名称和标签而变化；修改后需要重新复制，旧码不会更新，也没有远程撤销。
+
+模板码上限为 8,192 个 ASCII 字符，解码后的 JSON 上限为 4,096 字节；分享 JSON 文件也不能超过 4,096 字节。未知版本、损坏或超限数据不会覆盖当前设置。不会自动读取网址片段，也不生成分享链接。
+
+分享 JSON 中 `settings` 必须列全 19 项排版字段，`labels` 必须列全 `school_name`、`school_abbr`、`course_code`、`campus_term`；未填标签用空字符串。现有兼容裸 JSON 仍走原导入规则和 32 KB 文件上限，不要给它增加分享包装。现有 v2.5.0 安装包不识别模板码或分享 JSON 包装格式；跨旧端使用兼容裸 JSON。协议及校验范围见[分享设计](SHARING-DESIGN.md)。
 
 ### 5. DOCX 段落选择与对象保留
 
@@ -313,6 +342,24 @@ Import and export notes:
 - The current source supplies `western`, `Times New Roman`, `0` and `0` for the four missing Chinese-typography fields in older profiles, retaining their multiple spacing and centimeter indentation.
 - Clearing browser site data may remove web templates; copy or export the JSON first if you want a backup.
 - Still check the header, title page and reference page after generating.
+
+#### Course-template sharing
+
+This feature is prepared for the v2.6.0 static website and awaits deployment. The current public site and existing v2.5.0 packages do not support ShareV1; no new desktop or Android package is released in this round.
+
+| Method | Content | Compatibility |
+| --- | --- | --- |
+| **Export JSON** | Existing bare layout profile; no course labels | Web, desktop and Android versions supporting its fields |
+| **Copy template code** | An `FC1.` code carrying all settings and four optional labels | New sharing-aware web build; paste, preview, then apply |
+| **Export sharing JSON** | The same share data under `schema`, `v`, `settings`, `labels` | New sharing-aware web build; retains course labels |
+
+Choose or adjust a custom template, expand **Share a course template**, and enter school name, school abbreviation, course code and campus/term separately if wanted. These labels are not filled from paper details or inferred from course codes. An optional generic name changes only this share's name. Choose **Copy template code** or **Export sharing JSON**, review and share. If clipboard access fails, copy the displayed content manually.
+
+Recipients paste a code or either JSON format into **Import template**, or select a JSON file, then choose **Preview template** and explicitly **Apply this template**. This changes future formatting settings without replacing paper details, the selected draft, paragraph-preservation choices, generated results or saved presets. **Save template** retains layout only; labels stay in the current session and are not kept after reloading or closing. Retain a code or sharing JSON to preserve labels.
+
+Names, drafts, paper titles, instructors, file bytes, paragraph choices and results are not added automatically. The template name and labels you enter are included and readable by anyone holding the code or file. Codes are not encryption or random short IDs: they contain the complete settings and vary in length. Editing requires copying a new code; old codes cannot be updated or revoked remotely. No share link is generated or read from the address bar.
+
+Codes are limited to 8,192 ASCII characters and decoded JSON to 4,096 bytes; sharing JSON has the same 4,096-byte input limit. Invalid, unknown-version or oversized data does not replace current settings. Existing bare JSON retains its import rules and 32 KB file limit. Sharing JSON requires all 19 settings and all four label keys; use the compatible bare format with older desktop/Android apps. See the [sharing protocol](SHARING-DESIGN.md).
 
 ### 5. DOCX paragraph selection and object retention
 
