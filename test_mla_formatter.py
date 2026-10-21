@@ -4,6 +4,7 @@ Run:  python -m pytest test_mla_formatter.py -q      (or)   python test_mla_form
 """
 import io
 import os
+import re
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -20,6 +21,11 @@ import mla_formatter as m
 TMP = tempfile.mkdtemp(prefix="mlafmt_test_")
 META = dict(name="Jane Doe", instructor="Professor Smith",
             course="ENG 101", date_str="8 October 2026", title="On Reading")
+
+
+def test_current_version_has_packaging_changelog_entry():
+    changelog = (Path(__file__).resolve().parent / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert re.search(rf"(?m)^## v{re.escape(m.__version__)}\b", changelog)
 
 
 def _txt(content, name="d.txt", enc="utf-8"):

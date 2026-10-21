@@ -88,6 +88,13 @@ check('Every Spanish catalog value renders nonempty text', () => {
   }
 });
 
+check('Spanish result counts use singular forms and blank templates are format-neutral', () => {
+  assert.match(catalogs.es.result_details('1 KB', 1, 1, 1), /1 párrafo · 1 entrada de referencias · 1 línea de encabezado duplicada eliminada/);
+  assert.match(catalogs.es.result_details('2 KB', 2, 2, 2), /2 párrafos · 2 entradas de referencias/);
+  assert.match(catalogs.es.result_retained(1, 1, 1), /1 párrafo sin cambios · 1 imagen del cuerpo · 1 tabla conservada/);
+  assert.doesNotMatch(catalogs.es.result_blank('1 KB'), /MLA|APA/);
+});
+
 check('All HTML data-t, data-ph and data-label keys exist in all three catalogs', () => {
   const markup = source.slice(0, source.indexOf('<script'));
   const usedKeys = new Set([...markup.matchAll(/\bdata-(?:t|ph|label)="([^"]+)"/g)].map((m) => m[1]));
