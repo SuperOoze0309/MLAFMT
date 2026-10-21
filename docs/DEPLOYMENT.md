@@ -1,26 +1,33 @@
 # FormCapy web deployment
 
-## v2.5.0 staged update — public deployment pending
+## Current public deployment — v2.5.0
 
-**The public website still runs v2.4.0.** The v2.5.0 source and local static
-artifact include Chinese presets, Spanish and revised privacy text, but no
-v2.5.0 production upload has been recorded. Upload is awaiting the owner's
-manual selection of the staged H-drive folder in the browser. Existing
-Cloudflare routes, DNS and HTTPS settings remain in place.
+**v2.5.0 is live** at [formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/). The owner uploaded the final
+H-drive folder on 21 October 2026; Cloudflare production version `a9a1bc2e`
+shows **Ready, 100%**. Chinese course-paper and basic-thesis presets, Spanish,
+and the revised on-device privacy text are available without registration.
+Existing Workers Routes, DNS and HTTPS settings remain in place.
 
 | Item | v2.5.0 recorded state |
 | --- | --- |
 | Application source | `930d959bb4f5844ae81abb326b6d363c0c03334f` |
 | Platform CI | [Run 39568529951](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39568529951), all 7 jobs passed |
 | Downloads | [v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0), published `2026-10-21T08:33:08Z`; all 8 assets checked against REST size/digest metadata; tag targets the source commit above |
-| Staged static artifact | `dist/formcapy-v2.5.0/`, awaiting Cloudflare upload |
-| Staged cache version | `formcapy-2.5.0-pyodide-314.0.7-7d9b79703923` |
+| Uploaded static artifact | `dist/formcapy-v2.5.0/`; 123 manifest entries plus `manifest.json` |
+| Manifest SHA-256 | `3df0bee10ae34515bf9130d683101682254fd01ad04c979e5e3df86dc3d50e5b` |
+| Public cache version | `formcapy-2.5.0-pyodide-314.0.7-7d9b79703923` |
+| Public Worker assets | 122/122 downloadable resources match local SHA-256 and size; 115,845,925 bytes checked |
+| Public HTTPS | 13/13 checks passed; trusted TLS 1.3, HTTP upgrades preserve path/query, root and `www` return 200 |
+| Public homepage | Root and `www` match the final local HTML byte for byte after RUM was disabled |
+| Public Edge generation | Built-in Markdown demo generated with both Chinese presets on `www`; course preset also generated on the root domain; Spanish interface checked; no console warnings/errors |
+| Existing Edge cache | Reload initially retained v2.4.0; closing the agent's old root-domain test tab and reopening loaded v2.5.0 without clearing storage or drafts |
 | Python regression results | 161 pytest tests plus 159 subtests passed |
 | Node results | 65 cases passed |
 | Local browser | Codex in-app Chromium at `http://127.0.0.1:8606/` |
 | Local preservation result | Synthetic DOCX generation reported 2 preserved paragraphs, 1 body image and 1 table |
 | Offline check | Simulated offline reload and generation passed; online conditions were restored |
-| Download limitation | This round's generated browser DOCX was not downloaded; UI counts are not a fresh downloaded-file inspection |
+| Download limitation | This round's local and public browser DOCX files were not downloaded; UI counts are not a fresh downloaded-file inspection |
 | Device limitation | Safari and physical Apple devices remain unverified; physical Android checks remain unverified |
 
 Saved local evidence is `build/chinese-presets/final-browser-verification.json`.
@@ -31,15 +38,29 @@ before the final copy polish. The offline run used CDP network simulation,
 not physical disconnection. Independent Python regression checks cover DOCX
 structure; they do not establish a new browser-download or Safari result.
 
+Public HTTP evidence is saved in `build/v2.5-web-live/verification.md` and
+`analytics-before-after.md`. The initial custom-domain HTML included a
+367-byte Cloudflare analytics loader absent from the build. Zone Speed → Real
+user monitoring was set to **Disable completely**; the dashboard then showed
+“RUM is currently disabled for this zone.” After propagation, both public
+homepages returned 189,147 bytes, zero beacon scripts and SHA-256
+`54194eab77962d2586bcb0c063db68540733194a7418906ea2eacb84eef9def4`, exactly
+matching the local HTML. No WAF or TLS protections were changed. The initial
+injection alone did not establish draft upload.
+
 The [v2.5 local preview](images/formcapy-v2.5-chinese.png) uses fictional test
-information and is not a public-site screenshot. After upload, repeat the public
-manifest/hash, HTTPS, cache-update and browser/download checks against this
-artifact before recording the website as v2.5.0. The v2.4.0 launch evidence below
-remains the record for the current public deployment.
+information. The [public v2.5 screenshot](images/formcapy-live-v2.5-zh.png) uses
+the built-in Markdown demo and fictional paper details. Other public Edge
+screenshots and generation observations are recorded separately under
+`build/v2.5-web-live/`. Save or download any current work before
+closing old FormCapy tabs and reopening to receive the new offline cache;
+ordinary upgrades deliberately do not replace a running page's runtime.
+Safari, physical devices and a fresh public DOCX download remain unverified
+for this update. The v2.4.0 launch evidence below is historical.
 
-## Current public deployment — v2.4.0
+## Historical public deployment — v2.4.0
 
-The browser-local application is **live** at
+The browser-local application first went live at
 [formcapy.com](https://formcapy.com/) and
 [www.formcapy.com](https://www.formcapy.com/) on **Cloudflare Workers Static
 Assets, free plan**. The initial launch was on **21 October 2026 UTC
@@ -140,7 +161,7 @@ Completed public checks and remaining interactive/device checks are distinguishe
 below. Keep the deployed commit, artifact manifest, date and browser/device
 details with each new result. The v2.4.0 launch release targets
 `f7c3444436b1bd11a06085c9ea202f7f5711e508`; later documentation-only commits did
-not change that public deployment. The v2.5.0 source and staged artifact are
+not change that historical deployment. The v2.5.0 source and uploaded artifact are
 recorded separately above.
 
 - [ ] The finished static build loads its browser runtime and processes supported

@@ -1,10 +1,10 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：已发布的 FormCapy v2.5.0 源码及下载版本。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)现已开放。
+**适用版本 / Applies to：FormCapy v2.5.0 网页版、源码及下载版本。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)现已开放。
 
-中文预设与四项新增排版字段已在 v2.5.0 中具备。**[公网网站](https://formcapy.com/)目前仍为 v2.4.0，新版静态产物尚待部署**；v2.4.0 下载和网站不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
+中文预设与四项新增排版字段已在 v2.5.0 中具备，**[公网网站](https://formcapy.com/)现已更新至 v2.5.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
-The released v2.5.0 source and packages include the Chinese presets and four additional typography fields below. **The public website still runs v2.4.0 pending deployment** and, like the v2.4.0 packages, does not accept those four additional fields.
+The v2.5.0 public website, source and packages include the Chinese presets and four additional typography fields below. Older v2.4.0 builds do not accept those four additional fields.
 
 ## 中文
 
@@ -112,7 +112,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 #### JSON 示例
 
-下面是一个合法的裸 JSON 对象，使用 v2.5.0 的全部默认值，包括四项新增中文排版字段。顶层直接是模板字段，不要再包一层；v2.4.0 下载及当前公网网站不接受这四项字段。
+下面是一个合法的裸 JSON 对象，使用 v2.5.0 的全部默认值，包括四项新增中文排版字段。顶层直接是模板字段，不要再包一层；旧版 v2.4.0 不接受这四项字段。
 
 ```json
 {
@@ -277,7 +277,7 @@ Numbering options are disabled with `header: "none"`; cover numbering is disable
 
 #### JSON example
 
-The following bare JSON object uses all v2.5.0 defaults, including the four additional Chinese typography fields. Its top level is the template fields themselves. v2.4.0 packages and the current public website do not accept those four additional fields.
+The following bare JSON object uses all v2.5.0 defaults, including the four additional Chinese typography fields. Its top level is the template fields themselves. Older v2.4.0 builds do not accept those four additional fields.
 
 ```json
 {

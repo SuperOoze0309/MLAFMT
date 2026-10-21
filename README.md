@@ -4,11 +4,11 @@
 
 [立即使用网页版 / Use in browser](https://formcapy.com/) · [中文](#中文) · [English](#english) · [版式 / Formats](docs/FORMATS.md) · [下载 / Downloads](https://github.com/SuperOoze0309/MLAFMT/releases/latest)
 
-**免费使用，无需注册。文稿在你的浏览器本地处理，不上传。** 支持 `.docx`、`.txt`、`.md`，可整理为 MLA 9、APA 7 学生论文或自定义课程模板。
+**免费使用，无需注册。排版在你的设备上完成，当前文稿不会自动上传。** 支持 `.docx`、`.txt`、`.md`，可整理为 MLA 9、APA 7 学生论文或自定义课程模板。
 
-**Free, no account required. Your draft stays in your browser.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
+**Free, no account required. Formatting runs on your device; the current draft is not uploaded automatically.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
-**网页版尚未更新，目前仍为 v2.4.0。** 使用新增中文预设或西班牙语界面，请先下载 v2.5.0。**Website update pending:** use the v2.5.0 offline apps for Chinese presets and Spanish. [部署状态 / Deployment status](docs/DEPLOYMENT.md)
+**网页版与下载版本均已更新至 v2.5.0。** 中文预设和西班牙语界面现已上线。**The website and offline apps now run v2.5.0**, including Chinese presets and Spanish. [部署状态 / Deployment status](docs/DEPLOYMENT.md)
 
 ## 三步开始 / Get started
 
@@ -16,11 +16,13 @@
 2. 选入草稿；DOCX 可选多段保留原格式。Choose a draft; optionally keep selected DOCX paragraphs unchanged.
 3. 点 **生成 Word 文档 → 下载 Word**。Select **Format document → Download Word**.
 
-![FormCapy v2.4.0 已上线中文网页版：虚构示例信息、选入的 DOCX 草稿和生成后的 Word 下载入口](docs/images/formcapy-live-zh.png)
+![FormCapy v2.5.0 已上线中文网页版：中文课程论文预设、虚构示例信息和生成后的 Word 下载入口](docs/images/formcapy-live-v2.5-zh.png)
 
-*v2.4.0 真实公网操作截图，使用虚构信息与测试文稿。v2.4.0 live-site screenshot using fictional details and a synthetic draft.*
+*v2.5.0 正式网站截图，使用虚构信息和内置 Markdown 示例。右侧为版式示意；本轮已验证生成，未重新下载并检查 Word 文件。Live v2.5.0 screenshot using fictional details and the built-in Markdown demo; generation was verified, without a fresh downloaded-file inspection.*
 
 首次使用需要联网下载程序。iPhone/iPad 的保存步骤见 [Apple 指南 / Apple guide](docs/APPLE.md)；Safari 与 Apple 实机流程尚未验证。First use needs an internet connection; Safari and Apple device workflows remain unverified.
+
+若仍显示旧版，先下载当前文稿，再关闭本站旧标签页并重新打开。If an old version remains open, download your current document before closing the site's old tabs and reopening.
 
 应用名为 **FormCapy**，GitHub 项目保持 **MLAFMT**。App: FormCapy; repository: MLAFMT.
 
@@ -68,7 +70,7 @@ APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guideli
 
 v2.5.0 新增 **中文课程论文（通用）** 和 **中文毕业论文（基础版）**，放在 **中文预设 / 自定义模板** 的内置预设中：A4、宋体小四、首行缩进 2 字符、两端对齐和页脚居中页码；毕业论文基础版使用固定 20 pt 行距和不编号的基础封面。可选中后继续修改并保存为自己的模板。
 
-预设不生成目录、摘要或学校专用封面，不自动转换 GB/T 7714 引用格式；学校要求优先。公网网站仍为 v2.4.0，尚待更新；请使用 v2.5.0 源码或上方新版下载。详情与可导入 JSON 见[格式指南](docs/FORMATS.md)。
+预设不生成目录、摘要或学校专用封面，不自动转换 GB/T 7714 引用格式；学校要求优先。网页版、v2.5.0 源码及上方下载均可使用。详情与可导入 JSON 见[格式指南](docs/FORMATS.md)。
 
 1. 选择 **中文预设 / 自定义模板**。
 2. 展开 **选择预设或定制模板**，选择课程论文或毕业论文基础版；需要时进入 **高级定制** 调整字体、缩进和行距。
@@ -78,7 +80,7 @@ v2.5.0 新增 **中文课程论文（通用）** 和 **中文毕业论文（基�
 
 *v2.5静态本地预览，虚构测试信息。Local static preview with fictional test details; this is not a public-site screenshot.*
 
-v2.5.0 includes two editable built-in Chinese presets for course papers and basic theses, with separate Chinese/Latin fonts, character indentation and exact point spacing. Choose **Chinese presets / Custom template**, select a built-in preset, adjust it if needed, and generate Word. The public website still runs v2.4.0 and awaits deployment; use the v2.5.0 source or the new packages above. See the [format guide](docs/FORMATS.md) for settings and scope.
+v2.5.0 includes two editable built-in Chinese presets for course papers and basic theses, with separate Chinese/Latin fonts, character indentation and exact point spacing. Choose **Chinese presets / Custom template**, select a built-in preset, adjust it if needed, and generate Word. These presets are available on the public website and in the v2.5.0 source and packages above. See the [format guide](docs/FORMATS.md) for settings and scope.
 
 v2.5.0 还加入 **Español** 界面，覆盖静态网页构建、桌面和 Android；切换语言不会翻译文稿或个人模板名。下一版的[课程模板分享与参考文献方案](docs/SHARING-DESIGN.md)采用纯静态设计，目前未实现分享链接或引用条目转换。
 
@@ -201,7 +203,7 @@ Release 中的应用是当前发布版本。仓库根目录的旧 `MLAFMT.exe` �
 
 ## English
 
-Turn a `.docx`, `.txt` or `.md` draft into a Word document using **MLA 9, APA 7 student papers or custom course templates**. v2.5.0 adds built-in Chinese presets and Spanish alongside Chinese and English; switching language leaves your essay text unchanged. The public website remains v2.4.0 pending deployment of the new static build. Use the current website or an offline desktop/Android app.
+Turn a `.docx`, `.txt` or `.md` draft into a Word document using **MLA 9, APA 7 student papers or custom course templates**. v2.5.0 adds built-in Chinese presets and Spanish alongside Chinese and English; switching language leaves your essay text unchanged. The public website and offline desktop/Android apps now offer these features.
 
 ### Use in your browser
 
