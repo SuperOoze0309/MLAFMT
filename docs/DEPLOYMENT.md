@@ -1,6 +1,6 @@
 # FormCapy web deployment
 
-## v2.6.0 website update — awaiting production upload
+## Current public website — v2.6.0
 
 The v2.6.0 source adds self-contained `FC1.` course-template codes, versioned
 sharing JSON and review before applying. The existing layout-only JSON remains
@@ -8,18 +8,46 @@ compatible with v2.5.0 offline apps. No share-link service, server, database or
 visitor account is added. Current downloadable apps remain v2.5.0; this is a
 static-website update.
 
-The source and static artifact are being checked before upload to the existing
-Cloudflare Worker. Production still serves v2.5.0 until the upload is verified.
-The previous production record below remains historical evidence for that build.
+The owner uploaded the checked H-drive folder on 21 October 2026. The existing
+Cloudflare Worker automatically deployed production version `a4500358`, shown
+as **Ready, 100%**. Both [formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/) serve the v2.6.0 snapshot.
 
-Local development observations are recorded in
-`build/template-sharing/acceptance.md`; automated release checks for this update
-are kept under `build/v2.6-web-release/`. Do not describe Safari, physical devices
+| Item | Recorded result |
+| --- | --- |
+| Application source | `4e8817579e20a2003b86640e0e0dba6e3876dcfc` |
+| CI | [39586840224](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39586840224): all 7 jobs passed; native build artifacts were not published in this website release |
+| Local Python regression | 161 tests and 159 subtests passed |
+| Node regression | 112 cases passed, including 40 codec and 7 sharing-state cases; both new suites also ran in CI |
+| Uploaded folder | `dist/formcapy-v2.6.0/`; 125 manifest entries plus `manifest.json` (126 files) |
+| Manifest SHA-256 | `d62c46e30d1b81fbcdd901155009322031184170e78f24eb160da61e5c071189` |
+| Public cache | `formcapy-2.6.0-pyodide-314.0.7-f1db3d613220` |
+| Worker asset sweep | 124/124 downloadable files match local size and SHA-256; 115,884,667 bytes checked in one sweep |
+| Root / www | 10/10 homepage, manifest, SW and sharing-script comparisons match; zero analytics beacons |
+| HTTPS | 15/15 checks passed, trusted TLS 1.3; HTTP upgrades preserve encoded paths and queries |
+| Public Edge | Code copied on Worker, pasted/previewed/applied on `www` in Spanish; date and paper course preserved; both origins generated the demo with the shared profile |
+| Sharing JSON | Actual public output has 19 settings and 4 labels; excludes fictional paper name, title and date |
+| Downloads / devices | No fresh browser DOCX or JSON download inspection; Safari and physical devices remain unverified |
+
+Edge initially displayed its v2.5.0 offline cache. A normal demo conversion
+initialized the runtime and its worker registration; closing only the agent's
+old test tab and opening `www` again then showed v2.6.0. No cache, storage or
+user-draft clearing, forced activation or user-tab closure was used. Save or
+download current work before closing old FormCapy tabs to receive an update.
+The first bare visit alone was not sufficient in this observed session.
+
+Evidence is saved under `build/v2.6-web-release/`: `public-http-verification.md`,
+`browser-verification.md`, the test logs and the production dashboard screenshot.
+The [public template-code screenshot](images/formcapy-live-v2.6-template-code.png)
+uses fictional paper details and user-entered example course labels.
+
+Earlier local development observations are recorded in
+`build/template-sharing/acceptance.md`. Do not describe Safari, physical devices
 or native v2.6 installers as verified by this web deployment.
 
 ## Public v2.5.0 deployment record
 
-**v2.5.0 is live** at [formcapy.com](https://formcapy.com/) and
+**v2.5.0 was deployed** at [formcapy.com](https://formcapy.com/) and
 [www.formcapy.com](https://www.formcapy.com/). The owner uploaded the final
 H-drive folder on 21 October 2026; Cloudflare production version `a9a1bc2e`
 shows **Ready, 100%**. Chinese course-paper and basic-thesis presets, Spanish,

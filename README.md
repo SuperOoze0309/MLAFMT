@@ -8,7 +8,7 @@
 
 **Free, no account required. Formatting runs on your device; the current draft is not uploaded automatically.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
-**当前公网网站和离线下载为 v2.5.0；v2.6.0 静态网页版已进入上线准备，尚未部署。** v2.6.0 新增课程模板码与分享 JSON，现有下载包不包含这两项功能。**The public site and offline downloads remain v2.5.0; the v2.6.0 static website is being prepared for deployment**, adding template codes and sharing JSON. Existing packages do not include these features. [部署状态 / Deployment status](docs/DEPLOYMENT.md)
+**v2.6.0 静态网页版已上线，新增课程模板码与分享 JSON；离线下载仍为 v2.5.0，不包含这两项功能。** **The static website now runs v2.6.0**, with template codes and sharing JSON; offline downloads remain v2.5.0 without these features. [网页版发布说明 / Web release notes](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.6.0) · [部署状态 / Deployment status](docs/DEPLOYMENT.md)
 
 ## 三步开始 / Get started
 
@@ -18,7 +18,7 @@
 
 ![FormCapy v2.5.0 已上线中文网页版：中文课程论文预设、虚构示例信息和生成后的 Word 下载入口](docs/images/formcapy-live-v2.5-zh.png)
 
-*v2.5.0 正式网站截图，使用虚构信息和内置 Markdown 示例。右侧为版式示意；本轮已验证生成，未重新下载并检查 Word 文件。Live v2.5.0 screenshot using fictional details and the built-in Markdown demo; generation was verified, without a fresh downloaded-file inspection.*
+*历史 v2.5.0 正式网站截图，使用虚构信息和内置 Markdown 示例；当前网站为 v2.6.0。右侧为版式示意。Historical v2.5.0 live-site screenshot using fictional details and the built-in Markdown demo; the current website runs v2.6.0.*
 
 首次使用需要联网下载程序。iPhone/iPad 的保存步骤见 [Apple 指南 / Apple guide](docs/APPLE.md)；Safari 与 Apple 实机流程尚未验证。First use needs an internet connection; Safari and Apple device workflows remain unverified.
 
@@ -88,19 +88,19 @@ v2.5.0 还加入 **Español** 界面，覆盖静态网页构建、桌面和 Andr
 
 v2.5.0 also includes Spanish in the static web build, desktop and Android interfaces. Changing the interface language does not translate drafts or personal template names.
 
-### v2.6.0 待上线：课程模板分享 / Awaiting deployment: course-template sharing
+### v2.6.0 网页版新增：课程模板分享 / New on the website: course-template sharing
 
-**本节描述待上线的 v2.6.0 静态网页版；当前公网网站与安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
+**v2.6.0 静态网页版已上线，以下功能可在 [formcapy.com](https://formcapy.com/) 使用；离线安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
 
-![课程模板码本地开发预览：完整设置自带在 FC1 模板码中](docs/images/formcapy-template-code-preview.png)
+![FormCapy v2.6.0 正式网站：课程模板码包含完整排版设置和用户填写的课程标签](docs/images/formcapy-live-v2.6-template-code.png)
 
-*本地开发预览；课程标签仅为用户自填的示例，不代表学校官方模板。Local development preview; the labels are user-entered examples, without institutional verification.*
+*v2.6.0 正式网站的 Edge 截图；UCSB／LING36 仅为用户自填的课程标签示例，不代表学校官方模板或课程认证。Live v2.6.0 website in Edge; UCSB/LING36 are user-entered example labels, without institutional verification.*
 
 - 学校全名、学校简称、课程代码、校区／学期可分别填写，不根据 `UCSBLING36` 等代码猜学校，也不声明课程标签唯一或官方认证。
 - 分享内容包含模板名称、排版设置及主动填写的课程标签；不会自动带入文稿、姓名、论文标题、教师、段落保留选择或生成结果。可选 **本次分享使用通用名称**，不修改当前模板名；持有码或文件的人可以读取其中的名称和标签。
 - 模板码完整自带设置，不使用链接、服务器、账号或后台查码。设置修改后需重新复制；旧码不会更新或撤销。保存到 **我的模板** 仅保存排版设置，课程标签需用模板码或分享 JSON 留存。
 
-**This section describes the v2.6.0 static website awaiting deployment; the public site and packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
+**These features are live on the v2.6.0 static website; offline packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
 
 操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。参考文献结构化编辑和 MLA/APA/GB/T 条目转换仍仅为设计，未实现。
 
@@ -171,7 +171,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前离线下载为 v2.5.0；仓库源码正准备 v2.6.0 静态网页版。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码及静态网页版为 v2.6.0，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -299,7 +299,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-Current offline downloads remain v2.5.0; the source is being prepared for the v2.6.0 static website. This round does not provide newly verified desktop or Android packages. Run from source as follows.
+The source and static website are v2.6.0; offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 

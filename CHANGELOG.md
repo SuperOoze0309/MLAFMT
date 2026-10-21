@@ -5,7 +5,8 @@
 - 网页版新增课程模板码：复制完整的 `FC1.` 模板码，在“导入模板”粘贴、预览后应用；不需要分享网址、服务器、账号或模板数据库。
 - 新增独立的分享 JSON，包含完整排版设置与自填学校／课程标签；保留现有裸模板 JSON 导入导出。不会自动带入文稿、论文信息、段落选择或生成结果。
 - 应用分享模板不自动保存、不改写论文日期，也不覆盖当前文稿和已有结果。课程标签可通过模板码或分享 JSON 留存；“我的模板”和兼容 JSON 仍仅保存排版设置。
-- Add self-contained course-template codes and sharing JSON to the web UI, with review before applying and no server lookup. Existing layout-only JSON remains compatible. Website deployment is being prepared; existing offline downloads remain v2.5.0.
+- Add self-contained course-template codes and sharing JSON to the web UI, with review before applying and no server lookup. Existing layout-only JSON remains compatible. The [v2.6.0 website](https://formcapy.com/) is live; existing offline downloads remain v2.5.0.
+- 上线核对：124/124 公网资源匹配本地构建，HTTPS 15/15 检查通过，真实 Edge 模板码预览／应用及文档生成通过。112 项 Node 检查、161 项 Python 测试和 159 项子检查通过；CI 7 个任务全部通过。安装包下载仍为 v2.5.0，本次只发布静态网页版。
 
 ## v2.5.0 — 2026-10-21
 

@@ -1,12 +1,12 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：v2.5.0 的现有排版与下载，以及待上线 v2.6.0 静态网页版的课程模板分享。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码或分享 JSON。
+**适用版本 / Applies to：已上线 v2.6.0 静态网页版，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码或分享 JSON。
 
-中文预设与四项新增排版字段已在 v2.5.0 中具备，**[公网网站](https://formcapy.com/)现已更新至 v2.5.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
+中文预设与四项新增排版字段自 v2.5.0 起具备，**[公网网站](https://formcapy.com/)现为 v2.6.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
-The v2.5.0 public website, source and packages include the Chinese presets and four additional typography fields below. Older v2.4.0 builds do not accept those four additional fields.
+The public website now runs v2.6.0. Chinese presets and the four additional typography fields below remain available in both the website and v2.5.0 packages. Older v2.4.0 builds do not accept those four additional fields.
 
-**上线状态 / Deployment status：**下方“课程模板分享”描述待上线的 v2.6.0 静态网页版，不属于当前公网 v2.5.0 或现有安装包。本轮没有新发布、已验证的桌面或 Android 包。The sharing section describes the v2.6.0 static website awaiting deployment, without a new desktop or Android package release; the public site and downloads remain v2.5.0.
+**上线状态 / Deployment status：**下方“课程模板分享”已在 v2.6.0 静态网页版上线，不属于现有 v2.5.0 安装包。本轮没有新发布、已验证的桌面或 Android 包。Course-template sharing is live on the v2.6.0 static website; offline downloads remain v2.5.0 without this feature. This update does not release a new desktop or Android package.
 
 ## 中文
 
@@ -153,7 +153,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 #### 课程模板分享
 
-本节描述待上线的 v2.6.0 静态网页版功能。分享只传递模板，不需要服务器、注册或集中保存模板。
+本节描述已上线的 v2.6.0 静态网页版功能。分享只传递模板，不需要服务器、注册或集中保存模板。
 
 | 方式 | 内容 | 使用范围 |
 | --- | --- | --- |
@@ -345,7 +345,7 @@ Import and export notes:
 
 #### Course-template sharing
 
-This feature is prepared for the v2.6.0 static website and awaits deployment. The current public site and existing v2.5.0 packages do not support ShareV1; no new desktop or Android package is released in this round.
+This feature is live on the v2.6.0 static website. Existing v2.5.0 packages do not support ShareV1; no new desktop or Android package is released in this round.
 
 | Method | Content | Compatibility |
 | --- | --- | --- |
