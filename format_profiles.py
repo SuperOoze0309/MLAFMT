@@ -21,7 +21,35 @@ DEFAULT_CUSTOM_PROFILE = {
     "page_number_position": "top_right",
     "show_cover_page_number": True,
     "page_number_start": 1,
+    "typography": "western",
+    "latin_font_name": "Times New Roman",
+    "first_line_chars": 0,
+    "line_spacing_pt": 0,
 }
+
+# Editable starting points, kept separate from a user's saved templates.
+BUILTIN_CUSTOM_PRESETS = tuple(
+    {
+        "id": preset_id,
+        "label_zh": label,
+        "label_en": english,
+        "profile": {
+            **DEFAULT_CUSTOM_PROFILE,
+            "label": label, "paper_size": "A4", "font_name": "宋体",
+            "font_size": 12, "line_spacing": 1.5, "margin_cm": 2.5,
+            "first_line_cm": 0.8466666667, "alignment": "justify",
+            "page_number_position": "bottom_center",
+            "title_page": cover, "show_cover_page_number": False,
+            "references_title": "参考文献", "sort_references": False,
+            "typography": "chinese", "first_line_chars": 2,
+            "line_spacing_pt": fixed_spacing,
+        },
+    }
+    for preset_id, label, english, cover, fixed_spacing in (
+        ("zh_course", "中文课程论文（通用）", "Chinese course paper", False, 0),
+        ("zh_thesis", "中文毕业论文（基础版）", "Chinese thesis (basic)", True, 20),
+    )
+)
 
 
 def normalize_custom_profile(profile=None):
@@ -51,12 +79,15 @@ def normalize_custom_profile(profile=None):
         ("alignment", ("left", "justify")),
         ("header", ("surname_page", "page", "none")),
         ("page_number_position", ("top_right", "bottom_center", "bottom_right")),
+        ("typography", ("western", "chinese")),
+        ("latin_font_name", ("Times New Roman", "Arial", "Calibri")),
     ):
         if result[key] not in choices:
             raise ValueError(f"Unsupported {key} in the course template.")
     for key, minimum, maximum in (
         ("font_size", 8, 24), ("line_spacing", 1, 3),
         ("margin_cm", 0.5, 5.08), ("first_line_cm", 0, 2.54),
+        ("first_line_chars", 0, 4), ("line_spacing_pt", 0, 60),
     ):
         value = result[key]
         if (isinstance(value, bool) or not isinstance(value, (int, float))

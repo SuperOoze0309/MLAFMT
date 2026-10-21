@@ -1,5 +1,21 @@
 # Changelog
 
+## 开发中 / Unreleased
+
+### 中文
+
+- 在自定义课程模板中增加 **中文课程论文（通用）**、**中文毕业论文（基础版）** 两项内置预设；可修改并保存独立副本，不占个人模板名额。
+- 增加中文与西文字体分别设置、首行字符缩进和固定磅值行距；旧模板继续使用原来的倍数行距和厘米缩进。
+- 中文预设使用 A4、宋体小四、黑体标题、两端对齐和页脚居中页码；参考文献保留原顺序。毕业论文基础版采用固定 20 pt 行距和不编号的基础封面。
+- 补充中文模板 JSON 与格式说明。预设提供基础排版，不生成目录、摘要或学校专用封面，不自动改写 GB/T 7714 引用；尚未更新公网或 v2.4.0 下载文件。
+
+### English
+
+- Add built-in Chinese course-paper and basic-thesis presets under custom course templates, with independent editable copies outside the personal-template limit.
+- Support separate Chinese/Latin fonts, character-based first-line indentation and exact point line spacing while retaining older profile defaults.
+- Use A4, 12 pt 宋体 body text, 黑体 headings, justified paragraphs and centered footer numbers; retain reference order. The basic-thesis preset uses exactly 20 pt spacing and an unnumbered basic cover.
+- Add Chinese JSON examples and scope documentation. These are starting layouts, without generated contents/abstracts/institutional covers or GB/T 7714 citation rewriting. The public website and v2.4.0 downloads have not been updated.
+
 ## v2.4.0 — 2026-10-21
 
 [FormCapy v2.4.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0) 与[网页版](https://formcapy.com/)现已发布。FormCapy v2.4.0 and the browser app are now available.

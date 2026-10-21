@@ -1,0 +1,21 @@
+{
+  "label": "中文毕业论文（基础版）",
+  "paper_size": "A4",
+  "font_name": "宋体",
+  "font_size": 12,
+  "line_spacing": 1.5,
+  "margin_cm": 2.5,
+  "first_line_cm": 0.8466666667,
+  "alignment": "justify",
+  "header": "page",
+  "title_page": true,
+  "references_title": "参考文献",
+  "sort_references": false,
+  "page_number_position": "bottom_center",
+  "show_cover_page_number": false,
+  "page_number_start": 1,
+  "typography": "chinese",
+  "latin_font_name": "Times New Roman",
+  "first_line_chars": 2,
+  "line_spacing_pt": 20
+}

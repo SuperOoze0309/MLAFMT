@@ -8,6 +8,7 @@ Everything else lives in  ⚙ Advanced / 高级选项  (secondary window).
 """
 
 import json
+import datetime
 import locale
 import os
 import subprocess
@@ -36,7 +37,10 @@ from mla_formatter import (
     today_mla,
     today_for_format,
 )
-from format_profiles import DEFAULT_CUSTOM_PROFILE, FONT_CHOICES, normalize_custom_profile
+from format_profiles import (
+    BUILTIN_CUSTOM_PRESETS, DEFAULT_CUSTOM_PROFILE, FONT_CHOICES,
+    normalize_custom_profile,
+)
 
 try:  # optional drag-and-drop
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -302,9 +306,16 @@ T["zh"].update({
     "app": "论文与课程文档排版", "tagline": "选择格式，填写信息，得到整洁的 Word 文档。",
     "convert": "生成 Word 文档", "save_as": "保存排版文档为…",
     "format": "文档格式", "format_mla": "MLA 9", "format_apa": "APA 7 · 学生论文",
-    "format_custom": "自定义课程模板", "affiliation": "学校 / 院系",
+    "format_custom": "中文预设 / 自定义模板", "affiliation": "学校 / 院系",
     "template": "课程模板", "edit_template": "编辑 / 新建模板", "template_title": "课程模板设置",
     "template_hint": "保存老师要求的版式；选择同名模板后保存会更新该模板。最多保存 20 个。",
+    "builtin_prefix": "内置", "saved_prefix": "我的", "template_copy": "副本",
+    "builtin_hint": "中文预设提供常用基础排版，请以学校要求为准；不生成目录、摘要或学校专用封面，也不改写参考文献。编辑后保存为个人副本。",
+    "builtin_readonly": "内置预设不能删除；可编辑并保存为个人副本。",
+    "typography": "文字排版", "typography_western": "西文排版", "typography_chinese": "中文论文排版",
+    "latin_font_name": "西文与数字字体", "line_spacing_pt": "固定行距（磅，0 使用倍数）",
+    "first_line_chars": "首行缩进（字符，0 使用厘米）",
+    "chinese_controls_hint": "固定行距大于 0 时使用固定磅值；字符缩进大于 0 时使用字符数。中文排版分别设置中文与西文字体，并使用黑体标题。",
     "profile_label": "模板名称", "paper_size": "纸张", "font_name": "字体", "font_size": "字号（pt）",
     "line_spacing": "行距（倍）", "margin_cm": "四边页边距（cm）", "first_line_cm": "正文首行缩进（cm）",
     "alignment": "正文对齐", "align_left": "左对齐", "align_justify": "两端对齐",
@@ -318,7 +329,7 @@ T["zh"].update({
     "template_io": "无法读写模板文件：{e}", "template_json": "FormCapy 模板（JSON）",
     "template_too_large": "模板文件超过 64 KB，请选择一个课程模板 JSON 文件。",
     "advanced_custom": "高级定制…", "advanced_custom_title": "高级定制",
-    "advanced_custom_hint": "页码设置会随课程模板保存。",
+    "advanced_custom_hint": "文字排版、缩进、行距和页码设置会随课程模板保存。",
     "page_number_position": "页码位置", "page_number_top_right": "右上角",
     "page_number_bottom_center": "页脚居中", "page_number_bottom_right": "页脚右侧",
     "show_cover_page_number": "在封面显示页码", "page_number_start": "起始页码",
@@ -367,9 +378,16 @@ T["en"].update({
     "done": "✓ Saved: {f} ({b} paragraphs, {w} reference entries{r})",
     "convert": "Create Word document", "save_as": "Save formatted document as…",
     "format": "Document format", "format_mla": "MLA 9", "format_apa": "APA 7 · Student paper",
-    "format_custom": "Custom course template", "affiliation": "School / department",
+    "format_custom": "Chinese presets / Custom template", "affiliation": "School / department",
     "template": "Course template", "edit_template": "Edit / create template", "template_title": "Course template settings",
     "template_hint": "Save your instructor's layout requirements. Saving an existing name updates it. Up to 20 templates.",
+    "builtin_prefix": "Built-in", "saved_prefix": "My templates", "template_copy": "copy",
+    "builtin_hint": "Chinese presets provide a basic layout. Follow your school's requirements; no contents, abstract or school-specific cover is generated, and reference text is unchanged. Edit and save a personal copy.",
+    "builtin_readonly": "Built-in presets cannot be deleted. Edit one and save a personal copy.",
+    "typography": "Text layout", "typography_western": "Western", "typography_chinese": "Chinese paper",
+    "latin_font_name": "Latin / numeral font", "line_spacing_pt": "Exact line spacing (pt; 0 uses multiple)",
+    "first_line_chars": "First-line indent (characters; 0 uses cm)",
+    "chinese_controls_hint": "A positive point value uses exact spacing; a positive character value uses character indentation. Chinese layout uses separate Chinese/Latin fonts and Heiti headings.",
     "profile_label": "Template name", "paper_size": "Paper size", "font_name": "Font", "font_size": "Font size (pt)",
     "line_spacing": "Line spacing (multiple)", "margin_cm": "All page margins (cm)", "first_line_cm": "Body first-line indent (cm)",
     "alignment": "Body alignment", "align_left": "Left", "align_justify": "Justified",
@@ -383,7 +401,7 @@ T["en"].update({
     "template_io": "Could not read or write the template: {e}", "template_json": "FormCapy template (JSON)",
     "template_too_large": "This template exceeds 64 KB. Choose a course template JSON file.",
     "advanced_custom": "Advanced customization…", "advanced_custom_title": "Advanced customization",
-    "advanced_custom_hint": "Page-number settings are saved with the course template.",
+    "advanced_custom_hint": "Text layout, indentation, spacing and page-number settings are saved with the course template.",
     "page_number_position": "Page-number position", "page_number_top_right": "Top right",
     "page_number_bottom_center": "Bottom center", "page_number_bottom_right": "Bottom right",
     "show_cover_page_number": "Show a page number on the cover", "page_number_start": "Starting page number",
@@ -582,7 +600,10 @@ class MLAGui:
         if not isinstance(selected, str) or selected not in [p["label"] for p in self.custom_profiles]:
             selected = self.custom_profiles[0]["label"]
         self.selected_profile = tk.StringVar(self.root, value=selected)
-        self.v["date"].set(today_for_format(self.format_id.get()))
+        builtin = cfg.get("selected_builtin", "")
+        self.selected_builtin = tk.StringVar(self.root, value=builtin if builtin in
+            {preset["id"] for preset in BUILTIN_CUSTOM_PRESETS} else "")
+        self.v["date"].set(self._default_date())
         mode = cfg.get("txt_mode", "blank_line")
         self.txt_mode = tk.StringVar(self.root, value=mode if mode in
                                     ("blank_line", "line_by_line") else "blank_line")
@@ -705,10 +726,17 @@ class MLAGui:
         self._profile_combo = self._edit_profile_btn = None
         if self.format_id.get() == "custom":
             ttk.Label(formats, text=self.t("template"), style="Card.TLabel").pack(anchor=tk.W, pady=(10, 4))
-            self._profile_combo = ttk.Combobox(formats, textvariable=self.selected_profile,
-                values=[p["label"] for p in self.custom_profiles], state="readonly")
+            choices = self._template_choices()
+            selected_choice = next((label for label, builtin, saved in choices
+                if (builtin and builtin == self.selected_builtin.get()) or
+                   (not self.selected_builtin.get() and not builtin and saved == self.selected_profile.get())), choices[0][0])
+            self._profile_choice = tk.StringVar(self.root, value=selected_choice)
+            self._profile_combo = ttk.Combobox(formats, textvariable=self._profile_choice,
+                values=[label for label, _builtin, _saved in choices], state="readonly")
             self._profile_combo.pack(fill=tk.X)
             self._profile_combo.bind("<<ComboboxSelected>>", self._on_profile_selected)
+            if self.selected_builtin.get() or self._custom_profile().get("typography") == "chinese":
+                ttk.Label(formats, text=self.t("builtin_hint"), style="Muted.TLabel", wraplength=420).pack(anchor=tk.W, pady=(8, 0))
             self._edit_profile_btn = ttk.Button(formats, text=self.t("edit_template"), style="Ghost.TButton", command=self._edit_template)
             self._edit_profile_btn.pack(anchor=tk.W, pady=(8, 0))
         info = self._card(left)
@@ -781,11 +809,27 @@ class MLAGui:
         self._draw_preview()
         self._set_busy(self._busy)
 
+    def _template_choices(self):
+        choices = [(f"{self.t('builtin_prefix')} · {preset['label_zh' if self.lang == 'zh' else 'label_en']}",
+                    preset["id"], "") for preset in BUILTIN_CUSTOM_PRESETS]
+        choices.extend((f"{self.t('saved_prefix')} · {profile['label']}", "", profile["label"])
+                       for profile in self.custom_profiles)
+        return choices
+
     def _custom_profile(self):
+        for preset in BUILTIN_CUSTOM_PRESETS:
+            if preset["id"] == self.selected_builtin.get():
+                return normalize_custom_profile(dict(preset["profile"]))
         for profile in self.custom_profiles:
             if profile["label"] == self.selected_profile.get():
                 return dict(profile)
         return dict(self.custom_profiles[0])
+
+    def _default_date(self):
+        if self.format_id.get() == "custom" and self._custom_profile().get("typography") == "chinese":
+            today = datetime.date.today()
+            return f"{today.year}年{today.month}月{today.day}日"
+        return today_for_format(self.format_id.get())
 
     def _on_format_selected(self, _event=None):
         selected = next((key for key in ("mla", "apa", "custom")
@@ -796,9 +840,10 @@ class MLAGui:
         old_format = self.format_id.get()
         if selected == old_format:
             return
-        if self.v["date"].get() == today_for_format(old_format):
-            self.v["date"].set(today_for_format(selected))
+        automatic_date = self.v["date"].get() == self._default_date()
         self.format_id.set(selected)
+        if automatic_date:
+            self.v["date"].set(self._default_date())
         self._adv_win = None
         self._build()
         self._save_prefs()
@@ -806,6 +851,15 @@ class MLAGui:
     def _on_profile_selected(self, _event=None):
         if self._busy or self._choosing_output:
             return
+        automatic_date = self.v["date"].get() == self._default_date()
+        for label, builtin, saved in self._template_choices():
+            if label == self._profile_choice.get():
+                self.selected_builtin.set(builtin)
+                if not builtin:
+                    self.selected_profile.set(saved)
+                break
+        if automatic_date:
+            self.v["date"].set(self._default_date())
         self._adv_win = None
         self._build()
         self._save_prefs()
@@ -820,6 +874,8 @@ class MLAGui:
                     ["Times New Roman · 12 pt", "Double spacing · Letter · 1-inch margins", "Title page · automatic page-number header", "References: new page · 0.5-inch hanging indents"])
         p = self._custom_profile()
         font = f"{p['font_name']} · {p['font_size']:g} pt · {p['paper_size']}"
+        if p.get("typography") == "chinese":
+            font += f" · {p['latin_font_name']}"
         page_numbers = self.t("header_" + p["header"])
         if p["header"] != "none":
             page_numbers += " · " + self.t("page_number_summary", position=self.t("page_number_" + p.get("page_number_position", "top_right")),
@@ -827,12 +883,16 @@ class MLAGui:
             if p["title_page"] and not p.get("show_cover_page_number", True):
                 page_numbers += " · " + self.t("cover_unnumbered")
         if self.lang == "zh":
-            return [font, f"{p['line_spacing']:g} 倍行距 · 页边距 {p['margin_cm']:g} cm",
-                    f"首行缩进 {p['first_line_cm']:g} cm · {self.t('align_' + p['alignment'])}",
+            spacing = f"固定 {p['line_spacing_pt']:g} 磅行距" if p.get("line_spacing_pt", 0) else f"{p['line_spacing']:g} 倍行距"
+            indent = f"{p['first_line_chars']:g} 字符" if p.get("first_line_chars", 0) else f"{p['first_line_cm']:g} cm"
+            return [font, f"{spacing} · 页边距 {p['margin_cm']:g} cm",
+                    f"首行缩进 {indent} · {self.t('align_' + p['alignment'])}",
                     page_numbers + (" · 独立封面" if p["title_page"] else ""),
                     p["references_title"] + " · 另起一页" + (" · 字母排序" if p["sort_references"] else " · 保留顺序")]
-        return [font, f"{p['line_spacing']:g}× spacing · {p['margin_cm']:g} cm margins",
-                f"First-line indent: {p['first_line_cm']:g} cm · {self.t('align_' + p['alignment'])}",
+        spacing = f"Exactly {p['line_spacing_pt']:g} pt" if p.get("line_spacing_pt", 0) else f"{p['line_spacing']:g}× spacing"
+        indent = f"{p['first_line_chars']:g} characters" if p.get("first_line_chars", 0) else f"{p['first_line_cm']:g} cm"
+        return [font, f"{spacing} · {p['margin_cm']:g} cm margins",
+                f"First-line indent: {indent} · {self.t('align_' + p['alignment'])}",
                 page_numbers + (" · title page" if p["title_page"] else ""),
                 p["references_title"] + " · new page" + (" · alphabetical" if p["sort_references"] else " · original order")]
 
@@ -856,6 +916,8 @@ class MLAGui:
         header = profile["header"] if kind == "custom" else ("page" if kind == "apa" else "surname_page")
         font = profile["font_name"] if kind == "custom" else "Times New Roman"
         text_size = max(6, min(16, round(profile["font_size"] * 0.75))) if kind == "custom" else 9
+        chinese = kind == "custom" and profile.get("typography") == "chinese"
+        title_font = ("黑体", 12, "bold") if chinese else (font, text_size + 1, "bold")
         page_position = profile.get("page_number_position", "top_right") if kind == "custom" else "top_right"
         page_start = profile.get("page_number_start", 1) if kind == "custom" else 1
         cover_hidden = kind == "custom" and profile["title_page"] and not profile.get("show_cover_page_number", True)
@@ -867,7 +929,7 @@ class MLAGui:
         title = self.v["title"].get().strip() or self.t("preview_title")
         if kind == "apa" or (kind == "custom" and profile["title_page"]):
             title_item = c.create_text(width / 2, 86, text=title[:100], width=right-left, anchor="n",
-                                      font=(font, text_size + 1, "bold"), fill=TEXT)
+                                      font=title_font, fill=TEXT)
             top = max(128, c.bbox(title_item)[3] + 24)
             details = [name]
             if kind == "apa":
@@ -882,21 +944,39 @@ class MLAGui:
         details = [name]
         if kind == "custom" and self.affiliation.get().strip():
             details.append(self.affiliation.get().strip())
-        details.extend((self.v["instructor"].get().strip() or "Professor Smith",
-                        self.v["course"].get().strip() or "ENG 101",
-                        self.v["date"].get().strip() or today_mla()))
-        for index, value in enumerate(details):
-            c.create_text(left, 52 + index * 20, text=value[:52], anchor="w", width=right-left,
-                          font=(font, text_size), fill=TEXT)
-        title_top = 52 + len(details) * 20
-        title_font = (font, text_size + 1, "bold") if kind == "custom" else (font, text_size + 1)
-        title_item = c.create_text(width / 2, title_top, text=title[:100], width=right-left, anchor="n", font=title_font, fill=TEXT)
-        body_top = max(title_top + 43, c.bbox(title_item)[3] + 18)
-        line_step = profile["line_spacing"] * 8.5 if kind == "custom" else 17
+        if chinese:
+            details.extend(self.v[key].get().strip() for key in ("instructor", "course", "date"))
+            details = [value for value in details if value]
+            title_item = c.create_text(width / 2, 52, text=title[:100], width=right-left,
+                                      anchor="n", font=title_font, fill=TEXT)
+            detail_top = c.bbox(title_item)[3] + 20
+            for index, value in enumerate(details):
+                c.create_text(width / 2, detail_top + index * 20, text=value[:52], anchor="n",
+                              width=right-left, font=(font, text_size), fill=TEXT)
+            body_top = detail_top + len(details) * 20 + 16
+        else:
+            details.extend((self.v["instructor"].get().strip() or "Professor Smith",
+                            self.v["course"].get().strip() or "ENG 101",
+                            self.v["date"].get().strip() or today_mla()))
+            for index, value in enumerate(details):
+                c.create_text(left, 52 + index * 20, text=value[:52], anchor="w", width=right-left,
+                              font=(font, text_size), fill=TEXT)
+            title_top = 52 + len(details) * 20
+            title_font = (font, text_size + 1, "bold") if kind == "custom" else (font, text_size + 1)
+            title_item = c.create_text(width / 2, title_top, text=title[:100], width=right-left, anchor="n", font=title_font, fill=TEXT)
+            body_top = max(title_top + 43, c.bbox(title_item)[3] + 18)
+        line_step = (profile["line_spacing_pt"] * text_size / profile["font_size"]
+                     if kind == "custom" and profile.get("line_spacing_pt", 0)
+                     else profile["line_spacing"] * 8.5 if kind == "custom" else 17)
+        line_step = max(1, line_step)
         body_bottom = 288 if header != "none" and page_position.startswith("bottom_") else 312
         for index in range(max(0, min(12, int((body_bottom - body_top) / line_step) + 1))):
             y = body_top + index * line_step
-            indent = (page_width * profile["first_line_cm"] / (21 if profile["paper_size"] == "A4" else 21.59) if kind == "custom" else 12) if index in (0, 5) else 0
+            if kind == "custom" and profile.get("first_line_chars", 0):
+                indent_width = tkfont.Font(root=self.root, font=(font, text_size)).measure("汉") * profile["first_line_chars"]
+            else:
+                indent_width = page_width * profile["first_line_cm"] / (21 if profile["paper_size"] == "A4" else 21.59) if kind == "custom" else 12
+            indent = indent_width if index in (0, 5) else 0
             end = right - (38 if index in (4, 7) else 0)
             c.create_line(left + indent, y, end, y, fill="#d6d3cb", width=2)
 
@@ -947,7 +1027,8 @@ class MLAGui:
         if not self.remember:
             return True
         cfg = {"lang": self.lang, "txt_mode": self.txt_mode.get(), "format_id": self.format_id.get(),
-               "custom_profiles": self.custom_profiles, "selected_profile": self.selected_profile.get()}
+               "custom_profiles": self.custom_profiles, "selected_profile": self.selected_profile.get(),
+               "selected_builtin": self.selected_builtin.get()}
         cfg.update({key: self.v[key].get().strip() for key in ("name", "instructor", "course", "last_name")})
         cfg["affiliation"] = self.affiliation.get().strip()
         cfg.update({key: value.get() for key, value in self.opt.items()})
@@ -1170,7 +1251,19 @@ class MLAGui:
         for column in (0, 1):
             card.columnconfigure(column, weight=1)
         current = {"page_number_position": "top_right", "show_cover_page_number": True,
-                   "page_number_start": 1, **self._custom_profile()}
+                   "page_number_start": 1, "typography": "western", "latin_font_name": "Times New Roman",
+                   "line_spacing_pt": 0, "first_line_chars": 0, **self._custom_profile()}
+        if self.selected_builtin.get():
+            # Built-ins remain immutable and never overwrite a saved namesake.
+            base_label = current["label"]
+            taken = {profile["label"] for profile in self.custom_profiles}
+            number = 1
+            while True:
+                suffix = f" {self.t('template_copy')}" + (f" {number}" if number > 1 else "")
+                current["label"] = base_label[:60 - len(suffix)] + suffix
+                if current["label"] not in taken:
+                    break
+                number += 1
         variables = {key: (tk.BooleanVar(w, value=value) if isinstance(value, bool)
                            else tk.StringVar(w, value=f"{value:g}" if isinstance(value, (int, float)) else value))
                      for key, value in current.items()}
@@ -1179,6 +1272,7 @@ class MLAGui:
             "header": {self.t("header_" + key): key for key in ("surname_page", "page", "none")},
             "page_number_position": {self.t("page_number_" + key): key
                                      for key in ("top_right", "bottom_center", "bottom_right")},
+            "typography": {self.t("typography_" + key): key for key in ("western", "chinese")},
         }
         display_vars = {key: tk.StringVar(w, value=next(label for label, value in choices.items() if value == current[key]))
                         for key, choices in choice_maps.items()}
@@ -1187,7 +1281,9 @@ class MLAGui:
                   ("first_line_cm", "first_line_cm"), ("alignment", "alignment"), ("header", "header"),
                   ("references_title", "references_title"))
         ranges = {"font_size": (8, 24, 0.5), "line_spacing": (1, 3, 0.25),
-                  "margin_cm": (0.5, 5.08, 0.1), "first_line_cm": (0, 2.54, 0.1)}
+                  "margin_cm": (0.5, 5.08, 0.1), "first_line_cm": (0, 2.54, 0.1),
+                  "line_spacing_pt": (0, 60, 1), "first_line_chars": (0, 4, 0.5)}
+        main_controls = {}
         for row, (key, label) in enumerate(fields):
             ttk.Label(card, text=self.t(label), style="Card.TLabel").grid(row=row, column=0, sticky="w", padx=(0, 16), pady=6)
             if key in choice_maps:
@@ -1200,6 +1296,7 @@ class MLAGui:
             else:
                 entry = ttk.Entry(card, textvariable=variables[key], width=26)
             entry.grid(row=row, column=1, sticky="ew", pady=6)
+            main_controls[key] = entry
         for row, key in enumerate(("title_page", "sort_references"), start=len(fields)):
             ttk.Checkbutton(card, text=self.t(key), variable=variables[key], style="Card.TCheckbutton").grid(row=row, column=0, columnspan=2, sticky="w", pady=5)
 
@@ -1221,6 +1318,18 @@ class MLAGui:
 
         advanced_window = None
 
+        def sync_main_controls(*_):
+            for alternate, primary in (("line_spacing_pt", "line_spacing"), ("first_line_chars", "first_line_cm")):
+                try:
+                    active = float(variables[alternate].get()) > 0
+                except (TypeError, ValueError, tk.TclError):
+                    active = False
+                main_controls[primary].state(["disabled"] if active else ["!disabled"])
+
+        for key in ("line_spacing_pt", "first_line_chars"):
+            variables[key].trace_add("write", sync_main_controls)
+        sync_main_controls()
+
         def advanced_custom():
             nonlocal advanced_window
             if advanced_window is not None and advanced_window.winfo_exists():
@@ -1237,6 +1346,9 @@ class MLAGui:
             original_pages = {key: variables[key].get() for key in
                               ("show_cover_page_number", "page_number_start")}
             original_position = display_vars["page_number_position"].get()
+            original_text = {key: variables[key].get() for key in
+                             ("latin_font_name", "line_spacing_pt", "first_line_chars")}
+            original_typography = display_vars["typography"].get()
             advanced_canvas = tk.Canvas(advanced, bg=BG, highlightthickness=0)
             advanced_bar = ttk.Scrollbar(advanced, orient="vertical", command=advanced_canvas.yview)
             advanced_bar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -1250,6 +1362,23 @@ class MLAGui:
                 advanced.bind(sequence, lambda event: advanced_canvas.yview_scroll(_wheel_units(event), "units"))
             ttk.Label(content, text=self.t("advanced_custom_hint"), foreground=MUTED,
                       wraplength=550).pack(anchor=tk.W, pady=(0, 12))
+            text_options = self._card(content)
+            text_options.columnconfigure(1, weight=1)
+            ttk.Label(text_options, text=self.t("typography"), style="Card.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 16), pady=6)
+            typography = ttk.Combobox(text_options, textvariable=display_vars["typography"],
+                values=list(choice_maps["typography"]), state="readonly")
+            typography.grid(row=0, column=1, sticky="ew", pady=6)
+            ttk.Label(text_options, text=self.t("latin_font_name"), style="Card.TLabel").grid(row=1, column=0, sticky="w", padx=(0, 16), pady=6)
+            latin_font = ttk.Combobox(text_options, textvariable=variables["latin_font_name"],
+                values=("Times New Roman", "Arial", "Calibri"), state="readonly")
+            latin_font.grid(row=1, column=1, sticky="ew", pady=6)
+            for row, key in enumerate(("line_spacing_pt", "first_line_chars"), start=2):
+                ttk.Label(text_options, text=self.t(key), style="Card.TLabel", wraplength=320).grid(row=row, column=0, sticky="w", padx=(0, 16), pady=6)
+                minimum, maximum, increment = ranges[key]
+                ttk.Spinbox(text_options, textvariable=variables[key], from_=minimum, to=maximum,
+                    increment=increment).grid(row=row, column=1, sticky="ew", pady=6)
+            ttk.Label(content, text=self.t("chinese_controls_hint"), foreground=MUTED,
+                      wraplength=550).pack(anchor=tk.W, pady=(0, 14))
             options = self._card(content)
             options.columnconfigure(1, weight=1)
             ttk.Label(options, text=self.t("page_number_position"), style="Card.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 16), pady=6)
@@ -1271,9 +1400,12 @@ class MLAGui:
                 position.state(["!disabled"] if enabled else ["disabled"])
                 start.state(["!disabled"] if enabled else ["disabled"])
                 cover.state(["!disabled"] if enabled and variables["title_page"].get() else ["disabled"])
+                chinese = choice_maps["typography"].get(display_vars["typography"].get()) == "chinese"
+                latin_font.state(["!disabled"] if chinese else ["disabled"])
 
             traces = [(display_vars["header"], display_vars["header"].trace_add("write", update_enabled)),
-                      (variables["title_page"], variables["title_page"].trace_add("write", update_enabled))]
+                      (variables["title_page"], variables["title_page"].trace_add("write", update_enabled)),
+                      (display_vars["typography"], display_vars["typography"].trace_add("write", update_enabled))]
             update_enabled()
 
             def close_advanced(save=True):
@@ -1283,14 +1415,18 @@ class MLAGui:
                         first_page = int(variables["page_number_start"].get())
                         if not 1 <= first_page <= 9999:
                             raise ValueError(self.t("page_number_invalid"))
-                    except (TypeError, ValueError, tk.TclError):
-                        messagebox.showerror(self.t("advanced_custom_title"), self.t("page_number_invalid"), parent=advanced)
+                        read_profile()
+                    except (TypeError, ValueError, tk.TclError) as error:
+                        messagebox.showerror(self.t("advanced_custom_title"), self.t("template_invalid", e=str(error)), parent=advanced)
                         start.focus_set()
                         return
                 else:
                     for key, value in original_pages.items():
                         variables[key].set(value)
                     display_vars["page_number_position"].set(original_position)
+                    for key, value in original_text.items():
+                        variables[key].set(value)
+                    display_vars["typography"].set(original_typography)
                 for variable, trace in traces:
                     variable.trace_remove("write", trace)
                 advanced_window = None
@@ -1304,14 +1440,18 @@ class MLAGui:
             advanced.bind("<Escape>", lambda _e: close_advanced(False))
 
         def use_profile(profile, status_key="template_saved"):
+            automatic_date = self.v["date"].get() == self._default_date()
             profiles = [p for p in self.custom_profiles if p["label"] != profile["label"]]
             if len(profiles) >= 20:
                 messagebox.showerror(self.t("template_title"), self.t("template_limit"), parent=w)
                 return
             profiles.append(profile)
             self.custom_profiles = profiles
+            self.selected_builtin.set("")
             self.selected_profile.set(profile["label"])
             self.format_id.set("custom")
+            if automatic_date:
+                self.v["date"].set(self._default_date())
             saved = self._save_prefs()
             close()
             self._adv_win = None
@@ -1376,6 +1516,8 @@ class MLAGui:
                         pass
 
         def delete_profile():
+            if self.selected_builtin.get():
+                return
             self.custom_profiles = [p for p in self.custom_profiles if p["label"] != self.selected_profile.get()]
             if not self.custom_profiles:
                 self.custom_profiles = [dict(DEFAULT_CUSTOM_PROFILE)]
@@ -1389,7 +1531,11 @@ class MLAGui:
         ttk.Button(body, text=self.t("advanced_custom"), style="Ghost.TButton", command=advanced_custom).pack(anchor=tk.W, pady=(0, 12), before=row)
         ttk.Button(row, text=self.t("import_template"), style="Ghost.TButton", command=import_profile).pack(side=tk.LEFT)
         ttk.Button(row, text=self.t("export_template"), style="Ghost.TButton", command=export_profile).pack(side=tk.LEFT, padx=8)
-        ttk.Button(body, text=self.t("delete_template"), style="Ghost.TButton", command=delete_profile).pack(anchor=tk.W, pady=(0, 12))
+        delete_button = ttk.Button(body, text=self.t("delete_template"), style="Ghost.TButton", command=delete_profile)
+        delete_button.pack(anchor=tk.W, pady=(0, 12))
+        if self.selected_builtin.get():
+            delete_button.state(["disabled"])
+            ttk.Label(body, text=self.t("builtin_readonly"), foreground=MUTED, wraplength=600).pack(anchor=tk.W, pady=(0, 12))
         ttk.Button(body, text=self.t("save_template"), style="Accent.TButton", command=save).pack(fill=tk.X)
         w.protocol("WM_DELETE_WINDOW", close)
         w.bind("<Escape>", lambda _e: close())

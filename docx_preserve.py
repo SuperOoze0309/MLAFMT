@@ -322,13 +322,14 @@ def _format_existing(element, original, source, profile, mapping, core, *, role=
             continue  # Text inside a drawing/textbox keeps its own formatting.
         before, after = Run(original_run, original), Run(copied_run, paragraph)
         emphasis = [core._effective_emphasis(before, original, key) for key in ("bold", "italic", "underline")]
-        core._style_run(after, profile["font_name"], profile["font_size"])
+        core._style_profile_run(after, profile, role=role, heading_level=heading_level)
         rpr = copied_run.get_or_add_rPr()
         if rpr.find(qn("w:rStyle")) is None and "DefaultParagraphFont" in mapping:
             style = OxmlElement("w:rStyle")
             style.set(qn("w:val"), mapping["DefaultParagraphFont"])
             rpr.insert(0, style)
-        forced_bold = bool(heading_level) or (role == "reference_title" and profile["format_id"] == "apa")
+        forced_bold = bool(heading_level) or (role == "reference_title" and
+                      (profile["format_id"] == "apa" or profile["typography"] == "chinese"))
         forced_italic = heading_level == 3 and profile["format_id"] == "apa"
         for attribute, active in (("bold", emphasis[0] or forced_bold),
                                   ("italic", emphasis[1] or forced_italic),
@@ -336,10 +337,9 @@ def _format_existing(element, original, source, profile, mapping, core, *, role=
             value = True if active else (False if _character_style_emphasis(before, attribute) else None)
             setattr(after, attribute, value)
         after.font.color.rgb = RGBColor(0, 0, 0)
-    pf = paragraph.paragraph_format
-    pf.line_spacing = profile["line_spacing"]
-    pf.space_before = pf.space_after = Pt(0)
+    pf = core._profile_spacing(paragraph, profile)
     pf.left_indent = pf.right_indent = pf.first_line_indent = Inches(0)
+    core._reset_profile_character_indents(paragraph)
     pf.keep_with_next = bool(heading_level) or role == "reference_title"
     pf.keep_together = False
     pf.page_break_before = role == "reference_title"
@@ -347,14 +347,15 @@ def _format_existing(element, original, source, profile, mapping, core, *, role=
     if role == "reference_title":
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     elif role == "reference":
-        pf.left_indent, pf.first_line_indent = Inches(0.5), Inches(-0.5)
+        if profile["typography"] != "chinese":
+            pf.left_indent, pf.first_line_indent = Inches(0.5), Inches(-0.5)
     elif role == "block":
         pf.left_indent = Inches(0.5)
     elif heading_level:
         if heading_level == 1 and profile["format_id"] == "apa":
             paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     elif role == "body" and numbering is None:
-        pf.first_line_indent = Cm(profile["first_line_cm"])
+        core._profile_first_line(paragraph, profile)
         if profile["alignment"] == "justify":
             paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     return paragraph

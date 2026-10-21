@@ -257,6 +257,11 @@
       #paper-preview .paper-body { font-size: 0.92em; }
       #paper-preview .paper-header { font-size: 0.84em; }
       .paper.cover-layout { display: flex; flex-direction: column; padding-top: 25%; }
+      .paper.chinese-layout { display: flex; flex-direction: column; }
+      .paper.chinese-layout .paper-title { order: 0; }
+      .paper.chinese-layout .paper-heading { order: 1; text-align: center; }
+      .paper.chinese-layout .paper-body { order: 2; }
+      .paper.chinese-layout .paper-lines { order: 3; }
       .paper.cover-layout .paper-title { order: 0; margin: 0 0 14px; font-weight: 700; }
       .paper.cover-layout .paper-heading { order: 1; text-align: center; }
       .paper.cover-layout .paper-heading { display: flex; flex-direction: column; }
@@ -984,7 +989,26 @@
                     <label class="field"><span data-t="page_number_start">Starting page number</span>
                       <input id="c-page_number_start" type="number" min="1" max="9999" step="1" value="1" inputmode="numeric" />
                     </label>
+                    <label class="field"><span data-t="typography">Typography</span>
+                      <select id="c-typography"><option value="western" data-t="typography_western">Western</option><option value="chinese" data-t="typography_chinese">Chinese</option></select>
+                    </label>
+                    <label class="field"><span data-t="latin_font_name">Latin letters and numbers</span>
+                      <select id="c-latin_font_name"><option>Times New Roman</option><option>Arial</option><option>Calibri</option></select>
+                    </label>
+                    <label class="field"><span data-t="spacing_mode">Line-spacing mode</span>
+                      <select id="spacing-mode"><option value="multiple" data-t="spacing_multiple">Multiple</option><option value="exact" data-t="spacing_exact">Exactly (pt)</option></select>
+                    </label>
+                    <label class="field"><span data-t="line_spacing_pt">Exact line spacing (pt)</span>
+                      <input id="c-line_spacing_pt" type="number" min="0" max="60" step="any" value="0" inputmode="decimal" />
+                    </label>
+                    <label class="field"><span data-t="indent_mode">First-line indent mode</span>
+                      <select id="indent-mode"><option value="cm" data-t="indent_cm">Centimeters</option><option value="chars" data-t="indent_chars">Characters</option></select>
+                    </label>
+                    <label class="field"><span data-t="first_line_chars">First-line indent (characters)</span>
+                      <input id="c-first_line_chars" type="number" min="0" max="4" step="any" value="0" inputmode="decimal" />
+                    </label>
                   </div>
+                  <p class="hint" data-t="chinese_typography_hint">Chinese typography uses a 16 pt Heiti title and 16/14/12 pt Heiti headings. Your body font remains editable.</p>
                   <label class="option"><input type="checkbox" id="c-show_cover_page_number" checked /><span data-t="show_cover_page_number">Show a page number on the cover</span></label>
                   <p class="hint" data-t="numbering_hint">When the cover number is hidden, the starting number applies to the first body page. Numbering options apply when page numbers are enabled.</p>
                   <button type="button" class="text-button" id="open-preserve-options" data-t="open_preserve_options">Keep paragraph formatting in this draft…</button>
@@ -996,6 +1020,7 @@
                   <button class="ghost" type="button" id="preset-export" data-t="preset_export">Export template</button>
                 </div>
                 <p class="template-message" id="template-message" role="status" aria-live="polite"></p>
+                <p class="hint" id="chinese-template-hint" data-t="chinese_preset_hint" hidden>Common basic layouts; follow your institution's requirements. Does not generate contents, abstracts, institution-specific covers or rewrite GB/T 7714 citations.</p>
                 <p class="hint" data-t="template_local">Templates are saved in this browser on this device. Export one to keep a copy or use it elsewhere.</p>
               </details>
               <div class="fields">
@@ -1805,6 +1830,32 @@
         result_retained: (paragraphs, images, tables) => `${paragraphs} paragraphs kept unchanged · ${images} body images · ${tables} tables retained`,
         disclaimer: "DOCX body images and tables are retained. Page size, margins and numbering follow the selected template. TXT/MD image syntax does not embed images. Check complex documents and citations.",
       });
+      Object.assign(T.zh, {
+        format_custom: "中文预设 / 自定义模板", template_details: "选择预设或定制模板",
+        saved_templates: "预设与我的模板", builtin_templates: "内置中文预设", my_templates: "我的模板",
+        typography: "文字排版", typography_western: "西文排版", typography_chinese: "中文排版",
+        latin_font_name: "西文与数字字体", spacing_mode: "行距模式", spacing_multiple: "倍数行距", spacing_exact: "固定磅值",
+        line_spacing_pt: "固定行距（磅）", indent_mode: "首行缩进单位", indent_cm: "厘米", indent_chars: "字符",
+        first_line_chars: "首行缩进（字符）", chinese_course: "中文课程论文（通用）", chinese_thesis: "中文毕业论文（基础版）",
+        chinese_typography_hint: "中文排版：标题和参考文献标题为 16 磅黑体，1–3 级标题为 16/14/12 磅黑体；正文字体可修改。",
+        chinese_preset_hint: "这是常用基础排版，请以学校要求为准。不自动生成目录、摘要或学校专用封面，也不改写 GB/T 7714 引文。",
+        spacing_summary: (p) => p.line_spacing_pt > 0 ? `固定 ${p.line_spacing_pt} 磅行距` : `${p.line_spacing} 倍行距`,
+        indent_summary: (p) => p.first_line_chars > 0 ? `首行缩进 ${p.first_line_chars} 字符` : `首行缩进 ${p.first_line_cm} cm`,
+        reference_original: "保留条目顺序 · 无悬挂缩进", builtin_copy: "副本",
+      });
+      Object.assign(T.en, {
+        format_custom: "Chinese presets / Custom template", template_details: "Choose a preset or customize a template",
+        saved_templates: "Presets and saved templates", builtin_templates: "Built-in Chinese presets", my_templates: "My templates",
+        typography: "Typography", typography_western: "Western", typography_chinese: "Chinese",
+        latin_font_name: "Latin letters and numbers", spacing_mode: "Line-spacing mode", spacing_multiple: "Multiple", spacing_exact: "Exactly (pt)",
+        line_spacing_pt: "Exact line spacing (pt)", indent_mode: "First-line indent unit", indent_cm: "Centimeters", indent_chars: "Characters",
+        first_line_chars: "First-line indent (characters)", chinese_course: "Chinese course paper · General", chinese_thesis: "Chinese graduation paper · Basic",
+        chinese_typography_hint: "Chinese typography: 16 pt Heiti titles and reference headings; 16/14/12 pt Heiti heading levels 1–3. The body font is editable.",
+        chinese_preset_hint: "Common basic layouts; follow your institution's requirements. Does not generate contents, abstracts, institution-specific covers or rewrite GB/T 7714 citations.",
+        spacing_summary: (p) => p.line_spacing_pt > 0 ? `Exactly ${p.line_spacing_pt} pt line spacing` : `${p.line_spacing}× line spacing`,
+        indent_summary: (p) => p.first_line_chars > 0 ? `${p.first_line_chars}-character first-line indent` : `${p.first_line_cm} cm first-line indent`,
+        reference_original: "Original entry order · no hanging indent", builtin_copy: "Copy",
+      });
       const $ = (id) => document.getElementById(id);
       const store = {
         get(key) {
@@ -1856,12 +1907,32 @@
         alignment: "left", header: "page", title_page: false,
         references_title: "References", sort_references: true,
         page_number_position: "top_right", show_cover_page_number: true, page_number_start: 1,
+        typography: "western", latin_font_name: "Times New Roman", first_line_chars: 0, line_spacing_pt: 0,
       });
-      const PROFILE_NUMBERS = { font_size: [8, 24], line_spacing: [1, 3], margin_cm: [0.5, 5.08], first_line_cm: [0, 2.54], page_number_start: [1, 9999] };
+      const BUILTIN_PRESETS = Object.freeze([
+        { id: "zh_course", translation: "chinese_course", profile: Object.freeze({ ...CUSTOM_DEFAULT,
+          label: "中文课程论文（通用）", paper_size: "A4", font_name: "宋体", font_size: 12,
+          line_spacing: 1.5, margin_cm: 2.5, first_line_cm: 0.8466666667, alignment: "justify",
+          header: "page", references_title: "参考文献", sort_references: false,
+          page_number_position: "bottom_center", show_cover_page_number: false, page_number_start: 1,
+          typography: "chinese", latin_font_name: "Times New Roman", first_line_chars: 2,
+          title_page: false, line_spacing_pt: 0,
+        }) },
+        { id: "zh_thesis", translation: "chinese_thesis", profile: Object.freeze({ ...CUSTOM_DEFAULT,
+          label: "中文毕业论文（基础版）", paper_size: "A4", font_name: "宋体", font_size: 12,
+          line_spacing: 1.5, margin_cm: 2.5, first_line_cm: 0.8466666667, alignment: "justify",
+          header: "page", references_title: "参考文献", sort_references: false,
+          page_number_position: "bottom_center", show_cover_page_number: false, page_number_start: 1,
+          typography: "chinese", latin_font_name: "Times New Roman", first_line_chars: 2,
+          title_page: true, line_spacing_pt: 20,
+        }) },
+      ]);
+      const PROFILE_NUMBERS = { font_size: [8, 24], line_spacing: [1, 3], margin_cm: [0.5, 5.08], first_line_cm: [0, 2.54], page_number_start: [1, 9999], first_line_chars: [0, 4], line_spacing_pt: [0, 60] };
       const PROFILE_CHOICES = {
         paper_size: ["Letter", "A4"], font_name: ["Times New Roman", "Arial", "Calibri", "宋体", "黑体"],
         alignment: ["left", "justify"], header: ["surname_page", "page", "none"],
         page_number_position: ["top_right", "bottom_center", "bottom_right"],
+        typography: ["western", "chinese"], latin_font_name: ["Times New Roman", "Arial", "Calibri"],
       };
       const PROFILE_FLAGS = ["title_page", "sort_references", "show_cover_page_number"];
       function profileError(field) {
@@ -1896,6 +1967,8 @@
             : Object.hasOwn(PROFILE_NUMBERS, key) ? (input.value.trim() ? Number(input.value) : NaN)
             : input.value;
         }
+        if ($("spacing-mode").value === "exact" && value.line_spacing_pt <= 0) throw profileError("line_spacing_pt");
+        if ($("indent-mode").value === "chars" && value.first_line_chars <= 0) throw profileError("first_line_chars");
         return normalizeProfile(value);
       }
       function writeProfile(profile) {
@@ -1906,6 +1979,9 @@
           else input.value = setting;
           input.removeAttribute("aria-invalid");
         }
+        $("spacing-mode").value = value.line_spacing_pt > 0 ? "exact" : "multiple";
+        $("indent-mode").value = value.first_line_chars > 0 ? "chars" : "cm";
+        syncPageControls();
       }
       function profileSnapshot(data) {
         return { id: data.format_id, label: data.format_id === "custom" ? data.custom_profile.label : null };
@@ -1924,6 +2000,13 @@
         for (const key of ["page_number_position", "page_number_start"])
           $("c-" + key).disabled = noNumbers;
         $("c-show_cover_page_number").disabled = noNumbers || !$("c-title_page").checked;
+        const exact = $("spacing-mode").value === "exact";
+        $("c-line_spacing").disabled = exact;
+        $("c-line_spacing_pt").disabled = !exact;
+        const chars = $("indent-mode").value === "chars";
+        $("c-first_line_cm").disabled = chars;
+        $("c-first_line_chars").disabled = !chars;
+        $("c-latin_font_name").disabled = $("c-typography").value !== "chinese";
       }
       function numberingSummary(profile) {
         return t("numbering_summary", t("position_" + profile.page_number_position), profile.page_number_start);
@@ -2113,7 +2196,8 @@
         renderParagraphs();
       });
       let presets = [];
-      let selectedPreset = store.get("selected_preset") || "";
+      let selectedPreset = store.get("selected_preset_id") || "";
+      const legacyPresetSelection = store.get("selected_preset") || "";
       try {
         const saved = JSON.parse(store.get("presets") || "[]");
         if (Array.isArray(saved)) {
@@ -2125,24 +2209,52 @@
           }
         }
       } catch (_) {}
+      const savedPresetValue = (label) => "saved:" + encodeURIComponent(label);
+      const builtinPreset = (value) => BUILTIN_PRESETS.find((preset) => value === "builtin:" + preset.id);
+      const savedPreset = (value) => presets.find((profile) => savedPresetValue(profile.label) === value);
+      // A separate key avoids collisions with older user-defined labels such as "builtin:zh_course".
+      if (!selectedPreset && presets.some((profile) => profile.label === legacyPresetSelection))
+        selectedPreset = savedPresetValue(legacyPresetSelection);
+      const storedBuiltinCopy = store.get("builtin_working_copy");
+      let builtinWorkingCopy = BUILTIN_PRESETS.some((preset) => preset.id === storedBuiltinCopy)
+        ? storedBuiltinCopy : builtinPreset(selectedPreset)?.id || "";
+      if (savedPreset(selectedPreset)) builtinWorkingCopy = "";
       function renderPresets() {
-        $("saved-presets").replaceChildren(...["", ...presets.map((p) => p.label)].map((label) => {
+        const current = document.createElement("option");
+        current.value = "";
+        current.textContent = t("preset_unsaved");
+        const builtins = document.createElement("optgroup");
+        builtins.label = t("builtin_templates");
+        for (const preset of BUILTIN_PRESETS) {
           const option = document.createElement("option");
-          option.value = label;
-          option.textContent = label || t("preset_unsaved");
-          return option;
-        }));
-        $("saved-presets").value = presets.some((p) => p.label === selectedPreset) ? selectedPreset : "";
-        $("preset-delete").disabled = !$("saved-presets").value;
+          option.value = "builtin:" + preset.id;
+          option.textContent = t(preset.translation);
+          builtins.append(option);
+        }
+        const saved = document.createElement("optgroup");
+        saved.label = t("my_templates");
+        for (const profile of presets) {
+          const option = document.createElement("option");
+          option.value = savedPresetValue(profile.label);
+          option.textContent = profile.label;
+          saved.append(option);
+        }
+        $("saved-presets").replaceChildren(current, builtins, ...(presets.length ? [saved] : []));
+        $("saved-presets").value = builtinPreset(selectedPreset) || savedPreset(selectedPreset) ? selectedPreset : "";
+        $("preset-delete").disabled = !savedPreset($("saved-presets").value);
       }
-      function selectPreset(label) {
-        selectedPreset = label;
-        $("saved-presets").value = label;
-        store.set("selected_preset", label);
-        $("preset-delete").disabled = !label;
+      function selectPreset(value) {
+        selectedPreset = value;
+        $("saved-presets").value = value;
+        store.set("selected_preset_id", value);
+        store.set("selected_preset", savedPreset(value)?.label || "");
+        $("preset-delete").disabled = !savedPreset(value);
       }
       function persistCurrentProfile() {
-        try { store.set("custom_profile", JSON.stringify(customProfile())); } catch (_) {}
+        try {
+          store.set("custom_profile", JSON.stringify(customProfile()));
+          store.set("builtin_working_copy", builtinWorkingCopy);
+        } catch (_) {}
       }
       function templateMessage(key) {
         $("template-message").dataset.message = key;
@@ -2155,20 +2267,44 @@
         if (saved) writeProfile(JSON.parse(saved));
       } catch (_) {}
       try {
-        const selected = presets.find((profile) => profile.label === selectedPreset);
-        if (!selected || JSON.stringify(selected) !== JSON.stringify(customProfile())) selectedPreset = "";
+        const selected = builtinPreset(selectedPreset)?.profile || savedPreset(selectedPreset);
+        if (!selected || JSON.stringify(normalizeProfile(selected)) !== JSON.stringify(customProfile())) selectedPreset = "";
       } catch (_) { selectedPreset = ""; }
+      // Native date values already stored before this feature are treated as user-entered.
+      // Browser dates remain session-only, matching the existing persistence behavior.
+      const storedDateEdited = native ? store.get("date_edited") : null;
+      let dateWasEdited = native && (storedDateEdited === "true" ||
+        (storedDateEdited === null && store.get("date") !== null));
       let defaultMlaDate = $("date").defaultValue;
       if (!defaultMlaDate && window.MLAFMTTransport) {
         defaultMlaDate = window.MLAFMTTransport.todayMla();
         $("date").value = defaultMlaDate;
         $("date").defaultValue = defaultMlaDate;
       }
-      function defaultDate(format) {
+      function defaultDate(format, typography = $("c-typography").value) {
         const match = defaultMlaDate.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+        if (format === "custom" && typography === "chinese" && match) {
+          const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          const month = months.indexOf(match[2]) + 1;
+          if (month) return `${match[3]}年${month}月${Number(match[1])}日`;
+        }
         return format === "apa" && match ? `${match[2]} ${Number(match[1])}, ${match[3]}` : defaultMlaDate;
       }
-      let previousFormat = currentFormat();
+      function hasAutomaticDate() {
+        return !dateWasEdited && (!$("date").value.trim() ||
+          [defaultDate("mla"), defaultDate("apa"), defaultDate("custom", "chinese")].includes($("date").value));
+      }
+      function updateAutomaticDate() {
+        $("date").value = defaultDate(currentFormat());
+        if (native) {
+          store.set("date", $("date").value);
+          store.set("date_edited", "false");
+        }
+      }
+      $("date").addEventListener("input", () => {
+        dateWasEdited = true;
+        if (native) store.set("date_edited", "true");
+      });
       if ($("date").value === defaultMlaDate) $("date").value = defaultDate(currentFormat());
       function renderStatus() {
         $("status").textContent = t(lastStatus.key, ...lastStatus.args);
@@ -2310,19 +2446,25 @@
         if (format === "apa") profile.title_page = true;
         const zh = lang === "zh";
         const paper = $("paper-preview");
+        const chineseTypography = profile.typography === "chinese";
         paper.classList.toggle("cover-layout", profile.title_page);
+        paper.classList.toggle("chinese-layout", chineseTypography);
+        $("chinese-template-hint").hidden = format !== "custom" || !chineseTypography;
         paper.style.setProperty("--preview-scale", String(profile.font_size / 12));
-        paper.style.fontFamily = `"${profile.font_name}", serif`;
+        paper.style.fontFamily = chineseTypography ? `"${profile.latin_font_name}", "${profile.font_name}", serif` : `"${profile.font_name}", serif`;
         paper.style.aspectRatio = profile.paper_size === "A4" ? "210 / 297" : "8.5 / 11";
         const marginPercent = profile.margin_cm / (profile.paper_size === "A4" ? 21 : 21.59) * 100;
         paper.style.padding = `${profile.title_page ? 25 : marginPercent + 4}% ${marginPercent}% ${marginPercent}%`;
         $("paper-header").style.left = $("paper-header").style.right = marginPercent + "%";
-        document.querySelector(".paper-heading").style.lineHeight = String(profile.line_spacing);
-        document.querySelector(".paper-body").style.lineHeight = String(profile.line_spacing);
-        document.querySelector(".paper-body").style.textIndent = `${profile.first_line_cm / 0.635}em`;
+        const previewLineSpacing = profile.line_spacing_pt > 0 ? profile.line_spacing_pt / profile.font_size : profile.line_spacing;
+        document.querySelector(".paper-heading").style.lineHeight = String(previewLineSpacing);
+        document.querySelector(".paper-body").style.lineHeight = String(previewLineSpacing);
+        document.querySelector(".paper-body").style.textIndent = `${profile.first_line_chars > 0 ? profile.first_line_chars : profile.first_line_cm / 0.635}em`;
         document.querySelector(".paper-body").style.textAlign = profile.alignment;
         $("paper-title").style.fontWeight = format === "mla" ? "400" : "700";
-        $("paper-title").style.lineHeight = String(profile.line_spacing);
+        $("paper-title").style.lineHeight = String(previewLineSpacing);
+        $("paper-title").style.fontFamily = chineseTypography ? '"黑体", SimHei, sans-serif' : "";
+        $("paper-title").style.fontSize = chineseTypography ? `${16 / profile.font_size}em` : "";
         $("paper-date").textContent = $("date").value.trim() || defaultDate(format);
         $("paper-affiliation").textContent = $("affiliation").value.trim() || (format === "apa" ? t("affiliation") : "");
         $("paper-affiliation").hidden = format === "mla";
@@ -2340,13 +2482,9 @@
         $("header-options").hidden = profile.header !== "surname_page";
         $("date-hint").textContent = t(format === "mla" ? "date_hint" : "date_hint_" + format);
         document.querySelector("[data-t=preview_tag]").textContent = `${formatLabel({ id: format, label: profile.label })} · ${profile.paper_size}`;
-        $("spec-font-name").textContent = profile.font_name;
-        document.querySelector("[data-t=spec_font]").textContent = zh
-          ? `${profile.font_size} 磅字号 · ${profile.line_spacing} 倍行距`
-          : `${profile.font_size} pt · ${profile.line_spacing} line spacing`;
-        document.querySelector("[data-t=spec_margins_sub]").textContent = zh
-          ? `${profile.margin_cm} 厘米页边距 · ${profile.first_line_cm} 厘米首行缩进`
-          : `${profile.margin_cm} cm margins · ${profile.first_line_cm} cm first-line indent`;
+        $("spec-font-name").textContent = chineseTypography ? `${profile.font_name} / ${profile.latin_font_name}` : profile.font_name;
+        document.querySelector("[data-t=spec_font]").textContent = `${profile.font_size} ${zh ? "磅字号" : "pt"} · ${t("spacing_summary", profile)}`;
+        document.querySelector("[data-t=spec_margins_sub]").textContent = `${profile.margin_cm} ${zh ? "厘米页边距" : "cm margins"} · ${t("indent_summary", profile)}`;
         document.querySelector("[data-t=spec_header]").textContent = profile.header === "surname_page"
           ? t("spec_header") : t(profile.header === "page" ? "spec_header_page" : "spec_header_none");
         document.querySelector("[data-t=spec_header_sub]").textContent = profile.header === "none"
@@ -2354,24 +2492,27 @@
         const references = format === "mla" ? "Works Cited" : format === "apa" ? "References" : profile.references_title;
         document.querySelector("[data-t=spec_cited]").textContent = format === "mla" ? t("spec_cited")
           : format === "apa" ? t("spec_cited_apa") : t("spec_cited_custom", references);
-        document.querySelector("[data-t=spec_cited_sub]").textContent = profile.sort_references
-          ? t("spec_cited_sub") : t("spec_cited_keep");
+        document.querySelector("[data-t=spec_cited_sub]").textContent = chineseTypography
+          ? (profile.sort_references ? (zh ? "按条目排序 · 无悬挂缩进" : "Sorted entries · no hanging indent") : t("reference_original"))
+          : profile.sort_references ? t("spec_cited_sub") : t("spec_cited_keep");
         const summary = format === "mla" ? [
           t("summary_header", surname()),
           ...["paper", "font", "margins", "spacing", "indent", "block", "cited", "hanging"].map((key) => t("summary_" + key)),
         ] : [
           formatLabel({ id: format, label: profile.label }),
           `${zh ? "纸张" : "Paper"}: ${profile.paper_size}`,
-          `${zh ? "字体" : "Font"}: ${profile.font_name}, ${profile.font_size} ${zh ? "磅" : "pt"}`,
+          `${zh ? "字体" : "Font"}: ${profile.font_name}${chineseTypography ? " / " + profile.latin_font_name : ""}, ${profile.font_size} ${zh ? "磅" : "pt"}`,
+          ...(chineseTypography ? [t("chinese_typography_hint")] : []),
           `${zh ? "四周页边距" : "Margins on all sides"}: ${profile.margin_cm} cm`,
-          `${zh ? "行距" : "Line spacing"}: ${profile.line_spacing}; ${zh ? "段前段后" : "before/after"}: 0 pt`,
-          `${zh ? "首行缩进" : "First-line indent"}: ${profile.first_line_cm} cm; ${t(profile.alignment === "left" ? "align_left" : "align_justify")}`,
+          `${t("spacing_summary", profile)}; ${zh ? "段前段后" : "before/after"}: 0 pt`,
+          `${t("indent_summary", profile)}; ${t(profile.alignment === "left" ? "align_left" : "align_justify")}`,
           `${zh ? "页码内容" : "Page number content"}: ${t("header_" + (profile.header === "surname_page" ? "surname" : profile.header))}`,
           ...(profile.header === "none" ? [] : [numberingSummary(profile),
             ...(profile.title_page ? [t(profile.show_cover_page_number ? "cover_number_shown" : "cover_number_hidden")] : [])]),
           format === "apa" ? t("summary_cover_apa") : t(profile.title_page ? "summary_custom_cover" : "summary_inline_title"),
           ...(format === "apa" ? [t("summary_apa_title")] : []),
-          `${references}: ${zh ? "新页、居中标题、悬挂缩进 1.27 cm" : "new page, centered title, 1.27 cm hanging indent"}; ${profile.sort_references ? (zh ? "按字母排序" : "alphabetical entries") : (zh ? "保留原始顺序" : "original entry order")}`,
+          `${references}: ${chineseTypography ? (zh ? "新页、居中标题、无悬挂缩进" : "new page, centered title, no hanging indent") : (zh ? "新页、居中标题、悬挂缩进 1.27 cm" : "new page, centered title, 1.27 cm hanging indent")}; ${profile.sort_references ? (zh ? "按条目排序" : "sorted entries") : (zh ? "保留原始顺序" : "original entry order")}`,
+          ...(chineseTypography ? [t("chinese_preset_hint")] : []),
         ];
         summary.push(t("summary_citations"));
         $("format-summary").replaceChildren(
@@ -2420,26 +2561,41 @@
         });
       $("format-id").addEventListener("change", () => {
         const format = currentFormat();
-        if (!$("date").value.trim() || $("date").value === defaultDate(previousFormat)) {
-          $("date").value = defaultDate(format);
-          if (native) store.set("date", $("date").value);
-        }
-        previousFormat = format;
+        if (hasAutomaticDate()) updateAutomaticDate();
         store.set("format_id", format);
+        if (format === "custom") $("custom-editor").open = true;
         refreshPreview();
       });
       for (const key of Object.keys(CUSTOM_DEFAULT)) {
         $("c-" + key).addEventListener(PROFILE_FLAGS.includes(key) || Object.hasOwn(PROFILE_CHOICES, key) ? "change" : "input", () => {
           $("c-" + key).removeAttribute("aria-invalid");
+          if (key === "typography" && hasAutomaticDate()) updateAutomaticDate();
           selectPreset("");
           persistCurrentProfile();
           refreshPreview();
         });
       }
+      for (const [modeId, field, fallback] of [["spacing-mode", "line_spacing_pt", 20], ["indent-mode", "first_line_chars", 2]]) {
+        $(modeId).addEventListener("change", () => {
+          const enabled = $(modeId).value === (modeId === "spacing-mode" ? "exact" : "chars");
+          $("c-" + field).value = enabled ? (Number($("c-" + field).value) > 0 ? $("c-" + field).value : fallback) : 0;
+          $("c-" + field).removeAttribute("aria-invalid");
+          selectPreset("");
+          syncPageControls();
+          persistCurrentProfile();
+          refreshPreview();
+        });
+      }
       $("saved-presets").addEventListener("change", () => {
-        const selected = presets.find((p) => p.label === $("saved-presets").value);
+        const value = $("saved-presets").value;
+        const builtin = builtinPreset(value);
+        const selected = builtin?.profile || savedPreset(value);
+        const automaticDate = hasAutomaticDate();
+        if (builtin) builtinWorkingCopy = builtin.id;
+        else if (selected) builtinWorkingCopy = "";
         if (selected) writeProfile(selected);
-        selectPreset(selected?.label || "");
+        if (automaticDate) updateAutomaticDate();
+        selectPreset(selected ? value : "");
         persistCurrentProfile();
         refreshPreview();
       });
@@ -2449,7 +2605,7 @@
           if (error.field) {
             $("c-" + error.field).setAttribute("aria-invalid", "true");
             $("custom-editor").open = true;
-            if (["page_number_position", "page_number_start", "show_cover_page_number"].includes(error.field))
+            if (["page_number_position", "page_number_start", "show_cover_page_number", "typography", "latin_font_name", "first_line_chars", "line_spacing_pt"].includes(error.field))
               $("template-advanced").open = true;
             $("c-" + error.field).focus();
           }
@@ -2460,22 +2616,34 @@
       $("preset-save").addEventListener("click", () => {
         const profile = checkedProfile();
         if (!profile) return;
+        // Built-ins are immutable. Saving one or its edits always creates a personal copy.
+        if (builtinWorkingCopy || (BUILTIN_PRESETS.some((p) => p.profile.label === profile.label) && !savedPreset(selectedPreset))) {
+          const base = Array.from(profile.label).slice(0, 45).join("");
+          let copyLabel = `${base} (${t("builtin_copy")})`;
+          for (let number = 2; presets.some((p) => p.label === copyLabel); number += 1)
+            copyLabel = `${base} (${t("builtin_copy")} ${number})`;
+          profile.label = copyLabel;
+          writeProfile(profile);
+        }
         const index = presets.findIndex((p) => p.label === profile.label);
         if (index < 0 && presets.length >= 20) return templateMessage("template_limit");
         if (index < 0) presets.push(profile);
         else presets[index] = profile;
         const saved = store.set("presets", JSON.stringify(presets));
+        builtinWorkingCopy = "";
         persistCurrentProfile();
-        selectedPreset = profile.label;
+        selectedPreset = savedPresetValue(profile.label);
         renderPresets();
-        selectPreset(profile.label);
+        selectPreset(selectedPreset);
         templateMessage(saved ? "template_saved" : "template_storage");
       });
       $("preset-delete").addEventListener("click", () => {
-        const label = $("saved-presets").value;
-        if (!label) return templateMessage("template_none");
-        presets = presets.filter((p) => p.label !== label);
+        const selected = savedPreset($("saved-presets").value);
+        if (!selected) return templateMessage("template_none");
+        presets = presets.filter((p) => p.label !== selected.label);
+        builtinWorkingCopy = "";
         const saved = store.set("presets", JSON.stringify(presets));
+        persistCurrentProfile();
         selectPreset("");
         renderPresets();
         templateMessage(saved ? "template_deleted" : "template_storage");
@@ -2513,7 +2681,10 @@
           }
           const data = JSON.parse(text);
           const profile = normalizeProfile(data && Object.hasOwn(data, "custom_profile") ? data.custom_profile : data);
+          const automaticDate = hasAutomaticDate();
           writeProfile(profile);
+          if (automaticDate) updateAutomaticDate();
+          builtinWorkingCopy = "";
           selectPreset("");
           persistCurrentProfile();
           refreshPreview();
@@ -2914,7 +3085,7 @@
               return;
             }
             if (message.type === "init") {
-              const wasDefault = !$("date").value.trim() || [defaultDate("mla"), defaultDate("apa")].includes($("date").value);
+              const wasDefault = hasAutomaticDate();
               if (typeof message.today === "string") defaultMlaDate = message.today;
               $("date").defaultValue = defaultDate(currentFormat());
               if (wasDefault) $("date").value = defaultDate(currentFormat());

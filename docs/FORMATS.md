@@ -1,8 +1,10 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：MLAFMT v2.4.0 开发版（未发布） / Unreleased development version。** 当前正式下载仍为 v2.3.0，不包含本文的新功能。
+**适用版本 / Applies to：已发布的 FormCapy v2.4.0，以及当前源码中标为“开发中”的新增功能。** [v2.4.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)与[网页版](https://formcapy.com/)已开放。
 
-Published downloads are still v2.3.0 and do not contain the new features described here.
+The v2.4.0 release and website are available. Chinese presets and the four additional typography fields described below are **in development in the current source**; they are not part of the published v2.4.0 packages or current public deployment.
+
+**中文预设及下列四项新增排版字段仍在本轮开发中，尚未包含在 v2.4.0 下载包或当前公网部署中。**
 
 ## 中文
 
@@ -32,7 +34,7 @@ APA / 自定义模式下，Markdown 代码围栏连同其中的换行和文字�
 
 现有 MLA 9 版式保持不变：Letter 纸张、1 英寸页边距、Times New Roman 12 pt、双倍行距、0.5 英寸首行缩进；首页信息块和居中标题；右上角姓氏与页码；Works Cited 另起一页、标题居中、按字母排序并使用 0.5 英寸悬挂缩进。默认日期使用英文日月年格式；手动填写的日期文字保持原样。
 
-### 3. APA 7 学生版式（v2.4.0 开发中）
+### 3. APA 7 学生版式
 
 | 项目 | 排版行为 |
 | --- | --- |
@@ -46,7 +48,7 @@ APA / 自定义模式下，Markdown 代码围栏连同其中的换行和文字�
 
 APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)。
 
-### 4. 自定义课程模板（v2.4.0 开发中）
+### 4. 自定义课程模板
 
 自定义模板用于保存和复用一组布局设置：
 
@@ -56,6 +58,27 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 - Android 使用模板导入/导出弹窗中的文本框复制或粘贴 JSON。
 - 每个界面读取自己的本地设置；在桌面端创建的模板不会自动出现在网页端或 Android 上。
 - 导出的 JSON 只包含布局设置，不包含文档、草稿、引用或其他模板列表。
+
+#### 中文常用论文预设（开发中）
+
+选择 **自定义课程模板**，在模板列表的内置预设中选择以下一种，再按学校或老师的要求修改。内置预设不占 20 个个人模板名额；编辑后可另存为个人模板，内置原件保留。新增内置项不会改写已有个人模板。
+
+| 预设 | 共同布局 | 行距与封面 |
+| --- | --- | --- |
+| **中文课程论文（通用）** | A4；中文正文宋体小四（12 pt），西文和数字 Times New Roman；2.5 cm 四边页边距；首行缩进 2 字符；两端对齐；页脚居中页码 | 1.5 倍行距；不生成独立封面 |
+| **中文毕业论文（基础版）** | 同上 | 固定 20 pt 行距；生成基础封面且封面不编号，正文从 1 开始 |
+
+两种预设的论文标题和参考文献标题采用 16 pt 黑体；明确的一级、二级、三级标题分别采用 16、14、12 pt 黑体。参考文献页标题为“参考文献”，另起一页；条目保留原顺序，不强制西文式悬挂缩进。所需字体必须由打开文档的设备提供，应用不附带字体文件，缺失时 Word 或其他阅读器可能替换字体。
+
+这两项是可修改的基础布局，不对应某所学校的官方模板，也不代表完整学位论文规范。不会自动生成目录、摘要、关键词或学校专用封面，不会改写文内引用、自动编号参考文献或转换为 GB/T 7714 著录格式；请保留并核对原稿中的相应内容。
+
+各校要求确有差异：例如[南通大学马克思主义学院 2020 年说明](https://mkszyxy.ntu.edu.cn/2020/0315/c4202a112502/page.htm)采用 1.5 倍行距及字符缩进；[重庆师范大学 2012 年说明](https://graduate.cqnu.edu.cn/info/10656/103439.htm)采用固定磅值行距。这些历史文件用于说明差异，提交时应以本人学校和院系当前要求为准。
+
+可导入或查阅完整配置：[中文课程论文 JSON](../examples/chinese-course-paper.json) · [中文毕业论文 JSON](../examples/chinese-thesis-basic.json)。这些示例使用新增字段，需要本轮更新后的程序。
+
+#### 高级定制：中文排版（开发中）
+
+选择中文排版后可分别设置中文正文字体和西文字体。字符缩进大于 `0` 时使用字符单位；设为 `0` 则使用原来的厘米缩进。固定行距大于 `0` 时使用该磅值；设为 `0` 则使用倍数行距。因此修改未启用的备用数值不会改变实际输出。
 
 #### 高级定制：页码
 
@@ -71,9 +94,13 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 | `paper_size` | `Letter` 或 `A4` | `Letter` | 纸张大小 |
 | `font_name` | `Times New Roman`、`Arial`、`Calibri`、`宋体`、`黑体` 之一 | `Times New Roman` | 正文字体 |
 | `font_size` | 数字，8–24 | `12` | 字号（pt） |
-| `line_spacing` | 数字，1–3 | `2` | 行距倍数；`2` 为双倍行距 |
+| `typography`（开发中） | `western` 或 `chinese` | `western` | 中文排版启用分开的中西文字体、黑体标题和中文参考文献布局 |
+| `latin_font_name`（开发中） | `Times New Roman`、`Arial`、`Calibri` 之一 | `Times New Roman` | 中文排版中的西文和数字字体 |
+| `line_spacing` | 数字，1–3 | `2` | 行距倍数；`line_spacing_pt` 为 `0` 时生效 |
+| `line_spacing_pt`（开发中） | 数字，0–60 | `0` | 大于 `0` 时使用固定磅值行距；`0` 使用倍数行距 |
 | `margin_cm` | 数字，0.5–5.08 | `2.54` | 页边距（cm） |
-| `first_line_cm` | 数字，0–2.54 | `1.27` | 正文首行缩进（cm） |
+| `first_line_cm` | 数字，0–2.54 | `1.27` | 正文首行缩进（cm）；`first_line_chars` 为 `0` 时生效 |
+| `first_line_chars`（开发中） | 数字，0–4 | `0` | 大于 `0` 时使用字符缩进；`0` 使用厘米缩进 |
 | `alignment` | `left` 或 `justify` | `left` | 正文对齐方式 |
 | `header` | `surname_page`、`page` 或 `none` | `page` | 页码内容：姓氏加页码 / 仅页码 / 不显示；位置由下项决定 |
 | `page_number_position` | `top_right`、`bottom_center` 或 `bottom_right` | `top_right` | 页码位于右上角 / 页脚居中 / 页脚右侧 |
@@ -85,7 +112,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 #### JSON 示例
 
-下面是一个合法的裸 JSON 对象，使用全部默认值。顶层直接是模板字段，不要再包一层。
+下面是一个合法的裸 JSON 对象，使用当前源码的全部默认值，包括四项开发中的字段。顶层直接是模板字段，不要再包一层；已发布的 v2.4.0 程序尚不接受这四项字段。
 
 ```json
 {
@@ -103,7 +130,11 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
   "show_cover_page_number": true,
   "title_page": false,
   "references_title": "References",
-  "sort_references": true
+  "sort_references": true,
+  "typography": "western",
+  "latin_font_name": "Times New Roman",
+  "first_line_chars": 0,
+  "line_spacing_pt": 0
 }
 ```
 
@@ -114,6 +145,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 - 使用上表的字段名、类型、范围和可选取值；导入时不要增加外层包装或文档内容。
 - 一次导出的 JSON 描述一个模板配置；它不携带论文正文，也不同步账号或云端数据。
 - 旧模板省略三项新页码字段时，自动补为 `top_right`、`1`、`true`；段落保留选择不属于模板字段。
+- 当前源码读取旧模板时，四项中文排版字段补为 `western`、`Times New Roman`、`0`、`0`，保留原来的倍数行距和厘米缩进。
 - 清理浏览器站点数据可能移除网页端模板；可先复制或导出 JSON 作为备份。
 - 生成后仍需人工检查页眉、标题页和参考文献页。
 
@@ -137,7 +169,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 - **APA 参考文献**：不解析、改写或核验文内引用或条目内容，也不实现复杂的同作者、同年份书目排序。不提供专业论文 running head 或作者注。
 - **模板范围**：仅支持字段表中的布局项。没有账号或云同步。
 - **转换内容**：DOCX 正文图片和表格从源包保留；选择的段落保持原字体、字号与段落格式。页面设置及源分节、页眉和页脚会替换，不能保证原分页或原页眉页脚对象。复杂对象、修订和异常结构请对照原稿检查；部分结构和高于 3 级的标题会出现结果提示，高于 3 级的标题文字可保留为普通段落。这不等于完整文档检查。
-- **平台与要求**：网页端是电脑上的本地预览，iPhone/iPad 通过同一局域网访问；Android 可离线使用。教师或学校要求优先于预设。
+- **平台与要求**：已上线网页版在设备浏览器本地处理，无需旁边有电脑或连接同一局域网；原 Flask 局域网模式仍可用于本地预览。桌面与 Android 可离线使用。教师或学校要求优先于预设。
 
 ## English
 
@@ -167,7 +199,7 @@ All three layouts share the same formatting core and use the same rules on deskt
 
 The existing MLA 9 layout is unchanged: Letter paper, 1-inch margins, Times New Roman 12 pt, double spacing and a 0.5-inch first-line indent; a first-page information block with a centered title; a surname-and-page header at the top right; and a Works Cited page that starts on a new page, has a centered heading, is sorted alphabetically and uses 0.5-inch hanging indents. Default dates use the English day-month-year form; manually entered date text is kept as written.
 
-### 3. APA 7 student layout (v2.4.0 in development)
+### 3. APA 7 student layout
 
 | Item | Layout behavior |
 | --- | --- |
@@ -181,7 +213,7 @@ The existing MLA 9 layout is unchanged: Letter paper, 1-inch margins, Times New 
 
 APA's official guidance, for understanding the layout: [Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page).
 
-### 4. Custom course templates (v2.4.0 in development)
+### 4. Custom course templates
 
 Custom templates save and reuse a set of layout settings:
 
@@ -191,6 +223,27 @@ Custom templates save and reuse a set of layout settings:
 - Android uses the template transfer dialog's text box to copy or paste JSON.
 - Each interface reads its own local settings; a template created on desktop does not automatically appear on the web or Android.
 - Exported JSON contains layout settings only, not documents, drafts, citations or other preset lists.
+
+#### Common Chinese paper presets (in development)
+
+Choose **Custom course template**, then select a built-in preset from the template list and adjust it for your institution. Built-ins do not count toward the 20 personal-template limit. Save edits as a personal copy while retaining the built-in original. Adding the built-ins does not rewrite existing personal templates.
+
+| Preset | Shared layout | Spacing and cover |
+| --- | --- | --- |
+| **Chinese course paper — general** | A4; Chinese body text in 宋体 at 12 pt (小四), Latin text and digits in Times New Roman; 2.5 cm margins; a two-character first-line indent; justified body text; centered footer page numbers | 1.5 line spacing; no separate cover |
+| **Chinese thesis — basic** | Same layout | Exactly 20 pt line spacing; a basic unnumbered cover, with body numbering starting at 1 |
+
+Paper and reference-page titles use 黑体 at 16 pt. Explicit heading levels 1–3 use 黑体 at 16, 14 and 12 pt. The reference heading is “参考文献” on a new page; entries retain their order without a forced Western hanging indent. The device opening the DOCX must provide the requested fonts. FormCapy does not distribute font files; a reader may substitute missing fonts.
+
+These are editable starting layouts, not official university templates or complete thesis standards. They do not generate a table of contents, abstracts, keywords or an institution-specific cover. They do not rewrite citations, number reference entries or convert bibliography content to GB/T 7714. Retain and check those parts of the original draft.
+
+Institutional requirements differ. Historical guidance from [Nantong University (2020)](https://mkszyxy.ntu.edu.cn/2020/0315/c4202a112502/page.htm) uses multiple line spacing, while [Chongqing Normal University (2012)](https://graduate.cqnu.edu.cn/info/10656/103439.htm) specifies fixed point spacing. Consult your own department's current requirements before submission.
+
+Full configurations: [Chinese course paper JSON](../examples/chinese-course-paper.json) and [Chinese thesis JSON](../examples/chinese-thesis-basic.json). These examples use the new fields and require the current development update.
+
+#### Advanced customization: Chinese typography (in development)
+
+Chinese typography allows separate Chinese and Latin body fonts. A positive character-indent value takes precedence over the centimeter value; `0` uses centimeters. A positive fixed line-spacing value takes precedence over the multiple; `0` uses multiple line spacing. Changing an inactive fallback value does not change the output.
 
 #### Advanced customization: page numbers
 
@@ -206,9 +259,13 @@ Numbering options are disabled with `header: "none"`; cover numbering is disable
 | `paper_size` | `Letter` or `A4` | `Letter` | Paper size |
 | `font_name` | One of `Times New Roman`, `Arial`, `Calibri`, `宋体`, `黑体` | `Times New Roman` | Body font |
 | `font_size` | Number, 8–24 | `12` | Font size in pt |
-| `line_spacing` | Number, 1–3 | `2` | Line-spacing multiple; `2` is double spacing |
+| `typography` (in development) | `western` or `chinese` | `western` | Chinese typography uses separate Chinese/Latin fonts, 黑体 headings and Chinese reference layout |
+| `latin_font_name` (in development) | `Times New Roman`, `Arial` or `Calibri` | `Times New Roman` | Latin text and digit font in Chinese typography |
+| `line_spacing` | Number, 1–3 | `2` | Line-spacing multiple; applies when `line_spacing_pt` is `0` |
+| `line_spacing_pt` (in development) | Number, 0–60 | `0` | A positive value selects exact point spacing; `0` uses the multiple |
 | `margin_cm` | Number, 0.5–5.08 | `2.54` | Page margin in cm |
-| `first_line_cm` | Number, 0–2.54 | `1.27` | Body first-line indent in cm |
+| `first_line_cm` | Number, 0–2.54 | `1.27` | Body first-line indent in cm; applies when `first_line_chars` is `0` |
+| `first_line_chars` (in development) | Number, 0–4 | `0` | A positive value selects a character indent; `0` uses centimeters |
 | `alignment` | `left` or `justify` | `left` | Body alignment |
 | `header` | `surname_page`, `page` or `none` | `page` | Number content: surname plus page / page only / no numbers; position is set below |
 | `page_number_position` | `top_right`, `bottom_center` or `bottom_right` | `top_right` | Position of the page number |
@@ -220,7 +277,7 @@ Numbering options are disabled with `header: "none"`; cover numbering is disable
 
 #### JSON example
 
-The following is a valid bare JSON object using all defaults. Its top level is the template fields themselves; do not add another wrapper.
+The following bare JSON object uses all current-source defaults, including the four fields in development. Its top level is the template fields themselves. Published v2.4.0 packages do not yet accept those four additional fields.
 
 ```json
 {
@@ -238,7 +295,11 @@ The following is a valid bare JSON object using all defaults. Its top level is t
   "show_cover_page_number": true,
   "title_page": false,
   "references_title": "References",
-  "sort_references": true
+  "sort_references": true,
+  "typography": "western",
+  "latin_font_name": "Times New Roman",
+  "first_line_chars": 0,
+  "line_spacing_pt": 0
 }
 ```
 
@@ -249,6 +310,7 @@ Import and export notes:
 - Use the field names, types, bounds and allowed values above; do not add an outer wrapper or document content when importing.
 - One exported JSON object describes one template configuration. It carries no paper text and does not sync account or cloud data.
 - Older templates without the three new numbering fields receive defaults of `top_right`, `1` and `true`. Paragraph-preservation selections are not template fields.
+- The current source supplies `western`, `Times New Roman`, `0` and `0` for the four missing Chinese-typography fields in older profiles, retaining their multiple spacing and centimeter indentation.
 - Clearing browser site data may remove web templates; copy or export the JSON first if you want a backup.
 - Still check the header, title page and reference page after generating.
 
@@ -272,9 +334,11 @@ MLAFMT handles layout only. It does not create or verify citations, or assess wh
 - **APA references:** MLAFMT does not parse, rewrite or verify in-text citations or entry content, and does not implement complex same-author/year bibliographic ordering. No professional-paper running head or author note is produced.
 - **Template scope:** only the listed layout fields are supported. There is no account or cloud sync.
 - **Conversion contents:** body images and tables are retained from the source DOCX package, and selected paragraphs keep their fonts, sizes and paragraph formatting. Page settings, source sections, headers and footers are replaced; original pagination and header/footer objects are not guaranteed. Compare complex objects, revisions and unusual structures with the original. Warnings may identify some structures or headings above level 3; higher-level heading text may appear as ordinary paragraphs. This is not a complete document check.
-- **Platforms and requirements:** the web app is a local preview on the computer, with iPhone/iPad access over the same LAN; Android works offline. Instructor or institution requirements take priority over presets.
+- **Platforms and requirements:** the public website processes documents locally in the device's browser without a nearby computer or shared LAN. The original Flask LAN preview remains available. Desktop and Android work offline. Instructor or institution requirements take priority over presets.
 
 ## 参考 / References
 
-- APA Style — Paper format: <https://apastyle.apa.org/style-grammar-guidelines/paper-format>
-- APA Style — Title page: <https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page>
+- [APA Style — Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format)
+- [APA Style — Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)
+- [南通大学马克思主义学院 2020 届本科毕业论文规范要求](https://mkszyxy.ntu.edu.cn/2020/0315/c4202a112502/page.htm)
+- [重庆师范大学硕士学位论文撰写格式标准（2012 年修订说明）](https://graduate.cqnu.edu.cn/info/10656/103439.htm)

@@ -234,6 +234,14 @@ def _date_variants(text):
     months = ("January", "February", "March", "April", "May", "June", "July",
               "August", "September", "October", "November", "December")
     variants = [text]
+    chinese = re.fullmatch(r"(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日", text.strip())
+    if chinese:
+        try:
+            date = datetime.date(*(int(value) for value in chinese.groups()))
+        except ValueError:
+            return variants
+        english = f"{date.day} {months[date.month - 1]} {date.year}"
+        return list(dict.fromkeys(variants + _date_variants(english)))
     match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)\.?\s+(\d{4})", text.strip())
     if match:
         day, month, year = match.group(1), match.group(2), match.group(3)
@@ -252,6 +260,7 @@ def _date_variants(text):
         return variants
     month_name = months[date.month - 1]
     variants.extend((f"{date.day} {month_name} {date.year}", f"{month_name} {date.day}, {date.year}"))
+    variants.append(f"{date.year}年{date.month}月{date.day}日")
     return list(dict.fromkeys(variants))
 
 
@@ -412,6 +421,12 @@ def format_summary(name, last_name_override=None, *, format_id="mla", custom_pro
     profile = resolve_profile(format_id, custom_profile)
     ln = extract_last_name(name, last_name_override)
     if format_id != "mla":
+        spacing = (f"Exactly {profile['line_spacing_pt']:g} pt" if profile["line_spacing_pt"]
+                   else f"{profile['line_spacing']:g} times")
+        indent = (f"{profile['first_line_chars']:g} characters" if profile["first_line_chars"]
+                  else f"{profile['first_line_cm']:g} cm")
+        references_indent = ("no automatic hanging indent" if profile["typography"] == "chinese"
+                             else "hanging indent 0.5 in")
         position = {"top_right": "upper right", "bottom_center": "footer center",
                     "bottom_right": "footer right"}[profile["page_number_position"]]
         start = profile["page_number_start"]
@@ -420,16 +435,17 @@ def format_summary(name, last_name_override=None, *, format_id="mla", custom_pro
         return [
             f"Format: {profile['label']}",
             f"Paper: {profile['paper_size']}",
-            f"Font: {profile['font_name']} {profile['font_size']:g} pt",
+            f"Font: {profile['font_name']} {profile['font_size']:g} pt"
+            + (f"; Latin/numerals: {profile['latin_font_name']}" if profile["typography"] == "chinese" else ""),
             f"Margins: {profile['margin_cm']:g} cm (all sides)",
-            f"Line spacing: {profile['line_spacing']:g}; 0 pt before/after",
-            f"First-line indent: {profile['first_line_cm']:g} cm; {profile['alignment']} alignment",
+            f"Line spacing: {spacing}; 0 pt before/after",
+            f"First-line indent: {indent}; {profile['alignment']} alignment",
             f"Header: {headers[profile['header']]}",
             "Separate title page" if profile["title_page"] else "First-page information block",
             ("Cover counted and numbered" if profile["show_cover_page_number"]
              else "Cover unnumbered; body starts at the selected page number") if profile["title_page"]
             else "Page numbering begins on the first page",
-            f"{profile['references_title']}: new page, hanging indent 0.5 in; "
+            f"{profile['references_title']}: new page, {references_indent}; "
             + ("alphabetical order" if profile["sort_references"] else "original order"),
             "Reference wording and in-text citations are kept as supplied.",
         ]
@@ -509,7 +525,8 @@ def create_blank_template(output, name="Your Name", instructor="Instructor Name"
     else:
         doc = _new_profile_document(profile, name, instructor, course, date_str, title,
                                     last_name_override, affiliation)
-        _add_profile_paragraph(doc, [_seg("[Start writing your essay here.]")], profile)
+        placeholder = "[在此开始撰写正文。]" if profile["typography"] == "chinese" else "[Start writing your essay here.]"
+        _add_profile_paragraph(doc, [_seg(placeholder)], profile)
     _save_document(doc, output)
 
 
@@ -730,9 +747,67 @@ _LITERAL_BLOCK = -1  # A fenced text block, exempt from heading/reference guesse
 
 def _profile_spacing(paragraph, profile):
     pf = paragraph.paragraph_format
-    pf.line_spacing = profile["line_spacing"]
+    pf.line_spacing = (Pt(profile["line_spacing_pt"]) if profile["line_spacing_pt"]
+                       else profile["line_spacing"])
     pf.space_before = pf.space_after = Pt(0)
+    if profile["typography"] == "chinese":
+        ppr = paragraph._p.get_or_add_pPr()
+        grid = ppr.find(qn("w:snapToGrid"))
+        if grid is None:
+            grid = OxmlElement("w:snapToGrid")
+            ppr.insert_element_before(grid, "w:spacing")
+        grid.set(qn("w:val"), "0")
     return pf
+
+
+def _profile_font(profile, role="body", heading_level=0):
+    if profile["typography"] == "chinese" and (heading_level or role in ("title", "reference_title")):
+        return "黑体", {1: 16, 2: 14, 3: 12}.get(heading_level, 16)
+    return profile["font_name"], profile["font_size"]
+
+
+def _profile_rfonts(rpr, profile, font_name):
+    _force_rfonts(rpr, font_name)
+    if profile["typography"] == "chinese":
+        rfonts = rpr.find(qn("w:rFonts"))
+        for attribute in ("w:ascii", "w:hAnsi", "w:cs"):
+            rfonts.set(qn(attribute), profile["latin_font_name"])
+
+
+def _style_profile_run(run, profile, *, role="body", heading_level=0):
+    font_name, size = _profile_font(profile, role, heading_level)
+    _style_run(run, font_name, size)
+    _profile_rfonts(run._r.get_or_add_rPr(), profile, font_name)
+    return run
+
+
+def _reset_profile_character_indents(paragraph):
+    """Remove source character units before applying the template's units."""
+    indent = paragraph._p.get_or_add_pPr().find(qn("w:ind"))
+    if indent is not None:
+        for key in ("firstLineChars", "hangingChars", "leftChars", "rightChars", "startChars", "endChars", "start", "end"):
+            indent.attrib.pop(qn("w:" + key), None)
+
+
+def _profile_first_line(paragraph, profile):
+    chars = profile["first_line_chars"]
+    if chars:
+        # Word's character unit is one hundredth of a full-width character.
+        # Keep a physical fallback for editors which ignore firstLineChars.
+        paragraph.paragraph_format.first_line_indent = Pt(profile["font_size"] * chars)
+        indent = paragraph._p.get_or_add_pPr().find(qn("w:ind"))
+        indent.set(qn("w:firstLineChars"), str(round(chars * 100)))
+    else:
+        paragraph.paragraph_format.first_line_indent = Cm(profile["first_line_cm"])
+
+
+def _profile_date(profile, date_str):
+    if date_str and date_str.strip():
+        return date_str.strip()
+    if profile["typography"] == "chinese":
+        today = datetime.date.today()
+        return f"{today.year}年{today.month}月{today.day}日"
+    return today_for_format(profile["format_id"])
 
 
 def _set_page_start(section, start):
@@ -790,24 +865,34 @@ def _add_page_number(paragraph, profile, name, last_name_override):
     field.append(run)
     paragraph._p.append(field)
     for element in paragraph._p.iter(qn("w:r")):
-        _style_run(Run(element, paragraph), profile["font_name"], profile["font_size"])
+        _style_profile_run(Run(element, paragraph), profile)
 
 
 def _configure_profile_styles(doc, profile):
     set_default_font(doc, profile["font_name"], profile["font_size"])
+    if profile["typography"] == "chinese":
+        for style_name in ("Normal", "Header"):
+            _profile_rfonts(doc.styles[style_name].element.get_or_add_rPr(), profile, profile["font_name"])
+        defaults = doc.styles.element.find(qn("w:docDefaults"))
+        if defaults is not None:
+            rpr = defaults.find("./" + qn("w:rPrDefault") + "/" + qn("w:rPr"))
+            if rpr is not None:
+                _profile_rfonts(rpr, profile, profile["font_name"])
     normal = doc.styles["Normal"].paragraph_format
-    normal.line_spacing = profile["line_spacing"]
+    normal.line_spacing = (Pt(profile["line_spacing_pt"]) if profile["line_spacing_pt"]
+                           else profile["line_spacing"])
     normal.space_before = normal.space_after = Pt(0)
     for level in (1, 2, 3):
         style = doc.styles[f"Heading {level}"]
-        style.font.name = profile["font_name"]
-        style.font.size = Pt(profile["font_size"])
+        font_name, size = _profile_font(profile, heading_level=level)
+        style.font.name = font_name
+        style.font.size = Pt(size)
         style.font.color.rgb = RGBColor(0, 0, 0)
         style.font.bold = True
         style.font.italic = level == 3 and profile["format_id"] == "apa"
-        _force_rfonts(style.element.get_or_add_rPr(), profile["font_name"])
+        _profile_rfonts(style.element.get_or_add_rPr(), profile, font_name)
         pf = style.paragraph_format
-        pf.line_spacing = profile["line_spacing"]
+        pf.line_spacing = normal.line_spacing
         pf.space_before = pf.space_after = Pt(0)
         pf.first_line_indent = pf.left_indent = Inches(0)
         pf.keep_with_next = True
@@ -820,22 +905,24 @@ def _add_profile_paragraph(doc, segments, profile, *, role="body", heading_level
     paragraph = doc.add_paragraph(style=f"Heading {heading_level}" if heading_level else None)
     _add_segments(paragraph, segments, force_bold=bool(heading_level) or role == "title")
     for run in paragraph.runs:
-        _style_run(run, profile["font_name"], profile["font_size"])
+        _style_profile_run(run, profile, role=role, heading_level=heading_level)
         run.font.color.rgb = RGBColor(0, 0, 0)
         if heading_level == 3 and profile["format_id"] == "apa":
             run.italic = True
     pf = _profile_spacing(paragraph, profile)
     pf.left_indent = pf.right_indent = pf.first_line_indent = Inches(0)
+    _reset_profile_character_indents(paragraph)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
     if role in ("title", "reference_title"):
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         pf.keep_with_next = True
-        if role == "reference_title" and profile["format_id"] == "apa":
+        if role == "reference_title" and (profile["format_id"] == "apa" or profile["typography"] == "chinese"):
             for run in paragraph.runs:
                 run.bold = True
     elif role == "reference":
-        pf.left_indent = Inches(0.5)
-        pf.first_line_indent = Inches(-0.5)
+        if profile["typography"] != "chinese":
+            pf.left_indent = Inches(0.5)
+            pf.first_line_indent = Inches(-0.5)
     elif role == "block":
         pf.left_indent = Inches(0.5)
     elif heading_level:
@@ -843,7 +930,7 @@ def _add_profile_paragraph(doc, segments, profile, *, role="body", heading_level
             paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         pf.keep_with_next = True
     elif role == "body":
-        pf.first_line_indent = Cm(profile["first_line_cm"])
+        _profile_first_line(paragraph, profile)
         if profile["alignment"] == "justify":
             paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     return paragraph
@@ -862,11 +949,11 @@ def _new_profile_document(profile, name, instructor, course, date_str, title,
     # Keep a header inside even a narrow custom margin.
     section.header_distance = section.footer_distance = min(Inches(0.5), Cm(profile["margin_cm"] / 2))
     _configure_profile_styles(doc, profile)
-    date_text = date_str.strip() if date_str and date_str.strip() else today_for_format(profile["format_id"])
+    date_text = _profile_date(profile, date_str)
     title_segments = _parse_markdown_emphasis(title)
     if profile["title_page"]:
         cover_title = _add_profile_paragraph(doc, title_segments, profile, role="title")
-        cover_title.paragraph_format.space_before = Pt(profile["font_size"] * profile["line_spacing"] * 3)
+        cover_title.paragraph_format.space_before = Pt((profile["line_spacing_pt"] or profile["font_size"] * profile["line_spacing"]) * 3)
         # APA student title pages have one extra double-spaced line before the byline.
         _add_profile_paragraph(doc, [], profile, role="metadata")
         for value in (name, affiliation, course, instructor, date_text):
@@ -879,10 +966,17 @@ def _new_profile_document(profile, name, instructor, course, date_str, title,
         body_title = _add_profile_paragraph(doc, title_segments, profile, role="title")
         body_title.paragraph_format.page_break_before = not hidden_cover
     else:
-        for value in (name, affiliation, instructor, course, date_text):
-            if value and value.strip():
-                _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
-        _add_profile_paragraph(doc, title_segments, profile, role="title")
+        if profile["typography"] == "chinese":
+            _add_profile_paragraph(doc, title_segments, profile, role="title")
+            for value in (name, affiliation, instructor, course, date_text):
+                if value and value.strip():
+                    paragraph = _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        else:
+            for value in (name, affiliation, instructor, course, date_text):
+                if value and value.strip():
+                    _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
+            _add_profile_paragraph(doc, title_segments, profile, role="title")
     _configure_page_numbers(doc, profile, name, last_name_override)
     return doc
 
@@ -974,24 +1068,25 @@ def _strip_profile_front_matter(blocks, profile, name, instructor, course, date_
         return 0
     values = [key(_plain(segments)) for segments, _ in blocks]
     title_text = key(_plain(_parse_markdown_emphasis(title)))
-    date_text = date_str.strip() if date_str and date_str.strip() else today_for_format(profile["format_id"])
+    date_text = _profile_date(profile, date_str)
     # Match both layouts so switching a course template's cover setting does
     # not copy the previous cover into the new body. All supplied metadata must
     # still match, including an equivalent date; a title alone is never enough.
     for previous_date in _date_variants(date_text):
-        for cover, fields in (
-            (True, (name, affiliation, course, instructor, previous_date)),
-            (False, (name, affiliation, instructor, course, previous_date)),
+        for fields in (
+            (name, affiliation, course, instructor, previous_date),
+            (name, affiliation, instructor, course, previous_date),
         ):
             metadata = [key(value) for value in fields if value and value.strip()]
-            expected = ([title_text] if cover else []) + metadata
-            if len(metadata) < 2 or values[:len(expected)] != expected:
-                continue
-            count = len(expected)
-            if len(values) > count and values[count] == title_text:
-                count += 1
-            del blocks[:count]
-            return count
+            for title_first in (True, False):
+                expected = ([title_text] if title_first else []) + metadata
+                if len(metadata) < 2 or values[:len(expected)] != expected:
+                    continue
+                count = len(expected)
+                if len(values) > count and values[count] == title_text:
+                    count += 1
+                del blocks[:count]
+                return count
     # Support an MLA draft being laid out as APA without retaining the MLA block.
     for previous_date in _date_variants(date_text):
         paragraphs = [segments for segments, _ in blocks]
