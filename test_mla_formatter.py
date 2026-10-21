@@ -191,7 +191,8 @@ def test_docx_keeps_hyperlink_text_in_order():
 
     doc, _ = _convert(path)
     assert doc.paragraphs[5].text == "Read Hamlet today."
-    assert any(r.text == "Hamlet" and r.italic for r in doc.paragraphs[5].runs)
+    assert any(r.text == "Hamlet" and r.italic
+               for link in doc.paragraphs[5].hyperlinks for r in link.runs)
 
 
 def test_docx_keeps_inherited_emphasis_and_explicit_off():
