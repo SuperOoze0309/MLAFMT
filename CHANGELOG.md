@@ -1,12 +1,14 @@
 # Changelog
 
-## v2.4.0 开发版（未发布） / Unreleased
+## v2.4.0 — 2026-10-21
 
-源码开发版；GitHub 正式下载仍为 v2.3.0。Source development version; published GitHub downloads are still v2.3.0.
+[FormCapy v2.4.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0) 与[网页版](https://formcapy.com/)现已发布。FormCapy v2.4.0 and the browser app are now available.
 
 ### 中文
 
-- 应用显示名改为 FormCapy，新增抱纸水豚吉祥物，统一网页、桌面和 Android 标识及图标；项目名保持 MLAFMT，网站域名规划为 `formcapy.com`。见[形象说明](docs/BRANDING.md)。
+- 应用显示名改为 FormCapy，新增抱纸水豚吉祥物，统一网页、桌面和 Android 标识及图标；项目名保持 MLAFMT。见[形象说明](docs/BRANDING.md)。
+- 网页版在 [formcapy.com](https://formcapy.com/) 上线，采用 Cloudflare 免费静态托管与 HTTPS；无需注册，DOCX/TXT/MD 在浏览器本地处理，草稿与论文信息不上传。首次需联网下载程序，缓存保留且页面受 service worker 控制后可离线使用。
+- 浏览器任务取消会终止 Worker，并隔离旧任务回调；可立即重试。修复 Cloudflare 规范化首页地址后缓存响应导致重复访问失败的问题；精确识别首个错误缓存并在完整预缓存后激活修复，不刷新页面或清除内存中的文稿。
 - 处理时显示像素水豚沿蓝线跑动的进度动画；未知耗时阶段不显示百分比，完成或失败后收起。网页在减少动态效果模式下保留静态状态。
 - 新增 APA 7 学生论文版式：独立标题页、学校/院系信息、仅页码页眉、正文重复标题、新页 References 和悬挂缩进。
 - APA / 自定义格式识别 DOCX Heading 1–3 和 Markdown `#`–`###`，启发式标题识别仍为可选项；参考文献按完整条目的起始文字排序，引用内容保持原文。
@@ -19,13 +21,15 @@
 - Android 同一草稿的段落保留选择与指纹可在旋转、折叠及界面重建后恢复；切换或移除草稿会清空，旧草稿的异步段落读取结果会被忽略。
 - 桌面、网页、离线 Android 和命令行共用 MLA / APA / 自定义排版核心，摘要与预览随所选格式更新。
 - 结果显示实际保留的段落、正文图片和表格数量，并对部分复杂结构或超出 1–3 级的标题提示核对；这不等于完整文档检查。当前处理范围见[格式指南](docs/FORMATS.md)。
-- 新增[格式与模板说明](docs/FORMATS.md)及 [A4 课程报告示例](examples/course-report-a4.json)：页码在页脚居中、封面不编号、正文从 1 开始。README 保留 v2.3.0 下载与截图，明确区分未发布功能。
+- 新增[格式与模板说明](docs/FORMATS.md)及 [A4 课程报告示例](examples/course-report-a4.json)：页码在页脚居中、封面不编号、正文从 1 开始。README 加入公网图文使用说明，保留并标注 v2.3.0 历史截图。
 - Markdown 代码围栏按原文字保留，避免误判其中的标题或参考文献标记；模板导入会拒绝 Word 文档不支持的字符。
-- 统一桌面构建的第三方许可证收集，修复 `LICENSES.txt` 漏收；Windows 构建附带原始声明、依赖清单及匹配的对应源码材料，帮助菜单提供查看和导出入口。v2.3.0 下载文件尚未替换。
+- 统一桌面构建的第三方许可证收集，修复 `LICENSES.txt` 漏收；Windows 构建附带原始声明、依赖清单及匹配的对应源码材料，帮助菜单提供查看和导出入口。历史 v2.3.0 下载文件未被替换；新版下载使用 v2.4.0。
 
 ### English
 
-- Rename the application's display name to FormCapy and add a paper-holding capybara mascot across web, desktop and Android branding and icons. The project remains MLAFMT; the planned website domain is `formcapy.com`. See the [branding notes](docs/BRANDING.md).
+- Rename the application's display name to FormCapy and add a paper-holding capybara mascot across web, desktop and Android branding and icons. The project remains MLAFMT. See the [branding notes](docs/BRANDING.md).
+- Launch [formcapy.com](https://formcapy.com/) on Cloudflare free static hosting with HTTPS. No registration is required; DOCX/TXT/MD processing runs locally in the browser without uploading drafts or paper details. First use needs a program download; offline use depends on retained caches and service-worker control.
+- Terminate the browser Worker on cancellation and isolate old callbacks so users can retry immediately. Repair failed repeat visits caused by cached redirected home responses after Cloudflare URL canonicalization. Only the exact first broken cache activates the repair after the full precache succeeds, without refreshing pages or clearing in-memory drafts.
 - Show a pixel capybara running along a blue line during processing. Unknown-duration work has no percentage; the animation closes on success or failure. Reduced-motion web settings retain a static status display.
 - Add APA 7 student layout with a separate title page, affiliation, page-only header, repeated body title and a new References page with hanging indents.
 - Recognize DOCX Heading 1–3 and Markdown `#`–`###` in APA/custom formats; heuristic detection remains opt-in. Sort complete reference paragraphs by their initial text and leave citation text unchanged.
@@ -38,9 +42,9 @@
 - Restore the same Android draft's paragraph selections and fingerprint after rotation, folding or interface recreation. Changing or removing drafts clears them, and asynchronous inspection results for an old draft are ignored.
 - Share MLA, APA and custom formatting across desktop, web, offline Android and CLI, with summaries and previews reflecting the selected format.
 - Show counts of paragraphs kept unchanged, body images and tables; warn about some complex structures and headings above level 3. This is not a complete document check. See the [format guide](docs/FORMATS.md) for the current scope.
-- Add a [format and template guide](docs/FORMATS.md) and an [A4 course report example](examples/course-report-a4.json) with bottom-center numbering, an unnumbered cover and body numbering starting at 1. Keep v2.3.0 downloads and screenshots distinct from unreleased features in the README.
+- Add a [format and template guide](docs/FORMATS.md) and an [A4 course report example](examples/course-report-a4.json) with bottom-center numbering, an unnumbered cover and body numbering starting at 1. Add an illustrated public-site guide to the README and retain clearly labelled historical v2.3.0 screenshots.
 - Keep fenced Markdown text literal so its headings and reference labels are not misclassified; reject template characters that cannot be written to Word documents.
-- Share third-party notice collection across desktop builds and include `LICENSES.txt`. Windows builds carry original notices, an inventory and matching corresponding-source materials, with Help entries to view or export them. Published v2.3.0 files have not yet been replaced.
+- Share third-party notice collection across desktop builds and include `LICENSES.txt`. Windows builds carry original notices, an inventory and matching corresponding-source materials, with Help entries to view or export them. Historical v2.3.0 files were not replaced; use the new v2.4.0 downloads.
 
 ## v2.3.0 — 2026-10-20
 

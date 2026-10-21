@@ -159,3 +159,38 @@ Android native 路径优先级：`window.MLAFMTAndroid` 存在时 transport 选 
 - 本地提交建议/已执行：见 `git log -1`（若已提交）；**未 push**。
 - 工作区没有提交 `dist/`、`browser/.cache/`、`.venv/`；它们均在 `.gitignore` 中。
 - 主工作区、Android/release 流程均未被操作。
+
+## 9. 2026-10-21 Root 验收补记
+
+本节记录 Root 合入、修复及发布后的验收结果。第 1–8 节保留为 DSH 交接时的历史报告，其中“未推送、未部署、未发布”等描述不代表当前发布状态。
+
+### 当前源码与正式发布
+
+- 源码提交 `f7c3444` 已推送至 `main`。
+- [CI 39559961737](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39559961737) 全部通过：Windows、Linux、macOS Intel/Apple Silicon 双架构、Android。
+- 7 个发布产物的 provenance、哈希及许可材料发布准备验证通过。
+- [v2.4.0 已正式发布](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)。
+
+### 第 6 节历史问题的当前状态
+
+| 历史条目 | Root 验收后的状态 |
+| --- | --- |
+| 6.1 transport 生命周期与取消 | 已修复。任务在初始化/读文件前登记；每次异步边界校验实例与 epoch；旧 Worker 消息/错误、旧 AbortSignal 不再结算或终止新任务。独立 Node VM **13/13 通过**。 |
+| 6.2 builder materials 版本参数 | 已改为传入 Pyodide `314.0.7`；新的 runtime materials 收集已完成并进入静态产物。 |
+| 6.3 Android 未构建 | Android 构建与 CI 已通过；真实 Android 设备安装、交互和折叠屏行为尚未实测。 |
+| 6.4 浏览器/设备覆盖 | 已补充 Edge 与 IAB 公网验收；Safari、苹果设备、Android 实机仍未测，未新增 Firefox 实测证据。 |
+| 6.5 Native/WASM rebuild | **仍未执行实际重建或重链**。材料状态继续为 `collected-not-rebuilt`，不能将材料收集通过表述为实际重建完成。 |
+| 6.6 Cloudflare 未部署 | 已正式上线。Cloudflare Worker `formcapy`，已验收部署标识 `6769274b`；根域名与 www 均可匿名访问。 |
+| 6.7 hyperlink 旧断言失败 | 已处理。Root Python 回归结果为 **98 passed、88 subtests passed**；当前未保留该失败。 |
+| 6.8 iOS 下载/分享、Safari 内存和 SW 配额 | 仍缺实机验收；IAB 离线模拟通过不能替代这些设备检查。 |
+| 6.9 Service Worker 更新策略 | 一般更新仍不调用 `skipWaiting()`/`clients.claim()`，不自动刷新。仅精确检测到已公开坏缓存 `formcapy-2.4.0-pyodide-314.0.7-f7d959ab5df8`，且修复版预缓存完整成功时，调用 `skipWaiting()` 完成迁移；不操作当前文稿。 |
+
+### 公网、离线与文稿验收
+
+- [formcapy.com](https://formcapy.com/) 与 [www.formcapy.com](https://www.formcapy.com/) 的 HTTPS 检查 **13/13 通过**：证书链及主机名受信、HTTP 跳转 HTTPS、路径与查询参数保持，显式检查的运行时资源保持同源 HTTPS。
+- 首页、manifest 与清单中 **122/122 个可下载资源**的大小及 SHA-256 均匹配本地发布目录。`_headers` 由平台消费并生效；WASM/MJS MIME 正确，缺失 WASM 返回 404。
+- SW 首页预缓存改用 `./`，导航 `/` 与 `/index.html` 使用同一缓存键；返回重定向缓存响应时重新构造 `Response`，消除 `redirected` 标志。SW 模板已纳入缓存版本摘要，当前版本为 `formcapy-2.4.0-pyodide-314.0.7-d035ce17a12d`。
+- 正式 SW Node VM 检查 **18/18 通过**，包括精确坏缓存迁移条件：未知/相似缓存不触发，预缓存失败不激活，不 claim、导航或刷新页面。
+- 精确迁移已恢复受影响 Edge 页面；新 IAB 标签打开与 reload 均通过。IAB CDP 离线模拟下，reload 后生成及下载通过，验收后已恢复 online。
+- 公网 DOCX 的 MLA/APA 转换均通过：两段保护段落、图片字节一致性、表格、超链接、参考文献另起新页检查全部通过。
+- **未验证项保留**：Safari、iPhone/iPad/Mac 苹果设备、Android 实机，以及 Edge 系统文件选择器选稿流程。以上结果不代表这些设备或系统交互已通过。

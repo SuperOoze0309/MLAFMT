@@ -1,21 +1,76 @@
 # FormCapy web deployment
 
-## Current release decision
+## Current launch status
 
-Complete and accept the browser-local document-processing refactor, then publish
-its static build on **Cloudflare** with **HTTPS required**. The existing Flask
-version will not be launched on Render as an interim release.
+The browser-local application is **live** at
+[formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/) on **Cloudflare Workers Static
+Assets, free plan**. The initial launch was on **21 October 2026 UTC
+(20 October in Los Angeles)**; the cache repair and public asset/TLS checks were
+recorded on **21 October in both UTC and Los Angeles**. The deployed code is
+`f7c3444`; subsequent
+documentation edits do not change that deployed application code.
 
-The public website is open to everyone without registration, sign-in, or a
-required email address. Cloudflare accounts are for the owner's hosting and DNS
-administration only. Do not add visitor accounts or put the public app behind
-Cloudflare Access or another sign-in gate.
+The DSH browser-local refactor (`0e5e923`) was merged in `adeca89`. The final
+static artifact came from `dist/browser-local/`.
 
-Cloudflare Pages and Workers Static Assets remain hosting options. Select the
-product and deployment settings after checking the finished static artifact,
-runtime files, asset limits, and domain configuration; neither option is recorded
-as the final choice yet. The static release must process drafts in the browser
-without depending on the Flask conversion endpoints.
+| Item | Recorded state |
+| --- | --- |
+| Hosting product | Workers Static Assets, free plan |
+| Worker / deployed version | `formcapy` / `6769274b` |
+| Worker URL | [formcapy.benzooze0309.workers.dev](https://formcapy.benzooze0309.workers.dev/) |
+| Domain connection | Workers Routes: `formcapy.com/*` and `www.formcapy.com/*`, fail closed |
+| Root and `www` certificates | Active in Cloudflare |
+| Always Use HTTPS | Enabled |
+| Local static build | Built; default `--check` verified 123 manifest hashes |
+| Source materials | 20 pinned inputs / 94 source files; `collected-not-rebuilt` |
+| Local browser operation | MLA/APA generated and downloaded in Codex in-app Chromium |
+| Public browser operation | Synthetic DOCX → MLA then APA, downloads and structure inspection passed in Codex in-app Chromium |
+| Microsoft Edge | Built-in Markdown demo → MLA download passed; system file picker untested |
+| Uploaded artifact | 124 files: 123 manifest entries plus `manifest.json` |
+| Public Worker assets | 122/122 downloadable resources match local SHA-256 and size |
+| Public domain checks | 13/13 passed, including trusted TLS 1.3 and HTTP upgrade redirects |
+| Platform CI | Run `39559961737` for `f7c3444`: all jobs passed, including both Mac architectures and Android emulator checks |
+| Desktop/Android release | [v2.4.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0), published 21 October 2026; 8 verified assets |
+
+The `f7c3444` upload repairs the service-worker home-page redirect handling.
+The public script and cache digest match the local build, and all 18 related
+Node VM cases passed. The old cache's first reload can still fail while it
+triggers the update; a later reload recovered automatically in real Edge
+without clearing caches or drafts. A new Codex in-app Chromium tab
+loaded and reloaded normally. Chromium also reloaded, generated and downloaded
+under simulated offline network conditions; the network setting was then
+restored. This does not establish physical disconnection or Safari behavior.
+
+The public static app is open to everyone without registration,
+sign-in or a required email address. Cloudflare accounts are for the owner's
+hosting and DNS administration only. Do not add visitor accounts or put the app
+behind Cloudflare Access or another sign-in gate.
+
+The static release runs the Python formatter through **Pyodide 314.0.7** inside a
+browser Web Worker. It accepts DOCX, TXT and Markdown with MLA 9, APA 7 student
+and custom layouts; draft bytes and paper details stay on the device. It has no
+Flask conversion endpoint or server-side Python dependency. The Tk native
+desktop app and the Flask local web mode remain separate delivery paths.
+
+First use downloads about **15.7 MiB** of program assets from the same origin.
+The separate **95 MiB** source/notice kit under `licenses/runtime-materials/`
+must be available through the license entry only and must stay out of the
+service-worker precache. The total static artifact is about **110.4 MiB**, with
+the largest file a 20 MiB archive part. The uploaded program and source files
+matched the local final artifact in the public Worker audit.
+
+### Domain routing
+
+The live domains use **Workers Routes**, configured as `formcapy.com/*` and
+`www.formcapy.com/*` for Worker `formcapy`, with **fail closed** selected. Existing
+proxied DNS records and Universal SSL provide the domain entry points. Always
+Use HTTPS performs the HTTP upgrade; both HTTPS hostnames serve the app directly.
+
+The Workers **Custom Domain** wizard was not bound: it reported conflicts with
+the existing parking A/CNAME records. Those records were not deleted; the live
+configuration uses Routes instead. Existing mail MX/TXT records were retained.
+Do not describe this deployment as a Workers Custom Domain binding.
 
 The Render files (`render.yaml`, `requirements-web.txt`, `gunicorn.conf.py`) and
 the instructions below are retained as a **fallback only**. They do not represent
@@ -28,27 +83,60 @@ new security-sensitive permission grant with its actual scope before accepting
 it; do not request repeated approval for routine deployment work already
 authorized by the owner.
 
-## Required launch acceptance
+## Required public launch acceptance
 
-These are release requirements, not completed verification results. Record the
-deployed commit, date, browser and OS versions, device, and outcome for each check.
+The local results are documented in [BROWSER-LOCAL.md](BROWSER-LOCAL.md). DSH's
+headless Chrome evidence and the Codex in-app Chromium checks are separate from
+a real Edge or Safari run. The independent real Edge check passed the built-in
+Markdown demo generation/download flow; Edge system file selection remains
+untested. Safari/macOS, physical iPhone/iPad, Firefox and
+Android physical-device checks have not been performed. The updated Android app
+has passed CI compilation and emulator offline/file-operation checks. All jobs
+in platform CI run `39559961737` for `f7c3444` passed, including both Mac
+architectures on their first attempt. The separate
+[v2.4.0 release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)
+was published at **2026-10-21 07:20:44 UTC** with eight assets from that run.
+Asset names, sizes and SHA-256 values were checked before publication.
+
+Completed public checks and remaining interactive/device checks are distinguished
+below. Keep the deployed commit, artifact manifest, date and browser/device
+details with each new result. The application release targets
+`f7c3444436b1bd11a06085c9ea202f7f5711e508`; later documentation-only commits do
+not change the code in the uploaded website or installers.
 
 - [ ] The finished static build loads its browser runtime and processes supported
   drafts without a Flask server. Inspect network requests during file selection,
   paragraph inspection, conversion, and download: draft bytes and paper details
   must not be sent to a server. Privacy text must match the implementation.
-- [ ] `https://formcapy.com` and `https://www.formcapy.com` both have valid,
+- [x] Public-site CUA in Codex in-app Chromium selected a synthetic DOCX, read
+  eight paragraphs, selected ids 1 and 5, then generated/downloaded MLA and APA.
+  Both downloads passed the document-preservation checks recorded below.
+- [x] Real Microsoft Edge opened the public site anonymously, generated from
+  the built-in Markdown demo and downloaded a valid 37,720-byte MLA DOCX. This
+  does not cover its system file picker or DOCX paragraph-preservation flow.
+- [x] An existing Edge client recovered from the first broken cache on a later
+  reload after the first failed reload triggered an update; no cache or draft
+  clearing was used. A new Codex in-app Chromium tab loaded and reloaded normally.
+- [x] Codex in-app Chromium reloaded the public site and generated/downloaded a
+  Markdown example with offline network conditions simulated through CDP. The
+  test restored online conditions afterwards; physical disconnection and Safari
+  offline behavior remain unverified.
+- [ ] Initial loading and ordinary formatting do not request the 95 MiB source
+  kit. It becomes available only through the license entry; no source-material
+  URL is in the program precache. Revisit offline only after installation and a
+  navigation that gives the service worker control. A first uncontrolled page
+  is outside the old-cache version-isolation guarantee.
+- [x] `https://formcapy.com` and `https://www.formcapy.com` both have valid,
   browser-trusted TLS certificates covering the requested hostname. Verify the
   certificate chain, validity period, and absence of browser security warnings.
   A `www` redirect still requires valid TLS before it can redirect to the root.
-- [ ] `http://formcapy.com` and `http://www.formcapy.com` redirect to HTTPS, preserve
+- [x] `http://formcapy.com` and `http://www.formcapy.com` redirect to HTTPS, preserve
   the requested path and query string, and have no redirect loop. The HTTPS `www`
   entry may redirect to the canonical root domain.
-- [ ] Browser Network and Console panels show no mixed-content requests or
-  warnings. All network-loaded WASM, JavaScript, browser Web Worker scripts,
-  Python runtime/package files, and other dependencies use **same-origin HTTPS**
-  URLs. Confirm that the server returns the expected files and content types,
-  including `application/wasm` for WASM, rather than an HTML fallback or a 404.
+- [x] Public Chromium CUA had no Console warnings or errors. The asset audit
+  verified program files, expected MIME types including `application/wasm`, and
+  basic security headers. The root and `www` samples used same-origin HTTPS;
+  a missing WASM URL returned 404 rather than an HTML fallback.
 - [ ] In Safari, Chrome, and Edge, choose supported DOCX, TXT, and Markdown files
   using the system file picker; complete conversion; download the generated DOCX;
   and confirm that the saved document opens and has the expected filename and
@@ -61,20 +149,60 @@ deployed commit, date, browser and OS versions, device, and outcome for each che
   report. Desktop resizing, emulation, and another Apple device do not establish
   that the missing device has passed; do not claim full iPhone/iPad verification.
 
-Cloudflare documents [Pages custom-domain setup](https://developers.cloudflare.com/pages/configuration/custom-domains/)
-and [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
-as separate deployment paths. For the selected path, complete domain association
-and certificate activation before declaring the custom domain ready. Configure
+### Saved launch evidence
+
+- `build/launch/public-https-verification-repair.txt`: **13/13 passed**. Both hostnames
+  returned 200 over TLS 1.3 with trusted certificate chains and valid hostnames;
+  HTTP returned 301, preserved the requested path/query and had no redirect loop.
+  The service worker, transport, Worker, manifest, runtime MJS and WASM
+  samples loaded over same-origin HTTPS. The earlier launch check separately
+  verified the on-demand source index.
+- `build/launch/cloudflare-worker-asset-audit.json`: **122/122 downloadable
+  resources** matched the final local artifact's SHA-256 and size at the public
+  Worker URL. WASM and MJS had the expected content types, the basic security
+  headers were present, and a missing `.wasm` URL returned 404. The current cache
+  is `formcapy-2.4.0-pyodide-314.0.7-d035ce17a12d`. The artifact's
+  `manifest.json` SHA-256 is
+  `cf144c0f0b5e5fa32a4940bf05f2fea0fb779c8e5ed69fb8ad99b2ab7ac41263`.
+- `build/launch/public-docx-verification.json`: real public CUA in the Codex
+  in-app browser (Chromium) generated and downloaded MLA then APA from one
+  synthetic DOCX. Each result retained two selected paragraphs' fonts, sizes,
+  colors and styles, one byte-identical image, one table, the hyperlink target
+  and italic formatting. References used `pageBreakBefore=True`; page margins
+  were 1 inch. Console warnings/errors were empty. The
+  [public-site screenshot](images/formcapy-live-zh.png) uses fictional paper
+  information and the synthetic draft. The viewport capture is
+  `build/launch/formcapy-live-result.png`.
+- `build/launch/public-edge-verification.json`: real Microsoft Edge used the
+  built-in Markdown demo and downloaded `Example_MLA_Essay (4).docx`
+  (**37,720 bytes**) through the page's download link into Windows Downloads.
+  ZIP integrity, python-docx readability, references on a new page and the
+  Example header passed; Console warnings/errors were empty. Edge system file
+  selection was not tested because extension upload permission was unavailable.
+  The screenshot is `build/launch/formcapy-live-edge.png`.
+- `build/launch/draft-verification.json`: pre-publication release validation
+  checked the eight asset names, sizes, SHA-256 values and target commit. The
+  release was then published as v2.4.0, with draft and prerelease both false.
+- `build/launch/public-sw-browser-verification.json`: existing-client recovery,
+  new-tab reload and Chromium simulated-offline reload/generation/download
+  checks. The legacy cache's first reload can fail before the replacement is
+  installed; a later reload recovered without clearing caches or drafts. The
+  offline test used CDP network emulation and restored online conditions.
+
+Future [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
+updates should upload the complete artifact, including the on-demand source
+materials, and repeat the public checks against that build's manifest. Keep
+program asset URLs on the same origin and preserve the existing Workers Routes,
+DNS/mail records, certificates and
 [Always Use HTTPS](https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/)
-or the selected product's equivalent redirect behavior, then verify the HTTP and
-HTTPS entry points above. See also
+configuration. See also
 [Universal SSL certificates](https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/).
 
 ## Fallback: Render Python service
 
 This section applies only if a later decision explicitly activates the Render
 fallback. It runs the existing Flask formatter and uploads drafts to the server;
-its privacy and operating details differ from the planned browser-local release.
+its privacy and operating details differ from the live browser-local release.
 
 ### Create the fallback service
 

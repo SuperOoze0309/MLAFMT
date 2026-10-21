@@ -24,8 +24,51 @@ passed. It is not a third-party legal certification or a claim that every
 redistribution question has been independently settled.
 
 The previously published v2.3 Windows ZIP contained the project's own `LICENSE`
-but lacked a companion third-party notice inventory. The source changes here
-do not replace or repair that old downloaded asset.
+but lacked a companion third-party notice inventory. The historical asset was
+not replaced. The new [v2.4.0 packages](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)
+include the collected third-party notices and release materials.
+
+## Browser-local runtime and source materials
+
+The static browser build runs the same Python formatter in **Pyodide 314.0.7**
+(CPython 3.14.2). Its pinned program assets include the official Pyodide lxml
+6.1.3 WebAssembly wheel, typing_extensions 4.15.0 and the pure-Python
+python-docx 1.2.0 wheel. The native desktop wheel described below is not used in
+the browser. `browser/runtime.json` records the downloaded files, sizes and
+SHA-256 hashes; the deployed app loads these files from its own origin.
+
+`scripts/collect_browser_runtime_materials.py` and
+`browser/runtime-sources.json` collect the matching source and notice materials.
+The current collection verifies **20 pinned inputs** and contains **94 original
+or selected source files**, including upstream source archives, build recipes,
+patches, license texts, a source manifest and rebuild notes. The static builder
+publishes them under `licenses/runtime-materials/` alongside
+`THIRD-PARTY-NOTICES.txt`, the artifact's `manifest.json` and the original license
+texts.
+
+The recorded state is **`collected-not-rebuilt`**. The application still uses
+the official runtime and wheel; a native/WebAssembly rebuild, relink or
+byte-identical reproduction has not been established. The collection is an
+engineering inventory, not a legal certification or proof that the rebuild has
+been completed. Read the kit's `SOURCE-MANIFEST.json` and `REBUILD.md` for the
+matching inputs, selected files and remaining rebuild work.
+
+The program download is about **15.7 MiB**. The separate source/notice kit is
+about **95 MiB** and is available only when a visitor opens the license entry
+and requests its contents. It must **not** be included in the service-worker
+precache or downloaded for ordinary document formatting. Large source archives
+are split into parts of at most 20 MiB; the material index explains reassembly.
+Build sizes and hashes are recorded in `dist/browser-local/manifest.json`.
+
+This static artifact is deployed on Cloudflare's free Workers Static Assets
+plan at [formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/) from code commit `f7c3444`.
+The public Worker asset audit matched size and SHA-256 for all **122 downloadable
+resources** against the final local artifact; `_headers` is hosting configuration
+and is not a downloadable program resource. Runtime and caching details are in the
+[browser-local guide](BROWSER-LOCAL.md); launch status is in
+[deployment notes](DEPLOYMENT.md). Android retains its native offline Python
+bridge and does not download Pyodide.
 
 ## The stock Windows lxml wheel
 
@@ -105,10 +148,11 @@ release preparation step rejects an unexpected enabled iconv dependency.
 macOS/Linux release builders use this recipe by default. Windows can select it
 with `-NoIconv`. A native compiler, Python headers and CMake are required.
 The recipe has received static review, including its MSVC library names and
-path handling, but has not been compiled on this Windows host or on a Mac/Linux
-host during this change. Native build success remains to be established by
-the corresponding platform build; its presence in the repository is not a
-claim that a new wheel or distributable already exists.
+path handling. Subsequent CI for `f7c3444` successfully built Linux and both Intel
+and arm64 macOS packages. All jobs in run `39559961737` passed, including both
+Mac architectures on their first attempt.
+These native platform results do not change the browser material kit's
+`collected-not-rebuilt` state.
 
 ## Development and release checks
 
@@ -126,5 +170,7 @@ provenance. Renaming a development archive cannot bypass those checks.
 
 Commit the complete source change before making final release packages. A
 source kit made from a dirty tree is useful for inspection but fails the final
-release aggregation check. This document does not assert that previously
-published packages have been replaced.
+release aggregation check. The v2.4.0 release uses source commit
+`f7c3444436b1bd11a06085c9ea202f7f5711e508` and CI run `39559961737`; its eight
+published assets passed provenance, size and SHA-256 validation. Historical
+v2.3.0 assets were not replaced.

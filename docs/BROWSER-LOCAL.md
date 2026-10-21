@@ -1,20 +1,28 @@
 # Browser-local FormCapy (MLAFMT)
 
-FormCapy normally runs as a desktop Flask app, an Android app with an offline
-Python bridge, or a local web preview. This document describes the additional
+FormCapy runs as a native Tk desktop app, an Android app with an offline Python
+bridge, or a Flask local web app. This document describes the additional
 **static, browser-local** build:
 
 - A visitor opens a static HTTPS site. No account, email, login, analytics or
   server-side Python is involved.
-- The uploaded DOCX/TXT/MD is read in the page, passed to a module Worker as an
+- The selected DOCX/TXT/MD is read in the page, passed to a module Worker as an
   `ArrayBuffer`, and formatted by the project's real Python core running in
   Pyodide (WebAssembly).
 - The resulting DOCX is returned as bytes and downloaded or shared locally.
   The draft is not uploaded anywhere.
 
-The static build is intentionally separate from the Flask app. Flask remains
-the desktop preview mode; Android keeps its native Python bridge and never
-downloads Pyodide.
+The static build is separate from the Flask local web mode. The native desktop
+interface uses Tk; Android keeps its native Python bridge and never downloads
+Pyodide. The DSH refactor commit `0e5e923` was merged in `adeca89`.
+
+The static build is live on **Cloudflare's free Workers Static Assets plan** at
+[formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/), deployed from code commit
+`f7c3444` as Worker `formcapy`, version `6769274b`. Both entry points passed
+trusted TLS and HTTP-to-HTTPS checks. The domains use **Workers Routes** with
+existing proxied DNS and Universal SSL. See [deployment notes](DEPLOYMENT.md)
+for the launch record and remaining device checks.
 
 ---
 
@@ -102,7 +110,7 @@ limits, and never imports Flask.
   rejects pending requests, and the next attempt builds a fresh Worker. A late
   `arrayBuffer()` from the cancelled attempt is rejected by the epoch check and
   cannot post into the new Worker.
-- **server** — desktop Flask (`content="server"` and no Android bridge), using
+- **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
 
 ### Cancellation and busy ownership
@@ -132,14 +140,16 @@ The default output is `dist/browser-local/` (git-ignored). The builder:
 
 - verifies every pinned runtime and wheel file against `browser/runtime.json`
   SHA-256 and size before copying;
-- replaces the three Jinja placeholders in `templates/index.html` and switches
-  the transport meta tag to `browser`;
+- replaces the Jinja version/date/public-server placeholders in
+  `templates/index.html`, sets `public_server` to `false`, and switches the
+  transport meta tag to `browser`;
 - copies the Python core and `browser_bridge.py`;
 - runs or reuses `scripts/collect_browser_runtime_materials.py` and publishes its
   output under `licenses/runtime-materials/`;
 - writes `manifest.json` (versions, per-file size/SHA-256, cache version,
   precache list, limits), `THIRD-PARTY-NOTICES.txt`, `LICENSE.txt`,
-  Cloudflare-Pages-style `_headers`, and an offline service worker;
+  Cloudflare Static Assets `_headers` (including `nosniff` and a referrer policy),
+  and an offline service worker;
 - asserts that no `{{`/`{%` remains in the HTML.
 
 Useful options:
@@ -179,16 +189,18 @@ The exact numbers are in `dist/browser-local/manifest.json`.
 | Part | Approx. size | Precached offline? |
 | --- | ---: | --- |
 | App shell, transport, Worker, Python core | < 0.3 MiB | yes |
-| Pyodide runtime, stdlib, lxml/typing wheels | ~13.4 MiB | yes |
+| Pyodide runtime, stdlib, lxml/typing wheels | ~15.0 MiB | yes |
 | python-docx wheel | 0.25 MiB | yes |
-| **App total** | **~15.7 MiB** | **yes (16 requests)** |
+| Top-level notices and metadata | < 0.2 MiB | no |
+| **Program and top-level notices total** | **~15.7 MiB** | **16 program URLs precached** |
 | Source/notice kit (`licenses/runtime-materials/`) | ~94.8 MiB | **no** |
 | **Publication total** | **~110.4 MiB** | source kit is on demand |
 
-The largest published file is a 20 MiB split part of a source archive, below the
-25 MiB per-file ceiling. Source materials are deliberately **not** in the
-service-worker precache; a phone never downloads the 95 MiB kit just to format
-a paper.
+The largest artifact file is a 20 MiB split part of a source archive, below the
+builder's recorded 25 MiB per-file limit. Source materials are deliberately
+**not** in the service-worker precache. The source index and its files are
+requested only through the license entry; ordinary formatting does not request
+the 95 MiB kit.
 
 ---
 
@@ -198,17 +210,34 @@ a paper.
 
 - the application version,
 - the Pyodide version,
-- a digest of every built program file.
+- a digest of every built program file and the service-worker template.
 
 Consequences:
 
 - Old FormCapy caches are deleted on activation of a new cache.
-- `skipWaiting()` is **not** called and `clients.claim()` is **not** called.
-  A new service worker waits until old FormCapy tabs are gone. A page that is
-  already open keeps its old UI, Worker, runtime and Python modules together;
-  it cannot mix a new Python core with an old Worker.
-- The page never auto-refreshes and never discards the in-memory draft during an
-  update. The new version applies on the next navigation after old tabs close.
+- Ordinary upgrades do **not** call `skipWaiting()` or `clients.claim()`. A
+  replacement service worker waits until the old worker's controlled tabs are
+  gone. For pages already controlled by the old worker, its cached UI, Worker,
+  runtime and Python modules stay together during that session.
+- One repair exception recognizes only the exact first public cache name
+  `formcapy-2.4.0-pyodide-314.0.7-f7d959ab5df8`. After the replacement precache
+  is complete, that case calls `skipWaiting()` to repair failed home-page
+  navigation. This repair changes only service-worker/cache handling; program
+  and Python runtime bytes are unchanged. It does not claim clients, navigate,
+  reload, or discard in-memory drafts. Unknown and similarly named caches do
+  not trigger this exception.
+- The home page is precached as `./`. Home and `index.html` navigations use that
+  key. Redirected cached responses are reconstructed with the same bytes,
+  status and headers, clearing the redirect flag that otherwise makes a
+  navigation fail when the host canonicalizes `/index.html` to `/`.
+- The first page on a new origin is normally **not yet controlled** by the
+  service worker and needs another navigation after installation. During an
+  uncontrolled load, assets come from the network; this cache design does not
+  guarantee that every possible page avoids mixing assets across a deployment.
+- Service-worker updates do not auto-refresh the page or deliberately discard
+  the in-memory draft. New code applies on a later navigation after activation.
+  Offline use also depends on successful installation and browser cache
+  retention; storage eviction can require another online load.
 - Only the explicit precache list is cached. Unknown URLs, POST requests and
   user documents (in-memory Blob URLs) are never cached.
 - If a cache upgrade is undesirable for a first release, build with
@@ -263,9 +292,11 @@ warning that complex documents and citations must be reviewed.
 
 | Environment | Status |
 | --- | --- |
-| Desktop Chrome/Edge (headless Chrome on Windows) | Verified end-to-end, including offline reload and conversion |
-| Desktop Flask mode | Verified by the Python test suite; static transport is not used |
-| Android APK | Not built in this workspace; Kotlin/asset/CSP changes are code-reviewed only |
+| Codex in-app browser (Chromium), local and public static builds | Real CUA MLA/APA generation, downloads and DOCX inspection passed; see below |
+| Headless Chrome on Windows | DSH refactor evidence covers end-to-end conversion and offline reload; separate from the in-app browser checks |
+| Microsoft Edge on Windows, public site | Built-in Markdown demo generated and downloaded successfully; system file picker not tested |
+| Flask local web mode | Covered by the Python test suite; static transport is not used |
+| Updated Android APK | CI compilation and Android emulator offline/file-operation checks passed; physical devices remain unverified |
 | Safari macOS | Not verified |
 | iPhone/iPad Safari | Not verified |
 | Firefox | Not verified |
@@ -284,7 +315,99 @@ users to use Share → Save to Files. This behavior was not tested on a device.
 
 ## 7. Verification performed
 
-Commands and results from this workspace:
+### Public deployment checks
+
+The launch used code commit `f7c3444` and uploaded **124 static files** (the
+123 manifest entries plus `manifest.json`). At
+`https://formcapy.benzooze0309.workers.dev/`, the public asset audit matched
+SHA-256 and size for **122/122 downloadable resources** against the final local
+artifact. WASM/MJS MIME types and the generated security headers were correct;
+a missing `.wasm` URL returned 404. The saved report is
+`build/launch/cloudflare-worker-asset-audit.json`.
+
+The deployed cache name is
+`formcapy-2.4.0-pyodide-314.0.7-d035ce17a12d`, and the public `sw.js` bytes match
+the repaired build. Its 18 Node VM checks passed. Interactive migration from the
+first public broken cache recovered in real Edge: the first reload can still
+fail while triggering the update; a later reload worked without clearing caches
+or drafts. A new Codex in-app Chromium tab loaded and
+reloaded normally. With CDP offline network conditions simulated, Chromium
+reloaded the site and generated/downloaded a Markdown example; online conditions
+were restored afterwards. These are browser checks, not a physical network
+disconnection or Safari test. Evidence is recorded in
+`build/launch/public-sw-browser-verification.json`.
+
+The separate custom-hostname check passed **13/13 checks**: root and `www`
+returned 200 over TLS 1.3 with trusted chains and valid hostnames, HTTP upgraded
+with 301 while preserving the path/query without a loop, and the sampled worker,
+transport, manifest, MJS runtime and WASM resources loaded over same-origin
+HTTPS. The earlier launch check separately verified the source index.
+The saved report is `build/launch/public-https-verification-repair.txt`. These transport
+and asset checks are separate from interactive browser conversion.
+
+Real CUA on **`https://formcapy.com/` in the Codex in-app browser (Chromium)**
+selected a synthetic DOCX, read **eight paragraphs**, selected paragraph ids
+**1 and 5**, then generated and downloaded MLA followed by APA. Both downloaded
+documents passed inspection: two selected paragraphs retained fonts, sizes,
+colors and styles; one image retained identical bytes/SHA-256; one table,
+the hyperlink target and italic formatting were preserved; references had
+`pageBreakBefore=True`; page margins were 1 inch. Console warnings and errors
+were empty. Results are recorded in `build/launch/public-docx-verification.json`.
+The [live website screenshot](images/formcapy-live-zh.png) shows fictional paper
+details and this synthetic draft; it is separate from the historical v2.3.0 UI.
+
+A separate **real Microsoft Edge** public-site check opened `formcapy.com`
+without signing in, used **Try demo** to load the built-in Markdown, generated
+locally and clicked the page's download link. Windows Downloads received
+`Example_MLA_Essay (4).docx` (**37,720 bytes**). Its ZIP was intact, python-docx
+could read it, references started on a new page and the Example page header was
+present. Console warnings/errors were empty. Evidence is in
+`build/launch/public-edge-verification.json` and
+`build/launch/formcapy-live-edge.png`. The Edge system file picker was **not
+tested** because extension file-upload permission was unavailable; this check
+establishes the built-in demo flow only.
+
+Platform CI run **`39559961737`** for **`f7c3444`** completed successfully across
+Python tests, Windows, Linux, Intel Mac, arm64 Mac and Android. Both Mac builds
+passed on their first attempt in this run. Android emulator offline
+conversion and native file operations passed. The separate
+[v2.4.0 release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)
+was published on **21 October 2026**, with eight assets verified against that
+run and the full source commit `f7c3444436b1bd11a06085c9ea202f7f5711e508`.
+Documentation-only changes after that commit do not alter the deployed program
+or released installers.
+
+### Integrated root-workspace checks
+
+The following results were recorded after the DSH merge:
+
+- The targeted Python checks passed:
+  **98 tests passed, plus 88 subtests**. The stale hyperlink assertion reported
+  by DSH was corrected in `cb3540d`; hyperlink text/XML preservation no longer
+  has the recorded failing assertion.
+- The Node VM transport lifecycle checks passed **13 cases**, including
+  cancellation, initialization/file-read races, worker failures and retry
+  isolation. These are protocol checks, separate from a browser run.
+- The service-worker Node VM checks passed **18 cases**, including canonical
+  home redirects, preserved response bytes/headers, scope and method handling,
+  the exact legacy-cache repair and failure isolation. A service-worker-only
+  edit changes the generated cache digest. These checks do not substitute for
+  public reload, repeated-navigation or offline browser checks.
+- The default static builder `--check` path successfully ran the source-material
+  collector with Pyodide **314.0.7**: **20 pinned inputs**, **94 source files**,
+  and **123 artifact manifest hashes** verified. The generated page has no Jinja
+  placeholders and `public_server` is `false`.
+- Real CUA in the **Codex in-app browser (Chromium)** generated and downloaded
+  both MLA and APA documents from a local static preview. Inspection confirmed
+  **two selected paragraphs** retained their formatting, **one image** retained
+  identical bytes, **one table**, the **hyperlink**, and references starting on a
+  separate page. These results do not establish Edge or Safari compatibility.
+
+### DSH refactor verification history
+
+The DSH refactor recorded these commands and results before integration. They
+are retained as historical evidence; the integrated results above supersede its
+stale formatter assertion:
 
 ```sh
 # Pyodide import and DOCX generation, with assertions (Node)
@@ -299,14 +422,14 @@ node browser/test/node_import_test.mjs
 .venv/Scripts/python.exe -m pytest browser/test/test_bridge_desktop.py test_mla_web.py test_android_bridge.py -q
 # 42 passed
 
-# Formatter suite (one pre-existing assertion is stale with the synced core)
+# Historical formatter suite before the assertion correction in cb3540d
 .venv/Scripts/python.exe -m pytest test_mla_formatter.py -q
 # 37 passed, 1 failed: test_docx_keeps_hyperlink_text_in_order
 #   The paragraph text and hyperlink XML are preserved; python-docx's
 #   Paragraph.runs does not expose runs nested inside w:hyperlink. The main
-#   branch owns the updated core tests.
+#   branch later corrected this assertion in cb3540d.
 
-# Static site in real headless Chrome
+# Static site in headless Chrome (DSH evidence, not a real Edge run)
 node browser/test/run_static_browser_test.mjs
 # mode=browser; demo DOCX 37,720 bytes/18 parts; blank 37,461 bytes/18 parts;
 # 6 paragraphs read; cancel + retry; 20 MiB rejection; preflight validation;
@@ -321,7 +444,7 @@ node browser/test/run_static_browser_test.mjs --offline
 .venv/Scripts/python.exe scripts/build_browser_static.py --check
 ```
 
-The end-to-end test also fetched the published
+The DSH end-to-end test also fetched the locally served artifact's
 `licenses/runtime-materials/index.html`, verified that the footer link is visible
 in browser mode, parsed the DOCX central directory, and asserted that all
 observed HTTP requests were same-origin GETs (Blob reads excluded).
@@ -334,22 +457,29 @@ SHA-256 `DEF5F82945D3E93754D1E8882838E131A22E24D889119E764A8C778A960ECDB7`.
 ## 8. Not verified / remaining work
 
 - No real iPhone, iPad, Mac Safari, Firefox or Android device run was performed.
-- The Android APK was not built here. The Kotlin `request_id` echo, native busy
-  ownership, CSP change and same-origin asset allowlist are code-reviewed, not
-  compiled or installed. The JS native adapter was exercised with simulated
-  bridge payloads only.
-- Cloudflare Pages deployment was not performed from this workspace. Domain,
-  DNS and HTTP→HTTPS are being configured by the project owner. The site is
-  static and anonymous; do not add Cloudflare Access, Functions or a database.
-- A native/WASM rebuild was **not** performed. The collector verifies 20 pinned
+- Edge passed the built-in Markdown demo flow, but its system file picker and
+  DOCX selection/preservation flow remain unverified.
+- The updated Android APK passed CI compilation and emulator checks for offline
+  conversion and native file operations. Physical Android hardware has not been
+  checked; desktop JavaScript adapter simulation remains a separate result.
+- Cloudflare **Workers Static Assets, free plan** is live through Workers Routes.
+  Public-origin TLS, redirects, sampled MIME types and asset integrity passed.
+  Public interactive MLA/APA conversion and downloaded-document inspection
+  passed in Codex in-app Chromium; real Edge passed the built-in Markdown demo
+  generation/download flow. Other browser/device checks remain separate.
+  The site is static and anonymous; do not add Cloudflare Access, Functions or
+  a database.
+- A native/WASM rebuild was **not** performed; the state remains
+  **`collected-not-rebuilt`**. The collector verifies 20 pinned
   inputs and publishes 94 original/selected files, but the lxml wheel is still
   the official Pyodide wheel. The materials are an engineering inventory, not a
   legal certification or a reproducible-relink proof. Review
   `licenses/runtime-materials/REBUILD.md` and `SOURCE-MANIFEST.json` before
   claiming full corresponding-source compliance.
 - The source kit's 95 MiB is part of the publication directory but not precached.
-  Confirm Cloudflare Pages file-count/size and deployment limits with the final
-  artifact; every individual file is below 25 MiB.
+  The 124-file artifact was accepted by Workers Static Assets; its largest
+  individual file is 20 MiB. Future builds still need upload and public-integrity
+  checks against their own manifest.
 - iOS download/share and service-worker quota behavior remain device risks.
 - `scripts/collect_browser_runtime_materials.py` and
   `browser/runtime-sources.json` are maintained separately; the builder only

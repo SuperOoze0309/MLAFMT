@@ -2,44 +2,54 @@
 
 <img src="static/capybara-64.png" alt="FormCapy 水豚吉祥物 / capybara mascot" width="64" height="64" />
 
-[中文](#中文) · [English](#english) · [版式 / Formats](docs/FORMATS.md) · [下载 / Downloads](https://github.com/SuperOoze0309/MLAFMT/releases/latest)
+[立即使用网页版 / Use in browser](https://formcapy.com/) · [中文](#中文) · [English](#english) · [版式 / Formats](docs/FORMATS.md) · [下载 / Downloads](https://github.com/SuperOoze0309/MLAFMT/releases/latest)
 
-把 `.docx`、`.txt` 或 `.md` 作文草稿整理为 MLA 第 9 版常用版式的 Word 文档。桌面端与网页端均支持中文 / English 切换；界面语言不会翻译或改写你的作文。
+**免费使用，无需注册。文稿在你的浏览器本地处理，不上传。** 支持 `.docx`、`.txt`、`.md`，可整理为 MLA 9、APA 7 学生论文或自定义课程模板。
 
-> **v2.4.0 开发中 / v2.4.0 in development.** 当前源码新增 **APA 7 学生论文**、**自定义课程模板与页码高级定制**、**DOCX 指定段落保持原格式**及正文图片和表格保留。下方正式下载和截图仍对应 v2.3.0；新版用法见[版式与模板说明](docs/FORMATS.md)。
->
-> Current source adds **APA 7 student papers**, **custom course templates with advanced page numbering**, **selected DOCX paragraph formatting**, and retention of body images and tables. The published downloads and screenshots below are still v2.3.0. See the [format guide](docs/FORMATS.md) for the new workflow.
+**Free, no account required. Your draft stays in your browser.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
-应用显示名为 **FormCapy**，GitHub 仓库与源码项目名称保持 **MLAFMT**。开发版使用水豚吉祥物，计划域名为 `formcapy.com`（尚未部署）。下方 v2.3.0 下载与截图保留当时的 MLAFMT 名称。见[形象说明 / Branding](docs/BRANDING.md)。
+## 三步开始 / Get started
 
-The application's display name is **FormCapy**; the GitHub repository and source project remain **MLAFMT**. The development version uses a capybara mascot, with `formcapy.com` planned but not deployed. The v2.3.0 downloads and screenshots below retain their historical MLAFMT name. See [Branding](docs/BRANDING.md).
+1. 打开 [formcapy.com](https://formcapy.com/)，选择格式并填写论文信息。Open the site, choose a format and enter your paper details.
+2. 选入草稿；DOCX 可选多段保留原格式。Choose a draft; optionally keep selected DOCX paragraphs unchanged.
+3. 点 **生成 Word 文档 → 下载 Word**。Select **Format document → Download Word**.
+
+![FormCapy 已上线中文网页版：虚构示例信息、选入的 DOCX 草稿和生成后的 Word 下载入口](docs/images/formcapy-live-zh.png)
+
+*真实公网操作截图，使用虚构信息与测试文稿。Live-site screenshot using fictional details and a synthetic draft.*
+
+首次使用需要联网下载程序。iPhone/iPad 的保存步骤见 [Apple 指南 / Apple guide](docs/APPLE.md)；Safari 与 Apple 实机流程尚未验证。First use needs an internet connection; Safari and Apple device workflows remain unverified.
+
+应用名为 **FormCapy**，GitHub 项目保持 **MLAFMT**。App: FormCapy; repository: MLAFMT.
 
 ## 下载 / Downloads
 
-| 设备 / Device | v2.3.0 下载 / Download | 安装 / Install |
+**[FormCapy v2.4.0 已发布 / Released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)** · 2026-10-21
+
+| 设备 / Device | v2.4.0 下载 / Download | 安装 / Install |
 | --- | --- | --- |
-| Windows 10/11 · x64 | [MLAFMT.exe](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT.exe) | 双击运行 / Open the EXE |
-| macOS 14+ · M 系列 / Apple silicon | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-macos-arm64.dmg) | 拖入应用程序 / Drag to Applications |
-| macOS 14+ · Intel | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-macos-x64.dmg) | 拖入应用程序 / Drag to Applications |
-| Linux · x64 · Ubuntu 22.04+ 或兼容系统 / or compatible | [Linux AppImage](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-linux-x64.AppImage) | 允许执行后运行 / Mark executable and open |
-| Android 7+ · 64 位 / 64-bit | [Android APK](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-android.apk) | 下载后安装 / Download and install |
+| Windows 10/11 · x64 | [Windows 应用](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT.exe) | 双击运行 / Open the EXE |
+| macOS 14+ · M 系列 / Apple silicon | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-macos-arm64.dmg) | 拖入应用程序 / Drag to Applications |
+| macOS 14+ · Intel | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-macos-x64.dmg) | 拖入应用程序 / Drag to Applications |
+| Linux · x64 · Ubuntu 22.04+ 或兼容系统 / or compatible | [Linux AppImage](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-linux-x64.AppImage) | 允许执行后运行 / Mark executable and open |
+| Android 7+ · 64 位 / 64-bit | [Android APK](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-android.apk) | 下载后安装 / Download and install |
 
 macOS 包目前未经过 Apple 公证。首次打开若被系统阻止，可在“系统设置 → 隐私与安全”确认打开。macOS builds are not Apple-notarized; if blocked on first launch, confirm the app in System Settings → Privacy & Security.
 
-Mac 文件打开、Pages 导入及 iPhone/iPad 本地预览见 [Apple 设备指南 / Apple guide](docs/APPLE.md)。iPhone/iPad 当前提供本地网页预览。See the guide for Mac file handling and local iPhone/iPad web preview.
+桌面和 Android 在设备上离线处理，无需安装 Python。Desktop and Android work offline without installing Python. iPhone/iPad 使用网页版，没有原生 iOS App。Use the website on iPhone/iPad; no native iOS app is available.
 
 <details>
 <summary>其他下载 / Other downloads</summary>
 
-- [Windows ZIP（包含图文说明）/ Windows ZIP with illustrated guide](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-windows-x64.zip)
-- [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz for systems without FUSE](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-linux-x64.tar.gz)
-- [SHA-256 校验和 / Checksums](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/SHA256SUMS.txt)
+- [Windows ZIP（包含图文说明）/ Windows ZIP with illustrated guide](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-windows-x64.zip)
+- [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz for systems without FUSE](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/MLAFMT-v2.4.0-linux-x64.tar.gz)
+- [SHA-256 校验和 / Checksums](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.4.0/SHA256SUMS.txt)
 
 </details>
 
-## v2.4.0 开发中的功能 / v2.4.0 in development
+## 功能 / Features
 
-源码开发版提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板**。
+v2.4.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板**。
 
 - **APA 7 学生论文**：选择格式后填写学校/院系、课程、教师和截止日期；自动生成独立标题页、正文标题、页码和新页 References。保留 DOCX Heading 1–3 和 Markdown `#`–`###` 的标题层级；标题大小写保持原文，请按课程要求核对。
 - **自定义课程模板**：选择该格式，打开模板设置，调整老师要求的纸张、字体、行距和页边距，再保存为命名模板；下次直接选择使用。桌面和网页可导入/导出 JSON 文件，Android 可复制/粘贴同一份 JSON。
@@ -48,18 +58,24 @@ Mac 文件打开、Pages 导入及 iPhone/iPad 本地预览见 [Apple 设备指�
 - **正文对象保留**：从源 DOCX 包保留正文图片和表格；表格整体保留，不逐段勾选。纸张、页边距、页码及源分节、页眉和页脚按所选模板重建，原分页位置可能改变。TXT/MD 图片语法不会嵌入图片。
 - **课程报告示例**：[A4 模板](examples/course-report-a4.json) 使用 Arial 11 pt、1.5 倍行距和 2.5 cm 页边距；页码在页脚居中，封面不编号，正文从 1 开始。可导入后修改；它是示例，不代表任何学校规范。
 
-三种格式共用同一排版核心，桌面、本地网页和离线 Android 的规则一致。参考文献内容保持原文，版式和完整字段说明见[格式指南](docs/FORMATS.md)。
+三种格式共用同一排版核心，Tk 桌面、本地 Flask 网页、浏览器本地静态版和离线 Android 使用同一套规则。Android 已通过 CI 编译与模拟器验证，实机尚未验证。参考文献内容保持原文，版式和完整字段说明见[格式指南](docs/FORMATS.md)。
 
 APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)。
 
 ## 中文
 
+### 网页版与隐私
+
+网页版通过可信 HTTPS 开放访问，不需要账号或旁边有电脑。草稿和论文信息在浏览器本地处理；切换界面语言不会翻译或改写文稿。首次下载程序后，离线使用还取决于缓存完成和浏览器是否保留缓存。
+
+程序、缓存及依赖材料说明见[浏览器本地构建指南](docs/BROWSER-LOCAL.md)，部署与已验证范围见[上线记录](docs/DEPLOYMENT.md)。Safari、macOS、iPhone、iPad、Firefox 及 Android 实机尚未验证。
+
 ### 桌面快速开始
 
-以下步骤适用于 v2.3.0 安装包，展示 MLA 9 流程。
+以下步骤适用于 v2.4.0 安装包；可选择 MLA、APA 或自定义模板。
 
 1. 下载与你的系统对应的文件，按上表安装并打开。
-2. 填写姓名、作文标题；老师和课程可选，日期留空会使用今天。
+2. 选择格式并填写姓名、论文标题及相应信息；MLA 的老师和课程可选，日期留空会使用今天。
 3. 拖入草稿，或点击选择文件，然后转换并保存 `.docx`。
 
 #### 图示：填写信息并生成文档
@@ -76,11 +92,11 @@ APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guideli
 
 macOS 支持 ⌘O 选择文件、⌘Return 转换；Windows/Linux 使用 Ctrl。桌面与 Android 版均在设备上处理文档，转换时无需联网。
 
-Mac 也可以在 Finder 中选择“打开方式 → MLAFMT”，或把草稿拖到 Dock 图标。保存后点 **在 Finder 中显示** 可选中生成文件。
+Mac 也可以在 Finder 中选择“打开方式 → FormCapy”，或把草稿拖到 Dock 图标。保存后点 **在 Finder 中显示** 可选中生成文件。
 
 ### Android 快速开始
 
-以下步骤对应 v2.3.0 APK。
+以下步骤对应 v2.4.0 APK。
 
 1. 安装 APK 后，填写姓名和论文标题。
 2. 点击选择草稿，通过系统文件选择器选入 `.docx`、`.txt` 或 `.md`。
@@ -90,7 +106,7 @@ Android 版不需要账号或广泛的存储权限，仅访问你选择的文件
 
 支持折叠屏展开、合拢、半折叠与分屏窗口；界面避让折痕，并保留已填信息、草稿和转换结果。
 
-### MLA 9 自动整理的内容（v2.3.0）
+### MLA 9 自动整理的内容
 
 | 项目 | 输出格式 |
 | --- | --- |
@@ -103,7 +119,7 @@ Android 版不需要账号或广泛的存储权限，仅访问你选择的文件
 
 在草稿正文后单独写一行 `Works Cited`，下面每段放一条文献。纯文本可用 `*Hamlet*` 表示斜体。草稿已有的姓名和标题可自动去重，高级选项可关闭此功能。MLA 默认日期使用英文日月年格式；手动填写的日期文字保持原样。
 
-### APA 7 学生版式与自定义模板（v2.4.0 开发中）
+### APA 7 学生版式与自定义模板
 
 APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见 [docs/FORMATS.md](docs/FORMATS.md)。
 
@@ -113,7 +129,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前源码版本为 v2.4.0 开发版，正式下载仍为 v2.3.0。
+当前发布版本为 v2.4.0；源码运行方式如下。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -133,9 +149,9 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 - **APA 参考文献**：References 按完整条目的起始文本排序；含保留段落或对象时，仅对连续、安全的普通条目排序，并提示核对顺序。不解析或改写文内引用或文献内容，也不实现复杂的同作者、同年份书目排序。不提供专业论文 running head 或作者注。
 - **自定义模板**：仅支持字段表中的布局项。没有账号或云同步；导出的 JSON 只含布局设置，不含文档。
-- **DOCX 转换（v2.4.0 源码）**：保留源包中的正文图片和表格；所选段落保留字体、字号和段落格式。源分节、页眉和页脚会被模板设置替换，原页眉页脚中的图片不属于正文图片保留范围，原分页也可能改变。复杂对象、修订及异常结构请对照原稿核对；部分结构和高于 3 级的标题会出现结果提示，这不等于完整文档检查。
+- **DOCX 转换**：保留源包中的正文图片和表格；所选段落保留字体、字号和段落格式。源分节、页眉和页脚会被模板设置替换，原页眉页脚中的图片不属于正文图片保留范围，原分页也可能改变。复杂对象、修订及异常结构请对照原稿核对；部分结构和高于 3 级的标题会出现结果提示，这不等于完整文档检查。
 - **TXT/MD**：图片链接或图片语法不会自动嵌图；代码围栏只作为文字保留。段落保留选择仅支持 DOCX，表格整体保留且不提供表格内逐段选择。
-- 网页目前由电脑提供本地预览，iPhone/iPad 通过同一局域网访问。教师或学校要求优先于预设。
+- 浏览器本地静态版在设备浏览器内处理文档；原 Flask 局域网模式会把草稿临时传给运行服务的电脑。两种模式的网络和隐私行为见 [Apple 指南](docs/APPLE.md)。教师或学校要求优先于预设。
 
 ### 测试、打包与发布
 
@@ -163,14 +179,24 @@ Release 中的应用是当前发布版本。仓库根目录的旧 `MLAFMT.exe` �
 
 ## English
 
-Turn an essay draft into a Word document with common **MLA 9th edition layout conventions**. Use the desktop app, local web app, Python library, or command line. Chinese and English interface settings are remembered; switching language leaves your essay text unchanged.
+Turn a `.docx`, `.txt` or `.md` draft into a Word document. The website and v2.4.0 apps support **MLA 9, APA 7 student papers and custom course templates**. Use the website or an offline desktop/Android app. Chinese and English interface settings are remembered; switching language leaves your essay text unchanged.
+
+### Use in your browser
+
+1. Open [formcapy.com](https://formcapy.com/) and let the first program download finish.
+2. Choose MLA, APA or a custom template, enter your paper details, and select a `.docx`, `.txt` or `.md` draft.
+3. Generate the document, then select **Download Word**. See the [Apple guide](docs/APPLE.md) for saving on iPhone/iPad.
+
+The public site uses trusted HTTPS and processes drafts locally, with no account or draft upload. First use needs a program download. Offline use also depends on successful caching and the browser retaining its storage.
+
+See the [browser-local guide](docs/BROWSER-LOCAL.md) for program, cache and dependency details and the [launch record](docs/DEPLOYMENT.md) for completed checks. Safari, macOS, iPhone, iPad, Firefox and Android device workflows remain unverified.
 
 ### Desktop quick start
 
-These steps describe the v2.3.0 packages and the MLA 9 workflow.
+These steps describe the v2.4.0 packages. Choose MLA, APA or a custom template.
 
 1. Download the file for your system and install it as shown above.
-2. Enter your name and essay title. Instructor and course are optional; a blank date uses today.
+2. Choose a format and enter your name, paper title and the required details. For MLA, instructor and course are optional; a blank date uses today.
 3. Choose or drag in a `.docx`, `.txt`, or `.md` draft, then convert and save.
 
 #### Illustrated: enter details and create a document
@@ -187,11 +213,11 @@ Choose **中文 / English** at the top to switch language. Advanced settings inc
 
 On macOS, use ⌘O to choose a file and ⌘Return to convert; Windows/Linux use Ctrl. Desktop and Android apps process files on your device and work offline.
 
-On Mac, Finder's **Open With → MLAFMT** and Dock drops also load drafts. After saving, **Show in Finder** selects the generated document.
+On Mac, Finder's **Open With → FormCapy** and Dock drops also load drafts. After saving, **Show in Finder** selects the generated document.
 
 ### Android quick start
 
-These steps describe the v2.3.0 APK.
+These steps describe the v2.4.0 APK.
 
 1. Install the APK, then enter your name and essay title.
 2. Tap to choose a `.docx`, `.txt`, or `.md` draft using the system file picker.
@@ -201,7 +227,7 @@ No account or broad storage permissions are required. The app only accesses file
 
 Foldable and multi-window layouts adapt to available space and avoid separating hinges, while retaining your details, draft and generated document.
 
-### MLA 9 formatting (v2.3.0)
+### MLA 9 formatting
 
 | Element | Output |
 | --- | --- |
@@ -214,7 +240,7 @@ Foldable and multi-window layouts adapt to available space and avoid separating 
 
 Put `Works Cited` on its own line after the essay, with one source per paragraph. Use `*Hamlet*` for italics in plain text. Existing heading information can be removed to avoid duplicates; this is configurable in Advanced settings. Default MLA dates use the English day-month-year form; manually entered date text is kept as written.
 
-### APA 7 student layout and custom templates (v2.4.0 in development)
+### APA 7 student layout and custom templates
 
 - **APA 7 student layout:** select the format and enter your school/department, course, instructor and due date. It creates a title page, repeated body title, page numbers and a new References page. DOCX Heading 1–3 and Markdown `#`–`###` retain their heading levels; title and heading capitalization stays as written, so check it against course requirements.
 - **Custom course templates:** choose this format, adjust your instructor's paper, font, spacing and margin requirements, then save a named template for next time. Desktop and web import/export JSON files; Android can copy/paste the same JSON text. Each interface keeps its settings locally.
@@ -223,7 +249,7 @@ Put `Works Cited` on its own line after the essay, with one source per paragraph
 - **Retain body objects:** preserve body images and tables from the source DOCX package. Tables are retained as whole objects, without paragraph-by-paragraph selection inside them. Paper size, margins, numbering, source sections, headers and footers are rebuilt for the chosen template; original pagination may change. TXT/MD image syntax does not embed images.
 - **Course report example:** import the [A4 template](examples/course-report-a4.json), which uses Arial 11 pt, 1.5 spacing and 2.5 cm margins, with bottom-center page numbers, an unnumbered cover and body numbering starting at 1. Adjust this example for your course; it is not an institution's standard.
 
-All three layouts share the same core on desktop, local web and offline Android. Reference text is unchanged. See the [format guide](docs/FORMATS.md) for layout rules, fields and transfer instructions.
+All three layouts share the same core on the Tk desktop app, Flask local web app, browser-local static build and offline Android app. The updated Android app passed CI compilation and emulator checks; physical devices remain unverified. Reference text is unchanged. See the [format guide](docs/FORMATS.md) for layout rules, fields and transfer instructions.
 
 Open **Advanced customization** inside template settings for numbering. Under **Advanced options → Keep selected paragraphs unchanged**, read the Word paragraphs and select them or enter number ranges. IDs follow paragraph positions in the source DOCX body; empty paragraphs are hidden, so numbers may have gaps. Selected paragraphs keep fonts, sizes, spacing and indentation while page layout follows the template. Android restores the same draft's selections after rotation or folding recreates the interface.
 
@@ -231,7 +257,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-Current source is the v2.4.0 development version; published downloads are still v2.3.0.
+The current release is v2.4.0. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 
@@ -271,9 +297,9 @@ MLAFMT handles layout only. It does not create or verify citations, or assess wh
 
 - **APA references:** References are sorted by each complete entry's initial text. With preserved paragraphs or objects, only consecutive safe ordinary entries are sorted, with a message to check the order. MLAFMT does not parse or rewrite in-text citations or reference content, and does not implement complex same-author/year bibliographic ordering. No professional-paper running head or author note is produced.
 - **Custom templates:** only the listed layout fields are supported. There is no account or cloud sync, and exported JSON contains layout settings only, not documents.
-- **DOCX conversion (v2.4.0 source):** retains body images and tables from the source package, plus fonts, sizes and paragraph formatting in selected paragraphs. Template settings replace source sections, headers and footers; images in original headers/footers are outside body-image retention, and pagination may change. Compare complex objects, revisions and unusual structures with the original. Warnings about some structures or headings above level 3 are not a complete document check.
+- **DOCX conversion:** retains body images and tables from the source package, plus fonts, sizes and paragraph formatting in selected paragraphs. Template settings replace source sections, headers and footers; images in original headers/footers are outside body-image retention, and pagination may change. Compare complex objects, revisions and unusual structures with the original. Warnings about some structures or headings above level 3 are not a complete document check.
 - **TXT/MD:** image links and syntax do not automatically embed images; fenced code is retained as text only. Paragraph selection requires DOCX. Tables are kept whole, without selections for individual paragraphs inside them.
-- The web app currently runs as a local preview on the computer, with iPhone/iPad access over the same LAN. Instructor or institution requirements take priority over presets.
+- The static browser-local build processes documents in the device's browser. The original Flask LAN mode temporarily sends drafts to the computer running the server. See the [Apple guide](docs/APPLE.md) for both workflows and their privacy behavior. Instructor or institution requirements take priority over presets.
 
 ### Test, build and release
 
@@ -298,6 +324,6 @@ GitHub Actions tests and uploads platform packages for pushes, pull requests and
 
 Project source is licensed under MIT; see [LICENSE](LICENSE). The project license does not replace dependency licenses.
 
-v2.4.0 构建会生成 `THIRD-PARTY-NOTICES.txt`、原始许可文本与依赖清单。桌面应用的 **帮助 → 第三方许可证** 可查看声明；附带对应源码包的 Windows 构建可通过 **保存对应源码…** 导出。许可与构建材料说明见[依赖分发说明](docs/DEPENDENCIES.md)。这些改动尚未补入上方的 v2.3.0 下载文件。
+v2.4.0 安装包包含 `THIRD-PARTY-NOTICES.txt`、原始许可文本与依赖清单。桌面应用的 **帮助 → 第三方许可证** 可查看声明；附带对应源码包的 Windows 构建可通过 **保存对应源码…** 导出。许可与构建材料说明见[依赖分发说明](docs/DEPENDENCIES.md)。历史 v2.3.0 文件未被替换；请使用上方 v2.4.0 下载。
 
-v2.4.0 builds generate full third-party notices, original license texts and a dependency inventory. Use **Help → Third-party licenses** to read the notices; Windows builds carrying a corresponding source kit also offer **Save corresponding source…**. See [dependency distribution notes](docs/DEPENDENCIES.md). The v2.3.0 downloads above do not yet include these corrections.
+v2.4.0 packages include full third-party notices, original license texts and a dependency inventory. Use **Help → Third-party licenses** to read the notices; Windows builds carrying a corresponding source kit also offer **Save corresponding source…**. See [dependency distribution notes](docs/DEPENDENCIES.md). Historical v2.3.0 assets were not replaced; use the v2.4.0 downloads above.

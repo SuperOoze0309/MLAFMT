@@ -6,9 +6,9 @@
 
 GitHub 仓库与源码项目名称保持 **MLAFMT**，应用显示名为 **FormCapy**。网页、桌面和 Android 界面采用 FormCapy 名称与水豚吉祥物。内部模块、Android 包 ID、原有设置和安装升级标识继续沿用现有项目身份。
 
-### 域名规划
+### 网站
 
-计划使用 `formcapy.com` 作为网站域名。目前这是规划，尚未部署，也不表示已经提供可访问的线上服务。本地网页预览仍按现有方式运行。
+浏览器本地静态版已通过 Cloudflare 免费 Workers Static Assets 上线：[formcapy.com](https://formcapy.com/) · [www.formcapy.com](https://www.formcapy.com/)。实际域名连接使用 Workers Routes；两入口均已验证可信 HTTPS 和 HTTP 升级重定向。静态版在浏览器内通过 Pyodide 运行 Python 排版核心，无需账号且草稿不上传。原 Flask 本地网页预览仍可使用。部署记录见[部署说明](DEPLOYMENT.md)。
 
 ### 图像资源
 
@@ -21,7 +21,7 @@ GitHub 仓库与源码项目名称保持 **MLAFMT**，应用显示名为 **FormC
 
 ### 版本与截图
 
-FormCapy 应用名称与水豚形象属于 **v2.4.0 未发布开发版**。README 中现有界面截图和正式下载仍对应 **v2.3.0**，保留当时的 MLAFMT 名称与原截图。
+FormCapy 应用名称与水豚形象已用于上线网页版及 [v2.4.0 桌面和 Android 安装包](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0)。README 的新网站截图使用真实公网操作与虚构示例；标注 **v2.3.0** 的历史界面截图保留当时的 MLAFMT 名称。
 
 ## English
 
@@ -29,9 +29,9 @@ FormCapy 应用名称与水豚形象属于 **v2.4.0 未发布开发版**。READM
 
 The GitHub repository and source project remain **MLAFMT**, and the application's display name is **FormCapy**. The web, desktop and Android interfaces use FormCapy and its capybara mascot. Internal modules, Android package ID, existing settings and installation/update identifiers keep their current project identity.
 
-### Planned domain
+### Website
 
-`formcapy.com` is the planned website domain. It is not deployed, and the plan does not indicate that a public online service is available. The existing local web preview workflow continues to apply.
+The browser-local static build is live at [formcapy.com](https://formcapy.com/) and [www.formcapy.com](https://www.formcapy.com/) on Cloudflare's free Workers Static Assets plan. The domains use Workers Routes; both entry points passed trusted HTTPS and HTTP upgrade redirect checks. The static build runs the Python formatter through Pyodide in the browser, with no account or draft upload. The original Flask local web preview remains available. See [deployment notes](DEPLOYMENT.md) for the launch record.
 
 ### Image assets
 
@@ -44,4 +44,4 @@ The master was generated with the built-in imagegen tool; the [prompt record](..
 
 ### Versions and screenshots
 
-The FormCapy application name and capybara belong to the **unreleased v2.4.0 development version**. Existing README screenshots and published downloads still represent **v2.3.0**, retaining their historical MLAFMT name and original screenshots.
+The live website and [v2.4.0 desktop and Android packages](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.4.0) use the FormCapy name and capybara. The new README website screenshot shows a real public-site session with fictional details. Historical screenshots labelled **v2.3.0** retain their original MLAFMT name.
