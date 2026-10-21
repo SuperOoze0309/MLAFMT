@@ -417,7 +417,7 @@ def file_entries(root: Path) -> list[dict]:
 def precache_paths(entries: list[dict]) -> list[str]:
     prefixes = ("index.html", "static/", "browser/", "python/", "runtime/", "wheels/")
     return sorted(
-        "./" + entry["path"]
+        "./" if entry["path"] == "index.html" else "./" + entry["path"]
         for entry in entries
         if entry["path"].startswith(prefixes)
     )
@@ -510,9 +510,17 @@ def build(
     note_materials(out, materials_info)
 
     entries = file_entries(out)
+    # Include the unexpanded template in the cache identity: changing only SW
+    # behavior must select a fresh cache without hashing its own generated name.
+    template = (BROWSER / "sw.js").read_text(encoding="utf-8") if offline else ""
+    if offline and ("__CACHE_VERSION__" not in template or "__PRECACHE__" not in template):
+        raise BuildError("sw.js template is missing its build markers")
     digest = hashlib.sha256(
         json.dumps(
-            [(entry["path"], entry["size"], entry["sha256"]) for entry in entries],
+            {
+                "files": [(entry["path"], entry["size"], entry["sha256"]) for entry in entries],
+                "service_worker_template": template,
+            },
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
@@ -520,9 +528,6 @@ def build(
     precache = precache_paths(entries)
 
     if offline:
-        template = (BROWSER / "sw.js").read_text(encoding="utf-8")
-        if "__CACHE_VERSION__" not in template or "__PRECACHE__" not in template:
-            raise BuildError("sw.js template is missing its build markers")
         worker = template.replace("__CACHE_VERSION__", cache_name).replace(
             "__PRECACHE__", json.dumps(precache, indent=2)
         )
