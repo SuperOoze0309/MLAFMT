@@ -1,0 +1,34 @@
+[
+  {
+    "file": "cpython-3.12.15-incorporated-software.txt",
+    "component": "CPython 3.12 incorporated software notices",
+    "url": "https://raw.githubusercontent.com/python/cpython/v3.12.15/Doc/license.rst",
+    "source_sha256": "341832873fd316a37927e79385093fbbfd40a467428480835fe435a80cadf4e5",
+    "sha256": "d4f3b2147ce2d4b6a4671b208523669923778b9a3f609aab753c41d34540698a",
+    "selection": "Licenses and Acknowledgements for Incorporated Software onward"
+  },
+  {
+    "file": "openssl-3.5.9-LICENSE.txt",
+    "component": "OpenSSL 3.5.9",
+    "url": "https://raw.githubusercontent.com/openssl/openssl/openssl-3.5.9/LICENSE.txt",
+    "source_sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+    "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+    "selection": "complete source file"
+  },
+  {
+    "file": "expat-2.8.5-COPYING.txt",
+    "component": "Expat 2.8.5",
+    "url": "https://raw.githubusercontent.com/libexpat/libexpat/R_2_8_5/expat/COPYING",
+    "source_sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87",
+    "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87",
+    "selection": "complete source file"
+  },
+  {
+    "file": "libiconv-1.17-COPYING.LIB",
+    "component": "GNU libiconv 1.17 library",
+    "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz",
+    "source_sha256": "8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313",
+    "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+    "selection": "complete libiconv-1.17/COPYING.LIB archive member"
+  }
+]

@@ -6,10 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PYTHON="${PYTHON:-python3}"
 EXPECTED_VERSION=""
+DEVELOPMENT=0
 while (($#)); do
     case "$1" in
         --python) PYTHON="$2"; shift 2 ;;
         --expected-version) EXPECTED_VERSION="$2"; shift 2 ;;
+        --development) DEVELOPMENT=1; shift ;;
         *) echo "Unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -21,12 +23,18 @@ done
 
 BUILD_DIR="$PROJECT_ROOT/build/linux/x64"
 RELEASE_DIR="$PROJECT_ROOT/dist/release"
+if ((DEVELOPMENT)); then RELEASE_DIR="$PROJECT_ROOT/dist/development"; fi
 mkdir -p "$BUILD_DIR/tools" "$RELEASE_DIR"
 "$PYTHON" -m venv --clear "$BUILD_DIR/venv"
 BUILD_PYTHON="$BUILD_DIR/venv/bin/python"
 "$BUILD_PYTHON" -m pip install -r "$PROJECT_ROOT/requirements-build.txt"
 "$BUILD_PYTHON" -m pip check
-VERSION="$("$BUILD_PYTHON" "$PROJECT_ROOT/scripts/prepare_desktop_build.py" --root "$PROJECT_ROOT" --output "$BUILD_DIR" --platform linux --architecture x86_64 --expected-version "$EXPECTED_VERSION" --verify-dependencies)"
+PREPARE_ARGS=(--root "$PROJECT_ROOT" --output "$BUILD_DIR" --platform linux --architecture x86_64 --expected-version "$EXPECTED_VERSION" --verify-dependencies)
+if ((!DEVELOPMENT)); then
+    "$BUILD_PYTHON" "$PROJECT_ROOT/scripts/build_lxml_no_iconv.py" --output "$BUILD_DIR/native" --install
+    PREPARE_ARGS+=(--release-check)
+fi
+VERSION="$("$BUILD_PYTHON" "$PROJECT_ROOT/scripts/prepare_desktop_build.py" "${PREPARE_ARGS[@]}")"
 "$BUILD_PYTHON" -m PyInstaller --clean --noconfirm --workpath "$BUILD_DIR/pyinstaller" --distpath "$BUILD_DIR/dist" "$BUILD_DIR/MLAFMT.spec"
 
 STAGE_DIR="$(mktemp -d "$BUILD_DIR/package.XXXXXX")"
@@ -70,6 +78,7 @@ printf '%s  %s\n' "${TOOL_VALUES[3]}" "$VENDORED_RUNTIME" | sha256sum --check --
 cp "$VENDORED_RUNTIME" "$BUILD_DIR/tools/runtime-x86_64"
 chmod +x "$BUILD_DIR/tools/runtime-x86_64"
 APPIMAGE_PATH="$RELEASE_DIR/MLAFMT-v$VERSION-linux-x64.AppImage"
+if ((DEVELOPMENT)); then APPIMAGE_PATH="$RELEASE_DIR/MLAFMT-v$VERSION-linux-x64-development.AppImage"; fi
 ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$BUILD_DIR/tools/appimagetool.AppImage" --runtime-file "$BUILD_DIR/tools/runtime-x86_64" "$APP_DIR" "$APPIMAGE_PATH"
 chmod +x "$APPIMAGE_PATH"
 
@@ -78,5 +87,6 @@ mkdir -p "$STAGE_DIR/appimage-test"
 (cd "$STAGE_DIR/appimage-test" && "$APPIMAGE_PATH" --appimage-extract >/dev/null)
 smoke_test "$STAGE_DIR/appimage-test/squashfs-root/AppRun"
 TAR_PATH="$RELEASE_DIR/MLAFMT-v$VERSION-linux-x64.tar.gz"
+if ((DEVELOPMENT)); then TAR_PATH="$RELEASE_DIR/MLAFMT-v$VERSION-linux-x64-development.tar.gz"; fi
 tar -czf "$TAR_PATH" -C "$STAGE_DIR" MLAFMT.AppDir
 echo "Release assets ready: $APPIMAGE_PATH and $TAR_PATH"

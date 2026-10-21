@@ -1,4 +1,6 @@
-# MLAFMT · MLA 一键排版
+# FormCapy · 论文与报告排版
+
+<img src="static/capybara-64.png" alt="FormCapy 水豚吉祥物 / capybara mascot" width="64" height="64" />
 
 [中文](#中文) · [English](#english) · [版式 / Formats](docs/FORMATS.md) · [下载 / Downloads](https://github.com/SuperOoze0309/MLAFMT/releases/latest)
 
@@ -7,6 +9,10 @@
 > **v2.4.0 开发中 / v2.4.0 in development.** 当前源码新增 **APA 7 学生论文**、**自定义课程模板与页码高级定制**、**DOCX 指定段落保持原格式**及正文图片和表格保留。下方正式下载和截图仍对应 v2.3.0；新版用法见[版式与模板说明](docs/FORMATS.md)。
 >
 > Current source adds **APA 7 student papers**, **custom course templates with advanced page numbering**, **selected DOCX paragraph formatting**, and retention of body images and tables. The published downloads and screenshots below are still v2.3.0. See the [format guide](docs/FORMATS.md) for the new workflow.
+
+应用显示名为 **FormCapy**，GitHub 仓库与源码项目名称保持 **MLAFMT**。开发版使用水豚吉祥物，计划域名为 `formcapy.com`（尚未部署）。下方 v2.3.0 下载与截图保留当时的 MLAFMT 名称。见[形象说明 / Branding](docs/BRANDING.md)。
+
+The application's display name is **FormCapy**; the GitHub repository and source project remain **MLAFMT**. The development version uses a capybara mascot, with `formcapy.com` planned but not deployed. The v2.3.0 downloads and screenshots below retain their historical MLAFMT name. See [Branding](docs/BRANDING.md).
 
 ## 下载 / Downloads
 
@@ -291,3 +297,7 @@ GitHub Actions tests and uploads platform packages for pushes, pull requests and
 项目源码采用 MIT 许可证，见 [LICENSE](LICENSE)；项目许可证不替代各项依赖的许可证。
 
 Project source is licensed under MIT; see [LICENSE](LICENSE). The project license does not replace dependency licenses.
+
+v2.4.0 构建会生成 `THIRD-PARTY-NOTICES.txt`、原始许可文本与依赖清单。桌面应用的 **帮助 → 第三方许可证** 可查看声明；附带对应源码包的 Windows 构建可通过 **保存对应源码…** 导出。许可与构建材料说明见[依赖分发说明](docs/DEPENDENCIES.md)。这些改动尚未补入上方的 v2.3.0 下载文件。
+
+v2.4.0 builds generate full third-party notices, original license texts and a dependency inventory. Use **Help → Third-party licenses** to read the notices; Windows builds carrying a corresponding source kit also offer **Save corresponding source…**. See [dependency distribution notes](docs/DEPENDENCIES.md). The v2.3.0 downloads above do not yet include these corrections.

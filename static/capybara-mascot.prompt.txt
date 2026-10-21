@@ -1,0 +1,23 @@
+MLAFMT capybara mascot
+Created with the built-in image_gen tool on 2026-10-20; no fallback CLI.
+Project name: MLAFMT. Planned domain: formcapy.com.
+No supplied user image was used. The domain screenshot is not an art reference.
+The final PNG is the second tool output, a rendering-style edit of the first
+original generated image. It was copied to this project without local pixel editing.
+Transparency: ARGB PNG, with transparent background.
+
+Initial generation prompt:
+Use case: logo-brand
+Asset type: transparent PNG mascot for the MLAFMT document-formatting app.
+Primary request: create an original capybara mascot, in a square composition around 1024 by 1024 pixels.
+Subject: one calm, friendly light-brown capybara, front-facing with a slight three-quarter turn, upper body visible, large distinctive long rounded rectangular muzzle, tiny round ears and small relaxed eyes. Its paws lightly hold one cream-white sheet with two or three simple indigo horizontal rules, no letters or words.
+Style: polished flat brand illustration, clean rounded shapes, restrained soft shading, warm tan and cream palette with dark indigo details that work on a cream or white interface. Face is the main visual focus; simple and readable at 48 pixels.
+Composition: centered, occupies approximately 85% of the square canvas, comfortable safe padding on all sides, fully contained silhouette.
+Backdrop: genuinely transparent alpha, no background or decorative scene.
+Text: none.
+Constraints: original character, no logos, no watermark, no additional animals or objects, no text, no photorealism.
+
+Final style-edit prompt:
+Use case: style-transfer.
+Edit target: the provided capybara mascot PNG. Preserve this exact capybara's broad muzzle, small ears, calm smile, three-quarter upper-body pose, its paws and the cream sheet with three indigo horizontal lines. Keep the square composition and transparent background.
+Change only the illustration rendering: simplify to a crisp flat 2D brand mascot. Use a small number of solid warm tan, caramel, cream, and indigo color fills with a smooth medium-thick dark-brown outline. Remove all hair strands, fur texture, painterly texture, gradients, realistic lighting, and 3D modeling. Keep the eyes small and relaxed. The character should be readable at 48px. Entire silhouette stays within the canvas with the same safe padding. No lettering, logos, watermark, extra objects, or background. Preserve true transparent alpha.

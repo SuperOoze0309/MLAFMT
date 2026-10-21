@@ -13,6 +13,7 @@ import os
 import subprocess
 import queue
 import re
+import shutil
 import tempfile
 import threading
 from pathlib import Path
@@ -314,7 +315,7 @@ T["zh"].update({
     "template_limit": "最多保存 20 个模板。请删除一个模板，或使用已有模板的名称。",
     "template_saved": "课程模板已保存：{label}", "template_imported": "已导入课程模板：{label}",
     "template_session_only": "已使用模板 {label}，但无法保存设置；关闭应用后此修改可能丢失。",
-    "template_io": "无法读写模板文件：{e}", "template_json": "MLAFMT 模板（JSON）",
+    "template_io": "无法读写模板文件：{e}", "template_json": "FormCapy 模板（JSON）",
     "template_too_large": "模板文件超过 64 KB，请选择一个课程模板 JSON 文件。",
     "advanced_custom": "高级定制…", "advanced_custom_title": "高级定制",
     "advanced_custom_hint": "页码设置会随课程模板保存。",
@@ -347,6 +348,8 @@ T["zh"].update({
     "retained_images": "正文图片 {n} 项", "retained_tables": "正文表格 {n} 个",
     "review_reference_order": "保留段落或对象之间仅对连续普通文献排序，请核对完整顺序",
     "menu_notices": "第三方许可证", "notices_missing": "尚未找到当前构建的许可证文件。请先使用构建脚本生成 THIRD-PARTY-NOTICES.txt。",
+    "menu_source_kit": "保存对应源码…", "source_kit_saved": "已保存对应源码与重建说明：{path}",
+    "unsupported_document": "文档超过处理范围，请减少内容或拆分文件后重试。",
     "disclaimer": "保留 DOCX 正文图片和表格；页面布局按当前格式设置。复杂文档请核对结果。",
     "howto": "1. 选择 MLA、APA 学生论文或自定义课程模板。\n"
              "2. 填写姓名与标题，导入 .docx / .txt / .md 草稿。\n"
@@ -355,7 +358,7 @@ T["zh"].update({
              "高级选项可选择 Word 中保持原格式的段落。\n"
              "在草稿末尾写 Works Cited / References / Bibliography，每段一条文献。\n"
              "本工具调整版式，不会把引文或参考文献内容自动转换成另一规范。",
-    "about": "MLAFMT v{v}\n支持 MLA 9、APA 7 学生论文和自定义课程模板。\n\n"
+    "about": "FormCapy v{v}\n支持 MLA 9、APA 7 学生论文和自定义课程模板。\n\n"
              "保留 DOCX 正文图片和表格；页面布局按当前格式设置。\n"
              "选中段落保留字体、字号与段落格式；原分页位置可能改变。复杂文档请核对结果与引用。",
 })
@@ -377,7 +380,7 @@ T["en"].update({
     "template_limit": "You can save up to 20 templates. Delete one or use an existing template name.",
     "template_saved": "Course template saved: {label}", "template_imported": "Course template imported: {label}",
     "template_session_only": "Using {label}, but settings could not be saved. This change may be lost when the app closes.",
-    "template_io": "Could not read or write the template: {e}", "template_json": "MLAFMT template (JSON)",
+    "template_io": "Could not read or write the template: {e}", "template_json": "FormCapy template (JSON)",
     "template_too_large": "This template exceeds 64 KB. Choose a course template JSON file.",
     "advanced_custom": "Advanced customization…", "advanced_custom_title": "Advanced customization",
     "advanced_custom_hint": "Page-number settings are saved with the course template.",
@@ -410,6 +413,8 @@ T["en"].update({
     "retained_images": "{n} body image elements", "retained_tables": "{n} body tables",
     "review_reference_order": "Only consecutive plain references between retained paragraphs or objects were sorted; check the full order",
     "menu_notices": "Third-party licenses", "notices_missing": "No license file was found for this build. Generate THIRD-PARTY-NOTICES.txt using the build script first.",
+    "menu_source_kit": "Save corresponding source…", "source_kit_saved": "Saved corresponding source and rebuild instructions: {path}",
+    "unsupported_document": "This document exceeds the processing limits. Reduce its size or split it into smaller files.",
     "disclaimer": "DOCX body images and tables are retained; page layout follows the selected format. Review complex documents.",
     "howto": "1. Choose MLA, APA student paper, or a custom course template.\n"
              "2. Add your name and title, then choose a .docx / .txt / .md draft.\n"
@@ -418,7 +423,7 @@ T["en"].update({
              "Use Advanced options to choose Word paragraphs that keep their original formatting.\n"
              "End your draft with Works Cited / References / Bibliography and one source per paragraph.\n"
              "The tool adjusts layout; it does not convert citation or reference text between citation styles.",
-    "about": "MLAFMT v{v}\nMLA 9, APA 7 student papers, and custom course templates.\n\n"
+    "about": "FormCapy v{v}\nMLA 9, APA 7 student papers, and custom course templates.\n\n"
              "DOCX body images and tables are retained; page layout follows the selected format.\n"
              "Selected paragraphs keep their font, size and paragraph formatting; page breaks may move. Review complex documents and citations.",
 })
@@ -508,6 +513,15 @@ class MLAGui:
             self.root = tk.Tk()
             self.has_dnd = False
         self.root.configure(bg=BG)
+        self._brand_image = None
+        mascot = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "static" / "capybara-64.png"
+        if mascot.is_file():
+            try:
+                self._brand_image = tk.PhotoImage(master=self.root, file=str(mascot)).subsample(2, 2)
+                if sys.platform.startswith("linux"):
+                    self.root.iconphoto(True, self._brand_image)
+            except tk.TclError:
+                pass
         if sys.platform.startswith("win"):
             icon = Path(getattr(sys, "_MEIPASS", Path(__file__).parent / "build" / "windows")) / "MLAFMT.ico"
             if icon.is_file():
@@ -633,7 +647,7 @@ class MLAGui:
     def _build(self):
         for widget in self.root.winfo_children():
             widget.destroy()
-        self.root.title(f"MLAFMT · {self.t('app')} · v{__version__}")
+        self.root.title(f"FormCapy · {self.t('app')} · v{__version__}")
         self._build_menu()
         canvas = tk.Canvas(self.root, background=BG, highlightthickness=0)
         bar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
@@ -654,9 +668,9 @@ class MLAGui:
 
         top = ttk.Frame(main)
         top.pack(fill=tk.X, pady=(0, 16))
-        tk.Label(top, text="M", font=("Georgia", 20, "bold"), bg=ACCENT, fg=CARD,
-                 padx=11, pady=3).pack(side=tk.LEFT)
-        ttk.Label(top, text="MLAFMT", font=(self.font[0], 16, "bold")).pack(side=tk.LEFT, padx=(10, 8))
+        if self._brand_image is not None:
+            ttk.Label(top, image=self._brand_image).pack(side=tk.LEFT)
+        ttk.Label(top, text="FormCapy", font=(self.font[0], 16, "bold")).pack(side=tk.LEFT, padx=(10, 8))
         ttk.Label(top, text=f"v{__version__}", foreground=MUTED, font=(self.font[0], 9)).pack(side=tk.LEFT)
         self._lang_var = tk.StringVar(self.root, value=self.lang)
         self._language_buttons = []
@@ -897,6 +911,8 @@ class MLAGui:
         help_menu = tk.Menu(mb, tearoff=0)
         help_menu.add_command(label=self.t("menu_howto"), command=lambda: messagebox.showinfo(self.t("menu_howto"), self.t("howto"), parent=self.root))
         help_menu.add_command(label=self.t("menu_notices"), command=self._show_third_party_notices)
+        help_menu.add_command(label=self.t("menu_source_kit"), command=self._save_source_kit,
+                              state=tk.NORMAL if self._bundled_file("MLAFMT-SOURCE-KIT.zip") else tk.DISABLED)
         help_menu.add_command(label=self.t("menu_about"), command=lambda: messagebox.showinfo(self.t("menu_about"), self.t("about", v=__version__), parent=self.root))
         mb.add_cascade(label=self.t("menu_help"), menu=help_menu)
         self.root.config(menu=mb)
@@ -1578,13 +1594,32 @@ class MLAGui:
             ttk.Button(self._result_row, text=self.t("open_result"), style="Ghost.TButton", command=lambda: self._open_file(self._last_output)).pack(side=tk.LEFT)
             ttk.Button(self._result_row, text=self.t("reveal_result" if sys.platform == "darwin" else "view_folder"), style="Ghost.TButton", command=self._reveal_result).pack(side=tk.LEFT, padx=8)
 
-    def _show_third_party_notices(self):
+    @staticmethod
+    def _bundled_file(name):
         resource_root = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
-        candidates = [resource_root / "THIRD-PARTY-NOTICES.txt",
-                      Path(sys.executable).parent / "THIRD-PARTY-NOTICES.txt",
-                      Path(__file__).parent / "build" / "windows" / "THIRD-PARTY-NOTICES.txt"]
+        candidates = [resource_root / name, Path(sys.executable).parent / name,
+                      Path(__file__).parent / "build" / "windows" / name]
+        return next((path for path in candidates if path.is_file()), None)
+
+    def _save_source_kit(self):
+        source = self._bundled_file("MLAFMT-SOURCE-KIT.zip")
+        if source is None:
+            return
+        destination = filedialog.asksaveasfilename(parent=self.root, title=self.t("menu_source_kit"),
+                                                   initialfile=source.name, defaultextension=".zip",
+                                                   filetypes=[("ZIP", "*.zip")])
+        if not destination:
+            return
         try:
-            filename = next((path for path in candidates if path.is_file()), None)
+            if Path(destination).resolve() != source.resolve():
+                shutil.copyfile(source, destination)
+            messagebox.showinfo(self.t("menu_source_kit"), self.t("source_kit_saved", path=destination), parent=self.root)
+        except OSError as error:
+            messagebox.showerror(self.t("menu_source_kit"), str(error), parent=self.root)
+
+    def _show_third_party_notices(self):
+        try:
+            filename = self._bundled_file("THIRD-PARTY-NOTICES.txt")
             if filename is None:
                 messagebox.showinfo(self.t("menu_notices"), self.t("notices_missing"), parent=self.root)
                 return
@@ -1628,8 +1663,8 @@ class MLAGui:
             self._retained_note.pack_forget()
 
     def _report_error(self, e):
-        if isinstance(e, ValueError) and str(e) == "draft_changed":
-            key, kw = "draft_changed", {}
+        if isinstance(e, ValueError) and str(e) in ("draft_changed", "too_large", "empty_file", "unsupported_document"):
+            key, kw = str(e), {}
         elif isinstance(e, PermissionError):
             key, kw = "perm", {}
         elif isinstance(e, FileNotFoundError):

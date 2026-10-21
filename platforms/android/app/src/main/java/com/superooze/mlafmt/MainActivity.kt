@@ -86,10 +86,11 @@ class MainActivity : ComponentActivity() {
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = request.url.toString() != PAGE
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
-                if (request.url.toString() == PAGE) {
+                if (request.url.toString() in setOf(PAGE, MASCOT)) {
                     val response = assets.shouldInterceptRequest(request.url)
                     if (response != null) {
-                        response.responseHeaders = mapOf("Content-Security-Policy" to "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'")
+                        if (request.url.toString() == PAGE)
+                            response.responseHeaders = mapOf("Content-Security-Policy" to "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'")
                         return response
                     }
                 }
@@ -224,6 +225,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ORIGIN = "https://appassets.androidplatform.net"
         const val PAGE = "$ORIGIN/assets/index.html"
+        const val MASCOT = "$ORIGIN/assets/static/capybara-64.png"
         const val DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     }
 }

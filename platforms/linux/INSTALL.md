@@ -1,4 +1,4 @@
-# MLAFMT for Linux / 安装说明
+# FormCapy for Linux / 安装说明
 
 The x64 package targets **Ubuntu 22.04 or newer** and comparable desktop Linux
 systems with **glibc 2.35+** and X11 or XWayland. Python is included.

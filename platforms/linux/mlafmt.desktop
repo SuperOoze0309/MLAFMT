@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=MLAFMT
-Comment=Offline MLA essay formatter
+Name=FormCapy
+Comment=Offline document formatter
 Exec=MLAFMT
 Icon=mlafmt
 Categories=Office;Education;

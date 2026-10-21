@@ -23,7 +23,9 @@ def canSign = [keyPath, keyStorePass, keyAliasValue, keyPass].every { it }
 def nativeWheelDirectory = System.getenv('MLAFMT_ANDROID_NATIVE_WHEELS')
 def generatedPython = layout.buildDirectory.dir('generated/mlafmt/python')
 def generatedAssets = layout.buildDirectory.dir('generated/mlafmt/assets')
+def staticAssets = projectRoot.toPath().resolve('static').toFile()
 def provenanceFiles = ['mla_formatter.py', 'format_profiles.py', 'docx_preserve.py', 'templates/index.html', 'LICENSE'].collect { projectRoot.toPath().resolve(it).toFile() }
+provenanceFiles.addAll(fileTree(staticAssets).files)
 provenanceFiles.addAll(fileTree('src/main') { exclude '**/__pycache__/**', '**/*.pyc' }.files)
 provenanceFiles.addAll(rootProject.fileTree('licenses').files)
 provenanceFiles.addAll(['app/build.gradle', 'build.gradle', 'settings.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar'].collect { rootProject.file(it) })
@@ -90,6 +92,7 @@ tasks.register('prepareMlafmtSources') {
     inputs.file projectRoot.toPath().resolve('format_profiles.py')
     inputs.file projectRoot.toPath().resolve('docx_preserve.py')
     inputs.file projectRoot.toPath().resolve('templates/index.html')
+    inputs.dir staticAssets
     inputs.files provenanceFiles
     outputs.dirs generatedPython, generatedAssets
     // Git provenance must be refreshed even when source bytes are unchanged.
@@ -105,6 +108,10 @@ tasks.register('prepareMlafmtSources') {
         def destination = generatedAssets.get().file('index.html').asFile
         destination.parentFile.mkdirs()
         destination.setText(html, 'UTF-8')
+        project.sync {
+            from staticAssets
+            into generatedAssets.get().dir('static')
+        }
         def licenseCatalog = new groovy.json.JsonSlurper().parse(rootProject.file('licenses/sources.json'))
         def notices = 'MLAFMT for Android — Third-party copyright and license notices\n\n'
         licenseCatalog.each { entry ->
@@ -121,7 +128,7 @@ tasks.register('prepareMlafmtSources') {
             if (process.waitFor() != 0) throw new GradleException('Git provenance could not be read')
             output
         }
-        def info = [application: 'MLAFMT', version: appVersion, platform: 'android',
+        def info = [application: 'MLAFMT', application_display_name: 'FormCapy', version: appVersion, platform: 'android',
             commit: gitText(['rev-parse', 'HEAD']),
             working_tree_dirty: !gitText(['status', '--porcelain', '--untracked-files=normal']).isEmpty(),
             python: '3.12', abis: ['arm64-v8a', 'x86_64'], source_sha256: [:]]

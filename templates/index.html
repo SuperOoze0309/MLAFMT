@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light" />
-    <title>MLAFMT · Paper Formatter</title>
+    <title>FormCapy · Paper Formatter</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="static/capybara-64.png" />
     <style>
       :root {
         --ink: #242843;
@@ -67,17 +68,15 @@
         letter-spacing: -0.5px;
       }
       .mark {
-        width: 35px;
-        height: 35px;
-        display: grid;
-        place-items: center;
-        color: white;
-        background: var(--ink);
-        border-radius: 10px;
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
       }
-      .mark svg {
-        width: 21px;
-        height: 21px;
+      .mark img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
       .brand small {
         font-size: 11px;
@@ -848,15 +847,8 @@
     <div class="shell">
       <header class="topbar">
         <div class="brand">
-          <span class="mark" aria-hidden="true"
-            ><svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.7"
-            >
-              <path d="M5 19V5h3l4 8 4-8h3v14M8 19V9m8 10V9" /></svg></span
-          >MLAFMT <small>v{{ version }}</small>
+          <span class="mark"><img id="brand-mascot" src="static/capybara-64.png" width="40" height="40" alt="FormCapy capybara mascot" /></span>
+          FormCapy <small>v{{ version }}</small>
         </div>
         <div class="languages" role="group" data-label="language">
           <button type="button" id="lang-zh" lang="zh-CN" aria-pressed="false">
@@ -1223,7 +1215,7 @@
         </div>
       </main>
       <footer>
-        <span>MLAFMT v{{ version }}</span
+        <span>FormCapy v{{ version }}</span
         ><span data-t="footer">Made for the words that matter.</span>
       </footer>
     </div>
@@ -1593,6 +1585,7 @@
         },
       };
       Object.assign(T.zh, {
+        mascot_alt: "FormCapy 水豚吉祥物",
         tagline: "选择 MLA、APA 或课程模板，把草稿整理成可以继续编辑的 Word 文档。",
         format_label: "文档格式", format_mla: "MLA 9", format_apa: "APA 7 · 学生论文", format_custom: "自定义课程模板",
         format_note_mla: "MLA 第 9 版页面排版；已有引用内容保持原文。",
@@ -1620,13 +1613,14 @@
         preserve_count: (selected, total) => `已勾选 ${selected} / ${total} 段。`, preserve_invalid_range: "请填写列表中的段落编号或范围，例如 2, 4-6。",
         preserve_restored_count: (selected) => `已恢复 ${selected} 段的保留选择；重新读取可查看段落列表。`,
         preserve_image: "（图片段落）", preserve_read_failed: "段落读取失败，请重新读取。",
+        unsupported_document: "文档超过处理范围，请减少内容或拆分文件后重试。",
         draft_changed: "草稿已修改，请重新读取段落，再选择保留范围。",
         preset_save: "保存模板", preset_delete: "删除已选模板", preset_import: "导入模板", preset_export: "导出模板",
         template_local: "模板保存在这台设备的浏览器中。导出一份，可留作备份或在其他设备使用。",
         template_saved: "模板已保存。", template_deleted: "模板已删除，当前设置已保留。", template_none: "请先选择一个已保存的模板。",
         template_limit: "最多可保存 20 个模板，请先删除一个再保存。", template_storage: "此浏览器未能保存模板，请导出一份备份。",
         invalid_template: "请检查模板设置：名称和标题不能为空，数字须在输入框标注的范围内。",
-        invalid_profile: "模板文件无效，请使用 MLAFMT 导出的模板。", template_applied: "模板已导入。点击“保存模板”可保留。",
+        invalid_profile: "模板文件无效，请使用 FormCapy 导出的模板。", template_applied: "模板已导入。点击“保存模板”可保留。",
         template_transfer: "在设备之间分享模板", close_transfer: "关闭模板导入导出", template_text: "模板内容",
         transfer_hint: "可导入模板文件或粘贴模板内容。导出的模板仅包含排版设置，不含论文信息或草稿。",
         choose_template_file: "选择 JSON 文件", apply_template: "应用导入的模板", copy_template: "复制模板内容", download_template: "下载 JSON",
@@ -1651,6 +1645,7 @@
         disclaimer: "保留 DOCX 正文图片和表格，纸张、页边距和页码采用所选模板。TXT/MD 图像语法不会自动嵌图。请核对复杂文档与引用。",
       });
       Object.assign(T.en, {
+        mascot_alt: "FormCapy capybara mascot",
         tagline: "Choose MLA, APA or a course template. Turn your draft into an editable Word document.",
         format_label: "Paper format", format_mla: "MLA 9", format_apa: "APA 7 · Student paper", format_custom: "Custom course template",
         format_note_mla: "MLA 9 page layout. Existing citation text is kept as written.",
@@ -1678,13 +1673,14 @@
         preserve_count: (selected, total) => `${selected} of ${total} paragraphs selected.`, preserve_invalid_range: "Enter numbers or ranges from the paragraph list, e.g. 2, 4-6.",
         preserve_restored_count: (selected) => `${selected} paragraph selections restored. Read the paragraphs again to review the list.`,
         preserve_image: "(Image paragraph)", preserve_read_failed: "Could not read the paragraphs. Please try again.",
+        unsupported_document: "This document exceeds the processing limits. Reduce its size or split it into smaller files.",
         draft_changed: "The draft has changed. Read its paragraphs again and select what to preserve.",
         preset_save: "Save template", preset_delete: "Delete selected template", preset_import: "Import template", preset_export: "Export template",
         template_local: "Templates are saved in this browser on this device. Export a copy to keep a backup or use it elsewhere.",
         template_saved: "Template saved.", template_deleted: "Saved template deleted. Your current settings were kept.", template_none: "Select a saved template first.",
         template_limit: "You can save up to 20 templates. Delete one before adding another.", template_storage: "This browser could not save the template. Export a backup copy.",
         invalid_template: "Check the template settings: names and headings cannot be empty, and numbers must be within the displayed ranges.",
-        invalid_profile: "This template is invalid. Use a template exported from MLAFMT.", template_applied: "Template imported. Choose Save template to keep it.",
+        invalid_profile: "This template is invalid. Use a template exported from FormCapy.", template_applied: "Template imported. Choose Save template to keep it.",
         template_transfer: "Move a template between devices", close_transfer: "Close template import and export", template_text: "Template text",
         transfer_hint: "Import a template file or paste its text. Exported templates contain formatting settings only, without paper details or drafts.",
         choose_template_file: "Choose JSON file", apply_template: "Apply imported template", copy_template: "Copy template text", download_template: "Download JSON",
@@ -2247,7 +2243,8 @@
       function render() {
         document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
         document.title =
-          lang === "zh" ? "MLAFMT · 论文与报告排版" : "MLAFMT · Paper Formatter";
+          lang === "zh" ? "FormCapy · 论文与报告排版" : "FormCapy · Paper Formatter";
+        $("brand-mascot").alt = t("mascot_alt");
         document.querySelectorAll("[data-t]").forEach((el) => {
           el.textContent = t(el.dataset.t);
         });
@@ -2735,10 +2732,10 @@
                 : "Example, Alex. *Demonstration Source*. Example Press, 2026.";
               pick(new File([
                 "This is a short sample draft. The paper details above are examples that you can edit.\n\n" +
-                "MLAFMT sets the page size, margins, paragraph spacing and running header for the generated Word document.\n\n" +
+                "FormCapy sets the page size, margins, paragraph spacing and running header for the generated Word document.\n\n" +
                 "The reference below is fictional and only demonstrates the reference-page layout. Citation content stays as written.\n\n" +
                 referenceTitle + "\n\n" + referenceEntry + "\n",
-              ], "MLAFMT_Sample.md", { type: "text/markdown" }));
+              ], "FormCapy_Sample.md", { type: "text/markdown" }));
             } catch (_) {
               setStatus("demo_unavailable", "err");
               return;

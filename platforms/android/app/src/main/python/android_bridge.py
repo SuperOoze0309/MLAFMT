@@ -53,7 +53,9 @@ def paragraphs(input_path):
         if os.path.getsize(input_path) > MAX_FILE_SIZE:
             return json.dumps({"error": "too_large"})
         return json.dumps(inspect_draft_paragraphs(input_path), ensure_ascii=True)
-    except Exception:
+    except Exception as error:
+        if isinstance(error, ValueError) and str(error) in ("too_large", "empty_file", "unsupported_document"):
+            return json.dumps({"error": str(error)})
         return json.dumps({"error": "bad_doc"})
 
 

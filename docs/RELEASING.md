@@ -1,6 +1,6 @@
 # MLAFMT builds and releases
 
-The source version in `mla_formatter.py` is the version for every platform. Release builds use Python 3.12; Android uses the same formatter with its own locked mobile dependencies. All distributable files go to `dist/release/`.
+The source version in `mla_formatter.py` is the version for every platform. Release builds use Python 3.12; Android uses the same formatter with its own locked mobile dependencies. Release files go to `dist/release/`; explicitly marked desktop development packages go to `dist/development/`.
 
 ## Validate before publishing
 
@@ -24,7 +24,9 @@ py -3.12 -m venv .venv-build
 .\dist\release\MLAFMT.exe --smoke-test --require-dnd
 ```
 
-The EXE includes the app version. The versioned ZIP adds build provenance, the README and its image assets.
+The EXE includes the app version, full third-party notices and original license texts. The versioned ZIP adds build provenance, the README and its image assets. The strictly identified stock lxml wheel also carries `MLAFMT-SOURCE-KIT.zip` in both the EXE and ZIP; the application can save it through Help. Its complete pinned source/relink materials are assembled without requiring a C compiler on the packaging host. An unknown wheel cannot reuse that kit.
+
+Commit source changes before the final build: the source kit records the source commit and dirty-tree status. See [dependency materials and known limits](DEPENDENCIES.md). To build a different lxml configuration without GNU iconv, add `-NoIconv`; this requires CMake and a native Visual Studio C++ toolchain. For an ordinary local build without release material checks, use `-Development`; those artifacts are explicitly separated from releases.
 
 ## macOS
 
@@ -35,7 +37,7 @@ bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expe
 # On an Intel Mac, use --architecture x86_64.
 ```
 
-The script creates an isolated build environment, app bundle and DMG, then checks the app and disk image. The bundled arm64 TkDnD library requires macOS 14; both packages declare macOS 14 as the minimum supported system.
+The script creates an isolated build environment, builds the locked no-iconv XML dependencies, then creates the app bundle and DMG and checks the app and disk image. Install CMake and Xcode command-line tools first. The new native recipe must succeed on the target Mac; it has not been compiled on the Windows development host. `--development` skips that release dependency rebuild and creates a marked local package. The bundled arm64 TkDnD library requires macOS 14; both packages declare macOS 14 as the minimum supported system.
 
 Default builds are ad-hoc signed and **not notarized**. For Developer ID distribution, configure `MLAFMT_CODESIGN_IDENTITY` and optionally `MLAFMT_NOTARY_PROFILE` on the build Mac. The latter refers to a `notarytool` keychain profile; credentials and certificates must never be committed. The script waits for Apple's acceptance and staples the app and DMG when notarization is enabled.
 
@@ -44,11 +46,11 @@ Default builds are ad-hoc signed and **not notarized**. For Developer ID distrib
 Use Ubuntu 22.04 x64 / glibc 2.35 as the build baseline, Python 3.12 and the system X11/Tcl/Tk libraries:
 
 ```bash
-sudo apt-get install xvfb squashfs-tools libx11-6 libxext6 libxrender1 libxft2 fontconfig libtcl8.6 libtk8.6
+sudo apt-get install build-essential cmake python3.12-dev xvfb squashfs-tools libx11-6 libxext6 libxrender1 libxft2 fontconfig libtcl8.6 libtk8.6
 bash platforms/linux/build_linux.sh --python python3 --expected-version v2.4.0
 ```
 
-The script checks the staged app and extracts the finished AppImage to test it without FUSE. A portable tar.gz is also produced. AppImage packaging inputs are versioned and SHA-256 verified. Runtime documentation and third-party notices accompany the app.
+The script builds the locked no-iconv XML dependencies, checks the staged app and extracts the finished AppImage to test it without FUSE. A portable tar.gz is also produced. AppImage packaging inputs are versioned and SHA-256 verified. Runtime documentation, full third-party notices, original license texts and their audit accompany the app. `--development` skips the release dependency rebuild and creates a marked local package. The new native recipe has not been compiled on the Windows development host.
 
 ## Android
 
@@ -84,7 +86,7 @@ On Windows, use `gradlew.bat :app:exportRelease` with the signing environment co
 
 ## Publish one version
 
-After all platform checks pass, gather the seven release files and the macOS/Linux provenance sidecars into `dist/release/`. Validate the packages' clean source commit and exact hashes, and create a checksum manifest and concise bilingual download notes:
+After all platform checks pass, gather the seven release files and the macOS/Linux provenance sidecars into `dist/release/`. Validate the packages' clean source commit, full notice/source materials and exact hashes, and create a checksum manifest and concise bilingual download notes. The `release_ready` field denotes engineering material checks, not legal certification:
 
 ```bash
 python scripts/prepare_release.py

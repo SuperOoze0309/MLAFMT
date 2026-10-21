@@ -29,19 +29,19 @@ Build on each target Mac with **Python 3.12** and working Tkinter. Run Python na
 
 ```bash
 # Apple silicon
-bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expected-version v2.3.0
+bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expected-version v2.4.0
 
 # Intel Mac
-bash platforms/macos/build_macos.sh --python python3 --architecture x86_64 --expected-version v2.3.0
+bash platforms/macos/build_macos.sh --python python3 --architecture x86_64 --expected-version v2.4.0
 ```
 
 The script creates an isolated environment under `build/macos/<architecture>`, installs `requirements-build.txt`, reads the version from `mla_formatter.py`, and runs PyInstaller. Tcl/Tk and the matching TkDnD native library are bundled. The packaged app is smoke-tested for TkDnD availability, GUI startup and document conversion.
 
 Outputs:
 
-- `dist/release/MLAFMT-v2.3.0-macos-arm64.dmg`
-- `dist/release/MLAFMT-v2.3.0-macos-x64.dmg`
-- Uncompressed app: `build/macos/<architecture>/dist/MLAFMT.app`
+- `dist/release/MLAFMT-v2.4.0-macos-arm64.dmg`
+- `dist/release/MLAFMT-v2.4.0-macos-x64.dmg`
+- Uncompressed app: `build/macos/<architecture>/dist/FormCapy.app`
 
 The DMG contains an Applications shortcut, `Read Me.html` (the install guide), `Documentation/docs/APPLE.md`, other documentation, build metadata and license notices.
 
@@ -72,19 +72,19 @@ macOS 14 is the minimum because the bundled arm64 TkDnD library targets that dep
 
 ```bash
 # Apple 芯片
-bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expected-version v2.3.0
+bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expected-version v2.4.0
 
 # Intel Mac
-bash platforms/macos/build_macos.sh --python python3 --architecture x86_64 --expected-version v2.3.0
+bash platforms/macos/build_macos.sh --python python3 --architecture x86_64 --expected-version v2.4.0
 ```
 
 脚本会在 `build/macos/<architecture>` 创建隔离环境，安装 `requirements-build.txt`，从 `mla_formatter.py` 读取版本，然后运行 PyInstaller。Tcl/Tk 和对应的 TkDnD 原生库会一起打包。打包后的应用会做 TkDnD 可用性、GUI 启动和文档转换的冒烟测试。
 
 输出：
 
-- `dist/release/MLAFMT-v2.3.0-macos-arm64.dmg`
-- `dist/release/MLAFMT-v2.3.0-macos-x64.dmg`
-- 未压缩应用：`build/macos/<architecture>/dist/MLAFMT.app`
+- `dist/release/MLAFMT-v2.4.0-macos-arm64.dmg`
+- `dist/release/MLAFMT-v2.4.0-macos-x64.dmg`
+- 未压缩应用：`build/macos/<architecture>/dist/FormCapy.app`
 
 DMG 内包含“应用程序”快捷方式、`Read Me.html`（安装说明）、`Documentation/docs/APPLE.md` 等文档、构建元数据和许可证声明。
 

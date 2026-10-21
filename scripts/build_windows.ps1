@@ -3,6 +3,8 @@
 param(
     [Alias('Python')][string]$PythonPath = 'python',
     [switch]$InstallDependencies,
+    [switch]$Development,
+    [switch]$NoIconv,
     [string]$ExpectedVersion = ''
 )
 
@@ -11,6 +13,7 @@ Set-StrictMode -Version Latest
 $taskRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $taskBuild = Join-Path $taskRoot 'build\windows'
 $taskDist = Join-Path $taskRoot 'dist\release'
+if ($Development) { $taskDist = Join-Path $taskRoot 'dist\development' }
 
 if ($env:OS -ne 'Windows_NT') { throw 'Build on Windows with Python 3.12 x64.' }
 & $PythonPath -c "import struct, sys; assert sys.version_info[:2] == (3, 12), 'Use Python 3.12'; assert struct.calcsize('P') == 8, 'Use x64 Python'"
@@ -26,7 +29,15 @@ if ($InstallDependencies) {
 if ($LASTEXITCODE -ne 0) { throw 'Dependency validation failed.' }
 
 New-Item -ItemType Directory -Path $taskBuild, $taskDist -Force | Out-Null
-$taskPrepared = & $PythonPath (Join-Path $PSScriptRoot 'prepare_windows_build.py') --root $taskRoot --output $taskBuild --verify-dependencies
+$taskPrepareArguments = @('--root', $taskRoot, '--output', $taskBuild, '--verify-dependencies')
+if (-not $Development) {
+    if ($NoIconv) {
+        & $PythonPath (Join-Path $PSScriptRoot 'build_lxml_no_iconv.py') --output (Join-Path $taskBuild 'native') --install
+        if ($LASTEXITCODE -ne 0) { throw 'Building the release XML dependencies failed. Use -Development only for a local non-release build.' }
+    }
+    $taskPrepareArguments += '--release-check'
+}
+$taskPrepared = & $PythonPath (Join-Path $PSScriptRoot 'prepare_windows_build.py') @taskPrepareArguments
 if ($LASTEXITCODE -ne 0) { throw 'Preparing build metadata failed.' }
 $taskVersion = ($taskPrepared | Select-Object -Last 1).Trim()
 if ($ExpectedVersion -and $taskVersion -ne $ExpectedVersion.TrimStart('v')) {
@@ -41,8 +52,18 @@ try {
         '--version-file', (Join-Path $taskBuild 'version-info.txt'),
         '--icon', (Join-Path $taskBuild 'MLAFMT.ico'),
         '--add-data', ((Join-Path $taskBuild 'MLAFMT.ico') + ';.'),
+        '--add-data', ((Join-Path $taskRoot 'LICENSE') + ';.'),
+        '--add-data', ((Join-Path $taskBuild 'THIRD-PARTY-NOTICES.txt') + ';.'),
+        '--add-data', ((Join-Path $taskBuild 'license-manifest.json') + ';.'),
+        '--add-data', ((Join-Path $taskBuild 'license-audit.json') + ';.'),
+        '--add-data', ((Join-Path $taskBuild 'licenses') + ';licenses'),
+        '--add-data', ((Join-Path $taskRoot 'static') + ';static'),
         '--specpath', $taskBuild, '--workpath', (Join-Path $taskBuild 'pyinstaller'),
         '--distpath', $taskDist, (Join-Path $taskRoot 'mla_gui.py'))
+    $taskAudit = Get-Content -LiteralPath (Join-Path $taskBuild 'license-audit.json') -Raw | ConvertFrom-Json
+    if ($null -ne $taskAudit.source_kit) {
+        $taskArguments = $taskArguments[0..($taskArguments.Count - 2)] + @('--add-data', ((Join-Path $taskBuild 'MLAFMT-SOURCE-KIT.zip') + ';.'), (Join-Path $taskRoot 'mla_gui.py'))
+    }
     & $PythonPath @taskArguments
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed.' }
 } finally {
@@ -57,11 +78,19 @@ if ($taskExeVersion -ne $taskVersion) { throw "Executable has unexpected version
 $taskStage = Join-Path $taskBuild ('package-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $taskStage | Out-Null
 foreach ($taskFile in @($taskExe, (Join-Path $taskBuild 'build-info.json'),
+        (Join-Path $taskBuild 'THIRD-PARTY-NOTICES.txt'), (Join-Path $taskBuild 'license-manifest.json'),
+        (Join-Path $taskBuild 'license-audit.json'),
         (Join-Path $taskRoot 'README.md'), (Join-Path $taskRoot 'CHANGELOG.md'), (Join-Path $taskRoot 'LICENSE'))) {
     Copy-Item -LiteralPath $taskFile -Destination $taskStage
 }
+Copy-Item -LiteralPath (Join-Path $taskBuild 'licenses') -Destination (Join-Path $taskStage 'licenses') -Recurse
+if ($null -ne $taskAudit.source_kit) {
+    Copy-Item -LiteralPath (Join-Path $taskBuild 'MLAFMT-SOURCE-KIT.zip') -Destination $taskStage
+}
 Copy-Item -LiteralPath (Join-Path $taskRoot 'docs') -Destination (Join-Path $taskStage 'docs') -Recurse
 Copy-Item -LiteralPath (Join-Path $taskRoot 'examples') -Destination (Join-Path $taskStage 'examples') -Recurse
+Copy-Item -LiteralPath (Join-Path $taskRoot 'static') -Destination (Join-Path $taskStage 'static') -Recurse
 $taskZip = Join-Path $taskDist "MLAFMT-v$taskVersion-windows-x64.zip"
+if ($Development) { $taskZip = Join-Path $taskDist "MLAFMT-v$taskVersion-windows-x64-development.zip" }
 Compress-Archive -Path (Join-Path $taskStage '*') -DestinationPath $taskZip -CompressionLevel Optimal -Force
 Write-Output "Release assets ready: $taskDist (v$taskVersion)"

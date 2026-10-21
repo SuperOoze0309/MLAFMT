@@ -1,6 +1,6 @@
 """
 mla_web.py  (v2.4)
-Local web UI for MLAFMT -> http://127.0.0.1:8600
+Local web UI for FormCapy (MLAFMT project) -> http://127.0.0.1:8600
 Works on Windows / macOS / Linux. The Android APK embeds the formatter separately.
 
     python mla_web.py            # local only (safe default)
@@ -169,6 +169,8 @@ def api_paragraphs():
             return jsonify({"error": "empty_file"}), 400
         return jsonify(inspect_draft_paragraphs(path))
     except Exception as error:
+        if isinstance(error, ValueError) and str(error) in ("too_large", "empty_file", "unsupported_document"):
+            return jsonify({"error": str(error)}), 413 if str(error) == "too_large" else 400
         return jsonify({"error": "bad_doc", "detail": str(error)}), 400
     finally:
         try:
@@ -242,7 +244,7 @@ def api_convert():
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="MLAFMT local web preview")
+    parser = argparse.ArgumentParser(description="FormCapy local web preview")
     parser.add_argument("--lan", action="store_true", help="Allow devices on the same network to open this preview")
     parser.add_argument("--no-browser", action="store_true", help="Do not open a browser automatically")
     parser.add_argument("--port", type=int, default=8600, help="Local preview port (default: 8600)")
@@ -251,7 +253,7 @@ def main(argv=None):
         parser.error("--port must be between 1 and 65535")
     host = "0.0.0.0" if args.lan else "127.0.0.1"
     port = args.port
-    print(f"\n  MLAFMT Web v{__version__}  ->  http://127.0.0.1:{port}")
+    print(f"\n  FormCapy Web v{__version__}  ->  http://127.0.0.1:{port}")
     if args.lan:
         try:
             addresses = sorted({item[4][0] for item in socket.getaddrinfo(

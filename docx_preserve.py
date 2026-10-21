@@ -22,6 +22,7 @@ from docx.text.run import Run
 
 MAX_FILE_SIZE = 20 * 1024 * 1024
 MAX_DOCX_EXPANDED = 80 * 1024 * 1024
+MAX_BODY_PARAGRAPHS = 100000
 _P = qn("w:p")
 _SECT = qn("w:sectPr")
 _IMAGE_TAGS = {qn("a:blip"), "{urn:schemas-microsoft-com:vml}imagedata"}
@@ -78,6 +79,8 @@ def inspect_draft_paragraphs(input_path):
         if element.tag != _P:
             continue
         paragraph_id += 1
+        if paragraph_id > MAX_BODY_PARAGRAPHS:
+            raise ValueError("unsupported_document")
         if _has_content(element):
             result.append({"id": paragraph_id, "text": _text(element)[:300],
                            "has_images": _has_images(element)})
@@ -395,7 +398,7 @@ def convert_docx_draft(input_path, output, name, instructor, course, date_str, t
             continue
         if element.tag == _P:
             paragraph_count += 1
-            if paragraph_count > 100000:
+            if paragraph_count > MAX_BODY_PARAGRAPHS:
                 raise ValueError("unsupported_document")
             paragraph = Paragraph(element, source._body)
             segments = core._docx_paragraph_segments(paragraph)

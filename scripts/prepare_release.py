@@ -1,6 +1,7 @@
 """Validate gathered platform assets and prepare a concise manual GitHub Release."""
 
 import hashlib
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -9,6 +10,64 @@ import zipfile
 
 from prepare_windows_build import source_version
 from verify_android_apk import inspect_apk
+
+
+def validate_license_metadata(info, label):
+    audit = info.get("license_audit", {})
+    if audit.get("release_ready") is not True or audit.get("missing_license_texts"):
+        raise SystemExit(f"{label} has not passed the release dependency material checks")
+    hashes = info.get("license_files_sha256", {})
+    for name in ("THIRD-PARTY-NOTICES.txt", "license-manifest.json", "license-audit.json"):
+        value = hashes.get(name, "")
+        if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+            raise SystemExit(f"{label} is missing license artifact provenance: {name}")
+
+
+def validate_license_bundle(read, info, label):
+    """Read archive members without extracting or probing host dependencies."""
+    validate_license_metadata(info, label)
+    try:
+        for name, expected in info["license_files_sha256"].items():
+            if hashlib.sha256(read(name)).hexdigest() != expected:
+                raise SystemExit(f"{label} license artifact hash differs: {name}")
+        audit = json.loads(read("license-audit.json"))
+        if audit != info["license_audit"]:
+            raise SystemExit(f"{label} license audit differs from its build provenance")
+        manifest = json.loads(read("license-manifest.json"))
+        if not manifest.get("texts"):
+            raise SystemExit(f"{label} has an empty license text inventory")
+        for entry in manifest["texts"]:
+            path = entry["file"]
+            if not path.startswith("licenses/") or ".." in Path(path).parts:
+                raise SystemExit(f"{label} has an invalid license text path")
+            if hashlib.sha256(read(path)).hexdigest() != entry["sha256"]:
+                raise SystemExit(f"{label} is missing or has modified original license text: {path}")
+        kit = audit.get("source_kit")
+        if kit:
+            data = read("MLAFMT-SOURCE-KIT.zip")
+            if hashlib.sha256(data).hexdigest() != kit["sha256"]:
+                raise SystemExit(f"{label} source kit hash differs")
+            with zipfile.ZipFile(io.BytesIO(data)) as source:
+                source_manifest = json.loads(source.read("source-kit-manifest.json"))
+                if (source_manifest["application_commit"] != info["commit"]
+                        or source_manifest["working_tree_dirty"]
+                        or kit["application_commit"] != info["commit"] or kit["working_tree_dirty"]):
+                    raise SystemExit(f"{label} source kit does not match the clean application commit")
+                native = {item["file"].replace("\\", "/"): item["sha256"]
+                          for item in audit["lxml_native"]["binaries"]}
+                if (source_manifest["installed_native_files"] != native
+                        or source_manifest["upstream"]["native_files"] != native):
+                    raise SystemExit(f"{label} source kit identifies a different native dependency")
+                for entry in source_manifest["upstream"]["sources"]:
+                    if hashlib.sha256(source.read("sources/" + entry["archive"])).hexdigest() != entry["sha256"]:
+                        raise SystemExit(f"{label} source kit lacks the original source archive: {entry['name']}")
+                for path, expected in source_manifest["application_files"].items():
+                    if hashlib.sha256(source.read("application/" + path)).hexdigest() != expected:
+                        raise SystemExit(f"{label} application source kit file differs: {path}")
+                if not source.read("REBUILD.txt").strip() or not source.read("rebuild.py").strip():
+                    raise SystemExit(f"{label} source kit lacks relink instructions or helper")
+    except (KeyError, FileNotFoundError, AttributeError, json.JSONDecodeError, zipfile.BadZipFile) as error:
+        raise SystemExit(f"{label} is missing required license/source materials: {error}") from error
 
 
 def main():
@@ -37,11 +96,23 @@ def main():
             raise SystemExit("Windows ZIP integrity check failed")
         info = json.loads(archive.read("build-info.json"))
         validate_provenance(info, "Windows ZIP")
+        validate_license_bundle(archive.read, info, "Windows ZIP")
         if hashlib.sha256(archive.read("MLAFMT.exe")).digest() != hashlib.sha256((release / assets[0]).read_bytes()).digest():
             raise SystemExit("Standalone EXE differs from the packaged EXE")
         for image in ("mlafmt-web-zh.png", "mlafmt-web-en.png"):
             if f"docs/images/{image}" not in archive.namelist():
                 raise SystemExit("Windows ZIP is missing its illustrated guide")
+        # One-file downloads must carry the same notices and source material,
+        # rather than relying only on the optional companion ZIP.
+        from PyInstaller.archive.readers import CArchiveReader
+        executable = CArchiveReader(release / assets[0])
+        for name, expected in info["license_files_sha256"].items():
+            if name not in executable.toc or hashlib.sha256(executable.extract(name)).hexdigest() != expected:
+                raise SystemExit(f"Standalone EXE is missing its license artifact: {name}")
+        kit = info["license_audit"].get("source_kit")
+        if kit and ("MLAFMT-SOURCE-KIT.zip" not in executable.toc
+                    or hashlib.sha256(executable.extract("MLAFMT-SOURCE-KIT.zip")).hexdigest() != kit["sha256"]):
+            raise SystemExit("Standalone EXE is missing its complete corresponding source kit")
     with zipfile.ZipFile(release / assets[-1]) as archive:
         if archive.testzip() or "AndroidManifest.xml" not in archive.namelist():
             raise SystemExit("Android APK integrity check failed")
@@ -49,7 +120,10 @@ def main():
     inspect_apk(release / assets[-1])
     with tarfile.open(release / assets[5], "r:gz") as archive:
         member = archive.extractfile("MLAFMT.AppDir/Documentation/build-info.json")
-        validate_provenance(json.load(member), "Linux portable package")
+        info = json.load(member)
+        validate_provenance(info, "Linux portable package")
+        validate_license_bundle(lambda name: archive.extractfile("MLAFMT.AppDir/Documentation/" + name).read(),
+                                info, "Linux portable package")
     for platform_name, platform_assets in (("macos-arm64", [assets[2]]),
                                            ("macos-x64", [assets[3]]),
                                            ("linux-x64", assets[4:6])):
@@ -58,6 +132,7 @@ def main():
             raise SystemExit(f"Missing CI provenance: {sidecar.name}")
         info = json.loads(sidecar.read_text(encoding="utf-8"))
         validate_provenance(info, platform_name)
+        validate_license_metadata(info, platform_name)
         for name in platform_assets:
             if info["asset_sha256"].get(name) != hashlib.sha256((release / name).read_bytes()).hexdigest():
                 raise SystemExit(f"Asset does not match CI provenance: {name}")

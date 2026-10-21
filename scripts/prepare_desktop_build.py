@@ -17,6 +17,7 @@ import sys
 import sysconfig
 
 from prepare_windows_build import icon_png
+from license_notices import write_notices
 
 
 def source_version(root):
@@ -51,59 +52,6 @@ def verify_dependencies(root):
             actual = "missing"
         if actual == "missing" or not requirement.specifier.contains(actual):
             raise SystemExit(f"{requirement.name}: expected {requirement.specifier}, found {actual}.")
-
-
-def _license_path(path):
-    return any(re.match(r"^(licen[cs]e|copying|copyright|notice|authors)(\b|[-_.])", part, re.I)
-               or part.lower() == "license.terms" for part in path.parts)
-
-
-def write_notices(root, output):
-    """Keep installed wheel license texts, Python/Tcl/Tk licenses and provenance."""
-    notices = ["MLAFMT THIRD-PARTY NOTICES\n",
-               "MLAFMT is distributed under the MIT License; see LICENSE.\n",
-               "Build tool licenses are included for traceability. PyInstaller's bootloader\n"
-               "exception permits distribution of the generated application.\n"]
-    seen = set()
-    packages = {}
-
-    def append_text(label, filename):
-        if not filename.is_file():
-            return
-        value = filename.read_text(encoding="utf-8", errors="replace")
-        digest = hashlib.sha256(value.encode()).hexdigest()
-        if digest not in seen:
-            seen.add(digest)
-            notices.append(f"\n{'=' * 72}\n{label}\n{'=' * 72}\n{value}\n")
-
-    for distribution in sorted(importlib.metadata.distributions(),
-                               key=lambda item: item.metadata["Name"].lower()):
-        name = distribution.metadata["Name"]
-        packages[name] = distribution.version
-        identifier = distribution.metadata.get("License-Expression") or distribution.metadata.get("License") or "See license texts below"
-        notices.append(f"\n{name} {distribution.version}: {identifier}\n")
-        for item in distribution.files or []:
-            if _license_path(Path(str(item))):
-                append_text(f"{name}: {item}", Path(distribution.locate_file(item)))
-
-    for candidate in [Path(sys.base_prefix) / "LICENSE.txt",
-                      Path(sysconfig.get_path("stdlib")) / "LICENSE.txt"]:
-        append_text(f"Python {platform.python_version()}: {candidate.name}", candidate)
-    import tkinter
-
-    interpreter = tkinter.Tcl()
-    tcl_library = Path(interpreter.eval("info library"))
-    roots = [tcl_library, tcl_library.parent / "tk8.6", tcl_library.parent / "tk9.0"]
-    for candidate in roots:
-        for name in ("license.terms", "LICENSE", "COPYRIGHT"):
-            append_text(f"Tcl/Tk: {candidate.name}/{name}", candidate / name)
-    if sys.platform == "linux":
-        for package in ("libtcl8.6", "libtk8.6", "libfontconfig1", "libxft2", "libxrender1", "libx11-6"):
-            append_text(f"Ubuntu system library: {package}", Path("/usr/share/doc") / package / "copyright")
-        for path in sorted((root / "platforms/linux/licenses").glob("*")):
-            append_text(f"AppImage runtime: {path.name}", path)
-    (output / "THIRD-PARTY-NOTICES.txt").write_text("\n".join(notices), encoding="utf-8")
-    return packages
 
 
 def write_icons(output, target):
@@ -141,8 +89,8 @@ def write_macos_install(output, version, architecture, status):
     if status == "notarized":
         verification = ("此应用已使用 Developer ID 签名并通过 Apple 公证。",
                         "The app is Developer ID signed and Apple-notarized.")
-        first_open = ("打开“应用程序”中的 MLAFMT，按系统提示确认首次打开。",
-                      "Open MLAFMT in Applications and confirm the first launch when prompted.")
+        first_open = ("打开“应用程序”中的 FormCapy，按系统提示确认首次打开。",
+                      "Open FormCapy in Applications and confirm the first launch when prompted.")
     elif status == "developer-id":
         verification = ("此应用已使用 Developer ID 签名，尚未经过 Apple 公证。",
                         "The app is Developer ID signed and has not been Apple-notarized.")
@@ -156,7 +104,7 @@ def write_macos_install(output, version, architecture, status):
     icon = base64.b64encode((output / "MLAFMT.png").read_bytes()).decode("ascii")
     page = f"""<!doctype html>
 <html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MLAFMT · Mac 安装 / Install</title>
+<title>FormCapy · Mac 安装 / Install</title>
 <style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f5f3ef;color:#243058;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
 main{{max-width:780px;margin:48px auto;padding:32px;background:#fff;border-radius:20px}}header{{display:flex;align-items:center;gap:18px}}
@@ -164,11 +112,11 @@ img{{width:76px;height:76px}}h1{{margin:0;font-size:30px}}.muted,.en{{color:#666
 ol{{padding-left:24px}}li{{padding-left:8px;margin:20px 0}}.note{{padding:18px 20px;background:#f5f6fa;border-radius:12px}}
 a{{color:#31569b}}footer{{margin-top:26px;font-size:14px}}@media(max-width:600px){{main{{margin:16px;padding:24px}}}}
 </style>
-<main><header><img src="data:image/png;base64,{icon}" alt=""><div><h1>MLAFMT</h1>
+<main><header><img src="data:image/png;base64,{icon}" alt=""><div><h1>FormCapy</h1>
 <div class="muted">v{escape(version)} · {architecture_label} · macOS 14+</div></div></header>
-<ol><li><strong>把 MLAFMT 拖入 Applications（应用程序）。</strong>
-<span class="en" lang="en">Drag MLAFMT into the Applications shortcut in this disk image.</span></li>
-<li><strong>从“应用程序”中打开 MLAFMT。</strong><br>{first_open[0]}
+<ol><li><strong>把 FormCapy 拖入 Applications（应用程序）。</strong>
+<span class="en" lang="en">Drag FormCapy into the Applications shortcut in this disk image.</span></li>
+<li><strong>从“应用程序”中打开 FormCapy。</strong><br>{first_open[0]}
 <span class="en" lang="en">{first_open[1]}</span></li>
 <li><strong>选择草稿，填写姓名和标题，生成 Word 文档。</strong>
 <span class="en" lang="en">Choose a draft, enter your name and title, then generate the Word document.</span></li></ol>
@@ -182,7 +130,10 @@ a{{color:#31569b}}footer{{margin-top:26px;font-size:14px}}@media(max-width:600px
 
 
 def write_spec(root, output, target, architecture, version):
-    datas = [(str(output / "MLAFMT.png"), "."), (str(output / "documentation"), "documentation")]
+    datas = [(str(output / "MLAFMT.png"), "."), (str(output / "documentation"), "documentation"),
+             (str(output / "THIRD-PARTY-NOTICES.txt"), "."), (str(root / "LICENSE"), "."),
+             (str(output / "license-manifest.json"), "."), (str(output / "license-audit.json"), "."),
+             (str(output / "licenses"), "licenses"), (str(root / "static"), "static")]
     identity = os.environ.get("MLAFMT_CODESIGN_IDENTITY") or None
     entitlements = root / "platforms/macos/entitlements.plist"
     spec = f"""# Generated from mla_formatter.__version__; do not edit.
@@ -200,7 +151,7 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='MLAFMT',
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='MLAFMT')
 """
     if target == "macos":
-        plist = {"CFBundleDisplayName": "MLAFMT", "CFBundleShortVersionString": version,
+        plist = {"CFBundleDisplayName": "FormCapy", "CFBundleName": "FormCapy", "CFBundleShortVersionString": version,
                  "CFBundleVersion": version, "LSMinimumSystemVersion": "14.0",
                  "NSHighResolutionCapable": True,
                  "NSHumanReadableCopyright": "MLAFMT contributors. MIT License.",
@@ -221,7 +172,7 @@ coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='MLAFMT')
                           "public.filename-extension": ["md"],
                           "public.mime-type": ["text/markdown"]}},
                  ]}
-        spec += f"""app = BUNDLE(coll, name='MLAFMT.app', icon={str(output / 'MLAFMT.icns')!r},
+        spec += f"""app = BUNDLE(coll, name='FormCapy.app', icon={str(output / 'MLAFMT.icns')!r},
     bundle_identifier='com.mlafmt.app', version={version!r}, info_plist={plist!r})
 """
     (output / "MLAFMT.spec").write_text(spec, encoding="utf-8")
@@ -235,6 +186,7 @@ def main():
     parser.add_argument("--architecture", choices=("arm64", "x86_64"))
     parser.add_argument("--expected-version", default="")
     parser.add_argument("--verify-dependencies", action="store_true")
+    parser.add_argument("--release-check", action="store_true")
     parser.add_argument("--version-only", action="store_true")
     parser.add_argument("--macos-install-status", choices=("ad-hoc", "developer-id", "notarized"))
     args = parser.parse_args()
@@ -257,17 +209,25 @@ def main():
     if args.verify_dependencies:
         verify_dependencies(root)
     write_icons(output, args.platform)
-    packages = write_notices(root, output)
+    packages = write_notices(root, output, target=args.platform, release_check=args.release_check)
     status = git_output(root, "status", "--porcelain", "--untracked-files=normal")
-    sources = [root / "mla_gui.py", root / "mla_formatter.py", root / "format_profiles.py", root / "requirements-build.txt",
+    sources = [root / "mla_gui.py", root / "mla_formatter.py", root / "format_profiles.py", root / "docx_preserve.py", root / "requirements-build.txt",
                root / "scripts/prepare_desktop_build.py", root / "scripts/prepare_windows_build.py",
+               root / "scripts/prepare_brand_assets.ps1",
+               root / "scripts/license_notices.py", root / "scripts/build_lxml_no_iconv.py",
+               root / "scripts/lxml-no-iconv-sources.json",
                root / "scripts/hooks-desktop/hook-tkinterdnd2.py",
                root / "scripts/hooks-desktop/hook-docx.py"]
     sources += sorted((root / "platforms" / args.platform).rglob("*"))
+    sources += sorted((root / "scripts/licenses").glob("*"))
+    sources += sorted((root / "static").glob("*")) + sorted((root / "assets/icons").glob("*"))
     metadata = {
-        "application": "MLAFMT", "version": version, "target_platform": args.platform,
+        "application": "MLAFMT", "application_display_name": "FormCapy", "version": version, "target_platform": args.platform,
         "architecture": args.architecture, "build_platform": platform.platform(),
         "python": platform.python_version(), "packages": packages,
+        "license_audit": json.loads((output / "license-audit.json").read_text(encoding="utf-8")),
+        "license_files_sha256": {name: hashlib.sha256((output / name).read_bytes()).hexdigest()
+                                 for name in ("THIRD-PARTY-NOTICES.txt", "license-manifest.json", "license-audit.json")},
         "commit": git_output(root, "rev-parse", "HEAD"),
         "working_tree_dirty": None if status is None else bool(status),
         "minimum_system": "macOS 14" if args.platform == "macos" else "glibc 2.35, X11/XWayland",
@@ -287,8 +247,10 @@ def main():
     documentation.mkdir()
     for name in ("README.md", "CHANGELOG.md", "LICENSE"):
         shutil.copy2(root / name, documentation / name)
-    for name in ("build-info.json", "THIRD-PARTY-NOTICES.txt"):
+    for name in ("build-info.json", "THIRD-PARTY-NOTICES.txt", "license-manifest.json", "license-audit.json"):
         shutil.copy2(output / name, documentation / name)
+    shutil.copytree(output / "licenses", documentation / "licenses", dirs_exist_ok=True)
+    shutil.copytree(root / "static", documentation / "static", dirs_exist_ok=True)
     if args.platform == "linux":
         shutil.copytree(root / "platforms/linux/licenses", documentation / "licenses", dirs_exist_ok=True)
     shutil.copy2(root / "platforms" / args.platform / "INSTALL.md", documentation / "INSTALL.md")

@@ -1,3 +1,4 @@
 <resources>
-    <string name="update_webview">请更新 Android System WebView 后使用 MLAFMT。</string>
+    <string name="app_name">FormCapy</string>
+    <string name="update_webview">请更新 Android System WebView 后使用 FormCapy。</string>
 </resources>

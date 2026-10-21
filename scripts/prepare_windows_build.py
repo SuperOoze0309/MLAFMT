@@ -10,7 +10,8 @@ import re
 import struct
 import subprocess
 import sys
-import zlib
+
+from license_notices import write_notices
 
 
 def source_version(root):
@@ -21,43 +22,13 @@ def source_version(root):
     return match.group(1)
 
 
-def _inside_polygon(x, y, points):
-    inside = False
-    previous = points[-1]
-    for current in points:
-        ax, ay = previous
-        bx, by = current
-        if (ay > y) != (by > y) and x < (bx - ax) * (y - ay) / (by - ay) + ax:
-            inside = not inside
-        previous = current
-    return inside
-
-
 def icon_png(size):
-    """Draw a paper-white M on a rounded indigo tile, with a folded corner."""
-    paper, indigo, fold = (249, 247, 241, 255), (36, 48, 88, 255), (111, 137, 181, 255)
-    letter = [(0.24, 0.73), (0.24, 0.28), (0.34, 0.28), (0.50, 0.50),
-              (0.66, 0.28), (0.76, 0.28), (0.76, 0.73), (0.65, 0.73),
-              (0.65, 0.47), (0.50, 0.67), (0.35, 0.47), (0.35, 0.73)]
-    rows = bytearray()
-    for row in range(size):
-        rows.append(0)
-        for column in range(size):
-            x, y = (column + 0.5) / size, (row + 0.5) / size
-            dx, dy = max(abs(x - 0.5) - 0.30, 0), max(abs(y - 0.5) - 0.30, 0)
-            color = indigo if dx * dx + dy * dy <= 0.18 ** 2 else (0, 0, 0, 0)
-            if color[3] and x > 0.77 and y < 0.23 and x - y > 0.62:
-                color = fold
-            if _inside_polygon(x, y, letter):
-                color = paper
-            rows.extend(color)
-
-    def chunk(kind, value):
-        data = kind + value
-        return struct.pack(">I", len(value)) + data + struct.pack(">I", zlib.crc32(data) & 0xFFFFFFFF)
-
-    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
-            + chunk(b"IDAT", zlib.compress(bytes(rows), 9)) + chunk(b"IEND", b""))
+    """Use the same capybara artwork for each platform's icon container."""
+    path = Path(__file__).resolve().parents[1] / "assets/icons" / f"capybara-{size}.png"
+    data = path.read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n" or struct.unpack(">II", data[16:24]) != (size, size):
+        raise ValueError(f"Invalid application icon asset: {path}")
+    return data
 
 
 def write_icon(path):
@@ -85,6 +56,7 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--verify-dependencies", action="store_true")
+    parser.add_argument("--release-check", action="store_true")
     args = parser.parse_args()
     root, output = args.root.resolve(), args.output.resolve()
     if args.verify_dependencies:
@@ -110,12 +82,12 @@ def main():
         mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
     kids=[StringFileInfo([StringTable('040904B0', [
         StringStruct('CompanyName', 'MLAFMT'),
-        StringStruct('FileDescription', 'MLAFMT - MLA Essay Formatter'),
+        StringStruct('FileDescription', 'FormCapy - Document Formatter'),
         StringStruct('FileVersion', '{version}'),
         StringStruct('InternalName', 'MLAFMT'),
         StringStruct('LegalCopyright', 'MIT License'),
         StringStruct('OriginalFilename', 'MLAFMT.exe'),
-        StringStruct('ProductName', 'MLAFMT'),
+        StringStruct('ProductName', 'FormCapy'),
         StringStruct('ProductVersion', '{version}')])]),
         VarFileInfo([VarStruct('Translation', [1033, 1200])])])
 """
@@ -126,17 +98,25 @@ def main():
     if not release:
         raise SystemExit(f"CHANGELOG.md has no entry for v{version}.")
     (output / "release-notes.md").write_text(release.group(0).strip() + "\n", encoding="utf-8")
-    source_files = ["mla_gui.py", "mla_formatter.py", "format_profiles.py", "requirements-build.txt",
-                    "scripts/build_windows.ps1", "scripts/prepare_windows_build.py",
+    packages = write_notices(root, output, target="windows", release_check=args.release_check)
+    source_files = ["mla_gui.py", "mla_formatter.py", "format_profiles.py", "docx_preserve.py", "requirements-build.txt",
+                    "scripts/build_windows.ps1", "scripts/prepare_windows_build.py", "scripts/prepare_brand_assets.ps1",
+                    "scripts/license_notices.py", "scripts/build_lxml_no_iconv.py", "scripts/lxml-no-iconv-sources.json",
+                    "scripts/windows_source_kit.py", "scripts/rebuild_windows_source_kit.py", "scripts/lxml-windows-source-kit.json",
                     "scripts/hooks/hook-tkinterdnd2.py"]
+    source_files += [str(path.relative_to(root)).replace("\\", "/") for path in sorted((root / "scripts/licenses").glob("*")) if path.is_file()]
+    source_files += [path.relative_to(root).as_posix() for folder in (root / "static", root / "assets/icons")
+                     for path in sorted(folder.glob("*")) if path.is_file()]
     git_status = git_output(root, "status", "--porcelain", "--untracked-files=normal")
     metadata = {
-        "application": "MLAFMT", "version": version, "platform": platform.platform(),
+        "application": "MLAFMT", "application_display_name": "FormCapy", "version": version, "platform": platform.platform(),
         "python": platform.python_version(), "architecture": platform.machine(),
         "commit": git_output(root, "rev-parse", "HEAD"),
         "working_tree_dirty": None if git_status is None else bool(git_status),
-        "packages": {item.metadata["Name"]: item.version for item in sorted(
-            importlib.metadata.distributions(), key=lambda item: item.metadata["Name"].lower())},
+        "packages": packages,
+        "license_audit": json.loads((output / "license-audit.json").read_text(encoding="utf-8")),
+        "license_files_sha256": {name: hashlib.sha256((output / name).read_bytes()).hexdigest()
+                                 for name in ("THIRD-PARTY-NOTICES.txt", "license-manifest.json", "license-audit.json")},
         "source_sha256": {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in source_files},
     }
     (output / "build-info.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
