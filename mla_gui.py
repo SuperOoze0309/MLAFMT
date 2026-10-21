@@ -1,5 +1,5 @@
 """
-mla_gui.py  (v2.2)
+mla_gui.py  (v2.3)
 Desktop app for one-click MLA formatting.  中英双语 / Chinese-English UI.
 
 Home screen = only what most people need:
@@ -258,6 +258,10 @@ T["zh"].update({
     "done_blank": "空白模板已保存：{f}", "working": "正在排版，请稍候…",
     "done_removed": "已保存 {f} · {b} 段正文 · {w} 条参考文献 · 去重 {r} 行抬头",
     "open_result": "打开文档", "view_folder": "打开文件夹", "menu_language": "语言 / Language",
+    "reveal_result": "在 Finder 中显示", "empty_file": "这个文件是空的，请选择有内容的草稿。",
+    "queued_file": "当前操作结束后将载入：{f}",
+    "saved_next": "已保存 {f}；已载入下一份草稿：{next}",
+    "one_draft": "已选择 {f}；每次处理一份草稿。",
     "format_preview": "MLA 格式预览", "missing_source": "草稿已被移动或删除，请重新选择。",
     "preview_header": "页眉：{name} 1", "preview_specs": "Times New Roman 12 号\n双倍行距 · 1 英寸页边距\n正文首行缩进 0.5 英寸\nWorks Cited 另起一页，悬挂缩进",
 })
@@ -281,6 +285,10 @@ T["en"].update({
     "done_blank": "Blank template saved: {f}", "working": "Formatting your paper…",
     "done_removed": "Saved {f} · {b} paragraphs · {w} sources · removed {r} heading lines",
     "open_result": "Open document", "view_folder": "Show in folder", "menu_language": "Language / 语言",
+    "reveal_result": "Show in Finder", "empty_file": "This file is empty. Choose a draft with text.",
+    "queued_file": "This draft will open after the current operation: {f}",
+    "saved_next": "Saved {f}; next draft loaded: {next}",
+    "one_draft": "Selected {f}; one draft is processed at a time.",
     "format_preview": "MLA format preview", "missing_source": "Your draft was moved or deleted. Please select it again.",
     "preview_header": "Header: {name} 1", "preview_specs": "Times New Roman 12 pt\nDouble spacing · 1-inch margins\nBody first-line indent: 0.5 inch\nWorks Cited: new page, hanging indents",
 })
@@ -348,8 +356,20 @@ def _same_file(source, output):
         return os.path.normcase(os.path.realpath(source)) == os.path.normcase(os.path.realpath(output))
 
 
+def _launch_files(arguments):
+    """Keep document arguments; ignore Finder's legacy process serial number."""
+    files = []
+    literal = False
+    for argument in arguments:
+        if argument == "--" and not literal:
+            literal = True
+        elif literal or not argument.startswith("-"):
+            files.append(argument)
+    return files
+
+
 class MLAGui:
-    def __init__(self, remember=True):
+    def __init__(self, remember=True, initial_files=()):
         self.remember = remember
         try:
             self.root = TkinterDnD.Tk() if HAS_DND else tk.Tk()
@@ -375,6 +395,9 @@ class MLAGui:
         self._last_output = None
         self._adv_win = None
         self._busy = False
+        self._choosing_output = False
+        self._closing = False
+        self._pending_file = None
         self._results = queue.Queue()
         self._status_state = ("status_ready", "muted", {})
         self.v = {k: tk.StringVar(self.root) for k in
@@ -398,6 +421,16 @@ class MLAGui:
         if sys.platform == "darwin":
             self.root.bind("<Command-o>", lambda _e: self._on_browse())
             self.root.bind("<Command-Return>", lambda _e: self._on_convert())
+            self.root.bind("<Command-q>", lambda _e: self._on_close())
+            self.root.bind("<Command-comma>", lambda _e: self._open_advanced())
+            # Finder's Open With and Dock drops arrive as Apple Events, even
+            # after launch. Tk handles these without PyInstaller argv emulation.
+            self.root.createcommand("::tk::mac::OpenDocument", self._open_documents)
+            self.root.createcommand("::tk::mac::ReopenApplication", self._restore_window)
+            self.root.createcommand("::tk::mac::Quit", self._on_close)
+            self.root.createcommand("::tk::mac::ShowPreferences", self._open_advanced)
+        if initial_files:
+            self.root.after_idle(lambda: self._open_documents(*initial_files))
         self.root.after(80, self._poll_results)
 
     def t(self, key, **kw):
@@ -572,7 +605,7 @@ class MLAGui:
     def _build_menu(self):
         mb = tk.Menu(self.root)
         file = tk.Menu(mb, tearoff=0)
-        file.add_command(label=self.t("menu_open"), accelerator="Ctrl+O", command=self._on_browse)
+        file.add_command(label=self.t("menu_open"), accelerator="Cmd+O" if sys.platform == "darwin" else "Ctrl+O", command=self._on_browse)
         file.add_command(label=self.t("menu_blank"), command=self._on_blank)
         file.add_separator()
         file.add_command(label=self.t("menu_quit"), command=self._on_close)
@@ -618,7 +651,7 @@ class MLAGui:
         _save_config(cfg)
 
     def _open_advanced(self):
-        if self._busy:
+        if self._busy or self._choosing_output:
             return
         if self._adv_win is not None and self._adv_win.winfo_exists():
             self._adv_win.lift()
@@ -695,19 +728,54 @@ class MLAGui:
 
     def _set_file(self, path):
         if self._busy:
-            return
+            return False
         if not os.path.isfile(path):
             self._set_status("not_found", "err")
-            return
+            return False
         if Path(path).suffix.lower() not in SUPPORTED_EXTS:
             self._set_status("unsupported", "err")
-            return
-        if os.path.getsize(path) > MAX_FILE_SIZE:
+            return False
+        try:
+            size = os.path.getsize(path)
+        except OSError as error:
+            self._report_error(error)
+            return False
+        if size > MAX_FILE_SIZE:
             self._set_status("too_large", "err")
-            return
+            return False
+        if size == 0:
+            self._set_status("empty_file", "err")
+            return False
         self._input_file = os.path.abspath(path)
         self._refresh_drop()
         self._set_status("loaded", f=os.path.basename(path))
+        return True
+
+    def _restore_window(self):
+        if self._choosing_output or self._closing:
+            return
+        self.root.deiconify()
+        self.root.lift()
+        self.root.focus_force()
+
+    def _open_documents(self, *paths):
+        """Accept native file-open events without changing an active conversion."""
+        if not paths:
+            return
+        if self._busy or self._choosing_output:
+            self._pending_file = paths[0]
+            self._set_status("queued_file", f=os.path.basename(paths[0]))
+            return
+        self._restore_window()
+        if self._set_file(paths[0]):
+            if len(paths) > 1:
+                self._set_status("one_draft", f=os.path.basename(paths[0]))
+            self._entries["name" if not self.v["name"].get().strip() else "title"].focus_set()
+
+    def _load_pending_file(self, output=None):
+        pending, self._pending_file = self._pending_file, None
+        if not self._closing and pending and self._set_file(pending) and output:
+            self._set_status("saved_next", f=os.path.basename(output), next=os.path.basename(pending))
 
     def _on_drop(self, event):
         paths = self.root.tk.splitlist(event.data)
@@ -715,7 +783,7 @@ class MLAGui:
             self._set_file(paths[0])
 
     def _on_browse(self):
-        if self._busy:
+        if self._busy or self._choosing_output:
             return
         path = filedialog.askopenfilename(parent=self.root, title=self.t("choose"),
             filetypes=[(self.t("draft_types"), "*.docx *.txt *.md"), (self.t("word_type"), "*.docx"), (self.t("text_type"), "*.txt *.md")])
@@ -748,12 +816,23 @@ class MLAGui:
         except OSError as e:
             self._set_status("error", "err", e=str(e))
 
+    def _reveal_result(self):
+        if not self._last_output:
+            return
+        try:
+            if sys.platform == "darwin":
+                subprocess.Popen(["open", "-R", self._last_output])
+            else:
+                self._open_file(os.path.dirname(self._last_output))
+        except OSError as error:
+            self._set_status("error", "err", e=str(error))
+
     def _render_result(self):
         for w in self._result_row.winfo_children():
             w.destroy()
         if self._last_output:
             ttk.Button(self._result_row, text=self.t("open_result"), style="Ghost.TButton", command=lambda: self._open_file(self._last_output)).pack(side=tk.LEFT)
-            ttk.Button(self._result_row, text=self.t("view_folder"), style="Ghost.TButton", command=lambda: self._open_file(os.path.dirname(self._last_output))).pack(side=tk.LEFT, padx=8)
+            ttk.Button(self._result_row, text=self.t("reveal_result" if sys.platform == "darwin" else "view_folder"), style="Ghost.TButton", command=self._reveal_result).pack(side=tk.LEFT, padx=8)
 
     def _report_error(self, e):
         if isinstance(e, PermissionError):
@@ -779,27 +858,34 @@ class MLAGui:
         self._generate(False)
 
     def _generate(self, blank):
-        if self._busy:
+        if self._busy or self._choosing_output:
             return
         if not blank and not self._input_file:
             self._set_status("need_file", "err")
             self._on_browse()
             if not self._input_file:
                 return
-        meta = self._meta()
-        if not self._check(meta):
-            return
-        out = self._ask_save(meta, "save_blank" if blank else "save_as")
-        if not out:
-            return
-        if self._input_file and _same_file(self._input_file, out):
-            self._set_status("same_file", "err")
-            return
+        meta, source = self._meta(), self._input_file
+        # Native save/date dialogs run their own event loop. Queue Finder's
+        # document events until the dialog ends, keeping this draft fixed.
+        self._choosing_output = True
+        try:
+            if not self._check(meta):
+                return
+            out = self._ask_save(meta, "save_blank" if blank else "save_as")
+            if not out:
+                return
+            if source and _same_file(source, out):
+                self._set_status("same_file", "err")
+                return
+            self._set_busy(True)
+        finally:
+            self._choosing_output = False
+            if not self._busy:
+                self._load_pending_file()
         kwargs = dict(name=meta["name"], instructor=meta["instructor"], course=meta["course"], date_str=meta["date"], title=meta["title"], last_name_override=meta["last_name"])
-        source = self._input_file
         options = dict(txt_paragraph_mode=self.txt_mode.get(), enable_heading_detection=self.opt["headings"].get(), enable_block_quote=self.opt["bq"].get(), markdown_emphasis=self.opt["md"].get(), strip_existing_heading=self.opt["strip"].get())
         self._save_prefs()
-        self._set_busy(True)
         self._set_status("working")
         def worker():
             try:
@@ -830,9 +916,13 @@ class MLAGui:
                 self._render_result()
                 if self.opt["open_after"].get():
                     self._open_file(out)
+            self._load_pending_file(None if error else out)
         self.root.after(80, self._poll_results)
 
     def _on_close(self):
+        if self._closing:
+            return
+        self._closing = True
         self._save_prefs()
         self.root.destroy()
 
@@ -889,4 +979,4 @@ if __name__ == "__main__":
     if "--smoke-test" in sys.argv:
         _smoke_test(require_dnd="--require-dnd" in sys.argv)
     else:
-        MLAGui().run()
+        MLAGui(initial_files=_launch_files(sys.argv[1:])).run()

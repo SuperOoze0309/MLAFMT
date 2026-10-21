@@ -6,22 +6,24 @@
 
 ## 下载 / Downloads
 
-| 设备 / Device | v2.2.0 下载 / Download | 安装 / Install |
+| 设备 / Device | v2.3.0 下载 / Download | 安装 / Install |
 | --- | --- | --- |
-| Windows 10/11 · x64 | [MLAFMT.exe](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT.exe) | 双击运行 / Open the EXE |
-| macOS 14+ · M 系列 / Apple silicon | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT-v2.2.0-macos-arm64.dmg) | 拖入应用程序 / Drag to Applications |
-| macOS 14+ · Intel | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT-v2.2.0-macos-x64.dmg) | 拖入应用程序 / Drag to Applications |
-| Linux · x64 · Ubuntu 22.04+ 或兼容系统 / or compatible | [Linux AppImage](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT-v2.2.0-linux-x64.AppImage) | 允许执行后运行 / Mark executable and open |
-| Android 7+ · 64 位 / 64-bit | [Android APK](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT-v2.2.0-android.apk) | 下载后安装 / Download and install |
+| Windows 10/11 · x64 | [MLAFMT.exe](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT.exe) | 双击运行 / Open the EXE |
+| macOS 14+ · M 系列 / Apple silicon | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-macos-arm64.dmg) | 拖入应用程序 / Drag to Applications |
+| macOS 14+ · Intel | [Mac DMG](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-macos-x64.dmg) | 拖入应用程序 / Drag to Applications |
+| Linux · x64 · Ubuntu 22.04+ 或兼容系统 / or compatible | [Linux AppImage](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-linux-x64.AppImage) | 允许执行后运行 / Mark executable and open |
+| Android 7+ · 64 位 / 64-bit | [Android APK](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-android.apk) | 下载后安装 / Download and install |
 
 macOS 包目前未经过 Apple 公证。首次打开若被系统阻止，可在“系统设置 → 隐私与安全”确认打开。macOS builds are not Apple-notarized; if blocked on first launch, confirm the app in System Settings → Privacy & Security.
+
+Mac 文件打开、Pages 导入及 iPhone/iPad 本地预览见 [Apple 设备指南 / Apple guide](docs/APPLE.md)。iPhone/iPad 当前提供本地网页预览。See the guide for Mac file handling and local iPhone/iPad web preview.
 
 <details>
 <summary>其他下载 / Other downloads</summary>
 
-- [Windows ZIP（包含图文说明）/ Windows ZIP with illustrated guide](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT-v2.2.0-windows-x64.zip)
-- [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz for systems without FUSE](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/MLAFMT-v2.2.0-linux-x64.tar.gz)
-- [SHA-256 校验和 / Checksums](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.2.0/SHA256SUMS.txt)
+- [Windows ZIP（包含图文说明）/ Windows ZIP with illustrated guide](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-windows-x64.zip)
+- [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz for systems without FUSE](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/MLAFMT-v2.3.0-linux-x64.tar.gz)
+- [SHA-256 校验和 / Checksums](https://github.com/SuperOoze0309/MLAFMT/releases/download/v2.3.0/SHA256SUMS.txt)
 
 </details>
 
@@ -41,11 +43,13 @@ macOS 包目前未经过 Apple 公证。首次打开若被系统阻止，可在�
 
 1. 填写姓名和标题；老师、课程可选，并确认日期。
 2. 拖入 `.docx`、`.txt` 或 `.md` 草稿，也可以点击上传区域选择文件。
-3. 点击 **生成 MLA 文档并下载**。右侧页面是版式预览，下载的 Word 文档中会包含草稿正文。
+3. 点击 **生成 MLA 文档**，然后在结果卡中点 **下载 Word**；页面保持打开时可再次下载。右侧页面是版式示意，下载的 Word 文档中会包含草稿正文。
 
 顶部的 **中文 / English** 可随时切换界面语言，并记住你的选择。高级选项包含页眉姓氏、段落拆分、标题识别和块引用设置，也可直接创建空白 MLA 模板。
 
 macOS 支持 ⌘O 选择文件、⌘Return 转换；Windows/Linux 使用 Ctrl。桌面与 Android 版均在设备上处理文档，转换时无需联网。
+
+Mac 也可以在 Finder 中选择“打开方式 → MLAFMT”，或把草稿拖到 Dock 图标。保存后点 **在 Finder 中显示** 可选中生成文件。
 
 ### Android 快速开始
 
@@ -98,13 +102,13 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 # Windows 打包使用 Python 3.12 x64 和独立环境
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.2.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.3.0
 ```
 
 `requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.2.0-windows-x64.zip`：应用、双语说明、更新记录、许可证与构建信息。
+- `MLAFMT-v2.3.0-windows-x64.zip`：应用、双语说明、更新记录、许可证与构建信息。
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
@@ -130,11 +134,13 @@ Turn an essay draft into a Word document with common **MLA 9th edition layout co
 
 1. Enter your name and essay title; instructor and course are optional. Check the date.
 2. Drag in a `.docx`, `.txt`, or `.md` draft, or click the upload area to choose a file.
-3. Select **Format & download**. The paper on the right is a layout preview; your draft text appears in the downloaded Word document.
+3. Select **Format document**, then **Download Word** in the result card. Download again while the page stays open. The paper on the right is a layout illustration; your draft text appears in the Word document.
 
 Choose **中文 / English** at the top to switch language. Advanced settings include a header surname override, paragraph splitting, heading detection and block quotes. You can also create a blank MLA template.
 
 On macOS, use ⌘O to choose a file and ⌘Return to convert; Windows/Linux use Ctrl. Desktop and Android apps process files on your device and work offline.
+
+On Mac, Finder's **Open With → MLAFMT** and Dock drops also load drafts. After saving, **Show in Finder** selects the generated document.
 
 ### Android quick start
 
@@ -202,7 +208,7 @@ Run `python -m pytest -q` after installing `pytest` and `requirements.txt` in a 
 
 ```powershell
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.2.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.3.0
 ```
 
 The script installs the locked `requirements-build.txt` into that virtual environment, bundles the tkDnD native libraries and creates the EXE and versioned ZIP in `dist/release/`. The ZIP includes build information for the source commit, source hashes, Python and dependencies. Byte-for-byte identity across operating system or Python patch versions is not guaranteed.

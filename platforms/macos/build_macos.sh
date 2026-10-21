@@ -39,6 +39,8 @@ APP_PATH="$BUILD_DIR/dist/MLAFMT.app"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")" == "$VERSION" ]]
 codesign --verify --deep --strict "$APP_PATH"
 "$APP_PATH/Contents/MacOS/MLAFMT" --smoke-test --require-dnd
+INSTALL_STATUS=ad-hoc
+if [[ -n "${MLAFMT_CODESIGN_IDENTITY:-}" ]]; then INSTALL_STATUS=developer-id; fi
 
 notarize() {
     local artifact="$1" report="$2"
@@ -50,14 +52,24 @@ if [[ -n "${MLAFMT_NOTARY_PROFILE:-}" ]]; then
     notarize "$BUILD_DIR/notarization-app.zip" "$BUILD_DIR/notarization-app.json"
     xcrun stapler staple "$APP_PATH"
     xcrun stapler validate "$APP_PATH"
+    INSTALL_STATUS=notarized
 fi
+"$BUILD_PYTHON" "$PROJECT_ROOT/scripts/prepare_desktop_build.py" --root "$PROJECT_ROOT" --output "$BUILD_DIR" --platform macos --architecture "$ARCHITECTURE" --expected-version "$VERSION" --macos-install-status "$INSTALL_STATUS"
 
 # Create a fresh staging directory; no mounted Finder session is needed in CI.
 STAGE_DIR="$(mktemp -d "$BUILD_DIR/dmg-staging.XXXXXX")"
-trap 'rm -rf "$STAGE_DIR"' EXIT
+MOUNT_POINT=""
+cleanup() {
+    if [[ -n "$MOUNT_POINT" ]]; then
+        hdiutil detach "$MOUNT_POINT" >/dev/null 2>&1 || hdiutil detach -force "$MOUNT_POINT" >/dev/null 2>&1 || true
+        rmdir "$MOUNT_POINT" >/dev/null 2>&1 || true
+    fi
+    rm -rf "$STAGE_DIR"
+}
+trap cleanup EXIT
 ditto "$APP_PATH" "$STAGE_DIR/MLAFMT.app"
 ditto "$BUILD_DIR/documentation" "$STAGE_DIR/Documentation"
-cp "$SCRIPT_DIR/INSTALL.md" "$STAGE_DIR/READ-ME-FIRST.md"
+cp "$BUILD_DIR/Read Me.html" "$STAGE_DIR/Read Me.html"
 ln -s /Applications "$STAGE_DIR/Applications"
 FILE_ARCHITECTURE="$ARCHITECTURE"
 [[ "$ARCHITECTURE" != x86_64 ]] || FILE_ARCHITECTURE=x64
@@ -71,7 +83,27 @@ if [[ -n "${MLAFMT_CODESIGN_IDENTITY:-}" ]]; then
         xcrun stapler validate "$DMG_PATH"
     fi
 else
-    echo "Ad-hoc signed build: it is not Apple-notarized. See READ-ME-FIRST.md."
+    echo "Ad-hoc signed build: it is not Apple-notarized. See Read Me.html."
 fi
 hdiutil verify "$DMG_PATH"
+
+# Verify the app in the actual read-only download, including its
+# source metadata. This catches staging, resource and relative-path problems.
+MOUNT_POINT="$(mktemp -d "$BUILD_DIR/dmg-mount.XXXXXX")"
+hdiutil attach -readonly -nobrowse -noautoopen -mountpoint "$MOUNT_POINT" "$DMG_PATH"
+MOUNTED_APP="$MOUNT_POINT/MLAFMT.app"
+[[ -d "$MOUNTED_APP" && ! -L "$MOUNTED_APP" ]]
+[[ -L "$MOUNT_POINT/Applications" && "$(readlink "$MOUNT_POINT/Applications")" == /Applications ]]
+[[ -f "$MOUNT_POINT/Read Me.html" && -f "$MOUNT_POINT/Documentation/README.md" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$MOUNTED_APP/Contents/Info.plist")" == "$VERSION" ]]
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$MOUNTED_APP/Contents/Info.plist")" == com.mlafmt.app ]]
+cmp "$APP_PATH/Contents/MacOS/MLAFMT" "$MOUNTED_APP/Contents/MacOS/MLAFMT"
+cmp "$APP_PATH/Contents/Info.plist" "$MOUNTED_APP/Contents/Info.plist"
+cmp "$BUILD_DIR/build-info.json" "$MOUNT_POINT/Documentation/build-info.json"
+cmp "$BUILD_DIR/build-info.json" "$MOUNTED_APP/Contents/Resources/documentation/build-info.json"
+codesign --verify --deep --strict "$MOUNTED_APP"
+if [[ "$INSTALL_STATUS" == notarized ]]; then xcrun stapler validate "$MOUNTED_APP"; fi
+hdiutil detach "$MOUNT_POINT"
+rmdir "$MOUNT_POINT"
+MOUNT_POINT=""
 echo "Release asset ready: $DMG_PATH"

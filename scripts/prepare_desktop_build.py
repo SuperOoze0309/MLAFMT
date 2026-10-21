@@ -1,7 +1,9 @@
 """Prepare versioned macOS/Linux PyInstaller builds without importing the app."""
 
 import argparse
+import base64
 import hashlib
+from html import escape
 import importlib.metadata
 import json
 import os
@@ -116,6 +118,69 @@ def write_icons(output, target):
         (output / "MLAFMT.icns").write_bytes(b"icns" + struct.pack(">I", len(contents) + 8) + contents)
 
 
+def macos_document_types():
+    """Offer Finder's Open With without becoming the primary document editor."""
+    documents = [
+        ("Word draft", "docx", "org.openxmlformats.wordprocessingml.document"),
+        ("Text draft", "txt", "public.plain-text"),
+        ("Markdown draft", "md", "net.daringfireball.markdown"),
+    ]
+    return [{"CFBundleTypeName": name, "CFBundleTypeRole": "Viewer",
+             "LSHandlerRank": "Alternate", "CFBundleTypeExtensions": [extension],
+             "LSItemContentTypes": [identifier]}
+            for name, extension, identifier in documents]
+
+
+def write_macos_install(output, version, architecture, status):
+    """Render a self-contained, double-clickable guide after app verification."""
+    if status == "notarized":
+        report = json.loads((output / "notarization-app.json").read_text(encoding="utf-8"))
+        if report.get("status") != "Accepted":
+            raise SystemExit("A notarized install guide requires Apple's Accepted app report.")
+    architecture_label = "Apple silicon · M 系列" if architecture == "arm64" else "Intel · x64"
+    if status == "notarized":
+        verification = ("此应用已使用 Developer ID 签名并通过 Apple 公证。",
+                        "The app is Developer ID signed and Apple-notarized.")
+        first_open = ("打开“应用程序”中的 MLAFMT，按系统提示确认首次打开。",
+                      "Open MLAFMT in Applications and confirm the first launch when prompted.")
+    elif status == "developer-id":
+        verification = ("此应用已使用 Developer ID 签名，尚未经过 Apple 公证。",
+                        "The app is Developer ID signed and has not been Apple-notarized.")
+        first_open = ("首次打开如被阻止，确认来自项目 GitHub Releases 后，前往“系统设置 → 隐私与安全性 → 仍要打开”。",
+                      "If macOS blocks the first launch, confirm the GitHub Releases download source, then use System Settings → Privacy & Security → Open Anyway.")
+    else:
+        verification = ("此应用使用临时签名，尚未经过 Apple 公证。",
+                        "The app is ad-hoc signed and has not been Apple-notarized.")
+        first_open = ("首次打开如被阻止，确认来自项目 GitHub Releases 后，前往“系统设置 → 隐私与安全性 → 仍要打开”。",
+                      "If macOS blocks the first launch, confirm the GitHub Releases download source, then use System Settings → Privacy & Security → Open Anyway.")
+    icon = base64.b64encode((output / "MLAFMT.png").read_bytes()).decode("ascii")
+    page = f"""<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLAFMT · Mac 安装 / Install</title>
+<style>
+*{{box-sizing:border-box}}body{{margin:0;background:#f5f3ef;color:#243058;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
+main{{max-width:780px;margin:48px auto;padding:32px;background:#fff;border-radius:20px}}header{{display:flex;align-items:center;gap:18px}}
+img{{width:76px;height:76px}}h1{{margin:0;font-size:30px}}.muted,.en{{color:#666d7b}}.en{{display:block;font-size:14px;margin:3px 0 18px}}
+ol{{padding-left:24px}}li{{padding-left:8px;margin:20px 0}}.note{{padding:18px 20px;background:#f5f6fa;border-radius:12px}}
+a{{color:#31569b}}footer{{margin-top:26px;font-size:14px}}@media(max-width:600px){{main{{margin:16px;padding:24px}}}}
+</style>
+<main><header><img src="data:image/png;base64,{icon}" alt=""><div><h1>MLAFMT</h1>
+<div class="muted">v{escape(version)} · {architecture_label} · macOS 14+</div></div></header>
+<ol><li><strong>把 MLAFMT 拖入 Applications（应用程序）。</strong>
+<span class="en" lang="en">Drag MLAFMT into the Applications shortcut in this disk image.</span></li>
+<li><strong>从“应用程序”中打开 MLAFMT。</strong><br>{first_open[0]}
+<span class="en" lang="en">{first_open[1]}</span></li>
+<li><strong>选择草稿，填写姓名和标题，生成 Word 文档。</strong>
+<span class="en" lang="en">Choose a draft, enter your name and title, then generate the Word document.</span></li></ol>
+<div class="note">{verification[0]}<span class="en" lang="en">{verification[1]}</span>
+所有排版在设备上离线完成，无需安装 Python。
+<span class="en" lang="en">Formatting works offline. No Python installation is required.</span></div>
+<footer>支持 .docx / .txt / .md · 图文说明：<a href="Documentation/README.md">README</a> ·
+<a href="https://github.com/SuperOoze0309/MLAFMT/releases">GitHub Releases</a></footer></main></html>
+"""
+    (output / "Read Me.html").write_text(page, encoding="utf-8")
+
+
 def write_spec(root, output, target, architecture, version):
     datas = [(str(output / "MLAFMT.png"), "."), (str(output / "documentation"), "documentation")]
     identity = os.environ.get("MLAFMT_CODESIGN_IDENTITY") or None
@@ -140,7 +205,22 @@ coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='MLAFMT')
                  "NSHighResolutionCapable": True,
                  "NSHumanReadableCopyright": "MLAFMT contributors. MIT License.",
                  "NSDocumentsFolderUsageDescription": "Choose and save your essay documents.",
-                 "NSDownloadsFolderUsageDescription": "Choose drafts and save formatted documents."}
+                 "NSDownloadsFolderUsageDescription": "Choose drafts and save formatted documents.",
+                 "CFBundleDocumentTypes": macos_document_types(),
+                 "UTImportedTypeDeclarations": [
+                     {"UTTypeIdentifier": "org.openxmlformats.wordprocessingml.document",
+                      "UTTypeDescription": "Office Open XML document",
+                      "UTTypeConformsTo": ["public.data", "public.content"],
+                      "UTTypeTagSpecification": {
+                          "public.filename-extension": ["docx"],
+                          "public.mime-type": ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}},
+                     {"UTTypeIdentifier": "net.daringfireball.markdown",
+                      "UTTypeDescription": "Markdown document",
+                      "UTTypeConformsTo": ["public.plain-text"],
+                      "UTTypeTagSpecification": {
+                          "public.filename-extension": ["md"],
+                          "public.mime-type": ["text/markdown"]}},
+                 ]}
         spec += f"""app = BUNDLE(coll, name='MLAFMT.app', icon={str(output / 'MLAFMT.icns')!r},
     bundle_identifier='com.mlafmt.app', version={version!r}, info_plist={plist!r})
 """
@@ -156,6 +236,7 @@ def main():
     parser.add_argument("--expected-version", default="")
     parser.add_argument("--verify-dependencies", action="store_true")
     parser.add_argument("--version-only", action="store_true")
+    parser.add_argument("--macos-install-status", choices=("ad-hoc", "developer-id", "notarized"))
     args = parser.parse_args()
     root = args.root.resolve()
     version = source_version(root)
@@ -168,6 +249,11 @@ def main():
         parser.error("--output, --platform and --architecture are required to prepare a build")
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
+    if args.macos_install_status:
+        if args.platform != "macos":
+            parser.error("--macos-install-status requires --platform macos")
+        write_macos_install(output, version, args.architecture, args.macos_install_status)
+        return
     if args.verify_dependencies:
         verify_dependencies(root)
     write_icons(output, args.platform)

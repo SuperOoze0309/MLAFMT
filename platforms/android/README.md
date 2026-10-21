@@ -33,7 +33,7 @@ Set `JAVA_HOME` and `ANDROID_HOME` (or put `sdk.dir` in ignored
 cd platforms/android
 ./gradlew --no-daemon :app:assembleDebug :app:lintDebug
 ./gradlew --no-daemon :app:connectedDebugAndroidTest
-./build_android.sh --release --expected-version v2.2.0
+./build_android.sh --release --expected-version v2.3.0
 ```
 
 On Windows use `gradlew.bat` instead of `./gradlew`, and run
@@ -43,7 +43,7 @@ The wrapper locks Gradle 8.11.1 and validates its distribution SHA-256.
 The checked-in wrapper JAR's SHA-256 is
 `2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046`
 ([official Gradle checksum](https://services.gradle.org/distributions/gradle-8.11.1-wrapper.jar.sha256)).
-Dependencies are AGP 8.9.2, Kotlin 2.2.0, Chaquopy 17.0.0, Python 3.12,
+Dependencies are AGP 8.9.2, Kotlin 2.3.0, Chaquopy 17.0.0, Python 3.12,
 python-docx 1.1.2, lxml 5.3.0 and typing-extensions 4.12.2. lxml is locked to
 a version with prebuilt Android wheels for both supported ABIs. `minSdk` 24
 follows [Chaquopy's requirements](https://chaquo.com/chaquopy/doc/current/versions.html).

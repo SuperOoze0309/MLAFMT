@@ -83,9 +83,9 @@ Mac: drag to Applications. These builds are not Apple-notarized; confirm first l
 Linux：允许执行后打开。Android：安装后选择草稿，生成并保存或分享 Word 文档。
 Linux: mark executable and open. Android: install, choose your draft, then save or share the formatted Word document.
 
-本版新增 Mac、Linux 和 Android；保持同一 MLA 排版核心，并加入中英文图文说明。
-Android 支持折叠屏、分屏窗口和折痕避让，并保留填写信息与草稿。
-This release adds Mac, Linux and Android apps with the shared MLA engine and illustrated bilingual guides. Android supports foldable/multi-window layouts, avoids hinges and retains your details and draft.
+本版完善 Mac 的 Finder 打开方式、Dock 导入、Command 快捷键与生成文件定位；安装包内有可双击的安装说明。
+iPhone/iPad 先提供本地网页预览，生成后可再次下载 Word；支持时可使用系统分享。详见 Apple 设备指南。
+This release improves Mac file opening from Finder and the Dock, Command shortcuts, result location and the bundled install guide. iPhone/iPad use a local web preview with reusable Word downloads and file sharing when supported.
 
 <details>
 <summary>其他下载 / Other downloads</summary>
@@ -94,6 +94,7 @@ This release adds Mac, Linux and Android apps with the shared MLA engine and ill
 - [Linux tar.gz（无 FUSE 时使用）/ Linux tar.gz without FUSE]({base}/{assets[5]})
 - [SHA-256 校验和 / Checksums]({base}/SHA256SUMS.txt)
 - [图文使用说明 / Illustrated guide](https://github.com/SuperOoze0309/MLAFMT/blob/{tag}/README.md)
+- [Apple 设备指南 / Apple guide](https://github.com/SuperOoze0309/MLAFMT/blob/{tag}/docs/APPLE.md)
 
 </details>
 """

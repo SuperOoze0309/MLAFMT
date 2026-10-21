@@ -280,9 +280,50 @@
         justify-content: flex-end;
         margin-top: 7px;
       }
-      .file-actions[hidden], #native-actions[hidden] {
+      .file-actions[hidden], #native-actions[hidden], #web-result[hidden],
+      #web-share[hidden], #web-demo[hidden] {
         display: none;
       }
+      .demo-entry {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 12px;
+        margin: 10px 0 16px;
+      }
+      .demo-note, .result-note {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .result-card {
+        margin-top: 12px;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fafafc;
+      }
+      .result-card h3 { margin: 0; font-size: 12px; }
+      .result-filename {
+        margin: 6px 0;
+        font-size: 13px;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+      }
+      .result-card .secondary {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+      .result-card a {
+        display: inline-block;
+        text-decoration: none;
+      }
+      .result-card .ghost {
+        min-height: 44px;
+        padding: 10px 12px;
+        white-space: normal;
+      }
+      .result-note { margin: 8px 0 0; }
       .text-button {
         border: 0;
         background: transparent;
@@ -592,6 +633,15 @@
         margin: 12px 0;
         font-size: 13px;
       }
+      @media (pointer: coarse) {
+        .field input {
+          font-size: 16px;
+          min-height: 44px;
+        }
+        .ghost, .text-button, .languages button {
+          min-height: 44px;
+        }
+      }
       @media (max-width: 900px) {
         .shell {
           width: calc(100% - 40px);
@@ -614,6 +664,10 @@
         }
       }
       @media (max-width: 720px) {
+        .field input {
+          font-size: 16px;
+          min-height: 44px;
+        }
         .shell {
           max-width: 540px;
           width: calc(100% - 32px);
@@ -836,6 +890,10 @@
                   ></label
                 >
               </div>
+              <div class="demo-entry" id="web-demo" hidden>
+                <button type="button" class="text-button" id="try-demo" data-t="try_demo">Try a sample draft</button>
+                <span class="demo-note" data-t="demo_hint">Editable examples; your existing details and draft stay in place.</span>
+              </div>
               <hr class="divider" />
               <div class="section-heading draft-heading">
                 <span class="step" aria-hidden="true">02</span>
@@ -865,7 +923,7 @@
                   >DOCX, TXT or Markdown · up to 20 MB</span
                 >
               </button>
-              <input type="file" id="file" accept=".docx,.txt,.md" hidden />
+              <input type="file" id="file" accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" hidden />
               <div class="file-actions" id="file-actions" hidden>
                 <button
                   type="button"
@@ -878,7 +936,7 @@
               </div>
               <div class="actions">
                 <button type="submit" class="primary" id="convert">
-                  <span data-t="convert">Format & download</span
+                  <span data-t="convert">Format document</span
                   ><svg
                     aria-hidden="true"
                     viewBox="0 0 24 24"
@@ -918,6 +976,17 @@
               aria-live="polite"
               aria-atomic="true"
             ></div>
+            <section class="result-card" id="web-result" aria-labelledby="result-heading" hidden>
+              <h3 id="result-heading" data-t="result_heading">Latest document</h3>
+              <p class="result-filename" id="result-filename"></p>
+              <p class="result-note" id="result-details"></p>
+              <div class="secondary">
+                <a class="ghost" id="web-download" data-t="download_word" download>Download Word</a>
+                <button type="button" class="ghost" id="web-share" data-t="share_word" hidden>Share / Save to Files</button>
+              </div>
+              <p class="result-note" data-t="result_hint">You can download this result again while this page stays open.</p>
+              <p class="result-note" data-t="apple_save_hint">iPhone / iPad: tap Download Word, then find the file in Safari Downloads or the Files app. If a preview opens, use Share → Save to Files.</p>
+            </section>
             <div id="native-actions" class="secondary" hidden>
               <button type="button" class="ghost" id="native-save" data-t="native_save">Save Word document</button>
               <button type="button" class="ghost" id="native-open" data-t="native_open">Open</button>
@@ -934,7 +1003,7 @@
                 <rect x="5" y="10" width="14" height="11" rx="2" />
                 <path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg
               ><span data-t="privacy"
-                >Processed by this local server. No cloud upload.</span
+                >Processed by the computer running this page's service. Temporary drafts are deleted after processing.</span
               >
             </p>
           </section>
@@ -1094,6 +1163,7 @@
     <script>
       "use strict";
       const native = typeof window.MLAFMTAndroid?.postMessage === "function";
+      const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
       const nativeSend = (action, data) =>
         window.MLAFMTAndroid.postMessage(JSON.stringify({ action, data }));
       const T = {
@@ -1119,10 +1189,24 @@
           drop: "拖入草稿，或点击选择文件",
           drop_sub: "DOCX、TXT 或 Markdown · 最大 20 MB",
           remove_file: "移除文件",
-          convert: "生成 MLA 文档并下载",
+          convert: "生成 MLA 文档",
           blank: "从空白 MLA 模板开始",
           advanced: "高级选项",
-          privacy: "文件由当前本地服务处理，无需上传云端。",
+          privacy: "由运行本网页服务的电脑处理，处理结束后删除临时草稿。",
+          try_demo: "试用示例草稿",
+          demo_hint: "示例信息可编辑；保留你已填写的信息和已选草稿。",
+          demo_ready: "示例已就绪，可编辑信息后生成文档；已有信息和草稿已保留。",
+          demo_unavailable: "此浏览器无法载入示例，请选择草稿或使用空白模板。",
+          result_heading: "最近生成的文档",
+          download_word: "下载 Word",
+          share_word: "分享／存储到“文件”",
+          result_hint: "保持本页打开，可重复下载此文档；刷新或关闭页面后需重新生成。",
+          apple_save_hint: "iPhone／iPad：点击“下载 Word”后，在 Safari 下载列表或“文件”App 中查找；若打开预览，可点分享 → 存储到“文件”。",
+          result_details: (size, b, w, r) => `Word · ${size} · ${b} 段正文 · ${w} 条参考文献${r ? ` · 已移除 ${r} 行重复抬头` : ""}`,
+          result_blank: (size) => `Word · ${size} · 空白 MLA 模板`,
+          share_closed: "分享已关闭，文档仍可通过“下载 Word”保存。",
+          share_handed_off: "已交给所选应用；保存位置以系统中的选择为准。",
+          share_failed: "分享未完成，请使用“下载 Word”保存文档。",
           native_privacy: "全程在手机本地处理，无需联网或上传文件。",
           native_convert: "生成 MLA 文档",
           native_drop: "点击选择手机中的草稿文件",
@@ -1173,11 +1257,10 @@
           invalid_fields: "请检查论文信息，所有字段都应为文字。",
           invalid_options: "排版选项无效，请重新选择。",
           failed: "生成失败，请检查草稿后重试。",
-          net: "无法连接本地服务，请确认程序仍在运行。",
-          working: "正在排版，即将准备好下载…",
-          done: (f, b, w, r) =>
-            `下载已开始：${f} · ${b} 段正文 · ${w} 条参考文献${r ? ` · 已移除 ${r} 行重复抬头` : ""}`,
-          done_blank: (f) => `空白模板下载已开始：${f}`,
+          net: "无法连接提供此页面的电脑，请确认电脑和网页服务仍在运行。",
+          working: "正在排版，完成后可保存 Word 文档…",
+          done: (f) => `文档已生成：${f}。请在下方下载或保存。`,
+          done_blank: (f) => `空白模板已生成：${f}。请在下方下载或保存。`,
           adv_title: "调整每一个细节",
           adv_header: "页眉",
           lastname: "页眉中的姓氏",
@@ -1227,10 +1310,24 @@
           drop: "Drop your draft here, or browse files",
           drop_sub: "DOCX, TXT or Markdown · up to 20 MB",
           remove_file: "Remove file",
-          convert: "Format & download",
+          convert: "Format document",
           blank: "Start with a blank MLA template",
           advanced: "Advanced options",
-          privacy: "Processed by this local server. No cloud upload.",
+          privacy: "Processed by the computer running this page's service. Temporary drafts are deleted after processing.",
+          try_demo: "Try a sample draft",
+          demo_hint: "Editable examples; your existing details and draft stay in place.",
+          demo_ready: "Sample ready. Edit the details, then format your document. Your existing details and draft were kept.",
+          demo_unavailable: "This browser could not load the sample. Choose a draft or start with a blank template.",
+          result_heading: "Latest document",
+          download_word: "Download Word",
+          share_word: "Share / Save to Files",
+          result_hint: "Keep this page open to download again. Reloading or closing it requires generating the document again.",
+          apple_save_hint: "iPhone / iPad: tap Download Word, then look in Safari Downloads or the Files app. If a preview opens, use Share → Save to Files.",
+          result_details: (size, b, w, r) => `Word · ${size} · ${b} paragraphs · ${w} Works Cited entries${r ? ` · removed ${r} duplicate heading lines` : ""}`,
+          result_blank: (size) => `Word · ${size} · Blank MLA template`,
+          share_closed: "Sharing closed. Your document is still available using Download Word.",
+          share_handed_off: "Handed to the selected app. The save location depends on your system selection.",
+          share_failed: "Sharing did not finish. Use Download Word to save the document.",
           native_privacy: "Processed entirely on your phone. No network or cloud upload.",
           native_convert: "Format document",
           native_drop: "Choose a draft from your phone",
@@ -1284,12 +1381,11 @@
           invalid_options: "Please select valid formatting options.",
           failed:
             "The document could not be generated. Check your draft and try again.",
-          net: "Could not connect to the local server. Check that the app is still running.",
+          net: "Could not connect to the computer serving this page. Check that the computer and service are still running.",
           working:
-            "Formatting your paper. Your download will be ready shortly…",
-          done: (f, b, w, r) =>
-            `Download started: ${f} · ${b} paragraphs · ${w} Works Cited entries${r ? ` · removed ${r} duplicate heading lines` : ""}`,
-          done_blank: (f) => `Blank template download started: ${f}`,
+            "Formatting your paper. You can save the Word document when it is ready…",
+          done: (f) => `Document ready: ${f}. Download or save it below.`,
+          done_blank: (f) => `Blank template ready: ${f}. Download or save it below.`,
           adv_title: "Make the details work",
           adv_header: "Page header",
           lastname: "Surname in header",
@@ -1343,6 +1439,8 @@
           : "en";
       let file = null,
         inProgress = false;
+      let webResult = null,
+        sharing = false;
       let lastStatus = { key: "ready", args: [], tone: "" };
       const t = (key, ...args) => {
         if (native && ["privacy", "convert", "drop"].includes(key)) key = "native_" + key;
@@ -1365,6 +1463,38 @@
           }).format(size / (size >= 1048576 ? 1048576 : 1024)) +
           (size >= 1048576 ? " MB" : " KB")
         );
+      }
+      function canShareResult(result) {
+        if (native || !window.isSecureContext || !result?.shareFile ||
+            typeof navigator.share !== "function" || typeof navigator.canShare !== "function")
+          return false;
+        try {
+          return navigator.canShare({ files: [result.shareFile] });
+        } catch (_) {
+          return false;
+        }
+      }
+      function renderWebResult() {
+        if (native) return;
+        for (const id of ["convert", "blank", "try-demo"]) $(id).disabled = sharing || inProgress;
+        $("web-result").hidden = !webResult;
+        if (!webResult) return;
+        $("result-filename").textContent = webResult.name;
+        $("result-details").textContent = webResult.isBlank
+          ? t("result_blank", fileSize(webResult.blob.size))
+          : t("result_details", fileSize(webResult.blob.size), ...webResult.stats);
+        $("web-download").href = webResult.url;
+        $("web-download").download = webResult.name;
+        $("web-share").hidden = !canShareResult(webResult);
+        $("web-share").disabled = sharing || inProgress;
+      }
+      function releaseWebResult() {
+        if (!webResult) return;
+        URL.revokeObjectURL(webResult.url);
+        webResult = null;
+        $("web-download").removeAttribute("href");
+        $("web-download").removeAttribute("download");
+        $("web-result").hidden = true;
       }
       function renderDrop() {
         $("drop").classList.toggle("has", Boolean(file));
@@ -1439,6 +1569,7 @@
         renderDrop();
         refreshPreview();
         renderStatus();
+        renderWebResult();
       }
       for (const code of ["zh", "en"])
         $("lang-" + code).addEventListener("click", () => {
@@ -1589,8 +1720,9 @@
           for (const id of ["native-save", "native-open", "native-share", "remove-file"]) $(id).disabled = on;
         $("essay-form").setAttribute("aria-busy", String(on));
         if (on) setStatus("working", "working");
+        renderWebResult();
       }
-      async function download(response) {
+      async function prepareDownload(response, isBlank) {
         if (!response.ok) {
           let data = {};
           try {
@@ -1611,22 +1743,28 @@
         try {
           name = decodeURIComponent(response.headers.get("X-Filename") || name);
         } catch (_) {}
+        name = name.replace(/[\\/\u0000-\u001f\u007f]/g, "_");
         const blob = await response.blob();
-        const url = URL.createObjectURL(blob),
-          anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = name;
-        document.body.appendChild(anchor);
-        try {
-          anchor.click();
-        } finally {
-          anchor.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 30000);
+        let shareFile = null;
+        if (window.isSecureContext && typeof File === "function" &&
+            typeof navigator.share === "function" && typeof navigator.canShare === "function") {
+          try {
+            shareFile = new File([blob], name, { type: DOCX_MIME });
+          } catch (_) {}
         }
-        return { name, headers: response.headers };
+        const previous = webResult;
+        webResult = {
+          name, blob, shareFile, isBlank,
+          url: URL.createObjectURL(blob),
+          stats: ["body", "works-cited", "removed-heading-lines"].map((key) =>
+            Number(response.headers.get("X-Stat-" + key) || 0)),
+        };
+        renderWebResult();
+        if (previous) URL.revokeObjectURL(previous.url);
+        return webResult;
       }
       async function generate(isBlank) {
-        if (inProgress) return;
+        if (inProgress || sharing) return;
         const data = validate();
         if (!data) return;
         if (!isBlank && !file) {
@@ -1674,20 +1812,13 @@
         options.signal = controller.signal;
         busy(true);
         try {
-          const result = await download(
+          const result = await prepareDownload(
             await fetch(isBlank ? "/api/blank" : "/api/convert", options),
+            isBlank,
           );
           if (result) {
             if (isBlank) setStatus("done_blank", "ok", result.name);
-            else
-              setStatus(
-                "done",
-                "ok",
-                result.name,
-                Number(result.headers.get("X-Stat-body") || 0),
-                Number(result.headers.get("X-Stat-works-cited") || 0),
-                Number(result.headers.get("X-Stat-removed-heading-lines") || 0),
-              );
+            else setStatus("done", "ok", result.name);
           }
         } catch (_) {
           setStatus("net", "err");
@@ -1701,6 +1832,61 @@
         generate(false);
       });
       $("blank").addEventListener("click", () => generate(true));
+      if (!native) {
+        $("web-demo").hidden = false;
+        $("try-demo").addEventListener("click", () => {
+          if (inProgress || sharing) return;
+          for (const [id, value] of Object.entries({
+            name: "Alex Example", title: "A Short MLA Example",
+            instructor: "Professor Example", course: "ENG 101",
+          })) {
+            if (!$(id).value.trim()) {
+              $(id).value = value;
+              $(id).dispatchEvent(new Event("input", { bubbles: true }));
+            }
+          }
+          if (!file) {
+            try {
+              pick(new File([
+                "This is a short sample draft. The paper details above are examples that you can edit.\n\n" +
+                "MLAFMT sets the page size, margins, paragraph spacing and running header for the generated Word document.\n\n" +
+                "The reference below is fictional and only demonstrates the Works Cited layout.\n\n" +
+                "Works Cited\n\nExample, Alex. Demonstration Source. Example Press, 2026.\n",
+              ], "MLAFMT_Sample.md", { type: "text/markdown" }));
+            } catch (_) {
+              setStatus("demo_unavailable", "err");
+              return;
+            }
+          }
+          setStatus("demo_ready");
+          refreshPreview();
+        });
+        $("web-share").addEventListener("click", async () => {
+          const result = webResult;
+          if (sharing || inProgress || !canShareResult(result)) return;
+          sharing = true;
+          renderWebResult();
+          try {
+            // Call synchronously from the tap; an awaited fetch would lose activation.
+            await navigator.share({ files: [result.shareFile] });
+            if (webResult === result) setStatus("share_handed_off", "ok");
+          } catch (error) {
+            if (webResult === result)
+              setStatus(error?.name === "AbortError" ? "share_closed" : "share_failed",
+                error?.name === "AbortError" ? "" : "err");
+          } finally {
+            sharing = false;
+            renderWebResult();
+          }
+        });
+        window.addEventListener("pagehide", (event) => {
+          // Safari's back-forward cache retains this document and its download URL.
+          if (!event.persisted) releaseWebResult();
+        });
+        window.addEventListener("pageshow", (event) => {
+          if (event.persisted) renderWebResult();
+        });
+      }
       if (native) {
         // Native only: document bytes and private paths stay outside JavaScript.
         window.MLAFMTNative = {

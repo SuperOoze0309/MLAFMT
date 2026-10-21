@@ -1,5 +1,25 @@
 # Changelog
 
+## v2.3.0 — 2026-10-20
+
+### 中文
+
+- Mac 支持 Finder“打开方式”和把草稿拖到 Dock 图标；保存或转换期间收到的新草稿会等待当前操作完成。
+- 接入 macOS 原生退出、重新激活和偏好设置操作，菜单显示 Command 快捷键；生成后可在 Finder 中选中文档。
+- Mac 安装包加入可双击的中英双语安装说明，并检查最终 DMG 中的应用、文档、文件关联和签名。
+- 网页生成后保留 Word 下载入口，可再次下载；支持时提供点击触发的系统分享，并补充 iPhone/iPad 保存说明与试用示例。
+- 本地网页预览打印同一 Wi-Fi 下的访问地址，支持自定义端口；iPhone/iPad 此阶段使用本地网页预览。
+- 增加经审阅的 Apple 设备指南，说明 Pages 导入方式与实际签名状态。Mac 版本仍未经过 Apple 公证。
+
+### English
+
+- Open Mac drafts from Finder's Open With menu or by dropping them on the Dock icon; incoming files wait during save dialogs or conversion.
+- Handle native Quit, Reopen and Preferences actions, show Command shortcuts and reveal generated documents in Finder.
+- Include a double-clickable bilingual Mac installation guide and inspect the final DMG's app, documentation and signature.
+- Keep a reusable Word download link, offer file sharing when supported, and add iPhone/iPad save guidance and an editable sample.
+- Print same-network addresses for local web preview and allow a custom port; iPhone/iPad support is a local web preview at this stage.
+- Add a reviewed Apple device guide covering Pages import and actual signing status. Mac builds remain not Apple-notarized.
+
 ## v2.2.0 — 2026-10-13
 
 ### 中文

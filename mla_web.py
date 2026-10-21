@@ -1,5 +1,5 @@
 """
-mla_web.py  (v2.2)
+mla_web.py  (v2.3)
 Local web UI for MLAFMT -> http://127.0.0.1:8600
 Works on Windows / macOS / Linux. The Android APK embeds the formatter separately.
 
@@ -7,9 +7,11 @@ Works on Windows / macOS / Linux. The Android APK embeds the formatter separatel
     python mla_web.py --lan      # also reachable from other devices on your Wi-Fi
 """
 
+import argparse
 import io
 import os
 import sys
+import socket
 import tempfile
 from urllib.parse import quote
 from zipfile import BadZipFile
@@ -68,6 +70,8 @@ def _docx_response(buf, filename, stats=None):
         f"attachment; filename=\"{filename if filename.isascii() else 'MLA_Essay.docx'}\"; "
         f"filename*=UTF-8''{quote(filename)}")
     resp.headers["X-Filename"] = quote(filename)
+    resp.headers["Cache-Control"] = "no-store, max-age=0"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
     if stats:
         for k, v in stats.items():
             resp.headers[f"X-Stat-{k.replace('_', '-')}"] = str(v)
@@ -163,11 +167,30 @@ def api_convert():
 
 
 def main(argv=None):
-    argv = sys.argv[1:] if argv is None else argv
-    host = "0.0.0.0" if "--lan" in argv else "127.0.0.1"
-    port = 8600
-    print(f"\n  MLAFMT Web v{__version__}  ->  http://127.0.0.1:{port}\n")
-    if "--no-browser" not in argv:
+    parser = argparse.ArgumentParser(description="MLAFMT local web preview")
+    parser.add_argument("--lan", action="store_true", help="Allow devices on the same network to open this preview")
+    parser.add_argument("--no-browser", action="store_true", help="Do not open a browser automatically")
+    parser.add_argument("--port", type=int, default=8600, help="Local preview port (default: 8600)")
+    args = parser.parse_args(argv)
+    if not 1 <= args.port <= 65535:
+        parser.error("--port must be between 1 and 65535")
+    host = "0.0.0.0" if args.lan else "127.0.0.1"
+    port = args.port
+    print(f"\n  MLAFMT Web v{__version__}  ->  http://127.0.0.1:{port}")
+    if args.lan:
+        try:
+            addresses = sorted({item[4][0] for item in socket.getaddrinfo(
+                socket.gethostname(), port, family=socket.AF_INET, type=socket.SOCK_STREAM)
+                if not item[4][0].startswith(("127.", "169.254."))})
+        except OSError:
+            addresses = []
+        print("  iPhone / iPad (same Wi-Fi):")
+        for address in addresses:
+            print(f"    http://{address}:{port}")
+        if not addresses:
+            print(f"    http://<this computer's Wi-Fi IPv4 address>:{port}")
+    print()
+    if not args.no_browser:
         import threading
         import webbrowser
         threading.Timer(1.0, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
