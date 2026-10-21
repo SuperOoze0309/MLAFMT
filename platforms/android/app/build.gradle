@@ -23,7 +23,7 @@ def canSign = [keyPath, keyStorePass, keyAliasValue, keyPass].every { it }
 def nativeWheelDirectory = System.getenv('MLAFMT_ANDROID_NATIVE_WHEELS')
 def generatedPython = layout.buildDirectory.dir('generated/mlafmt/python')
 def generatedAssets = layout.buildDirectory.dir('generated/mlafmt/assets')
-def provenanceFiles = [projectRoot.toPath().resolve('mla_formatter.py').toFile(), projectRoot.toPath().resolve('templates/index.html').toFile(), projectRoot.toPath().resolve('LICENSE').toFile()]
+def provenanceFiles = ['mla_formatter.py', 'format_profiles.py', 'templates/index.html', 'LICENSE'].collect { projectRoot.toPath().resolve(it).toFile() }
 provenanceFiles.addAll(fileTree('src/main') { exclude '**/__pycache__/**', '**/*.pyc' }.files)
 provenanceFiles.addAll(rootProject.fileTree('licenses').files)
 provenanceFiles.addAll(['app/build.gradle', 'build.gradle', 'settings.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar'].collect { rootProject.file(it) })
@@ -87,6 +87,7 @@ chaquopy {
 
 tasks.register('prepareMlafmtSources') {
     inputs.file projectRoot.toPath().resolve('mla_formatter.py')
+    inputs.file projectRoot.toPath().resolve('format_profiles.py')
     inputs.file projectRoot.toPath().resolve('templates/index.html')
     inputs.files provenanceFiles
     outputs.dirs generatedPython, generatedAssets
@@ -95,7 +96,7 @@ tasks.register('prepareMlafmtSources') {
     doLast {
         copy {
             from projectRoot
-            include 'mla_formatter.py'
+            include 'mla_formatter.py', 'format_profiles.py'
             into generatedPython
         }
         def html = projectRoot.toPath().resolve('templates/index.html').toFile().getText('UTF-8')

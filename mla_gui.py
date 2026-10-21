@@ -1,6 +1,6 @@
 """
-mla_gui.py  (v2.3)
-Desktop app for one-click MLA formatting.  中英双语 / Chinese-English UI.
+mla_gui.py  (v2.4)
+Desktop paper and course formatter.  中英双语 / Chinese-English UI.
 
 Home screen = only what most people need:
     1. fill in name + title   2. drop the draft   3. click Convert
@@ -31,7 +31,9 @@ from mla_formatter import (
     format_summary,
     generate_filename,
     today_mla,
+    today_for_format,
 )
+from format_profiles import DEFAULT_CUSTOM_PROFILE, FONT_CHOICES, normalize_custom_profile
 
 try:  # optional drag-and-drop
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -293,6 +295,78 @@ T["en"].update({
     "preview_header": "Header: {name} 1", "preview_specs": "Times New Roman 12 pt\nDouble spacing · 1-inch margins\nBody first-line indent: 0.5 inch\nWorks Cited: new page, hanging indents",
 })
 
+T["zh"].update({
+    "app": "论文与课程文档排版", "tagline": "选择格式，填写信息，得到整洁的 Word 文档。",
+    "convert": "生成 Word 文档", "save_as": "保存排版文档为…",
+    "format": "文档格式", "format_mla": "MLA 9", "format_apa": "APA 7 · 学生论文",
+    "format_custom": "自定义课程模板", "affiliation": "学校 / 院系",
+    "template": "课程模板", "edit_template": "编辑 / 新建模板", "template_title": "课程模板设置",
+    "template_hint": "保存老师要求的版式；选择同名模板后保存会更新该模板。最多保存 20 个。",
+    "profile_label": "模板名称", "paper_size": "纸张", "font_name": "字体", "font_size": "字号（pt）",
+    "line_spacing": "行距（倍）", "margin_cm": "四边页边距（cm）", "first_line_cm": "正文首行缩进（cm）",
+    "alignment": "正文对齐", "align_left": "左对齐", "align_justify": "两端对齐",
+    "header": "页眉", "header_surname_page": "姓氏 + 页码", "header_page": "仅页码", "header_none": "无页眉",
+    "title_page": "单独封面页", "references_title": "参考文献页标题", "sort_references": "按字母顺序排列参考文献",
+    "save_template": "保存并使用", "import_template": "导入 JSON", "export_template": "导出 JSON",
+    "delete_template": "删除当前模板", "template_invalid": "模板设置有误：{e}",
+    "template_limit": "最多保存 20 个模板。请删除一个模板，或使用已有模板的名称。",
+    "template_saved": "课程模板已保存：{label}", "template_imported": "已导入课程模板：{label}",
+    "template_session_only": "已使用模板 {label}，但无法保存设置；关闭应用后此修改可能丢失。",
+    "template_io": "无法读写模板文件：{e}", "template_json": "MLAFMT 模板（JSON）",
+    "template_too_large": "模板文件超过 64 KB，请选择一个课程模板 JSON 文件。",
+    "format_preview": "排版设置", "spec_title": "本次应用的版式",
+    "apa_hint": "APA 7 学生版：封面、页码和正文标题。请补齐学校、课程、老师；引文内容保持原文。",
+    "custom_hint": "按所选课程模板排版；文献内容保持原文。",
+    "mla_hint": "MLA 9：姓氏页码、首面信息块、Works Cited 新页。",
+    "citation_hint": "引文和文献信息保持原文，请按课程要求核对。",
+    "review_result": "请对照原稿检查：{items}", "review_omitted": "{n} 项图片、表格、脚注或公式未保留",
+    "review_headings": "{n} 项不支持的标题按正文处理",
+    "howto": "1. 选择 MLA、APA 学生论文或自定义课程模板。\n"
+             "2. 填写姓名与标题，导入 .docx / .txt / .md 草稿。\n"
+             "3. 生成并保存 Word 文档。\n\n"
+             "自定义模板可保存、导入和导出老师要求的版式。APA / 自定义模式可填写学校 / 院系。\n"
+             "在草稿末尾写 Works Cited / References / Bibliography，每段一条文献。\n"
+             "本工具调整版式，不会把引文或参考文献内容自动转换成另一规范。",
+    "about": "MLAFMT v{v}\n支持 MLA 9、APA 7 学生论文和自定义课程模板。\n\n"
+             "保留文字、粗体、斜体和下划线。图片、表格、脚注、列表和公式可能丢失；请核对文档与引用。",
+})
+T["en"].update({
+    "app": "Paper and Course Formatter", "tagline": "Choose a format, add your details, and get a clean Word document.",
+    "done": "✓ Saved: {f} ({b} paragraphs, {w} reference entries{r})",
+    "convert": "Create Word document", "save_as": "Save formatted document as…",
+    "format": "Document format", "format_mla": "MLA 9", "format_apa": "APA 7 · Student paper",
+    "format_custom": "Custom course template", "affiliation": "School / department",
+    "template": "Course template", "edit_template": "Edit / create template", "template_title": "Course template settings",
+    "template_hint": "Save your instructor's layout requirements. Saving an existing name updates it. Up to 20 templates.",
+    "profile_label": "Template name", "paper_size": "Paper size", "font_name": "Font", "font_size": "Font size (pt)",
+    "line_spacing": "Line spacing (multiple)", "margin_cm": "All page margins (cm)", "first_line_cm": "Body first-line indent (cm)",
+    "alignment": "Body alignment", "align_left": "Left", "align_justify": "Justified",
+    "header": "Page header", "header_surname_page": "Surname + page number", "header_page": "Page number only", "header_none": "No header",
+    "title_page": "Separate title page", "references_title": "Reference page title", "sort_references": "Sort reference entries alphabetically",
+    "save_template": "Save and use", "import_template": "Import JSON", "export_template": "Export JSON",
+    "delete_template": "Delete current template", "template_invalid": "Check the template settings: {e}",
+    "template_limit": "You can save up to 20 templates. Delete one or use an existing template name.",
+    "template_saved": "Course template saved: {label}", "template_imported": "Course template imported: {label}",
+    "template_session_only": "Using {label}, but settings could not be saved. This change may be lost when the app closes.",
+    "template_io": "Could not read or write the template: {e}", "template_json": "MLAFMT template (JSON)",
+    "template_too_large": "This template exceeds 64 KB. Choose a course template JSON file.",
+    "format_preview": "Formatting settings", "spec_title": "Formatting for this document",
+    "apa_hint": "APA 7 student layout: title page, page numbers and repeated paper title. Add your affiliation, course and instructor. Citation text is unchanged.",
+    "custom_hint": "Apply the selected course template. Reference text is unchanged.",
+    "mla_hint": "MLA 9: surname/page header, first-page details, and a new Works Cited page.",
+    "citation_hint": "Citation and reference text is unchanged. Check it against your course requirements.",
+    "review_result": "Compare with your original draft: {items}", "review_omitted": "{n} image, table, footnote, or equation elements were not retained",
+    "review_headings": "{n} unsupported headings were kept as body text",
+    "howto": "1. Choose MLA, APA student paper, or a custom course template.\n"
+             "2. Add your name and title, then choose a .docx / .txt / .md draft.\n"
+             "3. Create and save your Word document.\n\n"
+             "Save, import, or export custom templates for your instructor's requirements. APA and custom formats include a school / department field.\n"
+             "End your draft with Works Cited / References / Bibliography and one source per paragraph.\n"
+             "The tool adjusts layout; it does not convert citation or reference text between citation styles.",
+    "about": "MLAFMT v{v}\nMLA 9, APA 7 student papers, and custom course templates.\n\n"
+             "Text, bold, italic, and underline are kept. Images, tables, footnotes, lists, and equations may be lost. Check the document and citations.",
+})
+
 ACCENT = "#4446a6"
 ACCENT_DARK = "#303278"
 MUTED = "#686a77"
@@ -393,7 +467,9 @@ class MLAGui:
         self.lang = saved_lang if isinstance(saved_lang, str) and saved_lang in T else _default_lang()
         self._input_file = None
         self._last_output = None
+        self._review_counts = (0, 0)
         self._adv_win = None
+        self._template_win = None
         self._busy = False
         self._choosing_output = False
         self._closing = False
@@ -405,7 +481,29 @@ class MLAGui:
         for key in ("name", "instructor", "course", "last_name"):
             value = cfg.get(key, "")
             self.v[key].set(value if isinstance(value, str) else "")
-        self.v["date"].set(today_mla())
+        affiliation = cfg.get("affiliation", "")
+        self.affiliation = tk.StringVar(self.root, value=affiliation if isinstance(affiliation, str) else "")
+        saved_format = cfg.get("format_id", "mla")
+        self.format_id = tk.StringVar(self.root, value=saved_format if saved_format in ("mla", "apa", "custom") else "mla")
+        self.custom_profiles = []
+        saved_profiles = cfg.get("custom_profiles", [])
+        if isinstance(saved_profiles, list):
+            for profile in saved_profiles[:20]:
+                if not isinstance(profile, dict):
+                    continue
+                try:
+                    normalized = normalize_custom_profile(profile)
+                except (TypeError, ValueError):
+                    continue
+                if not any(p["label"] == normalized["label"] for p in self.custom_profiles):
+                    self.custom_profiles.append(normalized)
+        if not self.custom_profiles:
+            self.custom_profiles.append(dict(DEFAULT_CUSTOM_PROFILE))
+        selected = cfg.get("selected_profile")
+        if not isinstance(selected, str) or selected not in [p["label"] for p in self.custom_profiles]:
+            selected = self.custom_profiles[0]["label"]
+        self.selected_profile = tk.StringVar(self.root, value=selected)
+        self.v["date"].set(today_for_format(self.format_id.get()))
         mode = cfg.get("txt_mode", "blank_line")
         self.txt_mode = tk.StringVar(self.root, value=mode if mode in
                                     ("blank_line", "line_by_line") else "blank_line")
@@ -416,6 +514,7 @@ class MLAGui:
         self._build()
         for var in self.v.values():
             var.trace_add("write", self._draw_preview)
+        self.affiliation.trace_add("write", self._draw_preview)
         self.root.bind("<Control-o>", lambda _e: self._on_browse())
         self.root.bind("<Control-Return>", lambda _e: self._on_convert())
         if sys.platform == "darwin":
@@ -515,6 +614,23 @@ class MLAGui:
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
         right = ttk.Frame(columns)
         right.grid(row=0, column=1, sticky="nsew")
+        formats = self._card(left)
+        ttk.Label(formats, text=self.t("format"), style="Step.TLabel").pack(anchor=tk.W, pady=(0, 6))
+        self._format_label = tk.StringVar(self.root, value=self.t("format_" + self.format_id.get()))
+        self._format_combo = ttk.Combobox(formats, textvariable=self._format_label,
+            values=[self.t("format_" + key) for key in ("mla", "apa", "custom")], state="readonly")
+        self._format_combo.pack(fill=tk.X)
+        self._format_combo.bind("<<ComboboxSelected>>", self._on_format_selected)
+        ttk.Label(formats, text=self.t(self.format_id.get() + "_hint"), style="Muted.TLabel", wraplength=420).pack(anchor=tk.W, pady=(8, 0))
+        self._profile_combo = self._edit_profile_btn = None
+        if self.format_id.get() == "custom":
+            ttk.Label(formats, text=self.t("template"), style="Card.TLabel").pack(anchor=tk.W, pady=(10, 4))
+            self._profile_combo = ttk.Combobox(formats, textvariable=self.selected_profile,
+                values=[p["label"] for p in self.custom_profiles], state="readonly")
+            self._profile_combo.pack(fill=tk.X)
+            self._profile_combo.bind("<<ComboboxSelected>>", self._on_profile_selected)
+            self._edit_profile_btn = ttk.Button(formats, text=self.t("edit_template"), style="Ghost.TButton", command=self._edit_template)
+            self._edit_profile_btn.pack(anchor=tk.W, pady=(8, 0))
         info = self._card(left)
         ttk.Label(info, text=self.t("step1"), style="Step.TLabel").grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 12))
         self._entries = {}
@@ -526,6 +642,11 @@ class MLAGui:
                 entry = ttk.Entry(info, textvariable=self.v[key], width=20)
                 entry.grid(row=row + 1, column=col, columnspan=span, sticky="ew", padx=pad, pady=(4, 10))
                 self._entries[key] = entry
+        if self.format_id.get() in ("apa", "custom"):
+            ttk.Label(info, text=self.t("affiliation"), style="Card.TLabel").grid(row=7, column=0, columnspan=2, sticky="w")
+            entry = ttk.Entry(info, textvariable=self.affiliation)
+            entry.grid(row=8, column=0, columnspan=2, sticky="ew", pady=(4, 10))
+            self._entries["affiliation"] = entry
         for col in (0, 1):
             info.columnconfigure(col, weight=1)
         draft = self._card(left)
@@ -557,6 +678,8 @@ class MLAGui:
         self._result_row = ttk.Frame(left)
         self._result_row.pack(fill=tk.X, pady=(8, 0))
         self._render_result()
+        self._review_note = ttk.Label(left, foreground="#936221", wraplength=420, font=(self.font[0], 9))
+        self._render_review()
         preview = self._card(right, padding=16)
         ttk.Label(preview, text=self.t("preview"), style="Step.TLabel").pack(anchor=tk.W)
         self._paper = tk.Canvas(preview, background=CARD, height=340, highlightthickness=0)
@@ -565,13 +688,62 @@ class MLAGui:
         ttk.Label(preview, text=self.t("preview_hint"), style="Muted.TLabel", wraplength=300).pack(anchor=tk.W)
         specs = self._card(right, padding=16)
         ttk.Label(specs, text=self.t("spec_title"), style="Step.TLabel").pack(anchor=tk.W, pady=(0, 8))
-        for key in ("spec_font", "spec_spacing", "spec_header", "spec_cited"):
-            ttk.Label(specs, text="✓  " + self.t(key), style="Muted.TLabel", wraplength=300).pack(anchor=tk.W, pady=3)
+        for line in self._summary_lines():
+            ttk.Label(specs, text="✓  " + line, style="Muted.TLabel", wraplength=300).pack(anchor=tk.W, pady=3)
         ttk.Label(right, text=self.t("disclaimer"), foreground=MUTED, wraplength=330,
                   font=(self.font[0], 9)).pack(anchor=tk.W, pady=(0, 8))
         ttk.Label(main, text=self.t("local"), foreground=MUTED, font=(self.font[0], 9)).pack(anchor=tk.W, pady=(12, 0))
         self._render_status()
         self._draw_preview()
+
+    def _custom_profile(self):
+        for profile in self.custom_profiles:
+            if profile["label"] == self.selected_profile.get():
+                return dict(profile)
+        return dict(self.custom_profiles[0])
+
+    def _on_format_selected(self, _event=None):
+        selected = next((key for key in ("mla", "apa", "custom")
+                         if self.t("format_" + key) == self._format_label.get()), self.format_id.get())
+        if self._busy or self._choosing_output:
+            self._format_label.set(self.t("format_" + self.format_id.get()))
+            return
+        old_format = self.format_id.get()
+        if selected == old_format:
+            return
+        if self.v["date"].get() == today_for_format(old_format):
+            self.v["date"].set(today_for_format(selected))
+        self.format_id.set(selected)
+        self._adv_win = None
+        self._build()
+        self._save_prefs()
+
+    def _on_profile_selected(self, _event=None):
+        if self._busy or self._choosing_output:
+            return
+        self._adv_win = None
+        self._build()
+        self._save_prefs()
+
+    def _summary_lines(self):
+        kind = self.format_id.get()
+        if kind == "mla":
+            return [self.t(key) for key in ("spec_font", "spec_spacing", "spec_header", "spec_cited")]
+        if kind == "apa":
+            return (["Times New Roman · 12 号", "双倍行距 · Letter · 1 英寸页边距", "独立封面 · 右上角自动页码", "References 新页 · 悬挂缩进 0.5 英寸"]
+                    if self.lang == "zh" else
+                    ["Times New Roman · 12 pt", "Double spacing · Letter · 1-inch margins", "Title page · automatic page-number header", "References: new page · 0.5-inch hanging indents"])
+        p = self._custom_profile()
+        font = f"{p['font_name']} · {p['font_size']:g} pt · {p['paper_size']}"
+        if self.lang == "zh":
+            return [font, f"{p['line_spacing']:g} 倍行距 · 页边距 {p['margin_cm']:g} cm",
+                    f"首行缩进 {p['first_line_cm']:g} cm · {self.t('align_' + p['alignment'])}",
+                    self.t("header_" + p["header"]) + (" · 独立封面" if p["title_page"] else ""),
+                    p["references_title"] + " · 另起一页" + (" · 字母排序" if p["sort_references"] else " · 保留顺序")]
+        return [font, f"{p['line_spacing']:g}× spacing · {p['margin_cm']:g} cm margins",
+                f"First-line indent: {p['first_line_cm']:g} cm · {self.t('align_' + p['alignment'])}",
+                self.t("header_" + p["header"]) + (" · title page" if p["title_page"] else ""),
+                p["references_title"] + " · new page" + (" · alphabetical" if p["sort_references"] else " · original order")]
 
     def _draw_preview(self, *_):
         if not hasattr(self, "_paper") or not self._paper.winfo_exists():
@@ -579,26 +751,54 @@ class MLAGui:
         c = self._paper
         c.delete("all")
         width = max(c.winfo_width(), 280)
-        page_width = min(width - 12, 300)
+        kind = self.format_id.get()
+        profile = self._custom_profile()
+        page_ratio = 210 / 297 if kind == "custom" and profile["paper_size"] == "A4" else 8.5 / 11
+        page_width = min(width - 12, 329 * page_ratio)
         x0 = (width - page_width) / 2
         c.create_rectangle(x0 + 3, 4, x0 + page_width + 3, 333, fill="#eeede8", outline="")
         c.create_rectangle(x0, 0, x0 + page_width, 329, fill="#fffefa", outline=BORDER)
-        left, right = x0 + 32, x0 + page_width - 32
+        margin = page_width * profile["margin_cm"] / (21 if profile["paper_size"] == "A4" else 21.59) if kind == "custom" else 32
+        left, right = x0 + margin, x0 + page_width - margin
         name = self.v["name"].get().strip() or self.t("preview_name")
         last = extract_last_name(name, self.v["last_name"].get().strip() or None)
-        c.create_text(right, 24, text=f"{last[:28]} 1", anchor="e", font=("Times New Roman", 9), fill=TEXT)
-        for index, value in enumerate((name, self.v["instructor"].get().strip() or "Professor Smith",
-                                       self.v["course"].get().strip() or "ENG 101",
-                                       self.v["date"].get().strip() or today_mla())):
-            c.create_text(left, 52 + index * 20, text=value[:52], anchor="w", width=right-left,
-                          font=("Times New Roman", 9), fill=TEXT)
+        header = profile["header"] if kind == "custom" else ("page" if kind == "apa" else "surname_page")
+        font = profile["font_name"] if kind == "custom" else "Times New Roman"
+        text_size = max(6, min(16, round(profile["font_size"] * 0.75))) if kind == "custom" else 9
+        if header != "none":
+            c.create_text(right, 24, text=f"{last[:28]} 1" if header == "surname_page" else "1", anchor="e", font=(font, text_size), fill=TEXT)
         title = self.v["title"].get().strip() or self.t("preview_title")
-        title_item = c.create_text(width / 2, 132, text=title[:100], width=right-left, anchor="n",
-                                   font=("Times New Roman", 10), fill=TEXT)
-        body_top = max(175, c.bbox(title_item)[3] + 18)
-        for index in range(max(0, min(8, int((312 - body_top) / 17) + 1))):
-            y = body_top + index * 17
-            indent = 12 if index in (0, 5) else 0
+        if kind == "apa" or (kind == "custom" and profile["title_page"]):
+            title_item = c.create_text(width / 2, 86, text=title[:100], width=right-left, anchor="n",
+                                      font=(font, text_size + 1, "bold"), fill=TEXT)
+            top = max(128, c.bbox(title_item)[3] + 24)
+            details = [name]
+            if kind == "apa":
+                details.append(self.affiliation.get().strip() or "School / Department")
+            elif self.affiliation.get().strip():
+                details.append(self.affiliation.get().strip())
+            details.extend(self.v[key].get().strip() for key in ("course", "instructor", "date"))
+            for index, value in enumerate(value for value in details if value):
+                c.create_text(width / 2, top + index * 21, text=value[:52], anchor="n", width=right-left,
+                              font=(font, text_size), fill=TEXT)
+            return
+        details = [name]
+        if kind == "custom" and self.affiliation.get().strip():
+            details.append(self.affiliation.get().strip())
+        details.extend((self.v["instructor"].get().strip() or "Professor Smith",
+                        self.v["course"].get().strip() or "ENG 101",
+                        self.v["date"].get().strip() or today_mla()))
+        for index, value in enumerate(details):
+            c.create_text(left, 52 + index * 20, text=value[:52], anchor="w", width=right-left,
+                          font=(font, text_size), fill=TEXT)
+        title_top = 52 + len(details) * 20
+        title_font = (font, text_size + 1, "bold") if kind == "custom" else (font, text_size + 1)
+        title_item = c.create_text(width / 2, title_top, text=title[:100], width=right-left, anchor="n", font=title_font, fill=TEXT)
+        body_top = max(title_top + 43, c.bbox(title_item)[3] + 18)
+        line_step = profile["line_spacing"] * 8.5 if kind == "custom" else 17
+        for index in range(max(0, min(12, int((312 - body_top) / line_step) + 1))):
+            y = body_top + index * line_step
+            indent = (page_width * profile["first_line_cm"] / (21 if profile["paper_size"] == "A4" else 21.59) if kind == "custom" else 12) if index in (0, 5) else 0
             end = right - (38 if index in (4, 7) else 0)
             c.create_line(left + indent, y, end, y, fill="#d6d3cb", width=2)
 
@@ -644,11 +844,179 @@ class MLAGui:
 
     def _save_prefs(self):
         if not self.remember:
-            return
-        cfg = {"lang": self.lang, "txt_mode": self.txt_mode.get()}
+            return True
+        cfg = {"lang": self.lang, "txt_mode": self.txt_mode.get(), "format_id": self.format_id.get(),
+               "custom_profiles": self.custom_profiles, "selected_profile": self.selected_profile.get()}
         cfg.update({key: self.v[key].get().strip() for key in ("name", "instructor", "course", "last_name")})
+        cfg["affiliation"] = self.affiliation.get().strip()
         cfg.update({key: value.get() for key, value in self.opt.items()})
-        _save_config(cfg)
+        return _save_config(cfg)
+
+    def _edit_template(self):
+        if self._busy or self._choosing_output:
+            return
+        if self._template_win is not None and self._template_win.winfo_exists():
+            self._template_win.lift()
+            return
+        w = tk.Toplevel(self.root)
+        self._template_win = w
+        w.title(self.t("template_title"))
+        w.configure(bg=BG)
+        w.transient(self.root)
+        w.geometry("680x760")
+        w.minsize(580, 480)
+        # The form is edited separately; generation always uses the saved copy.
+        w.grab_set()
+        canvas = tk.Canvas(w, bg=BG, highlightthickness=0)
+        bar = ttk.Scrollbar(w, orient="vertical", command=canvas.yview)
+        bar.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas.pack(fill=tk.BOTH, expand=True)
+        canvas.configure(yscrollcommand=bar.set)
+        body = ttk.Frame(canvas, padding=18)
+        item = canvas.create_window(0, 0, window=body, anchor="nw")
+        canvas.bind("<Configure>", lambda e: canvas.itemconfigure(item, width=e.width))
+        body.bind("<Configure>", lambda _e: canvas.configure(scrollregion=canvas.bbox("all")))
+        for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            w.bind(sequence, lambda e: canvas.yview_scroll(_wheel_units(e), "units"))
+        ttk.Label(body, text=self.t("template_hint"), foreground=MUTED, wraplength=600).pack(anchor=tk.W, pady=(0, 12))
+        card = self._card(body)
+        for column in (0, 1):
+            card.columnconfigure(column, weight=1)
+        current = self._custom_profile()
+        variables = {key: (tk.BooleanVar(w, value=value) if isinstance(value, bool)
+                           else tk.StringVar(w, value=f"{value:g}" if isinstance(value, (int, float)) else value))
+                     for key, value in current.items()}
+        choice_maps = {
+            "alignment": {self.t("align_" + key): key for key in ("left", "justify")},
+            "header": {self.t("header_" + key): key for key in ("surname_page", "page", "none")},
+        }
+        display_vars = {key: tk.StringVar(w, value=next(label for label, value in choices.items() if value == current[key]))
+                        for key, choices in choice_maps.items()}
+        fields = (("label", "profile_label"), ("paper_size", "paper_size"), ("font_name", "font_name"),
+                  ("font_size", "font_size"), ("line_spacing", "line_spacing"), ("margin_cm", "margin_cm"),
+                  ("first_line_cm", "first_line_cm"), ("alignment", "alignment"), ("header", "header"),
+                  ("references_title", "references_title"))
+        ranges = {"font_size": (8, 24, 0.5), "line_spacing": (1, 3, 0.25),
+                  "margin_cm": (0.5, 5.08, 0.1), "first_line_cm": (0, 2.54, 0.1)}
+        for row, (key, label) in enumerate(fields):
+            ttk.Label(card, text=self.t(label), style="Card.TLabel").grid(row=row, column=0, sticky="w", padx=(0, 16), pady=6)
+            if key in choice_maps:
+                entry = ttk.Combobox(card, textvariable=display_vars[key], values=list(choice_maps[key]), state="readonly")
+            elif key in ("paper_size", "font_name"):
+                entry = ttk.Combobox(card, textvariable=variables[key], values=("Letter", "A4") if key == "paper_size" else FONT_CHOICES, state="readonly")
+            elif key in ranges:
+                minimum, maximum, increment = ranges[key]
+                entry = ttk.Spinbox(card, textvariable=variables[key], from_=minimum, to=maximum, increment=increment, width=18)
+            else:
+                entry = ttk.Entry(card, textvariable=variables[key], width=26)
+            entry.grid(row=row, column=1, sticky="ew", pady=6)
+        for row, key in enumerate(("title_page", "sort_references"), start=len(fields)):
+            ttk.Checkbutton(card, text=self.t(key), variable=variables[key], style="Card.TCheckbutton").grid(row=row, column=0, columnspan=2, sticky="w", pady=5)
+
+        def read_profile():
+            values = {key: variable.get() for key, variable in variables.items()}
+            for key, choices in choice_maps.items():
+                values[key] = choices[display_vars[key].get()]
+            for key in ranges:
+                values[key] = float(values[key])
+            return normalize_custom_profile(values)
+
+        def invalid(error):
+            messagebox.showerror(self.t("template_title"), self.t("template_invalid", e=str(error)), parent=w)
+
+        def close():
+            self._template_win = None
+            w.destroy()
+
+        def use_profile(profile, status_key="template_saved"):
+            profiles = [p for p in self.custom_profiles if p["label"] != profile["label"]]
+            if len(profiles) >= 20:
+                messagebox.showerror(self.t("template_title"), self.t("template_limit"), parent=w)
+                return
+            profiles.append(profile)
+            self.custom_profiles = profiles
+            self.selected_profile.set(profile["label"])
+            self.format_id.set("custom")
+            saved = self._save_prefs()
+            close()
+            self._adv_win = None
+            self._build()
+            self._set_status(status_key if saved else "template_session_only", "ok" if saved else "muted", label=profile["label"])
+
+        def save():
+            try:
+                profile = read_profile()
+            except (TypeError, ValueError, tk.TclError) as error:
+                invalid(error)
+                return
+            use_profile(profile)
+
+        def import_profile():
+            path = filedialog.askopenfilename(parent=w, title=self.t("import_template"),
+                filetypes=[(self.t("template_json"), "*.json")])
+            if not path:
+                return
+            try:
+                with open(path, "rb") as source:
+                    raw = source.read(64 * 1024 + 1)
+                if len(raw) > 64 * 1024:
+                    raise ValueError(self.t("template_too_large"))
+                data = json.loads(raw.decode("utf-8-sig"))
+                if isinstance(data, dict) and "custom_profile" in data:
+                    data = data["custom_profile"]
+                if not isinstance(data, dict):
+                    raise ValueError("Expected a template object")
+                profile = normalize_custom_profile(data)
+            except (OSError, UnicodeError, TypeError, ValueError) as error:
+                invalid(error)
+                return
+            use_profile(profile, "template_imported")
+
+        def export_profile():
+            try:
+                profile = read_profile()
+            except (TypeError, ValueError, tk.TclError) as error:
+                invalid(error)
+                return
+            safe_name = "".join("_" if char in '\\/:*?"<>|\x00' or ord(char) < 32 else char for char in profile["label"]).strip(" .") or "Course template"
+            path = filedialog.asksaveasfilename(parent=w, title=self.t("export_template"), defaultextension=".json",
+                initialfile=safe_name + ".json", filetypes=[(self.t("template_json"), "*.json")])
+            if not path:
+                return
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=os.path.dirname(os.path.abspath(path)),
+                                                 suffix=".tmp", delete=False) as target:
+                    temporary = target.name
+                    json.dump(profile, target, ensure_ascii=False, indent=2)
+                    target.write("\n")
+                os.replace(temporary, path)
+            except OSError as error:
+                messagebox.showerror(self.t("template_title"), self.t("template_io", e=str(error)), parent=w)
+            finally:
+                if temporary and os.path.exists(temporary):
+                    try:
+                        os.unlink(temporary)
+                    except OSError:
+                        pass
+
+        def delete_profile():
+            self.custom_profiles = [p for p in self.custom_profiles if p["label"] != self.selected_profile.get()]
+            if not self.custom_profiles:
+                self.custom_profiles = [dict(DEFAULT_CUSTOM_PROFILE)]
+            self.selected_profile.set(self.custom_profiles[0]["label"])
+            self._save_prefs()
+            close()
+            self._build()
+
+        row = ttk.Frame(body)
+        row.pack(fill=tk.X, pady=(0, 10))
+        ttk.Button(row, text=self.t("import_template"), style="Ghost.TButton", command=import_profile).pack(side=tk.LEFT)
+        ttk.Button(row, text=self.t("export_template"), style="Ghost.TButton", command=export_profile).pack(side=tk.LEFT, padx=8)
+        ttk.Button(body, text=self.t("delete_template"), style="Ghost.TButton", command=delete_profile).pack(anchor=tk.W, pady=(0, 12))
+        ttk.Button(body, text=self.t("save_template"), style="Accent.TButton", command=save).pack(fill=tk.X)
+        w.protocol("WM_DELETE_WINDOW", close)
+        w.bind("<Escape>", lambda _e: close())
 
     def _open_advanced(self):
         if self._busy or self._choosing_output:
@@ -682,6 +1050,8 @@ class MLAGui:
         ttk.Label(card, text=self.t("lastname"), style="Card.TLabel").pack(anchor=tk.W)
         lastname_entry = ttk.Entry(card, textvariable=self.v["last_name"])
         lastname_entry.pack(fill=tk.X, pady=4)
+        if self.format_id.get() == "apa" or (self.format_id.get() == "custom" and self._custom_profile()["header"] != "surname_page"):
+            lastname_entry.state(["disabled"])
         ttk.Label(card, text=self.t("lastname_hint"), style="Muted.TLabel", wraplength=510).pack(anchor=tk.W)
         card = section("adv_txt")
         for key, mode in (("mode_blank", "blank_line"), ("mode_line", "line_by_line")):
@@ -695,10 +1065,14 @@ class MLAGui:
         card = section("adv_preview")
         summary = tk.StringVar(w)
         def refresh_summary(*_):
-            summary.set(self.t("preview_header", name=extract_last_name(self.v["name"].get(), self.v["last_name"].get() or None)) + "\n" + self.t("preview_specs"))
+            lines = self._summary_lines()
+            if self.format_id.get() == "mla" or (self.format_id.get() == "custom" and self._custom_profile()["header"] == "surname_page"):
+                lines = [self.t("preview_header", name=extract_last_name(self.v["name"].get(), self.v["last_name"].get() or None))] + lines
+            summary.set("\n".join(lines))
         refresh_summary()
         lastname_entry.bind("<KeyRelease>", refresh_summary)
-        ttk.Label(card, textvariable=summary, style="Muted.TLabel").pack(anchor=tk.W)
+        ttk.Label(card, textvariable=summary, style="Muted.TLabel", wraplength=510).pack(anchor=tk.W)
+        ttk.Label(card, text=self.t("citation_hint"), style="Muted.TLabel", wraplength=510).pack(anchor=tk.W, pady=(8, 0))
         def close():
             self._save_prefs()
             self._adv_win = None
@@ -754,6 +1128,8 @@ class MLAGui:
     def _restore_window(self):
         if self._choosing_output or self._closing:
             return
+        if self.root.grab_current() is not None:
+            return
         self.root.deiconify()
         self.root.lift()
         self.root.focus_force()
@@ -770,7 +1146,8 @@ class MLAGui:
         if self._set_file(paths[0]):
             if len(paths) > 1:
                 self._set_status("one_draft", f=os.path.basename(paths[0]))
-            self._entries["name" if not self.v["name"].get().strip() else "title"].focus_set()
+            if self.root.grab_current() is None:
+                self._entries["name" if not self.v["name"].get().strip() else "title"].focus_set()
 
     def _load_pending_file(self, output=None):
         pending, self._pending_file = self._pending_file, None
@@ -791,7 +1168,10 @@ class MLAGui:
             self._set_file(path)
 
     def _meta(self):
-        return {k: self.v[k].get().strip() for k in ("name", "title", "instructor", "course", "date")} | {"last_name": self.v["last_name"].get().strip() or None}
+        return {k: self.v[k].get().strip() for k in ("name", "title", "instructor", "course", "date")} | {
+            "last_name": self.v["last_name"].get().strip() or None,
+            "format_id": self.format_id.get(), "custom_profile": self._custom_profile(), "affiliation": self.affiliation.get().strip(),
+        }
 
     def _check(self, meta):
         for key, error in (("name", "need_name"), ("title", "need_title")):
@@ -799,13 +1179,13 @@ class MLAGui:
                 self._set_status(error, "err")
                 self._entries[key].focus_set()
                 return False
-        if date_warning(meta["date"]):
+        if date_warning(meta["date"], format_id=meta["format_id"]):
             return messagebox.askyesno(self.t("date_tip_title"), self.t("date_tip", d=today_mla()), parent=self.root)
         return True
 
     def _ask_save(self, meta, title_key):
         return filedialog.asksaveasfilename(parent=self.root, defaultextension=".docx", filetypes=[(self.t("word_type"), "*.docx")],
-            initialfile=generate_filename(meta["name"], meta["last_name"]), initialdir=os.path.dirname(self._input_file) if self._input_file else None, title=self.t(title_key))
+            initialfile=generate_filename(meta["name"], meta["last_name"], format_id=meta["format_id"], custom_profile=meta["custom_profile"]), initialdir=os.path.dirname(self._input_file) if self._input_file else None, title=self.t(title_key))
 
     def _open_file(self, path):
         try:
@@ -834,6 +1214,19 @@ class MLAGui:
             ttk.Button(self._result_row, text=self.t("open_result"), style="Ghost.TButton", command=lambda: self._open_file(self._last_output)).pack(side=tk.LEFT)
             ttk.Button(self._result_row, text=self.t("reveal_result" if sys.platform == "darwin" else "view_folder"), style="Ghost.TButton", command=self._reveal_result).pack(side=tk.LEFT, padx=8)
 
+    def _render_review(self):
+        omitted, headings = self._review_counts
+        items = []
+        if omitted:
+            items.append(self.t("review_omitted", n=omitted))
+        if headings:
+            items.append(self.t("review_headings", n=headings))
+        if items:
+            self._review_note.configure(text=self.t("review_result", items=("；" if self.lang == "zh" else "; ").join(items)))
+            self._review_note.pack(fill=tk.X, pady=(8, 0))
+        else:
+            self._review_note.pack_forget()
+
     def _report_error(self, e):
         if isinstance(e, PermissionError):
             key, kw = "perm", {}
@@ -848,7 +1241,10 @@ class MLAGui:
 
     def _set_busy(self, busy):
         self._busy = busy
-        for button in (self._btn, self._blank_btn, self._advanced_btn, self._remove_btn, *self._language_buttons):
+        for button in (self._btn, self._blank_btn, self._advanced_btn, self._remove_btn, self._format_combo,
+                       self._profile_combo, self._edit_profile_btn, *self._language_buttons):
+            if button is None:
+                continue
             button.state(["disabled"] if busy else ["!disabled"])
 
     def _on_blank(self):
@@ -866,6 +1262,7 @@ class MLAGui:
             if not self._input_file:
                 return
         meta, source = self._meta(), self._input_file
+        options = dict(txt_paragraph_mode=self.txt_mode.get(), enable_heading_detection=self.opt["headings"].get(), enable_block_quote=self.opt["bq"].get(), markdown_emphasis=self.opt["md"].get(), strip_existing_heading=self.opt["strip"].get())
         # Native save/date dialogs run their own event loop. Queue Finder's
         # document events until the dialog ends, keeping this draft fixed.
         self._choosing_output = True
@@ -883,8 +1280,8 @@ class MLAGui:
             self._choosing_output = False
             if not self._busy:
                 self._load_pending_file()
-        kwargs = dict(name=meta["name"], instructor=meta["instructor"], course=meta["course"], date_str=meta["date"], title=meta["title"], last_name_override=meta["last_name"])
-        options = dict(txt_paragraph_mode=self.txt_mode.get(), enable_heading_detection=self.opt["headings"].get(), enable_block_quote=self.opt["bq"].get(), markdown_emphasis=self.opt["md"].get(), strip_existing_heading=self.opt["strip"].get())
+        kwargs = dict(name=meta["name"], instructor=meta["instructor"], course=meta["course"], date_str=meta["date"], title=meta["title"], last_name_override=meta["last_name"],
+                      affiliation=meta["affiliation"], format_id=meta["format_id"], custom_profile=meta["custom_profile"])
         self._save_prefs()
         self._set_status("working")
         def worker():
@@ -906,6 +1303,7 @@ class MLAGui:
                 self._report_error(error)
             else:
                 self._last_output = os.path.abspath(out)
+                self._review_counts = ((stats or {}).get("omitted_elements", 0), (stats or {}).get("unsupported_headings", 0))
                 if blank:
                     self._set_status("done_blank", "ok", f=os.path.basename(out))
                 else:
@@ -914,6 +1312,7 @@ class MLAGui:
                     if stats["body"] == 0:
                         messagebox.showwarning(self.t("app"), self.t("empty"), parent=self.root)
                 self._render_result()
+                self._render_review()
                 if self.opt["open_after"].get():
                     self._open_file(out)
             self._load_pending_file(None if error else out)

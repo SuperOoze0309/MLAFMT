@@ -1,5 +1,5 @@
 """
-mla_web.py  (v2.3)
+mla_web.py  (v2.4)
 Local web UI for MLAFMT -> http://127.0.0.1:8600
 Works on Windows / macOS / Linux. The Android APK embeds the formatter separately.
 
@@ -9,6 +9,7 @@ Works on Windows / macOS / Linux. The Android APK embeds the formatter separatel
 
 import argparse
 import io
+import json
 import os
 import sys
 import socket
@@ -19,6 +20,8 @@ from zipfile import BadZipFile
 from docx.opc.exceptions import PackageNotFoundError
 from flask import Flask, jsonify, render_template, request, send_file
 from lxml.etree import XMLSyntaxError
+
+from format_profiles import resolve_profile
 
 from mla_formatter import (
     SUPPORTED_EXTS,
@@ -37,7 +40,7 @@ MAX_FILE_SIZE = 20 * 1024 * 1024
 # Leave room for multipart boundaries and form fields; validate the file itself below.
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE + 1024 * 1024
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override")
+TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override", "affiliation", "format_id")
 
 
 def _json_fields():
@@ -45,7 +48,8 @@ def _json_fields():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return None, (jsonify({"error": "invalid_json"}), 400)
-    if any(data.get(key) is not None and not isinstance(data[key], str) for key in TEXT_FIELDS):
+    if any(data.get(key) is not None and (not isinstance(data[key], str) or len(data[key]) > 5000)
+           for key in TEXT_FIELDS):
         return None, (jsonify({"error": "invalid_fields"}), 400)
     return data, None
 
@@ -62,20 +66,40 @@ def _flag(src, key, default):
     return str(v).lower() in ("1", "true", "on", "yes")
 
 
-def _docx_response(buf, filename, stats=None):
+def _layout_options(src, *, multipart=False):
+    format_id = _form(src, "format_id", "mla")
+    custom = src.get("custom_profile")
+    if format_id == "custom" and multipart and custom is not None:
+        if len(custom) > 10000:
+            raise ValueError("The course template is too large.")
+        try:
+            custom = json.loads(custom)
+        except (ValueError, TypeError) as error:
+            raise ValueError("The course template must be valid JSON.") from error
+    profile = resolve_profile(format_id, custom)
+    options = {"format_id": format_id, "custom_profile": custom if format_id == "custom" else None}
+    return options, profile
+
+
+def _docx_response(buf, filename, stats=None, profile=None):
     buf.seek(0)
     resp = send_file(buf, as_attachment=True, download_name=filename, mimetype=DOCX_MIME)
     # explicit UTF-8 filename so non-ASCII surnames survive
     resp.headers["Content-Disposition"] = (
-        f"attachment; filename=\"{filename if filename.isascii() else 'MLA_Essay.docx'}\"; "
+        f"attachment; filename=\"{filename if filename.isascii() else 'Formatted_Paper.docx'}\"; "
         f"filename*=UTF-8''{quote(filename)}")
     resp.headers["X-Filename"] = quote(filename)
     resp.headers["Cache-Control"] = "no-store, max-age=0"
     resp.headers["X-Content-Type-Options"] = "nosniff"
+    if profile:
+        resp.headers["X-Format-Id"] = profile["format_id"]
+        resp.headers["X-Format-Label"] = quote(profile["label"])
     if stats:
         for k, v in stats.items():
             resp.headers[f"X-Stat-{k.replace('_', '-')}"] = str(v)
-    resp.headers["Access-Control-Expose-Headers"] = "X-Filename, X-Stat-body, X-Stat-works-cited, X-Stat-removed-heading-lines"
+    resp.headers["Access-Control-Expose-Headers"] = (
+        "X-Filename, X-Format-Id, X-Format-Label, X-Stat-body, X-Stat-works-cited, "
+        "X-Stat-removed-heading-lines, X-Stat-omitted-elements, X-Stat-unsupported-headings")
     return resp
 
 
@@ -94,7 +118,11 @@ def api_summary():
     data, error = _json_fields()
     if error is not None:
         return error
-    return jsonify(format_summary(_form(data, "name"), _form(data, "last_name_override") or None))
+    try:
+        layout, _profile = _layout_options(data)
+    except ValueError as error:
+        return jsonify({"error": "invalid_options", "detail": str(error)}), 400
+    return jsonify(format_summary(_form(data, "name"), _form(data, "last_name_override") or None, **layout))
 
 
 @app.route("/api/blank", methods=["POST"])
@@ -106,14 +134,19 @@ def api_blank():
     if validate_inputs(name, title):
         return jsonify({"error": "missing_fields"}), 400
     override = _form(data, "last_name_override") or None
+    try:
+        layout, profile = _layout_options(data)
+    except ValueError as error:
+        return jsonify({"error": "invalid_options", "detail": str(error)}), 400
     buf = io.BytesIO()
     try:
         create_blank_template(buf, name=name, instructor=_form(data, "instructor"),
                               course=_form(data, "course"), date_str=_form(data, "date"),
-                              title=title, last_name_override=override)
+                              title=title, last_name_override=override,
+                              affiliation=_form(data, "affiliation"), **layout)
     except Exception as e:  # noqa
         return jsonify({"error": "failed", "detail": str(e)}), 500
-    return _docx_response(buf, generate_filename(name, override))
+    return _docx_response(buf, generate_filename(name, override, **layout), profile=profile)
 
 
 @app.route("/api/convert", methods=["POST"])
@@ -126,12 +159,18 @@ def api_convert():
         return jsonify({"error": "unsupported"}), 400
 
     form = request.form
+    if any(len(form.get(key, "")) > 5000 for key in TEXT_FIELDS):
+        return jsonify({"error": "invalid_fields"}), 400
     if form.get("txt_mode", "blank_line") not in ("blank_line", "line_by_line"):
         return jsonify({"error": "invalid_options"}), 400
     name, title = _form(form, "name"), _form(form, "title")
     if validate_inputs(name, title):
         return jsonify({"error": "missing_fields"}), 400
     override = _form(form, "last_name_override") or None
+    try:
+        layout, profile = _layout_options(form, multipart=True)
+    except ValueError as error:
+        return jsonify({"error": "invalid_options", "detail": str(error)}), 400
 
     fd, in_path = tempfile.mkstemp(prefix="mlafmt_", suffix=ext)
     os.close(fd)
@@ -152,6 +191,7 @@ def api_convert():
             enable_block_quote=_flag(form, "block_quote", False),
             markdown_emphasis=_flag(form, "markdown", True),
             strip_existing_heading=_flag(form, "strip_heading", True),
+            affiliation=_form(form, "affiliation"), **layout,
         )
     except Exception as e:  # noqa
         invalid_docx = ext == ".docx" and isinstance(
@@ -163,7 +203,7 @@ def api_convert():
             os.remove(in_path)
         except OSError:
             pass
-    return _docx_response(buf, generate_filename(name, override), stats)
+    return _docx_response(buf, generate_filename(name, override, **layout), stats, profile)
 
 
 def main(argv=None):

@@ -259,7 +259,7 @@ def main():
     write_icons(output, args.platform)
     packages = write_notices(root, output)
     status = git_output(root, "status", "--porcelain", "--untracked-files=normal")
-    sources = [root / "mla_gui.py", root / "mla_formatter.py", root / "requirements-build.txt",
+    sources = [root / "mla_gui.py", root / "mla_formatter.py", root / "format_profiles.py", root / "requirements-build.txt",
                root / "scripts/prepare_desktop_build.py", root / "scripts/prepare_windows_build.py",
                root / "scripts/hooks-desktop/hook-tkinterdnd2.py",
                root / "scripts/hooks-desktop/hook-docx.py"]
@@ -294,6 +294,8 @@ def main():
     shutil.copy2(root / "platforms" / args.platform / "INSTALL.md", documentation / "INSTALL.md")
     if (root / "docs").is_dir():
         shutil.copytree(root / "docs", documentation / "docs", dirs_exist_ok=True)
+    if (root / "examples").is_dir():
+        shutil.copytree(root / "examples", documentation / "examples", dirs_exist_ok=True)
     write_spec(root, output, args.platform, args.architecture, version)
     print(version)
 

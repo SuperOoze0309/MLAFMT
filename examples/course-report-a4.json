@@ -1,0 +1,14 @@
+{
+  "label": "A4 course report example",
+  "paper_size": "A4",
+  "font_name": "Arial",
+  "font_size": 11,
+  "line_spacing": 1.5,
+  "margin_cm": 2.5,
+  "first_line_cm": 1,
+  "alignment": "left",
+  "header": "page",
+  "title_page": true,
+  "references_title": "References",
+  "sort_references": true
+}

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light" />
-    <title>MLAFMT · MLA Formatter</title>
+    <title>MLAFMT · Paper Formatter</title>
     <style>
       :root {
         --ink: #242843;
@@ -29,7 +29,9 @@
         -webkit-font-smoothing: antialiased;
       }
       button,
-      input {
+      input,
+      select,
+      textarea {
         font: inherit;
         -webkit-tap-highlight-color: transparent;
       }
@@ -189,7 +191,9 @@
         color: var(--accent);
         margin-left: 3px;
       }
-      .field input {
+      .field input,
+      .field select,
+      .field textarea {
         display: block;
         width: 100%;
         min-width: 0;
@@ -208,13 +212,41 @@
       .field input::placeholder {
         color: #a3a3b0;
       }
-      .field input:focus {
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 3px #5755cc0d;
       }
       .field input[aria-invalid="true"] {
         border-color: var(--error);
       }
+      [hidden] { display: none !important; }
+      .format-choice { margin-bottom: 20px; }
+      .format-note { color: var(--muted); font-size: 11px; margin: 8px 0 0; }
+      .template-editor {
+        border: 1px solid var(--line); border-radius: 10px;
+        background: #fafafc; padding: 14px; margin: 15px 0 20px;
+      }
+      .template-editor summary { cursor: pointer; font-size: 12px; font-weight: 650; }
+      .template-editor .fields { margin-top: 14px; gap: 12px; }
+      .template-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .template-tools button { white-space: normal; }
+      .template-message { color: var(--muted); font-size: 11px; margin: 9px 0 0; }
+      .field textarea { resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+      #paper-preview { font-size: calc(var(--preview-base, 12px) * var(--preview-scale, 1)); }
+      #paper-preview .paper-body { font-size: 0.92em; }
+      #paper-preview .paper-header { font-size: 0.84em; }
+      .paper.cover-layout { display: flex; flex-direction: column; padding-top: 25%; }
+      .paper.cover-layout .paper-title { order: 0; margin: 0 0 14px; font-weight: 700; }
+      .paper.cover-layout .paper-heading { order: 1; text-align: center; }
+      .paper.cover-layout .paper-heading { display: flex; flex-direction: column; }
+      .paper.cover-layout #paper-name { order: 0; }
+      .paper.cover-layout #paper-affiliation { order: 1; }
+      .paper.cover-layout #paper-course { order: 2; }
+      .paper.cover-layout #paper-instructor { order: 3; }
+      .paper.cover-layout #paper-date { order: 4; }
+      .paper.cover-layout .paper-body, .paper.cover-layout .paper-lines { display: none; }
       .field-note {
         margin: 7px 0 0;
         font-weight: 400;
@@ -324,6 +356,7 @@
         white-space: normal;
       }
       .result-note { margin: 8px 0 0; }
+      .result-warning { color: #815b20; background: #fff8e9; border-radius: 7px; padding: 9px 11px; font-size: 11px; }
       .text-button {
         border: 0;
         background: transparent;
@@ -634,7 +667,7 @@
         font-size: 13px;
       }
       @media (pointer: coarse) {
-        .field input {
+        .field input, .field select, .field textarea {
           font-size: 16px;
           min-height: 44px;
         }
@@ -656,6 +689,7 @@
           padding: 22px;
         }
         .paper {
+          --preview-base: 10px;
           min-height: 350px;
           font-size: 10px;
         }
@@ -664,7 +698,7 @@
         }
       }
       @media (max-width: 720px) {
-        .field input {
+        .field input, .field select, .field textarea {
           font-size: 16px;
           min-height: 44px;
         }
@@ -695,6 +729,7 @@
           padding: 25px 40px;
         }
         .paper {
+          --preview-base: 12px;
           min-height: 0;
           font-size: 12px;
         }
@@ -840,6 +875,64 @@
                 <h2 id="info-heading" data-t="step1">Make it yours</h2>
                 <span class="aside" data-t="required">* Required</span>
               </div>
+              <div class="format-choice">
+                <label class="field"><span data-t="format_label">Paper format</span>
+                  <select id="format-id" name="format_id">
+                    <option value="mla" data-t="format_mla">MLA 9</option>
+                    <option value="apa" data-t="format_apa">APA 7 · Student paper</option>
+                    <option value="custom" data-t="format_custom">Custom course template</option>
+                  </select>
+                </label>
+                <p class="format-note" id="format-note"></p>
+              </div>
+              <details class="template-editor" id="custom-editor" hidden>
+                <summary data-t="template_details">Adjust and save a course template</summary>
+                <div class="fields">
+                  <label class="field full"><span data-t="saved_templates">Saved templates</span>
+                    <select id="saved-presets"><option value="" data-t="preset_unsaved">Current settings</option></select>
+                  </label>
+                  <label class="field full"><span data-t="template_name">Template name</span>
+                    <input id="c-label" maxlength="120" value="Course template" />
+                  </label>
+                  <label class="field"><span data-t="paper_size">Paper size</span>
+                    <select id="c-paper_size"><option value="Letter">Letter</option><option value="A4">A4</option></select>
+                  </label>
+                  <label class="field"><span data-t="font_name">Font</span>
+                    <select id="c-font_name"><option>Times New Roman</option><option>Arial</option><option>Calibri</option><option>宋体</option><option>黑体</option></select>
+                  </label>
+                  <label class="field"><span data-t="font_size">Font size (pt)</span>
+                    <input id="c-font_size" type="number" min="8" max="24" step="0.5" value="12" inputmode="decimal" />
+                  </label>
+                  <label class="field"><span data-t="line_spacing">Line spacing</span>
+                    <input id="c-line_spacing" type="number" min="1" max="3" step="0.05" value="2" inputmode="decimal" />
+                  </label>
+                  <label class="field"><span data-t="margin_cm">Margins, all sides (cm)</span>
+                    <input id="c-margin_cm" type="number" min="0.5" max="5.08" step="0.01" value="2.54" inputmode="decimal" />
+                  </label>
+                  <label class="field"><span data-t="first_line_cm">First-line indent (cm)</span>
+                    <input id="c-first_line_cm" type="number" min="0" max="2.54" step="0.01" value="1.27" inputmode="decimal" />
+                  </label>
+                  <label class="field"><span data-t="alignment">Body alignment</span>
+                    <select id="c-alignment"><option value="left" data-t="align_left">Left</option><option value="justify" data-t="align_justify">Justified</option></select>
+                  </label>
+                  <label class="field"><span data-t="header_style">Page header</span>
+                    <select id="c-header"><option value="page" data-t="header_page">Page number</option><option value="surname_page" data-t="header_surname">Surname + page number</option><option value="none" data-t="header_none">None</option></select>
+                  </label>
+                  <label class="field full"><span data-t="references_title">References heading</span>
+                    <input id="c-references_title" maxlength="160" value="References" />
+                  </label>
+                </div>
+                <label class="option"><input type="checkbox" id="c-title_page" /><span data-t="title_page">Separate title page</span></label>
+                <label class="option"><input type="checkbox" id="c-sort_references" checked /><span data-t="sort_references">Sort reference entries alphabetically</span></label>
+                <div class="template-tools">
+                  <button class="ghost" type="button" id="preset-save" data-t="preset_save">Save template</button>
+                  <button class="ghost" type="button" id="preset-delete" data-t="preset_delete">Delete saved template</button>
+                  <button class="ghost" type="button" id="preset-import" data-t="preset_import">Import template</button>
+                  <button class="ghost" type="button" id="preset-export" data-t="preset_export">Export template</button>
+                </div>
+                <p class="template-message" id="template-message" role="status" aria-live="polite"></p>
+                <p class="hint" data-t="template_local">Templates are saved in this browser on this device. Export one to keep a copy or use it elsewhere.</p>
+              </details>
               <div class="fields">
                 <label class="field"
                   ><span data-t="name">Your name</span
@@ -870,6 +963,9 @@
                     data-ph="title_ph"
                     placeholder="The Role of Memory in Hamlet"
                 /></label>
+                <label class="field full" id="affiliation-field" hidden><span data-t="affiliation">School / department</span>
+                  <input id="affiliation" name="affiliation" maxlength="5000" data-ph="affiliation_ph" placeholder="Department, University" />
+                </label>
                 <label class="field"
                   ><span data-t="course">Course</span
                   ><input
@@ -980,6 +1076,8 @@
               <h3 id="result-heading" data-t="result_heading">Latest document</h3>
               <p class="result-filename" id="result-filename"></p>
               <p class="result-note" id="result-details"></p>
+              <p class="result-note" id="result-format"></p>
+              <p class="result-warning" id="result-warning" role="status" aria-live="polite" hidden></p>
               <div class="secondary">
                 <a class="ghost" id="web-download" data-t="download_word" download>Download Word</a>
                 <button type="button" class="ghost" id="web-share" data-t="share_word" hidden>Share / Save to Files</button>
@@ -992,6 +1090,8 @@
               <button type="button" class="ghost" id="native-open" data-t="native_open">Open</button>
               <button type="button" class="ghost" id="native-share" data-t="native_share">Share</button>
             </div>
+            <p class="result-note" id="native-result-format" hidden></p>
+            <p class="result-warning" id="native-result-warning" role="status" aria-live="polite" hidden></p>
             <p class="privacy">
               <svg
                 aria-hidden="true"
@@ -1021,6 +1121,7 @@
                 <div class="paper-header" id="paper-header">Doe 1</div>
                 <div class="paper-heading">
                   <div id="paper-name"></div>
+                  <div id="paper-affiliation" hidden></div>
                   <div id="paper-instructor"></div>
                   <div id="paper-course"></div>
                   <div id="paper-date"></div>
@@ -1043,7 +1144,7 @@
               <div class="spec">
                 <span class="check" aria-hidden="true">✓</span>
                 <div>
-                  <strong>Times New Roman</strong
+                  <strong id="spec-font-name">Times New Roman</strong
                   ><span data-t="spec_font">12 pt · double spacing</span>
                 </div>
               </div>
@@ -1101,7 +1202,7 @@
             ×
           </button>
         </div>
-        <section class="dialog-section">
+        <section class="dialog-section" id="header-options">
           <h3 data-t="adv_header">Page header</h3>
           <label class="field"
             ><span data-t="lastname">Surname in header</span
@@ -1158,6 +1259,24 @@
         <button type="button" class="primary" id="adv-close" data-t="close">
           Save options
         </button>
+      </div>
+    </dialog>
+    <dialog id="template-transfer" aria-labelledby="transfer-title">
+      <div class="dialog-content">
+        <div class="dialog-heading">
+          <h2 id="transfer-title" data-t="template_transfer">Move a template between devices</h2>
+          <button class="ghost" type="button" id="transfer-x" data-label="close_transfer">×</button>
+        </div>
+        <p class="hint" data-t="transfer_hint">Import a template file or paste its text. Exported templates contain formatting settings only.</p>
+        <label class="field"><span data-t="template_text">Template text</span><textarea id="transfer-text" rows="10" spellcheck="false"></textarea></label>
+        <div class="template-tools">
+          <button class="ghost" type="button" id="transfer-file" data-t="choose_template_file">Choose JSON file</button>
+          <button class="ghost" type="button" id="transfer-apply" data-t="apply_template">Apply imported template</button>
+          <button class="ghost" type="button" id="transfer-copy" data-t="copy_template">Copy template text</button>
+          <button class="ghost" type="button" id="transfer-download" data-t="download_template">Download JSON</button>
+        </div>
+        <input type="file" id="template-file" accept=".json,application/json" hidden />
+        <p class="hint" id="transfer-message" role="status" aria-live="polite"></p>
       </div>
     </dialog>
     <script>
@@ -1416,6 +1535,84 @@
           summary_hanging: "Works Cited entries: hanging indent 0.5 in",
         },
       };
+      Object.assign(T.zh, {
+        tagline: "选择 MLA、APA 或课程模板，把草稿整理成可以继续编辑的 Word 文档。",
+        format_label: "文档格式", format_mla: "MLA 9", format_apa: "APA 7 · 学生论文", format_custom: "自定义课程模板",
+        format_note_mla: "MLA 第 9 版页面排版；已有引用内容保持原文。",
+        format_note_apa: "APA 7 学生论文版式，包含独立封面。请补齐学校、课程和老师；引用内容保持原文。",
+        format_note_custom: "按老师的要求调整排版，保存模板后可重复使用。",
+        affiliation: "学校／院系", affiliation_ph: "例如 Department of Psychology, Example University",
+        template_details: "调整并保存课程模板", saved_templates: "已保存的模板", preset_unsaved: "当前设置（尚未选择模板）",
+        template_name: "模板名称", paper_size: "纸张", font_name: "字体", font_size: "字号（磅）", line_spacing: "行距（倍）",
+        margin_cm: "四周页边距（厘米）", first_line_cm: "首行缩进（厘米）", alignment: "正文对齐", align_left: "左对齐", align_justify: "两端对齐",
+        header_style: "页眉", header_page: "页码", header_surname: "姓氏＋页码", header_none: "无页眉",
+        references_title: "参考文献标题", title_page: "独立封面", sort_references: "参考文献条目按字母排序",
+        preset_save: "保存模板", preset_delete: "删除已选模板", preset_import: "导入模板", preset_export: "导出模板",
+        template_local: "模板保存在这台设备的浏览器中。导出一份，可留作备份或在其他设备使用。",
+        template_saved: "模板已保存。", template_deleted: "模板已删除，当前设置已保留。", template_none: "请先选择一个已保存的模板。",
+        template_limit: "最多可保存 20 个模板，请先删除一个再保存。", template_storage: "此浏览器未能保存模板，请导出一份备份。",
+        invalid_template: "请检查模板设置：名称和标题不能为空，数字须在输入框标注的范围内。",
+        invalid_profile: "模板文件无效，请使用 MLAFMT 导出的模板。", template_applied: "模板已导入。点击“保存模板”可保留。",
+        template_transfer: "在设备之间分享模板", close_transfer: "关闭模板导入导出", template_text: "模板内容",
+        transfer_hint: "可导入模板文件或粘贴模板内容。导出的模板仅包含排版设置，不含论文信息或草稿。",
+        choose_template_file: "选择 JSON 文件", apply_template: "应用导入的模板", copy_template: "复制模板内容", download_template: "下载 JSON",
+        template_copied: "模板内容已复制。", template_copy_manual: "已选中模板内容，请使用系统的复制操作。", template_file_large: "模板文件不能超过 32 KB。",
+        native_transfer_hint: "请在下方粘贴模板内容导入；导出时可复制内容，在另一台设备粘贴。",
+        result_format: (label) => `生成时使用：${label}。更改当前设置不会改变这份文档。`,
+        result_details: (size, b, w, r) => `Word · ${size} · ${b} 段正文 · ${w} 条参考文献${r ? ` · 已移除 ${r} 行重复抬头` : ""}`,
+        result_blank: (size) => `Word · ${size} · 空白模板`,
+        date_hint_apa: "月（英文） 日, 年；可按课程要求修改", date_hint_custom: "按课程要求填写；留空使用今天",
+        convert: "生成 Word 文档", native_convert: "生成 Word 文档", blank: "从空白模板开始",
+        spec_header_page: "自动页码", spec_header_none: "不添加页眉", spec_cited_apa: "References，另起一页",
+        spec_cited_custom: (title) => `${title}，另起一页`, spec_cited_keep: "保留条目顺序 · 悬挂缩进",
+        summary_cover_apa: "独立封面：标题、姓名、学校／院系、课程、教师、截止日期",
+        summary_apa_title: "正文新页重复加粗居中标题，保留明确的 1–3 级标题",
+        summary_citations: "引用内容保持原文；请按所选规范检查作者、年份及文献资料",
+        summary_custom_cover: "独立封面；正文另起一页", summary_inline_title: "个人信息与居中标题置于正文第一页",
+        template_unavailable: "模板内容无法读取，请重试。",
+        warning_omitted: (count) => `原稿中有 ${count} 个图片、表格、脚注或公式结构未保留，请用原稿核对并补回。`,
+        warning_headings: (count) => `${count} 个第 4 级及更深标题保留为普通文字，请检查标题层级。`,
+        disclaimer: "仅处理文字草稿，保留粗体、斜体与下划线。图片、脚注、表格和特殊样式可能丢失。引用内容不会自动改写，请检查生成文档。",
+      });
+      Object.assign(T.en, {
+        tagline: "Choose MLA, APA or a course template. Turn your draft into an editable Word document.",
+        format_label: "Paper format", format_mla: "MLA 9", format_apa: "APA 7 · Student paper", format_custom: "Custom course template",
+        format_note_mla: "MLA 9 page layout. Existing citation text is kept as written.",
+        format_note_apa: "APA 7 student layout with a separate title page. Add your affiliation, course and instructor. Citation text stays as written.",
+        format_note_custom: "Match your instructor's requirements, then save the settings to use again.",
+        affiliation: "School / department", affiliation_ph: "e.g. Department of Psychology, Example University",
+        template_details: "Adjust and save a course template", saved_templates: "Saved templates", preset_unsaved: "Current settings (no saved template selected)",
+        template_name: "Template name", paper_size: "Paper size", font_name: "Font", font_size: "Font size (pt)", line_spacing: "Line spacing",
+        margin_cm: "Margins, all sides (cm)", first_line_cm: "First-line indent (cm)", alignment: "Body alignment", align_left: "Left", align_justify: "Justified",
+        header_style: "Page header", header_page: "Page number", header_surname: "Surname + page number", header_none: "None",
+        references_title: "References heading", title_page: "Separate title page", sort_references: "Sort reference entries alphabetically",
+        preset_save: "Save template", preset_delete: "Delete selected template", preset_import: "Import template", preset_export: "Export template",
+        template_local: "Templates are saved in this browser on this device. Export a copy to keep a backup or use it elsewhere.",
+        template_saved: "Template saved.", template_deleted: "Saved template deleted. Your current settings were kept.", template_none: "Select a saved template first.",
+        template_limit: "You can save up to 20 templates. Delete one before adding another.", template_storage: "This browser could not save the template. Export a backup copy.",
+        invalid_template: "Check the template settings: names and headings cannot be empty, and numbers must be within the displayed ranges.",
+        invalid_profile: "This template is invalid. Use a template exported from MLAFMT.", template_applied: "Template imported. Choose Save template to keep it.",
+        template_transfer: "Move a template between devices", close_transfer: "Close template import and export", template_text: "Template text",
+        transfer_hint: "Import a template file or paste its text. Exported templates contain formatting settings only, without paper details or drafts.",
+        choose_template_file: "Choose JSON file", apply_template: "Apply imported template", copy_template: "Copy template text", download_template: "Download JSON",
+        template_copied: "Template text copied.", template_copy_manual: "Template text selected. Use your system's Copy action.", template_file_large: "Template files must be no larger than 32 KB.",
+        native_transfer_hint: "Paste template text below to import it. To export, copy the text and paste it on your other device.",
+        result_format: (label) => `Generated with: ${label}. Changing the current settings does not change this document.`,
+        result_details: (size, b, w, r) => `Word · ${size} · ${b} paragraphs · ${w} reference entries${r ? ` · removed ${r} duplicate heading lines` : ""}`,
+        result_blank: (size) => `Word · ${size} · Blank template`,
+        date_hint_apa: "Month D, YYYY; adjust to your course requirements", date_hint_custom: "Use your course's date format; blank uses today",
+        convert: "Create Word document", native_convert: "Create Word document", blank: "Start with a blank template",
+        spec_header_page: "Automatic page numbers", spec_header_none: "No page header", spec_cited_apa: "References, on a new page",
+        spec_cited_custom: (title) => `${title}, on a new page`, spec_cited_keep: "Original entry order · hanging indents",
+        summary_cover_apa: "Separate title page: title, name, affiliation, course, instructor and due date",
+        summary_apa_title: "Body starts on a new page with the bold, centered paper title; explicit heading levels 1–3 retained",
+        summary_citations: "Citation text stays as written; check author, year and source details against the selected style",
+        summary_custom_cover: "Separate title page; body starts on a new page", summary_inline_title: "Personal details and a centered title on the first body page",
+        template_unavailable: "Could not read the template. Please try again.",
+        warning_omitted: (count) => `${count} image, table, footnote or equation structures from the draft were not retained. Compare with the original and restore them.`,
+        warning_headings: (count) => `${count} headings at level 4 or deeper were kept as ordinary text. Check their heading levels.`,
+        disclaimer: "For text drafts. Bold, italic and underline are kept; images, footnotes, tables and special styles may be lost. Citation text is not rewritten. Review the generated document.",
+      });
       const $ = (id) => document.getElementById(id);
       const store = {
         get(key) {
@@ -1428,7 +1625,8 @@
         set(key, value) {
           try {
             localStorage.setItem("mlafmt." + key, value);
-          } catch (_) {}
+            return true;
+          } catch (_) { return false; }
         },
       };
       const savedLanguage = store.get("lang");
@@ -1441,12 +1639,130 @@
         inProgress = false;
       let webResult = null,
         sharing = false;
+      let nativeResultFormat = null,
+        nativeGenerationFormat = null,
+        nativeResultWarnings = null;
       let lastStatus = { key: "ready", args: [], tone: "" };
       const t = (key, ...args) => {
         if (native && ["privacy", "convert", "drop"].includes(key)) key = "native_" + key;
         const value = T[lang][key] ?? T.en[key] ?? T.en.failed;
         return typeof value === "function" ? value(...args) : value;
       };
+      const CUSTOM_DEFAULT = Object.freeze({
+        label: "Course template", paper_size: "Letter", font_name: "Times New Roman",
+        font_size: 12, line_spacing: 2, margin_cm: 2.54, first_line_cm: 1.27,
+        alignment: "left", header: "page", title_page: false,
+        references_title: "References", sort_references: true,
+      });
+      const PROFILE_NUMBERS = { font_size: [8, 24], line_spacing: [1, 3], margin_cm: [0.5, 5.08], first_line_cm: [0, 2.54] };
+      const PROFILE_CHOICES = {
+        paper_size: ["Letter", "A4"], font_name: ["Times New Roman", "Arial", "Calibri", "宋体", "黑体"],
+        alignment: ["left", "justify"], header: ["surname_page", "page", "none"],
+      };
+      const PROFILE_FLAGS = ["title_page", "sort_references"];
+      function profileError(field) {
+        const error = new Error("invalid_profile");
+        error.field = field;
+        return error;
+      }
+      function normalizeProfile(value) {
+        if (!value || typeof value !== "object" || Array.isArray(value) ||
+            Object.keys(value).some((key) => !Object.hasOwn(CUSTOM_DEFAULT, key))) throw profileError();
+        const result = { ...CUSTOM_DEFAULT, ...value };
+        for (const [key, max] of [["label", 60], ["references_title", 80]]) {
+          if (typeof result[key] !== "string" || !result[key].trim() || Array.from(result[key].trim()).length > max ||
+              /[\u0000-\u001f\u007f-\u009f]/.test(result[key])) throw profileError(key);
+          result[key] = result[key].trim();
+        }
+        for (const [key, range] of Object.entries(PROFILE_NUMBERS))
+          if (typeof result[key] !== "number" || !Number.isFinite(result[key]) || result[key] < range[0] || result[key] > range[1]) throw profileError(key);
+        for (const [key, choices] of Object.entries(PROFILE_CHOICES))
+          if (!choices.includes(result[key])) throw profileError(key);
+        for (const key of PROFILE_FLAGS)
+          if (typeof result[key] !== "boolean") throw profileError(key);
+        return result;
+      }
+      function customProfile() {
+        const value = {};
+        for (const key of Object.keys(CUSTOM_DEFAULT)) {
+          const input = $("c-" + key);
+          value[key] = PROFILE_FLAGS.includes(key) ? input.checked
+            : Object.hasOwn(PROFILE_NUMBERS, key) ? (input.value.trim() ? Number(input.value) : NaN)
+            : input.value;
+        }
+        return normalizeProfile(value);
+      }
+      function writeProfile(profile) {
+        const value = normalizeProfile(profile);
+        for (const [key, setting] of Object.entries(value)) {
+          const input = $("c-" + key);
+          if (PROFILE_FLAGS.includes(key)) input.checked = setting;
+          else input.value = setting;
+          input.removeAttribute("aria-invalid");
+        }
+      }
+      function profileSnapshot(data) {
+        return { id: data.format_id, label: data.format_id === "custom" ? data.custom_profile.label : null };
+      }
+      function formatLabel(snapshot) {
+        if (!snapshot) return "";
+        return snapshot.id === "custom" ? snapshot.label || t("format_custom")
+          : t(snapshot.id === "apa" ? "format_apa" : "format_mla");
+      }
+      function currentFormat() { return $("format-id").value; }
+      let presets = [];
+      let selectedPreset = store.get("selected_preset") || "";
+      try {
+        const saved = JSON.parse(store.get("presets") || "[]");
+        if (Array.isArray(saved)) {
+          for (const value of saved.slice(0, 20)) {
+            try {
+              const profile = normalizeProfile(value);
+              if (!presets.some((p) => p.label === profile.label)) presets.push(profile);
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+      function renderPresets() {
+        $("saved-presets").replaceChildren(...["", ...presets.map((p) => p.label)].map((label) => {
+          const option = document.createElement("option");
+          option.value = label;
+          option.textContent = label || t("preset_unsaved");
+          return option;
+        }));
+        $("saved-presets").value = presets.some((p) => p.label === selectedPreset) ? selectedPreset : "";
+        $("preset-delete").disabled = !$("saved-presets").value;
+      }
+      function selectPreset(label) {
+        selectedPreset = label;
+        $("saved-presets").value = label;
+        store.set("selected_preset", label);
+        $("preset-delete").disabled = !label;
+      }
+      function persistCurrentProfile() {
+        try { store.set("custom_profile", JSON.stringify(customProfile())); } catch (_) {}
+      }
+      function templateMessage(key) {
+        $("template-message").dataset.message = key;
+        $("template-message").textContent = t(key);
+      }
+      const savedFormat = store.get("format_id");
+      if (["mla", "apa", "custom"].includes(savedFormat)) $("format-id").value = savedFormat;
+      try {
+        const saved = store.get("custom_profile");
+        if (saved) writeProfile(JSON.parse(saved));
+      } catch (_) {}
+      try {
+        const selected = presets.find((profile) => profile.label === selectedPreset);
+        if (!selected || JSON.stringify(selected) !== JSON.stringify(customProfile())) selectedPreset = "";
+      } catch (_) { selectedPreset = ""; }
+      let defaultMlaDate = $("date").defaultValue;
+      function defaultDate(format) {
+        const match = defaultMlaDate.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+        return format === "apa" && match ? `${match[2]} ${Number(match[1])}, ${match[3]}` : defaultMlaDate;
+      }
+      let previousFormat = currentFormat();
+      if ($("date").value === defaultMlaDate) $("date").value = defaultDate(currentFormat());
       function renderStatus() {
         $("status").textContent = t(lastStatus.key, ...lastStatus.args);
         $("status").className =
@@ -1474,6 +1790,13 @@
           return false;
         }
       }
+      function renderWarnings(id, counts) {
+        const notes = [];
+        if (counts?.omitted > 0) notes.push(t("warning_omitted", counts.omitted));
+        if (counts?.headings > 0) notes.push(t("warning_headings", counts.headings));
+        $(id).textContent = notes.join(" ");
+        $(id).hidden = !notes.length;
+      }
       function renderWebResult() {
         if (native) return;
         for (const id of ["convert", "blank", "try-demo"]) $(id).disabled = sharing || inProgress;
@@ -1483,6 +1806,8 @@
         $("result-details").textContent = webResult.isBlank
           ? t("result_blank", fileSize(webResult.blob.size))
           : t("result_details", fileSize(webResult.blob.size), ...webResult.stats);
+        $("result-format").textContent = t("result_format", formatLabel(webResult.format));
+        renderWarnings("result-warning", webResult.warnings);
         $("web-download").href = webResult.url;
         $("web-download").download = webResult.name;
         $("web-share").hidden = !canShareResult(webResult);
@@ -1527,22 +1852,69 @@
           $("paper-" + id).textContent =
             $(id).value.trim() ||
             t(id === "title" ? "preview_essay" : "preview_" + id);
-        $("paper-date").textContent =
-          $("date").value.trim() || $("date").defaultValue;
-        $("paper-header").textContent = surname() + " 1";
-        const summary = [
+        const format = currentFormat();
+        let profile;
+        try { profile = format === "custom" ? customProfile() : { ...CUSTOM_DEFAULT }; }
+        catch (_) { profile = { ...CUSTOM_DEFAULT }; }
+        if (format === "mla") profile.header = "surname_page";
+        if (format === "apa") profile.title_page = true;
+        const zh = lang === "zh";
+        const paper = $("paper-preview");
+        paper.classList.toggle("cover-layout", profile.title_page);
+        paper.style.setProperty("--preview-scale", String(profile.font_size / 12));
+        paper.style.fontFamily = `"${profile.font_name}", serif`;
+        paper.style.aspectRatio = profile.paper_size === "A4" ? "210 / 297" : "8.5 / 11";
+        const marginPercent = profile.margin_cm / (profile.paper_size === "A4" ? 21 : 21.59) * 100;
+        paper.style.padding = `${profile.title_page ? 25 : marginPercent + 4}% ${marginPercent}% ${marginPercent}%`;
+        $("paper-header").style.left = $("paper-header").style.right = marginPercent + "%";
+        document.querySelector(".paper-heading").style.lineHeight = String(profile.line_spacing);
+        document.querySelector(".paper-body").style.lineHeight = String(profile.line_spacing);
+        document.querySelector(".paper-body").style.textIndent = `${profile.first_line_cm / 0.635}em`;
+        document.querySelector(".paper-body").style.textAlign = profile.alignment;
+        $("paper-title").style.fontWeight = format === "mla" ? "400" : "700";
+        $("paper-title").style.lineHeight = String(profile.line_spacing);
+        $("paper-date").textContent = $("date").value.trim() || defaultDate(format);
+        $("paper-affiliation").textContent = $("affiliation").value.trim() || (format === "apa" ? t("affiliation") : "");
+        $("paper-affiliation").hidden = format === "mla";
+        $("paper-header").textContent = profile.header === "surname_page" ? surname() + " 1" : profile.header === "page" ? "1" : "";
+        $("format-note").textContent = t("format_note_" + format);
+        $("custom-editor").hidden = format !== "custom";
+        $("affiliation-field").hidden = format === "mla";
+        $("header-options").hidden = profile.header !== "surname_page";
+        $("date-hint").textContent = t(format === "mla" ? "date_hint" : "date_hint_" + format);
+        document.querySelector("[data-t=preview_tag]").textContent = `${formatLabel({ id: format, label: profile.label })} · ${profile.paper_size}`;
+        $("spec-font-name").textContent = profile.font_name;
+        document.querySelector("[data-t=spec_font]").textContent = zh
+          ? `${profile.font_size} 磅字号 · ${profile.line_spacing} 倍行距`
+          : `${profile.font_size} pt · ${profile.line_spacing} line spacing`;
+        document.querySelector("[data-t=spec_margins_sub]").textContent = zh
+          ? `${profile.margin_cm} 厘米页边距 · ${profile.first_line_cm} 厘米首行缩进`
+          : `${profile.margin_cm} cm margins · ${profile.first_line_cm} cm first-line indent`;
+        document.querySelector("[data-t=spec_header]").textContent = profile.header === "surname_page"
+          ? t("spec_header") : t(profile.header === "page" ? "spec_header_page" : "spec_header_none");
+        document.querySelector("[data-t=spec_header_sub]").textContent = profile.header === "surname_page"
+          ? t("spec_header_sub") : profile.header === "page" ? (zh ? "右上角 · 从第 1 页开始" : "Upper right · starts at page 1") : (zh ? "按课程模板设置" : "As set in your course template");
+        const references = format === "mla" ? "Works Cited" : format === "apa" ? "References" : profile.references_title;
+        document.querySelector("[data-t=spec_cited]").textContent = format === "mla" ? t("spec_cited")
+          : format === "apa" ? t("spec_cited_apa") : t("spec_cited_custom", references);
+        document.querySelector("[data-t=spec_cited_sub]").textContent = profile.sort_references
+          ? t("spec_cited_sub") : t("spec_cited_keep");
+        const summary = format === "mla" ? [
           t("summary_header", surname()),
-          ...[
-            "paper",
-            "font",
-            "margins",
-            "spacing",
-            "indent",
-            "block",
-            "cited",
-            "hanging",
-          ].map((key) => t("summary_" + key)),
+          ...["paper", "font", "margins", "spacing", "indent", "block", "cited", "hanging"].map((key) => t("summary_" + key)),
+        ] : [
+          formatLabel({ id: format, label: profile.label }),
+          `${zh ? "纸张" : "Paper"}: ${profile.paper_size}`,
+          `${zh ? "字体" : "Font"}: ${profile.font_name}, ${profile.font_size} ${zh ? "磅" : "pt"}`,
+          `${zh ? "四周页边距" : "Margins on all sides"}: ${profile.margin_cm} cm`,
+          `${zh ? "行距" : "Line spacing"}: ${profile.line_spacing}; ${zh ? "段前段后" : "before/after"}: 0 pt`,
+          `${zh ? "首行缩进" : "First-line indent"}: ${profile.first_line_cm} cm; ${t(profile.alignment === "left" ? "align_left" : "align_justify")}`,
+          `${zh ? "页眉" : "Header"}: ${t("header_" + (profile.header === "surname_page" ? "surname" : profile.header))}`,
+          format === "apa" ? t("summary_cover_apa") : t(profile.title_page ? "summary_custom_cover" : "summary_inline_title"),
+          ...(format === "apa" ? [t("summary_apa_title")] : []),
+          `${references}: ${zh ? "新页、居中标题、悬挂缩进 1.27 cm" : "new page, centered title, 1.27 cm hanging indent"}; ${profile.sort_references ? (zh ? "按字母排序" : "alphabetical entries") : (zh ? "保留原始顺序" : "original entry order")}`,
         ];
+        summary.push(t("summary_citations"));
         $("format-summary").replaceChildren(
           ...summary.map((text) => {
             const item = document.createElement("li");
@@ -1554,7 +1926,7 @@
       function render() {
         document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
         document.title =
-          lang === "zh" ? "MLAFMT · MLA 论文排版" : "MLAFMT · MLA Formatter";
+          lang === "zh" ? "MLAFMT · 论文与报告排版" : "MLAFMT · Paper Formatter";
         document.querySelectorAll("[data-t]").forEach((el) => {
           el.textContent = t(el.dataset.t);
         });
@@ -1567,9 +1939,13 @@
         for (const code of ["zh", "en"])
           $("lang-" + code).setAttribute("aria-pressed", String(lang === code));
         renderDrop();
+        renderPresets();
+        if ($("template-message").dataset.message) templateMessage($("template-message").dataset.message);
         refreshPreview();
         renderStatus();
         renderWebResult();
+        if (nativeResultFormat) $("native-result-format").textContent = t("result_format", formatLabel(nativeResultFormat));
+        renderWarnings("native-result-warning", nativeResultWarnings);
       }
       for (const code of ["zh", "en"])
         $("lang-" + code).addEventListener("click", () => {
@@ -1577,7 +1953,147 @@
           store.set("lang", lang);
           render();
         });
-      for (const id of ["name", "instructor", "course", "lname", ...(native ? ["title", "date"] : [])]) {
+      $("format-id").addEventListener("change", () => {
+        const format = currentFormat();
+        if (!$("date").value.trim() || $("date").value === defaultDate(previousFormat)) {
+          $("date").value = defaultDate(format);
+          if (native) store.set("date", $("date").value);
+        }
+        previousFormat = format;
+        store.set("format_id", format);
+        refreshPreview();
+      });
+      for (const key of Object.keys(CUSTOM_DEFAULT)) {
+        $("c-" + key).addEventListener(PROFILE_FLAGS.includes(key) || Object.hasOwn(PROFILE_CHOICES, key) ? "change" : "input", () => {
+          $("c-" + key).removeAttribute("aria-invalid");
+          selectPreset("");
+          persistCurrentProfile();
+          refreshPreview();
+        });
+      }
+      $("saved-presets").addEventListener("change", () => {
+        const selected = presets.find((p) => p.label === $("saved-presets").value);
+        if (selected) writeProfile(selected);
+        selectPreset(selected?.label || "");
+        persistCurrentProfile();
+        refreshPreview();
+      });
+      function checkedProfile() {
+        try { return customProfile(); }
+        catch (error) {
+          if (error.field) {
+            $("c-" + error.field).setAttribute("aria-invalid", "true");
+            $("custom-editor").open = true;
+            $("c-" + error.field).focus();
+          }
+          templateMessage("invalid_template");
+          return null;
+        }
+      }
+      $("preset-save").addEventListener("click", () => {
+        const profile = checkedProfile();
+        if (!profile) return;
+        const index = presets.findIndex((p) => p.label === profile.label);
+        if (index < 0 && presets.length >= 20) return templateMessage("template_limit");
+        if (index < 0) presets.push(profile);
+        else presets[index] = profile;
+        const saved = store.set("presets", JSON.stringify(presets));
+        persistCurrentProfile();
+        selectedPreset = profile.label;
+        renderPresets();
+        selectPreset(profile.label);
+        templateMessage(saved ? "template_saved" : "template_storage");
+      });
+      $("preset-delete").addEventListener("click", () => {
+        const label = $("saved-presets").value;
+        if (!label) return templateMessage("template_none");
+        presets = presets.filter((p) => p.label !== label);
+        const saved = store.set("presets", JSON.stringify(presets));
+        selectPreset("");
+        renderPresets();
+        templateMessage(saved ? "template_deleted" : "template_storage");
+      });
+      const transfer = $("template-transfer");
+      let transferOpener = null;
+      function openTransfer(exporting) {
+        let text = "";
+        if (exporting) {
+          const profile = checkedProfile();
+          if (!profile) return;
+          text = JSON.stringify(profile, null, 2);
+        }
+        transferOpener = $(exporting ? "preset-export" : "preset-import");
+        $("transfer-text").value = text;
+        $("transfer-message").textContent = native ? t("native_transfer_hint") : "";
+        $("transfer-file").hidden = native || exporting;
+        $("transfer-apply").hidden = exporting;
+        $("transfer-copy").hidden = !exporting;
+        $("transfer-download").hidden = native || !exporting;
+        transfer.showModal();
+      }
+      $("preset-import").addEventListener("click", () => openTransfer(false));
+      $("preset-export").addEventListener("click", () => openTransfer(true));
+      $("transfer-x").addEventListener("click", () => {
+        transfer.close();
+        transferOpener?.focus();
+      });
+      $("transfer-apply").addEventListener("click", () => {
+        try {
+          const text = $("transfer-text").value;
+          if (new Blob([text]).size > 32768) {
+            $("transfer-message").textContent = t("template_file_large");
+            return;
+          }
+          const data = JSON.parse(text);
+          const profile = normalizeProfile(data && Object.hasOwn(data, "custom_profile") ? data.custom_profile : data);
+          writeProfile(profile);
+          selectPreset("");
+          persistCurrentProfile();
+          refreshPreview();
+          templateMessage("template_applied");
+          transfer.close();
+          $("preset-save").focus();
+        } catch (_) { $("transfer-message").textContent = t("invalid_profile"); }
+      });
+      $("transfer-file").addEventListener("click", () => $("template-file").click());
+      $("template-file").addEventListener("change", async (event) => {
+        const candidate = event.target.files[0];
+        if (!candidate) return;
+        try {
+          if (candidate.size > 32768) $("transfer-message").textContent = t("template_file_large");
+          else {
+            $("transfer-text").value = await candidate.text();
+            $("transfer-message").textContent = "";
+          }
+        } catch (_) { $("transfer-message").textContent = t("template_unavailable"); }
+        finally { $("template-file").value = ""; }
+      });
+      $("transfer-copy").addEventListener("click", async () => {
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error("clipboard");
+          await navigator.clipboard.writeText($("transfer-text").value);
+          $("transfer-message").textContent = t("template_copied");
+        } catch (_) {
+          $("transfer-text").focus();
+          $("transfer-text").select();
+          $("transfer-message").textContent = t("template_copy_manual");
+        }
+      });
+      $("transfer-download").addEventListener("click", () => {
+        try {
+          const data = JSON.parse($("transfer-text").value);
+          const profile = normalizeProfile(data && Object.hasOwn(data, "custom_profile") ? data.custom_profile : data);
+          const url = URL.createObjectURL(new Blob([JSON.stringify(profile, null, 2)], { type: "application/json" }));
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = profile.label.replace(/[\\/\u0000-\u001f\u007f:*?"<>|]/g, "_") + ".json";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (_) { $("transfer-message").textContent = t("invalid_profile"); }
+      });
+      for (const id of ["name", "instructor", "course", "affiliation", "lname", ...(native ? ["title", "date"] : [])]) {
         const value = store.get(id);
         if (value !== null) $(id).value = value;
         $(id).addEventListener("input", () => {
@@ -1589,6 +2105,7 @@
         "title",
         "instructor",
         "course",
+        "affiliation",
         "date",
         "lname",
       ])
@@ -1691,19 +2208,26 @@
           closeDialog();
       });
       function fields() {
-        return Object.fromEntries(
+        return { ...Object.fromEntries(
           [
             ["name", "name"],
             ["title", "title"],
             ["instructor", "instructor"],
             ["course", "course"],
+            ["affiliation", "affiliation"],
             ["date", "date"],
             ["last_name_override", "lname"],
           ].map(([key, id]) => [key, $(id).value.trim()]),
-        );
+        ), format_id: currentFormat(), custom_profile: currentFormat() === "custom" ? customProfile() : null };
       }
       function validate() {
-        const data = fields();
+        let data;
+        try { data = fields(); }
+        catch (_) {
+          checkedProfile();
+          setStatus("invalid_template", "err");
+          return null;
+        }
         for (const id of ["name", "title"])
           $(id).setAttribute("aria-invalid", String(!data[id]));
         if (!data.name || !data.title) {
@@ -1722,7 +2246,7 @@
         if (on) setStatus("working", "working");
         renderWebResult();
       }
-      async function prepareDownload(response, isBlank) {
+      async function prepareDownload(response, isBlank, format) {
         if (!response.ok) {
           let data = {};
           try {
@@ -1739,7 +2263,7 @@
           setStatus(key, "err");
           return null;
         }
-        let name = "MLA_Essay.docx";
+        let name = "Formatted_Paper.docx";
         try {
           name = decodeURIComponent(response.headers.get("X-Filename") || name);
         } catch (_) {}
@@ -1753,11 +2277,21 @@
           } catch (_) {}
         }
         const previous = webResult;
+        const responseFormat = response.headers.get("X-Format-Id");
+        if (["mla", "apa", "custom"].includes(responseFormat)) {
+          let label = format.label;
+          try { label = decodeURIComponent(response.headers.get("X-Format-Label") || label || ""); } catch (_) {}
+          format = { id: responseFormat, label };
+        }
         webResult = {
-          name, blob, shareFile, isBlank,
+          name, blob, shareFile, isBlank, format,
           url: URL.createObjectURL(blob),
           stats: ["body", "works-cited", "removed-heading-lines"].map((key) =>
             Number(response.headers.get("X-Stat-" + key) || 0)),
+          warnings: {
+            omitted: Number(response.headers.get("X-Stat-omitted-elements") || 0),
+            headings: Number(response.headers.get("X-Stat-unsupported-headings") || 0),
+          },
         };
         renderWebResult();
         if (previous) URL.revokeObjectURL(previous.url);
@@ -1767,12 +2301,14 @@
         if (inProgress || sharing) return;
         const data = validate();
         if (!data) return;
+        const format = profileSnapshot(data);
         if (!isBlank && !file) {
           setStatus("need_file", "err");
           drop.focus();
           return;
         }
         if (native) {
+          nativeGenerationFormat = format;
           data.kind = isBlank ? "blank" : "convert";
           data.txt_mode = document.querySelector("input[name=mode]:checked").value;
           for (const [key, id] of [["markdown", "o-md"], ["strip_heading", "o-strip"], ["heading_detect", "o-head"], ["block_quote", "o-bq"]])
@@ -1791,9 +2327,9 @@
         else {
           const body = new FormData();
           body.append("file", file);
-          Object.entries(data).forEach(([key, value]) =>
-            body.append(key, value),
-          );
+          Object.entries(data).forEach(([key, value]) => {
+            if (value !== null) body.append(key, key === "custom_profile" ? JSON.stringify(value) : value);
+          });
           body.append(
             "txt_mode",
             document.querySelector("input[name=mode]:checked").value,
@@ -1814,7 +2350,7 @@
         try {
           const result = await prepareDownload(
             await fetch(isBlank ? "/api/blank" : "/api/convert", options),
-            isBlank,
+            isBlank, format,
           );
           if (result) {
             if (isBlank) setStatus("done_blank", "ok", result.name);
@@ -1837,8 +2373,9 @@
         $("try-demo").addEventListener("click", () => {
           if (inProgress || sharing) return;
           for (const [id, value] of Object.entries({
-            name: "Alex Example", title: "A Short MLA Example",
+            name: "Alex Example", title: "A Short Formatting Example",
             instructor: "Professor Example", course: "ENG 101",
+            ...(currentFormat() === "apa" ? { affiliation: "Department, Example University" } : {}),
           })) {
             if (!$(id).value.trim()) {
               $(id).value = value;
@@ -1847,11 +2384,15 @@
           }
           if (!file) {
             try {
+              const format = currentFormat();
+              const referenceTitle = format === "mla" ? "Works Cited" : format === "apa" ? "References" : customProfile().references_title;
+              const referenceEntry = format === "apa" ? "Example, A. (2026). *Demonstration source*. Example Press."
+                : "Example, Alex. *Demonstration Source*. Example Press, 2026.";
               pick(new File([
                 "This is a short sample draft. The paper details above are examples that you can edit.\n\n" +
                 "MLAFMT sets the page size, margins, paragraph spacing and running header for the generated Word document.\n\n" +
-                "The reference below is fictional and only demonstrates the Works Cited layout.\n\n" +
-                "Works Cited\n\nExample, Alex. Demonstration Source. Example Press, 2026.\n",
+                "The reference below is fictional and only demonstrates the reference-page layout. Citation content stays as written.\n\n" +
+                referenceTitle + "\n\n" + referenceEntry + "\n",
               ], "MLAFMT_Sample.md", { type: "text/markdown" }));
             } catch (_) {
               setStatus("demo_unavailable", "err");
@@ -1930,8 +2471,10 @@
               return;
             }
             if (message.type === "init") {
-              $("date").defaultValue = message.today;
-              if (!$("date").value.trim()) $("date").value = message.today;
+              const wasDefault = !$("date").value.trim() || [defaultDate("mla"), defaultDate("apa")].includes($("date").value);
+              if (typeof message.today === "string") defaultMlaDate = message.today;
+              $("date").defaultValue = defaultDate(currentFormat());
+              if (wasDefault) $("date").value = defaultDate(currentFormat());
               refreshPreview();
               return;
             }
@@ -1940,6 +2483,21 @@
             renderDrop();
             busy(Boolean(message.busy));
             $("native-actions").hidden = !message.result;
+            if (message.result) {
+              nativeResultFormat = ["mla", "apa", "custom"].includes(message.result.format_id)
+                ? { id: message.result.format_id, label: message.result.format_label }
+                : nativeResultFormat || nativeGenerationFormat;
+              nativeResultWarnings = {
+                omitted: Number(message.result.stats?.omitted_elements || 0),
+                headings: Number(message.result.stats?.unsupported_headings || 0),
+              };
+            } else {
+              nativeResultFormat = null;
+              nativeResultWarnings = null;
+            }
+            $("native-result-format").hidden = !nativeResultFormat;
+            if (nativeResultFormat) $("native-result-format").textContent = t("result_format", formatLabel(nativeResultFormat));
+            renderWarnings("native-result-warning", nativeResultWarnings);
             if (message.error) setStatus(message.error, "err");
             else if (message.message === "file_ready" && file)
               setStatus("file_ready", "", file.name, fileSize(file.size));

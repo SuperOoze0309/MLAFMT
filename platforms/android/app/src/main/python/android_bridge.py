@@ -11,6 +11,8 @@ import zipfile
 from docx.opc.exceptions import PackageNotFoundError
 from lxml.etree import XMLSyntaxError
 
+from format_profiles import resolve_profile
+
 from mla_formatter import (
     SUPPORTED_EXTS, convert_draft_to_mla, create_blank_template,
     generate_filename, today_mla, validate_inputs,
@@ -18,7 +20,7 @@ from mla_formatter import (
 
 MAX_FILE_SIZE = 20 * 1024 * 1024
 MAX_DOCX_EXPANDED = 80 * 1024 * 1024
-TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override")
+TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override", "affiliation")
 FLAGS = {
     "heading_detect": False, "block_quote": False,
     "markdown": True, "strip_heading": True,
@@ -61,8 +63,15 @@ def generate(request_json, input_path, output_directory):
             return json.dumps({"error": "invalid_options"})
         if any(k in data and not isinstance(data[k], bool) for k in FLAGS):
             return json.dumps({"error": "invalid_options"})
+        format_id = data.get("format_id", "mla")
+        custom_profile = data.get("custom_profile")
+        try:
+            profile = resolve_profile(format_id, custom_profile)
+        except ValueError:
+            return json.dumps({"error": "invalid_options"})
+        layout = {"format_id": format_id, "custom_profile": custom_profile if format_id == "custom" else None}
         override = fields.pop("last_name_override") or None
-        filename = generate_filename(fields["name"], override)
+        filename = generate_filename(fields["name"], override, **layout)
         # Android filesystem component limits apply to long Unicode surnames.
         stem = filename[:-5]
         while len(stem.encode("utf-8")) > 180:
@@ -73,6 +82,7 @@ def generate(request_json, input_path, output_directory):
         arguments = dict(fields)
         arguments["date_str"] = arguments.pop("date")
         arguments["last_name_override"] = override
+        arguments.update(layout)
         stats = {}
         if data["kind"] == "blank":
             create_blank_template(output_path, **arguments)
@@ -98,7 +108,8 @@ def generate(request_json, input_path, output_directory):
                 strip_existing_heading=data.get("strip_heading", True),
             )
         return json.dumps({"name": filename, "path": output_path, "stats": stats,
-                           "blank": data["kind"] == "blank"})
+                           "blank": data["kind"] == "blank", "format_id": format_id,
+                           "format_label": profile["label"]})
     except (json.JSONDecodeError, TypeError):
         return json.dumps({"error": "invalid_json"})
     except Exception as error:

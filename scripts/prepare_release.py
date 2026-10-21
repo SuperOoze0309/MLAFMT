@@ -83,9 +83,12 @@ Mac: drag to Applications. These builds are not Apple-notarized; confirm first l
 Linux：允许执行后打开。Android：安装后选择草稿，生成并保存或分享 Word 文档。
 Linux: mark executable and open. Android: install, choose your draft, then save or share the formatted Word document.
 
-本版完善 Mac 的 Finder 打开方式、Dock 导入、Command 快捷键与生成文件定位；安装包内有可双击的安装说明。
-iPhone/iPad 先提供本地网页预览，生成后可再次下载 Word；支持时可使用系统分享。详见 Apple 设备指南。
-This release improves Mac file opening from Finder and the Dock, Command shortcuts, result location and the bundled install guide. iPhone/iPad use a local web preview with reusable Word downloads and file sharing when supported.
+本版新增 APA 7 学生论文版式与自定义课程模板：可保存多套老师要求，并用 JSON 在设备间交换模板。
+桌面、网页和 Android 共用格式设置；APA 支持封面、页码、1–3 级标题与新页 References。引用文字保持原样。
+iPhone/iPad 继续使用本地网页预览。文档包含图片、表格、脚注或公式时，请对照原稿检查。
+This release adds APA 7 student paper layouts and custom course templates, with named presets and JSON transfer between devices.
+Desktop, web and Android share the layout engine. APA includes a title page, page numbers, heading levels 1–3 and a new References page; citation text is unchanged.
+iPhone/iPad continue to use the local web preview. Compare documents containing images, tables, notes or equations with the original.
 
 <details>
 <summary>其他下载 / Other downloads</summary>
@@ -95,6 +98,7 @@ This release improves Mac file opening from Finder and the Dock, Command shortcu
 - [SHA-256 校验和 / Checksums]({base}/SHA256SUMS.txt)
 - [图文使用说明 / Illustrated guide](https://github.com/SuperOoze0309/MLAFMT/blob/{tag}/README.md)
 - [Apple 设备指南 / Apple guide](https://github.com/SuperOoze0309/MLAFMT/blob/{tag}/docs/APPLE.md)
+- [格式与模板说明 / Formats and templates](https://github.com/SuperOoze0309/MLAFMT/blob/{tag}/docs/FORMATS.md)
 
 </details>
 """

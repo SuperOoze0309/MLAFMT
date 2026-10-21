@@ -20,7 +20,7 @@ Use Python 3.12 x64 in a virtual environment:
 
 ```powershell
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.3.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.4.0
 .\dist\release\MLAFMT.exe --smoke-test --require-dnd
 ```
 
@@ -31,7 +31,7 @@ The EXE includes the app version. The versioned ZIP adds build provenance, the R
 Build natively on Apple silicon and Intel separately with Python 3.12, including working Tk:
 
 ```bash
-bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expected-version v2.3.0
+bash platforms/macos/build_macos.sh --python python3 --architecture arm64 --expected-version v2.4.0
 # On an Intel Mac, use --architecture x86_64.
 ```
 
@@ -45,7 +45,7 @@ Use Ubuntu 22.04 x64 / glibc 2.35 as the build baseline, Python 3.12 and the sys
 
 ```bash
 sudo apt-get install xvfb squashfs-tools libx11-6 libxext6 libxrender1 libxft2 fontconfig libtcl8.6 libtk8.6
-bash platforms/linux/build_linux.sh --python python3 --expected-version v2.3.0
+bash platforms/linux/build_linux.sh --python python3 --expected-version v2.4.0
 ```
 
 The script checks the staged app and extracts the finished AppImage to test it without FUSE. A portable tar.gz is also produced. AppImage packaging inputs are versioned and SHA-256 verified. Runtime documentation and third-party notices accompany the app.
@@ -73,11 +73,11 @@ The release signing inputs are:
 On GitHub, the same password/alias names are repository secrets. `MLAFMT_ANDROID_KEYSTORE_BASE64` supplies the keystore; CI writes it to a temporary file. Local signing backups are kept under `.secrets/android/`, which is ignored by Git. Keep a secure backup of the keystore and credentials: subsequent APK updates must use the same signing key.
 
 ```bash
-bash platforms/android/build_android.sh --release --expected-version v2.3.0
+bash platforms/android/build_android.sh --release --expected-version v2.4.0
 cd platforms/android
 bash gradlew :app:lintDebug :app:testDebugUnitTest
 bash gradlew :app:connectedDebugAndroidTest  # Requires a running Android emulator/device.
-python ../../scripts/verify_android_apk.py ../../dist/release/MLAFMT-v2.3.0-android.apk
+python ../../scripts/verify_android_apk.py ../../dist/release/MLAFMT-v2.4.0-android.apk
 ```
 
 On Windows, use `gradlew.bat :app:exportRelease` with the signing environment configured. The APK supports arm64-v8a and x86_64 on Android 7+ (API 24), with a target SDK of 35. See the Android project's README for the complete local setup.
@@ -88,8 +88,8 @@ After all platform checks pass, gather the seven release files and the macOS/Lin
 
 ```bash
 python scripts/prepare_release.py
-git tag v2.3.0
-git push origin main v2.3.0
+git tag v2.4.0
+git push origin main v2.4.0
 ```
 
-Create the GitHub Release explicitly using `gh release create v2.3.0 --verify-tag --title "MLAFMT v2.3.0" --notes-file build/release-notes.md`, passing the seven validated files and `SHA256SUMS.txt` as assets. Keep the main download table to recommended files; place portable archives and checksums under Other downloads. Never upload a debug APK or a signing key.
+Create the GitHub Release explicitly using `gh release create v2.4.0 --verify-tag --title "MLAFMT v2.4.0" --notes-file build/release-notes.md`, passing the seven validated files and `SHA256SUMS.txt` as assets. Keep the main download table to recommended files; place portable archives and checksums under Other downloads. Never upload a debug APK or a signing key.

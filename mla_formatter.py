@@ -1,6 +1,6 @@
 """
-mla_formatter.py  (v2.1)
-Core engine for one-click MLA formatting (MLA Handbook, 9th Edition).
+mla_formatter.py  (v2.4)
+Shared MLA 9, APA 7 student and custom course-layout engine.
 
 Two entry points:
   create_blank_template(...)  -> blank MLA-formatted docx, ready to type into
@@ -23,17 +23,19 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Inches, Pt
+from docx.shared import Cm, Inches, Pt, RGBColor
 from docx.text.run import Run
 
-__version__ = "2.3.0"
+from format_profiles import FORMAT_IDS, resolve_profile
+
+__version__ = "2.4.0"
 
 FONT_NAME = "Times New Roman"
 FONT_SIZE = 12
 SUPPORTED_EXTS = (".docx", ".txt", ".md")
 
 MLG_DISCLAIMER = (
-    "This tool reformats plain essay text into MLA format. Italic, bold and "
+    "This tool reformats text drafts into the selected paper layout. Italic, bold and "
     "underline are kept; images, footnotes, tables, lists and special styles "
     "may not be preserved. Always proofread the result."
 )
@@ -214,6 +216,43 @@ def today_mla(date=None):
     return f"{d.day} {d.strftime('%B')} {d.year}"
 
 
+def today_for_format(format_id="mla", date=None):
+    """Use an English written date independent of the operating-system locale."""
+    resolve_profile(format_id)
+    d = date or datetime.date.today()
+    months = ("January", "February", "March", "April", "May", "June", "July",
+              "August", "September", "October", "November", "December")
+    if format_id == "apa":
+        return f"{months[d.month - 1]} {d.day}, {d.year}"
+    return f"{d.day} {months[d.month - 1]} {d.year}"
+
+
+def _date_variants(text):
+    """Equivalent written English dates for matching a complete old heading."""
+    months = ("January", "February", "March", "April", "May", "June", "July",
+              "August", "September", "October", "November", "December")
+    variants = [text]
+    match = re.fullmatch(r"(\d{1,2})\s+([A-Za-z]+)\.?\s+(\d{4})", text.strip())
+    if match:
+        day, month, year = match.group(1), match.group(2), match.group(3)
+    else:
+        match = re.fullmatch(r"([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})", text.strip())
+        if not match:
+            return variants
+        month, day, year = match.group(1), match.group(2), match.group(3)
+    month_number = next((index for index, value in enumerate(months, 1)
+                         if month.casefold() in (value.casefold(), value[:3].casefold())), None)
+    if month_number is None:
+        return variants
+    try:
+        date = datetime.date(int(year), month_number, int(day))
+    except ValueError:
+        return variants
+    month_name = months[date.month - 1]
+    variants.extend((f"{date.day} {month_name} {date.year}", f"{month_name} {date.day}, {date.year}"))
+    return list(dict.fromkeys(variants))
+
+
 def add_header_with_pagenum(doc, last_name):
     """'LastName N' flush right in the header, N = live PAGE field (MLA 9th 1.5).
     The field carries a cached '1' so it shows correctly even before Word
@@ -348,23 +387,44 @@ def validate_inputs(name, title):
 _MLA_DATE_RE = re.compile(r"^\d{1,2}\s+[A-Za-z]{3,}\.?\s+\d{4}$")
 
 
-def date_warning(date_str):
+def date_warning(date_str, format_id="mla"):
     """Return a hint if the date is not in MLA day-month-year form, else None."""
-    if date_str and not _MLA_DATE_RE.match(date_str.strip()):
+    if format_id == "mla" and date_str and not _MLA_DATE_RE.match(date_str.strip()):
         return f"Tip: MLA date format is day month year, e.g. '{today_mla()}'."
     return None
 
 
-def generate_filename(name, last_name_override=None):
+def generate_filename(name, last_name_override=None, *, format_id="mla", custom_profile=None):
     """Auto-generate filename: LastName_MLA_Essay.docx"""
+    profile = resolve_profile(format_id, custom_profile)
     ln = extract_last_name(name, last_name_override)
-    safe = re.sub(r'[\\/*?:"<>|\s]+', "_", ln).strip("_") or "MLA"
-    return f"{safe}_MLA_Essay.docx"
+    safe = re.sub(r'[\\/*?:"<>|\s\x00-\x1f\x7f]+', "_", ln).strip("_.") or "Paper"
+    while len(safe.encode("utf-8")) > 150:
+        safe = safe[:-1]
+    style = {"mla": "MLA", "apa": "APA", "custom": "Custom"}[profile["format_id"]]
+    return f"{safe}_{style}_Essay.docx"
 
 
-def format_summary(name, last_name_override=None):
+def format_summary(name, last_name_override=None, *, format_id="mla", custom_profile=None):
     """Human-readable list of the MLA specs that will be applied."""
+    profile = resolve_profile(format_id, custom_profile)
     ln = extract_last_name(name, last_name_override)
+    if format_id != "mla":
+        headers = {"page": "Page number only (upper right)", "none": "None",
+                   "surname_page": f"{ln} 1 (upper right)"}
+        return [
+            f"Format: {profile['label']}",
+            f"Paper: {profile['paper_size']}",
+            f"Font: {profile['font_name']} {profile['font_size']:g} pt",
+            f"Margins: {profile['margin_cm']:g} cm (all sides)",
+            f"Line spacing: {profile['line_spacing']:g}; 0 pt before/after",
+            f"First-line indent: {profile['first_line_cm']:g} cm; {profile['alignment']} alignment",
+            f"Header: {headers[profile['header']]}",
+            "Separate title page" if profile["title_page"] else "First-page information block",
+            f"{profile['references_title']}: new page, hanging indent 0.5 in; "
+            + ("alphabetical order" if profile["sort_references"] else "original order"),
+            "Reference wording and in-text citations are kept as supplied.",
+        ]
     return [
         f"Header: {ln} 1 (upper right, 0.5 in from top)",
         "Paper: 8.5 x 11 in (Letter)",
@@ -431,10 +491,17 @@ def _save_document(doc, output):
 
 def create_blank_template(output, name="Your Name", instructor="Instructor Name",
                           course="Course Number", date_str="",
-                          title="Title of Your Paper", last_name_override=None):
+                          title="Title of Your Paper", last_name_override=None, *,
+                          format_id="mla", custom_profile=None, affiliation=""):
     """Write a blank MLA template. `output` is a path or a binary stream."""
-    doc = _new_mla_document(name, instructor, course, date_str, title, last_name_override)
-    add_body_paragraph(doc, "[Start writing your essay here.]")
+    profile = resolve_profile(format_id, custom_profile)
+    if format_id == "mla":
+        doc = _new_mla_document(name, instructor, course, date_str, title, last_name_override)
+        add_body_paragraph(doc, "[Start writing your essay here.]")
+    else:
+        doc = _new_profile_document(profile, name, instructor, course, date_str, title,
+                                    last_name_override, affiliation)
+        _add_profile_paragraph(doc, [_seg("[Start writing your essay here.]")], profile)
     _save_document(doc, output)
 
 
@@ -479,7 +546,11 @@ def _extract_paragraphs(input_path, txt_paragraph_mode="blank_line",
         paras = [_normalize_segments(_docx_paragraph_segments(p)) for p in src.paragraphs]
         return [p for p in paras if p]
 
-    # .txt / .md  - try UTF-8 first, fall back to common Windows/Chinese encodings
+    return _text_paragraphs(_read_text_draft(input_path), txt_paragraph_mode, markdown_emphasis)
+
+
+def _read_text_draft(input_path):
+    """Try UTF-8 first, then common Windows and Chinese draft encodings."""
     with open(input_path, "rb") as source:
         raw = source.read()
     for enc in ("utf-8-sig", "utf-16", "gb18030", "cp1252"):
@@ -492,8 +563,10 @@ def _extract_paragraphs(input_path, txt_paragraph_mode="blank_line",
             continue
     else:
         text = raw.decode("utf-8", errors="replace")
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
+
+def _text_paragraphs(text, txt_paragraph_mode, markdown_emphasis):
     if txt_paragraph_mode == "line_by_line":
         chunks = [line for line in text.split("\n") if line.strip()]
     else:
@@ -549,11 +622,19 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
                          enable_heading_detection=False,
                          enable_block_quote=False,
                          markdown_emphasis=True,
-                         strip_existing_heading=True):
+                         strip_existing_heading=True, *, format_id="mla",
+                         custom_profile=None, affiliation=""):
     """Convert a draft (.docx/.txt/.md) into an MLA-formatted .docx.
 
     Returns a stats dict: {"body": n, "works_cited": n, "removed_heading_lines": n}.
     """
+    profile = resolve_profile(format_id, custom_profile)
+    if format_id != "mla":
+        return _convert_profile_draft(
+            input_path, output, name, instructor, course, date_str, title,
+            last_name_override, txt_paragraph_mode, enable_heading_detection,
+            enable_block_quote, markdown_emphasis, strip_existing_heading,
+            profile, affiliation)
     ext = os.path.splitext(input_path)[1].lower()
     if ext not in SUPPORTED_EXTS:
         raise ValueError(f"Unsupported file type '{ext}'. Use .docx, .txt or .md.")
@@ -567,6 +648,13 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
     if strip_existing_heading:
         removed = _strip_existing_heading(paragraphs, name, instructor, course,
                                           date_str, title, last_name)
+        if not removed:
+            blocks = [(segments, 0) for segments in paragraphs]
+            removed = _strip_profile_front_matter(
+                blocks, profile, name, instructor, course, date_str, title,
+                affiliation, last_name)
+            if removed:
+                paragraphs = [segments for segments, _level in blocks]
 
     doc = _new_mla_document(name, instructor, course, date_str, title, last_name_override)
 
@@ -614,12 +702,314 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
 
 
 # ======================================================================
+# APA student papers and custom course layouts
+# ======================================================================
+
+def _profile_spacing(paragraph, profile):
+    pf = paragraph.paragraph_format
+    pf.line_spacing = profile["line_spacing"]
+    pf.space_before = pf.space_after = Pt(0)
+    return pf
+
+
+def _add_profile_header(doc, profile, name, last_name_override):
+    if profile["header"] == "none":
+        return
+    paragraph = doc.sections[0].header.paragraphs[0]
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    _profile_spacing(paragraph, profile)
+    if profile["header"] == "surname_page":
+        paragraph.add_run(extract_last_name(name, last_name_override) + " ")
+    field = OxmlElement("w:fldSimple")
+    field.set(qn("w:instr"), " PAGE ")
+    run = OxmlElement("w:r")
+    text = OxmlElement("w:t")
+    text.text = "1"
+    run.append(text)
+    field.append(run)
+    paragraph._p.append(field)
+    for element in paragraph._p.iter(qn("w:r")):
+        _style_run(Run(element, paragraph), profile["font_name"], profile["font_size"])
+
+
+def _configure_profile_styles(doc, profile):
+    set_default_font(doc, profile["font_name"], profile["font_size"])
+    normal = doc.styles["Normal"].paragraph_format
+    normal.line_spacing = profile["line_spacing"]
+    normal.space_before = normal.space_after = Pt(0)
+    for level in (1, 2, 3):
+        style = doc.styles[f"Heading {level}"]
+        style.font.name = profile["font_name"]
+        style.font.size = Pt(profile["font_size"])
+        style.font.color.rgb = RGBColor(0, 0, 0)
+        style.font.bold = True
+        style.font.italic = level == 3 and profile["format_id"] == "apa"
+        _force_rfonts(style.element.get_or_add_rPr(), profile["font_name"])
+        pf = style.paragraph_format
+        pf.line_spacing = profile["line_spacing"]
+        pf.space_before = pf.space_after = Pt(0)
+        pf.first_line_indent = pf.left_indent = Inches(0)
+        pf.keep_with_next = True
+        pf.alignment = (WD_ALIGN_PARAGRAPH.CENTER
+                        if level == 1 and profile["format_id"] == "apa"
+                        else WD_ALIGN_PARAGRAPH.LEFT)
+
+
+def _add_profile_paragraph(doc, segments, profile, *, role="body", heading_level=0):
+    paragraph = doc.add_paragraph(style=f"Heading {heading_level}" if heading_level else None)
+    _add_segments(paragraph, segments, force_bold=bool(heading_level) or role == "title")
+    for run in paragraph.runs:
+        _style_run(run, profile["font_name"], profile["font_size"])
+        run.font.color.rgb = RGBColor(0, 0, 0)
+        if heading_level == 3 and profile["format_id"] == "apa":
+            run.italic = True
+    pf = _profile_spacing(paragraph, profile)
+    pf.left_indent = pf.right_indent = pf.first_line_indent = Inches(0)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    if role in ("title", "reference_title"):
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pf.keep_with_next = True
+        if role == "reference_title" and profile["format_id"] == "apa":
+            for run in paragraph.runs:
+                run.bold = True
+    elif role == "reference":
+        pf.left_indent = Inches(0.5)
+        pf.first_line_indent = Inches(-0.5)
+    elif role == "block":
+        pf.left_indent = Inches(0.5)
+    elif heading_level:
+        if heading_level == 1 and profile["format_id"] == "apa":
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pf.keep_with_next = True
+    elif role == "body":
+        pf.first_line_indent = Cm(profile["first_line_cm"])
+        if profile["alignment"] == "justify":
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    return paragraph
+
+
+def _new_profile_document(profile, name, instructor, course, date_str, title,
+                          last_name_override, affiliation):
+    doc = Document()
+    section = doc.sections[0]
+    if profile["paper_size"] == "A4":
+        section.page_width, section.page_height = Cm(21), Cm(29.7)
+    else:
+        section.page_width, section.page_height = Inches(8.5), Inches(11)
+    section.top_margin = section.bottom_margin = Cm(profile["margin_cm"])
+    section.left_margin = section.right_margin = Cm(profile["margin_cm"])
+    # Keep a header inside even a narrow custom margin.
+    section.header_distance = section.footer_distance = min(Inches(0.5), Cm(profile["margin_cm"] / 2))
+    _configure_profile_styles(doc, profile)
+    _add_profile_header(doc, profile, name, last_name_override)
+    date_text = date_str.strip() if date_str and date_str.strip() else today_for_format(profile["format_id"])
+    title_segments = _parse_markdown_emphasis(title)
+    if profile["title_page"]:
+        cover_title = _add_profile_paragraph(doc, title_segments, profile, role="title")
+        cover_title.paragraph_format.space_before = Pt(profile["font_size"] * profile["line_spacing"] * 3)
+        # APA student title pages have one extra double-spaced line before the byline.
+        _add_profile_paragraph(doc, [], profile, role="metadata")
+        for value in (name, affiliation, course, instructor, date_text):
+            if value and value.strip():
+                paragraph = _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        body_title = _add_profile_paragraph(doc, title_segments, profile, role="title")
+        body_title.paragraph_format.page_break_before = True
+    else:
+        for value in (name, affiliation, instructor, course, date_text):
+            if value and value.strip():
+                _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
+        _add_profile_paragraph(doc, title_segments, profile, role="title")
+    return doc
+
+
+def _paragraph_heading_level(paragraph):
+    style = paragraph.style
+    seen = set()
+    while style is not None and style.style_id not in seen:
+        seen.add(style.style_id)
+        match = re.fullmatch(r"Heading\s*([1-9])", style.style_id, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+        style = style.base_style
+    return 0
+
+
+def _profile_blocks(input_path, txt_paragraph_mode, markdown_emphasis):
+    """Keep explicit heading levels alongside the existing rich text model."""
+    if os.path.splitext(input_path)[1].lower() == ".docx":
+        source = Document(input_path)
+        blocks = []
+        for paragraph in source.paragraphs:
+            segments = _normalize_segments(_docx_paragraph_segments(paragraph))
+            if segments:
+                blocks.append((segments, _paragraph_heading_level(paragraph)))
+        unsupported = ("w:tbl", "w:drawing", "w:pict", "w:footnoteReference",
+                       "w:endnoteReference", "m:oMath")
+        unsupported_tags = {qn(tag) for tag in unsupported}
+        omitted = sum(1 for element in source.element.iter() if element.tag in unsupported_tags)
+        return blocks, omitted
+    # A Markdown heading ends at the newline even when no empty line follows it.
+    text = _read_text_draft(input_path)
+    text = re.sub(r"(?m)^(#{1,6})[ \t]+([^\n]+)$", r"\n\n\1 \2\n\n", text)
+    paragraphs = _text_paragraphs(text, txt_paragraph_mode, markdown_emphasis)
+    blocks = []
+    for segments in paragraphs:
+        match = re.match(r"^(#{1,6})\s+", _plain(segments))
+        level = len(match.group(1)) if match else 0
+        if match:
+            segments = _drop_segment_prefix(segments, len(match.group(0)))
+        blocks.append((segments, level))
+    return blocks, 0
+
+
+def _drop_segment_prefix(segments, count):
+    out = []
+    for text, *style in segments:
+        if count >= len(text):
+            count -= len(text)
+            continue
+        out.append((text[count:], *style))
+        count = 0
+    return _normalize_segments(out)
+
+
+def _strip_profile_front_matter(blocks, profile, name, instructor, course, date_str,
+                                 title, affiliation, last_name):
+    """Only remove complete matching metadata blocks; never guess from a name."""
+    def key(text):
+        return " ".join(text.split()).casefold()
+
+    if not blocks:
+        return 0
+    values = [key(_plain(segments)) for segments, _ in blocks]
+    title_text = key(_plain(_parse_markdown_emphasis(title)))
+    date_text = date_str.strip() if date_str and date_str.strip() else today_for_format(profile["format_id"])
+    # Match both layouts so switching a course template's cover setting does
+    # not copy the previous cover into the new body. All supplied metadata must
+    # still match, including an equivalent date; a title alone is never enough.
+    for previous_date in _date_variants(date_text):
+        for cover, fields in (
+            (True, (name, affiliation, course, instructor, previous_date)),
+            (False, (name, affiliation, instructor, course, previous_date)),
+        ):
+            metadata = [key(value) for value in fields if value and value.strip()]
+            expected = ([title_text] if cover else []) + metadata
+            if len(metadata) < 2 or values[:len(expected)] != expected:
+                continue
+            count = len(expected)
+            if len(values) > count and values[count] == title_text:
+                count += 1
+            del blocks[:count]
+            return count
+    # Support an MLA draft being laid out as APA without retaining the MLA block.
+    for previous_date in _date_variants(date_text):
+        paragraphs = [segments for segments, _ in blocks]
+        count = _strip_existing_heading(paragraphs, name, instructor, course, previous_date, title, last_name)
+        if count:
+            del blocks[:count]
+            return count
+    return 0
+
+
+def _profile_reference_title(text, profile):
+    """Recognize a standalone reference-section label, never rewrite entries."""
+    if _WORKS_CITED_RE.match(text):
+        return True
+    return _canon(text) == _canon(profile["references_title"])
+
+
+def _reference_sort_key(segments):
+    # APA author surnames include The/A/An; do not use MLA's article stripping.
+    return re.sub(r"^[\W_]+", "", _plain(segments)).casefold()
+
+
+def _convert_profile_draft(input_path, output, name, instructor, course, date_str, title,
+                            last_name_override, txt_paragraph_mode, enable_heading_detection,
+                            enable_block_quote, markdown_emphasis, strip_existing_heading,
+                            profile, affiliation):
+    ext = os.path.splitext(input_path)[1].lower()
+    if ext not in SUPPORTED_EXTS:
+        raise ValueError(f"Unsupported file type '{ext}'. Use .docx, .txt or .md.")
+    if txt_paragraph_mode not in ("blank_line", "line_by_line"):
+        raise ValueError("Choose blank_line or line_by_line for plain text.")
+    _ensure_distinct_output(input_path, output)
+    blocks, omitted = _profile_blocks(input_path, txt_paragraph_mode, markdown_emphasis)
+    removed = 0
+    if strip_existing_heading:
+        removed = _strip_profile_front_matter(
+            blocks, profile, name, instructor, course, date_str, title, affiliation,
+            extract_last_name(name, last_name_override))
+    doc = _new_profile_document(profile, name, instructor, course, date_str, title,
+                                last_name_override, affiliation)
+    references, body_blocks, trailing_blocks = [], [], []
+    found_references, after_references = False, False
+    for segments, level in blocks:
+        plain = _plain(segments).strip()
+        if not found_references and _profile_reference_title(plain, profile):
+            found_references = True
+            continue
+        if found_references and not after_references:
+            # An explicit section heading ends References, so an appendix is
+            # never alphabetized together with the bibliography entries.
+            if level:
+                after_references = True
+            else:
+                references.append(segments)
+                continue
+        (trailing_blocks if after_references else body_blocks).append((segments, level))
+
+    body_count, unsupported_headings = 0, 0
+
+    def add_body_blocks(items, new_page=False):
+        nonlocal body_count, unsupported_headings
+        first = True
+        for segments, level in items:
+            plain = _plain(segments).strip()
+            unsupported_level = level > 3
+            if unsupported_level:
+                unsupported_headings += 1
+                level = 0
+            role = "body"
+            if enable_block_quote and plain.startswith(">"):
+                segments = _drop_segment_prefix(segments, len(plain) - len(plain.lstrip(">")))
+                role = "block"
+                level = 0
+            elif not level and not unsupported_level and enable_heading_detection and is_likely_heading(plain):
+                level = 1
+            if not segments:
+                continue
+            paragraph = _add_profile_paragraph(doc, segments, profile, role=role, heading_level=level)
+            if first and new_page:
+                paragraph.paragraph_format.page_break_before = True
+            first = False
+            body_count += 1
+
+    add_body_blocks(body_blocks)
+    if found_references:
+        label = _add_profile_paragraph(doc, [_seg(profile["references_title"])], profile, role="reference_title")
+        label.paragraph_format.page_break_before = True
+        entries = sorted(references, key=_reference_sort_key) if profile["sort_references"] else references
+        for entry in entries:
+            _add_profile_paragraph(doc, entry, profile, role="reference")
+    add_body_blocks(trailing_blocks, new_page=True)
+    _save_document(doc, output)
+    return {"body": body_count, "works_cited": len(references), "removed_heading_lines": removed,
+            "omitted_elements": omitted, "unsupported_headings": unsupported_headings}
+
+
+# Format-neutral name for new clients; the old entry point remains compatible.
+convert_draft = convert_draft_to_mla
+
+
+# ======================================================================
 # CLI
 # ======================================================================
 
 def _cli(argv=None):
     import argparse
-    ap = argparse.ArgumentParser(description="Format an essay draft in MLA 9th edition style.")
+    import json
+    ap = argparse.ArgumentParser(description="Format a draft in MLA 9, APA 7 student, or a course template.")
     ap.add_argument("input", nargs="?", help=".docx/.txt/.md draft (omit with --blank)")
     ap.add_argument("-o", "--output", help="output .docx (default: LastName_MLA_Essay.docx)")
     ap.add_argument("--blank", action="store_true", help="create a blank template instead")
@@ -629,14 +1019,32 @@ def _cli(argv=None):
     ap.add_argument("--course", default="")
     ap.add_argument("--date", default="", help="default: today")
     ap.add_argument("--last-name", default=None, help="header surname override")
+    ap.add_argument("--format", dest="format_id", choices=FORMAT_IDS, default="mla")
+    ap.add_argument("--affiliation", default="", help="department and university for an APA student title page")
+    ap.add_argument("--profile", help="custom course-template JSON file (use with --format custom)")
     ap.add_argument("--line-by-line", action="store_true", help="txt: every line is a paragraph")
     ap.add_argument("--headings", action="store_true", help="auto-detect headings")
     ap.add_argument("--block-quotes", action="store_true", help="'>' lines become block quotes")
     a = ap.parse_args(argv)
 
-    out = a.output or generate_filename(a.name, a.last_name)
+    custom = None
+    if a.profile:
+        if a.format_id != "custom":
+            ap.error("--profile requires --format custom")
+        try:
+            with open(a.profile, encoding="utf-8-sig") as source:
+                custom = json.load(source)
+        except (OSError, ValueError) as error:
+            ap.error(f"Cannot read course template: {error}")
+    layout = {"format_id": a.format_id, "custom_profile": custom}
+    try:
+        resolve_profile(**layout)
+    except ValueError as error:
+        ap.error(str(error))
+    out = a.output or generate_filename(a.name, a.last_name, **layout)
     if a.blank:
-        create_blank_template(out, a.name, a.instructor, a.course, a.date, a.title, a.last_name)
+        create_blank_template(out, a.name, a.instructor, a.course, a.date, a.title, a.last_name,
+                              affiliation=a.affiliation, **layout)
         print(f"Blank template -> {out}")
         return 0
     if not a.input:
@@ -644,8 +1052,9 @@ def _cli(argv=None):
     stats = convert_draft_to_mla(a.input, out, a.name, a.instructor, a.course, a.date,
                                  a.title, a.last_name,
                                  "line_by_line" if a.line_by_line else "blank_line",
-                                 a.headings, a.block_quotes)
-    print(f"{stats['body']} body paragraphs, {stats['works_cited']} Works Cited entries -> {out}")
+                                 a.headings, a.block_quotes,
+                                 affiliation=a.affiliation, **layout)
+    print(f"{stats['body']} body paragraphs, {stats['works_cited']} reference entries -> {out}")
     return 0
 
 

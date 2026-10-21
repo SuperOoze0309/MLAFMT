@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.4.0 开发版（未发布） / Unreleased
+
+源码开发版；GitHub 正式下载仍为 v2.3.0。Source development version; published GitHub downloads are still v2.3.0.
+
+### 中文
+
+- 新增 APA 7 学生论文版式：独立标题页、学校/院系信息、仅页码页眉、正文重复标题、新页 References 和悬挂缩进。
+- APA / 自定义格式识别 DOCX Heading 1–3 和 Markdown `#`–`###`，启发式标题识别仍为可选项；参考文献按完整条目的起始文字排序，引用内容保持原文。
+- 新增最多 20 个命名课程模板，支持纸张、字体、字号、行距、页边距、首行缩进、对齐、页眉、独立标题页及参考文献设置。
+- 桌面与网页支持 JSON 模板导入/导出；Android 通过文本框复制/粘贴同一份 JSON，各端分别在本机保存设置。
+- 桌面、网页、离线 Android 和命令行共用 MLA / APA / 自定义排版核心，摘要与预览随所选格式更新。
+- APA / 自定义转换检测到部分复杂元素或超出 1–3 级的标题时提示核对。图片、表格、脚注、公式等内容仍不会保留；当前处理范围见[格式指南](docs/FORMATS.md)。
+- 新增[格式与模板说明](docs/FORMATS.md)及 [A4 课程报告示例](examples/course-report-a4.json)，README 区分开发版与已发布下载。
+
+### English
+
+- Add APA 7 student layout with a separate title page, affiliation, page-only header, repeated body title and a new References page with hanging indents.
+- Recognize DOCX Heading 1–3 and Markdown `#`–`###` in APA/custom formats; heuristic detection remains opt-in. Sort complete reference paragraphs by their initial text and leave citation text unchanged.
+- Add up to 20 named course templates for paper, font, size, spacing, margins, indentation, alignment, header, title page and reference settings.
+- Import/export template JSON on desktop and web; copy/paste the same JSON through an Android text editor. Each interface saves its settings locally.
+- Share MLA, APA and custom formatting across desktop, web, offline Android and CLI, with summaries and previews reflecting the selected format.
+- Warn about some detected complex elements and headings above level 3 in APA/custom conversion. Images, tables, footnotes and formulas are still omitted; see the [format guide](docs/FORMATS.md) for the current scope.
+- Add a [format and template guide](docs/FORMATS.md) and an [A4 course report example](examples/course-report-a4.json); distinguish development features from published downloads in the README.
+
 ## v2.3.0 — 2026-10-20
 
 ### 中文

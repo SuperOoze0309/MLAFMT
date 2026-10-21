@@ -126,7 +126,7 @@ def main():
     if not release:
         raise SystemExit(f"CHANGELOG.md has no entry for v{version}.")
     (output / "release-notes.md").write_text(release.group(0).strip() + "\n", encoding="utf-8")
-    source_files = ["mla_gui.py", "mla_formatter.py", "requirements-build.txt",
+    source_files = ["mla_gui.py", "mla_formatter.py", "format_profiles.py", "requirements-build.txt",
                     "scripts/build_windows.ps1", "scripts/prepare_windows_build.py",
                     "scripts/hooks/hook-tkinterdnd2.py"]
     git_status = git_output(root, "status", "--porcelain", "--untracked-files=normal")
