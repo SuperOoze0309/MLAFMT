@@ -1,5 +1,9 @@
 # MLAFMT 苹果设备使用说明 / Apple Devices
 
+v2.4.0 开发版的应用名为 **FormCapy**，Mac 应用包为 `FormCapy.app`；项目仍为 MLAFMT。下文 MLAFMT 名称也用于已发布的 v2.3.0 安装包。
+
+The v2.4.0 development app is **FormCapy**, with a `FormCapy.app` Mac bundle; the project remains MLAFMT. References to MLAFMT below also apply to the published v2.3.0 packages.
+
 适用于 macOS 14 或更新版本的 Mac，以及同一 Wi-Fi 下 iPhone/iPad 的本地网页预览。
 
 For Macs running macOS 14 or later, plus local web preview on iPhone/iPad over the same Wi-Fi.

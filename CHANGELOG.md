@@ -7,6 +7,7 @@
 ### 中文
 
 - 应用显示名改为 FormCapy，新增抱纸水豚吉祥物，统一网页、桌面和 Android 标识及图标；项目名保持 MLAFMT，网站域名规划为 `formcapy.com`。见[形象说明](docs/BRANDING.md)。
+- 处理时显示像素水豚沿蓝线跑动的进度动画；未知耗时阶段不显示百分比，完成或失败后收起。网页在减少动态效果模式下保留静态状态。
 - 新增 APA 7 学生论文版式：独立标题页、学校/院系信息、仅页码页眉、正文重复标题、新页 References 和悬挂缩进。
 - APA / 自定义格式识别 DOCX Heading 1–3 和 Markdown `#`–`###`，启发式标题识别仍为可选项；参考文献按完整条目的起始文字排序，引用内容保持原文。
 - 新增最多 20 个命名课程模板，支持纸张、字体、字号、行距、页边距、首行缩进、对齐、页眉、独立标题页及参考文献设置。
@@ -25,6 +26,7 @@
 ### English
 
 - Rename the application's display name to FormCapy and add a paper-holding capybara mascot across web, desktop and Android branding and icons. The project remains MLAFMT; the planned website domain is `formcapy.com`. See the [branding notes](docs/BRANDING.md).
+- Show a pixel capybara running along a blue line during processing. Unknown-duration work has no percentage; the animation closes on success or failure. Reduced-motion web settings retain a static status display.
 - Add APA 7 student layout with a separate title page, affiliation, page-only header, repeated body title and a new References page with hanging indents.
 - Recognize DOCX Heading 1–3 and Markdown `#`–`###` in APA/custom formats; heuristic detection remains opt-in. Sort complete reference paragraphs by their initial text and leave citation text unchanged.
 - Add up to 20 named course templates for paper, font, size, spacing, margins, indentation, alignment, header, title page and reference settings.

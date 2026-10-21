@@ -106,9 +106,14 @@ def main():
         # rather than relying only on the optional companion ZIP.
         from PyInstaller.archive.readers import CArchiveReader
         executable = CArchiveReader(release / assets[0])
+        embedded_names = {name.replace("\\", "/"): name for name in executable.toc}
         for name, expected in info["license_files_sha256"].items():
             if name not in executable.toc or hashlib.sha256(executable.extract(name)).hexdigest() != expected:
                 raise SystemExit(f"Standalone EXE is missing its license artifact: {name}")
+        for entry in json.loads(archive.read("license-manifest.json"))["texts"]:
+            name = embedded_names.get(entry["file"])
+            if name is None or hashlib.sha256(executable.extract(name)).hexdigest() != entry["sha256"]:
+                raise SystemExit(f"Standalone EXE is missing its original license text: {entry['file']}")
         kit = info["license_audit"].get("source_kit")
         if kit and ("MLAFMT-SOURCE-KIT.zip" not in executable.toc
                     or hashlib.sha256(executable.extract("MLAFMT-SOURCE-KIT.zip")).hexdigest() != kit["sha256"]):

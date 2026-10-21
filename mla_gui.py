@@ -260,7 +260,7 @@ T["zh"].update({
     "disclaimer": "保留斜体、粗体和下划线。图片、表格、脚注等可能丢失，提交前请检查。",
     "status_ready": "就绪 · 先填写姓名与标题，再选择草稿。",
     "done": "已保存 {f} · {b} 段正文 · {w} 条参考文献{r}",
-    "done_blank": "空白模板已保存：{f}", "working": "正在排版，请稍候…",
+    "done_blank": "空白模板已保存：{f}", "working": "正在生成文档…",
     "done_removed": "已保存 {f} · {b} 段正文 · {w} 条参考文献 · 去重 {r} 行抬头",
     "open_result": "打开文档", "view_folder": "打开文件夹", "menu_language": "语言 / Language",
     "reveal_result": "在 Finder 中显示", "empty_file": "这个文件是空的，请选择有内容的草稿。",
@@ -287,7 +287,7 @@ T["en"].update({
     "disclaimer": "Italic, bold and underline are kept. Images, tables and footnotes may be lost. Always proofread.",
     "status_ready": "Ready · add your name and title, then choose a draft.",
     "done": "Saved {f} · {b} paragraphs · {w} sources{r}",
-    "done_blank": "Blank template saved: {f}", "working": "Formatting your paper…",
+    "done_blank": "Blank template saved: {f}", "working": "Generating document…",
     "done_removed": "Saved {f} · {b} paragraphs · {w} sources · removed {r} heading lines",
     "open_result": "Open document", "view_folder": "Show in folder", "menu_language": "Language / 语言",
     "reveal_result": "Show in Finder", "empty_file": "This file is empty. Choose a draft with text.",
@@ -548,6 +548,8 @@ class MLAGui:
         self._preservation_source = None
         self._preserve_count_labels = []
         self._busy = False
+        self._progress_after = None
+        self._progress_tick = 0
         self._choosing_output = False
         self._closing = False
         self._pending_file = None
@@ -645,6 +647,7 @@ class MLAGui:
         return inner
 
     def _build(self):
+        self._stop_progress_animation()
         for widget in self.root.winfo_children():
             widget.destroy()
         self.root.title(f"FormCapy · {self.t('app')} · v{__version__}")
@@ -750,6 +753,9 @@ class MLAGui:
         self._blank_btn.pack(side=tk.LEFT)
         self._advanced_btn = ttk.Button(actions, text=self.t("advanced"), style="Ghost.TButton", command=self._open_advanced)
         self._advanced_btn.pack(side=tk.RIGHT)
+        self._progress_canvas = tk.Canvas(left, background=BG, height=40, highlightthickness=0)
+        self._progress_canvas.bind("<Configure>", lambda _event: self._draw_processing_progress())
+        self._progress_canvas.bind("<Destroy>", lambda _event: self._stop_progress_animation())
         self._status = ttk.Label(left, foreground=MUTED, wraplength=390, font=(self.font[0], 9))
         self._status.pack(fill=tk.X, pady=(12, 0))
         self._result_row = ttk.Frame(left)
@@ -773,6 +779,7 @@ class MLAGui:
         ttk.Label(main, text=self.t("local"), foreground=MUTED, font=(self.font[0], 9)).pack(anchor=tk.W, pady=(12, 0))
         self._render_status()
         self._draw_preview()
+        self._set_busy(self._busy)
 
     def _custom_profile(self):
         for profile in self.custom_profiles:
@@ -1676,8 +1683,72 @@ class MLAGui:
         self._set_status(key, "err", **kw)
         messagebox.showerror(self.t("app"), self.t(key, **kw), parent=self.root)
 
+    def _stop_progress_animation(self):
+        pending = getattr(self, "_progress_after", None)
+        self._progress_after = None
+        if pending is not None:
+            try:
+                self.root.after_cancel(pending)
+            except tk.TclError:
+                pass
+
+    def _draw_processing_progress(self):
+        canvas = getattr(self, "_progress_canvas", None)
+        if canvas is None:
+            return
+        try:
+            if not canvas.winfo_exists():
+                return
+            width = max(48, canvas.winfo_width())
+        except tk.TclError:
+            return
+        tick = self._progress_tick % 64
+        forward = tick < 32
+        position = tick / 32 if forward else (64 - tick) / 32
+        origin = round(max(0, width - 48) * position)
+        canvas.delete("processing")
+        canvas.create_line(0, 34, width, 34, fill="#4d8cda", width=2, tags="processing")
+        # A repeating position and four leg poses indicate activity, not completion.
+        legs = (
+            ((5, 11, 2, 4), (4, 15, 3, 1), (17, 11, 2, 4), (17, 15, 3, 1)),
+            ((6, 11, 2, 3), (7, 14, 3, 1), (16, 11, 2, 3), (15, 14, 3, 1)),
+            ((5, 11, 2, 4), (5, 15, 3, 1), (17, 11, 2, 4), (16, 15, 3, 1)),
+            ((4, 11, 2, 3), (3, 14, 3, 1), (18, 11, 2, 3), (19, 14, 3, 1)),
+        )[(tick // 2) % 4]
+        groups = (
+            ("#754d33", legs),
+            ("#9b6846", ((3, 5, 14, 7), (2, 7, 2, 4), (5, 4, 9, 2), (14, 4, 6, 7), (14, 2, 3, 3))),
+            ("#ba8b5c", ((17, 7, 6, 4), (17, 10, 5, 2), (5, 5, 8, 1))),
+            ("#754d33", ((4, 10, 13, 2), (15, 3, 1, 1))),
+            ("#302820", ((18, 5, 1, 1), (22, 7, 1, 2))),
+        )
+        for color, rectangles in groups:
+            for x, y, rect_width, rect_height in rectangles:
+                left = x if forward else 24 - x - rect_width
+                canvas.create_rectangle(origin + left * 2, 2 + y * 2,
+                                        origin + (left + rect_width) * 2, 2 + (y + rect_height) * 2,
+                                        fill=color, outline="", tags="processing")
+
+    def _animate_progress(self):
+        self._progress_after = None
+        if self._closing or not self._busy or not self._progress_canvas.winfo_exists():
+            return
+        self._draw_processing_progress()
+        self._progress_tick = (self._progress_tick + 1) % 64
+        self._progress_after = self.root.after(70, self._animate_progress)
+
     def _set_busy(self, busy):
+        was_busy = self._busy
         self._busy = busy
+        if busy:
+            if not was_busy:
+                self._progress_tick = 0
+            self._progress_canvas.pack(fill=tk.X, pady=(10, 0), before=self._status)
+            if self._progress_after is None:
+                self._animate_progress()
+        else:
+            self._stop_progress_animation()
+            self._progress_canvas.pack_forget()
         self._refresh_preservation_controls()
         for button in (self._btn, self._blank_btn, self._advanced_btn, self._remove_btn, self._format_combo,
                        self._profile_combo, self._edit_profile_btn, *self._language_buttons):
@@ -1767,6 +1838,7 @@ class MLAGui:
         if self._closing:
             return
         self._closing = True
+        self._stop_progress_animation()
         self._save_prefs()
         self.root.destroy()
 

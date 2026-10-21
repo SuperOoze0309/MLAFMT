@@ -465,6 +465,28 @@
           transform: rotate(360deg);
         }
       }
+      .processing-progress { margin-top: 12px; }
+      .processing-progress[hidden] { display: none; }
+      .processing-label { margin: 0; color: var(--muted); font-size: 12px; }
+      .capy-track { position: relative; height: 40px; overflow: hidden; }
+      .capy-track::before {
+        content: ""; position: absolute; bottom: 4px; left: 0; right: 0;
+        height: 2px; border-radius: 2px; background: #4d8cda;
+      }
+      .capy-runner {
+        position: absolute; bottom: 4px; left: calc(50% - 24px); width: 48px; height: 32px;
+        animation: capy-travel 4.48s linear infinite;
+      }
+      .capy-direction { display: block; width: 100%; height: 100%; animation: capy-turn 4.48s steps(1, end) infinite; }
+      .capy-pixel { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+      .capy-legs { opacity: 0; animation: capy-steps 0.56s steps(1, end) infinite; }
+      .capy-legs-0 { opacity: 1; }
+      .capy-legs-1 { animation-delay: -0.42s; }
+      .capy-legs-2 { animation-delay: -0.28s; }
+      .capy-legs-3 { animation-delay: -0.14s; }
+      @keyframes capy-travel { 0%, 100% { left: 0; } 50% { left: calc(100% - 48px); } }
+      @keyframes capy-turn { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } }
+      @keyframes capy-steps { 0% { opacity: 1; } 25%, 100% { opacity: 0; } }
       .privacy {
         display: flex;
         align-items: flex-start;
@@ -1093,6 +1115,25 @@
                 </div>
               </div>
             </form>
+            <div class="processing-progress" id="processing-progress" hidden>
+              <p class="processing-label" id="processing-label">Generating document…</p>
+              <div class="capy-track" id="processing-track" role="progressbar" aria-labelledby="processing-label">
+                <span class="capy-runner" aria-hidden="true"><span class="capy-direction">
+                  <svg class="capy-pixel" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg">
+                    <g fill="#754d33">
+                      <g class="capy-legs capy-legs-0"><rect x="5" y="11" width="2" height="4"/><rect x="4" y="15" width="3" height="1"/><rect x="17" y="11" width="2" height="4"/><rect x="17" y="15" width="3" height="1"/></g>
+                      <g class="capy-legs capy-legs-1"><rect x="6" y="11" width="2" height="3"/><rect x="7" y="14" width="3" height="1"/><rect x="16" y="11" width="2" height="3"/><rect x="15" y="14" width="3" height="1"/></g>
+                      <g class="capy-legs capy-legs-2"><rect x="5" y="11" width="2" height="4"/><rect x="5" y="15" width="3" height="1"/><rect x="17" y="11" width="2" height="4"/><rect x="16" y="15" width="3" height="1"/></g>
+                      <g class="capy-legs capy-legs-3"><rect x="4" y="11" width="2" height="3"/><rect x="3" y="14" width="3" height="1"/><rect x="18" y="11" width="2" height="3"/><rect x="19" y="14" width="3" height="1"/></g>
+                    </g>
+                    <g fill="#9b6846"><rect x="3" y="5" width="14" height="7"/><rect x="2" y="7" width="2" height="4"/><rect x="5" y="4" width="9" height="2"/><rect x="14" y="4" width="6" height="7"/><rect x="14" y="2" width="3" height="3"/></g>
+                    <g fill="#ba8b5c"><rect x="17" y="7" width="6" height="4"/><rect x="17" y="10" width="5" height="2"/><rect x="5" y="5" width="8" height="1"/></g>
+                    <g fill="#754d33"><rect x="4" y="10" width="13" height="2"/><rect x="15" y="3" width="1" height="1"/></g>
+                    <g fill="#302820"><rect x="18" y="5" width="1" height="1"/><rect x="22" y="7" width="1" height="2"/></g>
+                  </svg>
+                </span></span>
+              </div>
+            </div>
             <div
               class="status"
               id="status"
@@ -1586,6 +1627,7 @@
       };
       Object.assign(T.zh, {
         mascot_alt: "FormCapy 水豚吉祥物",
+        progress_generating: "正在生成文档…", progress_processing: "正在处理…", progress_sharing: "正在等待分享操作…",
         tagline: "选择 MLA、APA 或课程模板，把草稿整理成可以继续编辑的 Word 文档。",
         format_label: "文档格式", format_mla: "MLA 9", format_apa: "APA 7 · 学生论文", format_custom: "自定义课程模板",
         format_note_mla: "MLA 第 9 版页面排版；已有引用内容保持原文。",
@@ -1646,6 +1688,7 @@
       });
       Object.assign(T.en, {
         mascot_alt: "FormCapy capybara mascot",
+        progress_generating: "Generating document…", progress_processing: "Processing…", progress_sharing: "Waiting for the share action…",
         tagline: "Choose MLA, APA or a course template. Turn your draft into an editable Word document.",
         format_label: "Paper format", format_mla: "MLA 9", format_apa: "APA 7 · Student paper", format_custom: "Custom course template",
         format_note_mla: "MLA 9 page layout. Existing citation text is kept as written.",
@@ -1728,6 +1771,7 @@
           : "en";
       let file = null,
         inProgress = false;
+      let processingMessage = null;
       let webResult = null,
         sharing = false;
       let nativeResultFormat = null,
@@ -1848,6 +1892,7 @@
           : paragraphItems.length ? t("preserve_count", preservedIds.size, paragraphItems.length)
           : preservedIds.size ? t("preserve_restored_count", preservedIds.size)
           : paragraphFingerprint ? t("preserve_empty") : t("preserve_unread");
+        renderProcessingProgress();
       }
       function renderParagraphs() {
         const fragment = document.createDocumentFragment();
@@ -2065,6 +2110,19 @@
         $("status").textContent = t(lastStatus.key, ...lastStatus.args);
         $("status").className =
           "status" + (lastStatus.tone ? " " + lastStatus.tone : "");
+      }
+      function renderProcessingProgress() {
+        const active = inProgress || sharing || paragraphLoading;
+        $("processing-progress").hidden = !active;
+        $("essay-form").setAttribute("aria-busy", String(active));
+        $("processing-track").setAttribute("aria-busy", String(active));
+        if (!active) return;
+        const key = inProgress
+          ? native && ["importing", "saving"].includes(processingMessage) ? processingMessage
+            : native && processingMessage !== "working" ? "progress_processing" : "progress_generating"
+          : sharing ? "progress_sharing" : "preserve_reading";
+        const text = t(key);
+        if ($("processing-label").textContent !== text) $("processing-label").textContent = text;
       }
       function setStatus(key, tone = "", ...args) {
         lastStatus = { key, args, tone };
@@ -2570,13 +2628,13 @@
         }
         return data;
       }
-      function busy(on) {
+      function busy(on, message = "working") {
         inProgress = on;
+        processingMessage = on ? message : null;
         for (const id of ["convert", "blank"]) $(id).disabled = on;
         if (native)
           for (const id of ["native-save", "native-open", "native-share", "remove-file"]) $(id).disabled = on;
-        $("essay-form").setAttribute("aria-busy", String(on));
-        if (on) setStatus("working", "working");
+        if (on) setStatus(native && ["importing", "saving"].includes(message) ? message : "working", "working");
         renderWebResult();
         renderParagraphControls();
       }
@@ -2859,7 +2917,7 @@
             file = nextFile;
             if (nextId !== previousId) resetPreservation();
             renderDrop();
-            busy(Boolean(message.busy));
+            busy(Boolean(message.busy), message.message ?? null);
             $("native-actions").hidden = !message.result;
             if (message.result) {
               nativeResultFormat = ["mla", "apa", "custom"].includes(message.result.format_id)
