@@ -705,6 +705,8 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
 # APA student papers and custom course layouts
 # ======================================================================
 
+_LITERAL_BLOCK = -1  # A fenced text block, exempt from heading/reference guesses.
+
 def _profile_spacing(paragraph, profile):
     pf = paragraph.paragraph_format
     pf.line_spacing = profile["line_spacing"]
@@ -849,17 +851,43 @@ def _profile_blocks(input_path, txt_paragraph_mode, markdown_emphasis):
         unsupported_tags = {qn(tag) for tag in unsupported}
         omitted = sum(1 for element in source.element.iter() if element.tag in unsupported_tags)
         return blocks, omitted
-    # A Markdown heading ends at the newline even when no empty line follows it.
-    text = _read_text_draft(input_path)
-    text = re.sub(r"(?m)^(#{1,6})[ \t]+([^\n]+)$", r"\n\n\1 \2\n\n", text)
-    paragraphs = _text_paragraphs(text, txt_paragraph_mode, markdown_emphasis)
     blocks = []
-    for segments in paragraphs:
-        match = re.match(r"^(#{1,6})\s+", _plain(segments))
-        level = len(match.group(1)) if match else 0
-        if match:
-            segments = _drop_segment_prefix(segments, len(match.group(0)))
-        blocks.append((segments, level))
+    regular_lines, literal_lines = [], []
+    fence = None
+    closing_fence = None
+
+    def flush_regular():
+        # A heading ends at the newline even without an empty line after it.
+        text = "\n".join(regular_lines)
+        text = re.sub(r"(?m)^(#{1,6})[ \t]+([^\n]+)$", r"\n\n\1 \2\n\n", text)
+        for segments in _text_paragraphs(text, txt_paragraph_mode, markdown_emphasis):
+            match = re.match(r"^(#{1,6})\s+", _plain(segments))
+            level = len(match.group(1)) if match else 0
+            if match:
+                segments = _drop_segment_prefix(segments, len(match.group(0)))
+            blocks.append((segments, level))
+        regular_lines.clear()
+
+    for line in _read_text_draft(input_path).split("\n"):
+        if fence is not None:
+            literal_lines.append(line)
+            if closing_fence.fullmatch(line):
+                blocks.append(([_seg("\n".join(literal_lines))], _LITERAL_BLOCK))
+                literal_lines.clear()
+                fence = None
+            continue
+        match = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if match and (match.group(1)[0] != "`" or "`" not in match.group(2)):
+            flush_regular()
+            fence = match.group(1)
+            closing_fence = re.compile(r" {0,3}" + re.escape(fence[0])
+                                       + "{" + str(len(fence)) + r",}[ \t]*")
+            literal_lines.append(line)
+        else:
+            regular_lines.append(line)
+    if literal_lines:
+        blocks.append(([_seg("\n".join(literal_lines))], _LITERAL_BLOCK))
+    flush_regular()
     return blocks, 0
 
 
@@ -946,13 +974,13 @@ def _convert_profile_draft(input_path, output, name, instructor, course, date_st
     found_references, after_references = False, False
     for segments, level in blocks:
         plain = _plain(segments).strip()
-        if not found_references and _profile_reference_title(plain, profile):
+        if level != _LITERAL_BLOCK and not found_references and _profile_reference_title(plain, profile):
             found_references = True
             continue
         if found_references and not after_references:
-            # An explicit section heading ends References, so an appendix is
-            # never alphabetized together with the bibliography entries.
-            if level:
+            # A section heading or literal block ends References, so appendix
+            # text is never alphabetized with the bibliography entries.
+            if level > 0 or level == _LITERAL_BLOCK:
                 after_references = True
             else:
                 references.append(segments)
@@ -966,16 +994,19 @@ def _convert_profile_draft(input_path, output, name, instructor, course, date_st
         first = True
         for segments, level in items:
             plain = _plain(segments).strip()
+            literal = level == _LITERAL_BLOCK
+            if literal:
+                level = 0
             unsupported_level = level > 3
             if unsupported_level:
                 unsupported_headings += 1
                 level = 0
-            role = "body"
-            if enable_block_quote and plain.startswith(">"):
+            role = "literal" if literal else "body"
+            if not literal and enable_block_quote and plain.startswith(">"):
                 segments = _drop_segment_prefix(segments, len(plain) - len(plain.lstrip(">")))
                 role = "block"
                 level = 0
-            elif not level and not unsupported_level and enable_heading_detection and is_likely_heading(plain):
+            elif not literal and not level and not unsupported_level and enable_heading_detection and is_likely_heading(plain):
                 level = 1
             if not segments:
                 continue

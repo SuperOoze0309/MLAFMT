@@ -13,6 +13,7 @@
 - 桌面、网页、离线 Android 和命令行共用 MLA / APA / 自定义排版核心，摘要与预览随所选格式更新。
 - APA / 自定义转换检测到部分复杂元素或超出 1–3 级的标题时提示核对。图片、表格、脚注、公式等内容仍不会保留；当前处理范围见[格式指南](docs/FORMATS.md)。
 - 新增[格式与模板说明](docs/FORMATS.md)及 [A4 课程报告示例](examples/course-report-a4.json)，README 区分开发版与已发布下载。
+- Markdown 代码围栏按原文字保留，避免误判其中的标题或参考文献标记；模板导入会拒绝 Word 文档不支持的字符。
 
 ### English
 
@@ -23,6 +24,7 @@
 - Share MLA, APA and custom formatting across desktop, web, offline Android and CLI, with summaries and previews reflecting the selected format.
 - Warn about some detected complex elements and headings above level 3 in APA/custom conversion. Images, tables, footnotes and formulas are still omitted; see the [format guide](docs/FORMATS.md) for the current scope.
 - Add a [format and template guide](docs/FORMATS.md) and an [A4 course report example](examples/course-report-a4.json); distinguish development features from published downloads in the README.
+- Keep fenced Markdown text literal so its headings and reference labels are not misclassified; reject template characters that cannot be written to Word documents.
 
 ## v2.3.0 — 2026-10-20
 

@@ -15,6 +15,8 @@ Published downloads are still v2.3.0 and do not contain the new features describ
 
 可先导入 [A4 课程报告示例](../examples/course-report-a4.json)：Arial 11 pt、1.5 倍行距、2.5 cm 页边距和 1 cm 首行缩进。它是演示配置，可按课程要求修改。
 
+APA / 自定义模式下，Markdown 代码围栏连同其中的换行和文字原样保留，不会把代码里的 `#` 或 `References` 当作标题。
+
 ### 1. 版式概览
 
 | 版式 | 用途 | 主要行为 |
@@ -118,6 +120,8 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 4. Choose a draft and generate the Word document, review result messages, then download or save it. The paper illustration shows layout rather than your draft text.
 
 Try importing the [A4 course report example](../examples/course-report-a4.json): Arial 11 pt, 1.5 spacing, 2.5 cm margins and a 1 cm first-line indent. Adjust this demonstration profile for your course.
+
+APA/custom conversion keeps Markdown fences and their contents as literal text with line breaks; `#` or `References` inside a fence is not treated as a heading.
 
 ### 1. Layout overview
 
