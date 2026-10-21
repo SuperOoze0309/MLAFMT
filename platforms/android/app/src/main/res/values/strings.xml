@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">FormCapy</string>
     <string name="update_webview">Please update Android System WebView to use FormCapy.</string>
+    <string name="document_clip_label">FormCapy document</string>
 </resources>

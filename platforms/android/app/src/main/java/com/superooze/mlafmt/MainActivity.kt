@@ -167,7 +167,7 @@ class MainActivity : ComponentActivity() {
             putExtra(Intent.EXTRA_STREAM, uri)
         } else Intent(Intent.ACTION_VIEW).setDataAndType(uri, DOCX_MIME)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        intent.clipData = ClipData.newRawUri("MLA document", uri)
+        intent.clipData = ClipData.newRawUri(getString(R.string.document_clip_label), uri)
         try {
             startActivity(if (share) Intent.createChooser(intent, null) else intent)
         } catch (_: android.content.ActivityNotFoundException) { model.error("no_document_app") }
