@@ -274,42 +274,35 @@
     }
 
     function settlePending(error) {
-      for (const [id, item] of pending) {
-        pending.delete(id);
-        item.reject(error);
-      }
+      // Each item's settlement also removes its AbortSignal listener.
+      for (const item of [...pending.values()]) item.reject(error);
     }
 
     function terminate(reason) {
       const error = reason instanceof TransportError
         ? reason
         : new TransportError("cancelled");
+      const instance = worker;
       epoch += 1;
-      if (worker) {
-        worker.terminate();
-        worker = null;
-      }
+      worker = null;
       initialized = false;
       initPromise = null;
-      if (initReject) {
-        const reject = initReject;
-        initResolve = null;
-        initReject = null;
-        reject(error);
+      const reject = initReject;
+      initResolve = null;
+      initReject = null;
+      // Invalidate ownership before touching the old instance. Even an already
+      // queued callback cannot address a replacement worker after this point.
+      try {
+        instance?.terminate();
+      } catch (_) {
+        // Cancellation must still reject callers if the host cannot terminate.
       }
+      reject?.(error);
       settlePending(error);
     }
 
     function failInit(error) {
-      initialized = false;
-      initPromise = null;
-      if (initReject) {
-        const reject = initReject;
-        initResolve = null;
-        initReject = null;
-        reject(error);
-      }
-      settlePending(error);
+      terminate(error);
     }
 
     function registerOffline() {
@@ -346,12 +339,11 @@
       if (message.type === "worker-error") {
         const error = new TransportError("failed", message.detail);
         if (!initialized) failInit(new TransportError("engine_init_failed", message.detail));
-        else settlePending(error);
+        else terminate(error);
         return;
       }
       const item = pending.get(message.id);
       if (!item) return;
-      pending.delete(message.id);
       if (message.type === "aborted") {
         item.reject(new TransportError("cancelled"));
         return;
@@ -374,86 +366,120 @@
       if (initPromise) return initPromise;
       if (worker) terminate(new TransportError("cancelled"));
       epoch += 1;
+      const ownerEpoch = epoch;
+      let resolveInit, rejectInit;
       const promise = new Promise((resolve, reject) => {
-        try {
-          const instance = new Worker(workerURL, {
-            type: "module",
-            name: "formcapy-formatter",
-          });
-          worker = instance;
-          initResolve = resolve;
-          initReject = reject;
-          instance.onmessage = onMessage;
-          instance.onerror = (event) => {
-            event.preventDefault?.();
-            const detail = String(event?.message || "The formatter worker could not load.").slice(0, 300);
-            failInit(new TransportError("engine_init_failed", detail));
-            terminate(new TransportError("engine_init_failed", detail));
-          };
-          instance.postMessage({
-            type: "init",
-            id: ++requestSeq,
-            config: {
-              indexURL: runtimeURL,
-              baseURL: pageURL.href,
-              runtimeVersion,
-            },
-          });
-        } catch (error) {
-          initResolve = null;
-          initReject = null;
-          reject(new TransportError("engine_init_failed", error?.message || error));
-        }
+        resolveInit = resolve;
+        rejectInit = reject;
       });
       initPromise = promise;
+      initResolve = resolveInit;
+      initReject = rejectInit;
       const clear = () => {
         if (initPromise === promise) initPromise = null;
       };
       promise.then(clear, clear);
+      try {
+        const instance = new Worker(workerURL, {
+          type: "module",
+          name: "formcapy-formatter",
+        });
+        worker = instance;
+        const ownsWorker = () => !disposed && worker === instance && epoch === ownerEpoch;
+        instance.onmessage = (event) => {
+          if (ownsWorker()) onMessage(event);
+        };
+        instance.onerror = (event) => {
+          if (!ownsWorker()) return;
+          event.preventDefault?.();
+          const detail = String(event?.message || "The formatter worker could not load.").slice(0, 300);
+          failInit(new TransportError("engine_init_failed", detail));
+        };
+        instance.postMessage({
+          type: "init",
+          id: ++requestSeq,
+          config: {
+            indexURL: runtimeURL,
+            baseURL: pageURL.href,
+            runtimeVersion,
+          },
+        });
+      } catch (error) {
+        failInit(new TransportError("engine_init_failed", error?.message || error));
+      }
       return promise;
     }
 
-    async function enqueue(action, request, file, signal) {
-      if (signal?.aborted) throw new TransportError("cancelled");
-      if (file && Number(file.size) > MAX_FILE_SIZE) throw new TransportError("too_large");
-
-      // Cancellation may happen while the draft is being read. Register the
-      // abort handler before any await; the epoch check below keeps a late read
-      // from posting into a newer worker after cancel + retry.
-      let abortHandler = null;
-      if (signal) {
-        abortHandler = () => terminate(new TransportError("cancelled"));
-        signal.addEventListener("abort", abortHandler, { once: true });
+    function enqueue(action, request, file, signal) {
+      if (disposed || signal?.aborted) return Promise.reject(new TransportError("cancelled"));
+      if (file && Number(file.size) > MAX_FILE_SIZE) {
+        return Promise.reject(new TransportError("too_large"));
       }
 
-      let id = 0;
-      let item = null;
-      try {
-        await init();
-        if (signal?.aborted) throw new TransportError("cancelled");
+      // Register the caller's promise before initialization or file IO. The
+      // dispatch chain may remain suspended in arrayBuffer(); cancellation
+      // settles this independent promise immediately instead of waiting on IO.
+      const id = ++requestSeq;
+      let item;
+      let abortHandler = null;
+      const promise = new Promise((resolve, reject) => {
+        const cleanup = () => {
+          if (pending.get(id) !== item) return false;
+          pending.delete(id);
+          if (abortHandler) signal.removeEventListener("abort", abortHandler);
+          return true;
+        };
+        item = {
+          instance: null,
+          epoch: null,
+          resolve(value) { if (cleanup()) resolve(value); },
+          reject(error) { if (cleanup()) reject(error); },
+        };
+        pending.set(id, item);
+      });
+
+      if (signal) {
+        abortHandler = () => {
+          if (pending.get(id) !== item) return;
+          const error = new TransportError("cancelled");
+          if (item.instance && item.instance === worker && item.epoch === epoch) {
+            terminate(error);
+          } else {
+            // An obsolete operation may reject itself, never a newer owner.
+            item.reject(error);
+          }
+        };
+        signal.addEventListener("abort", abortHandler, { once: true });
+        if (signal.aborted) abortHandler();
+      }
+
+      const dispatch = async () => {
+        if (pending.get(id) !== item) return;
+        const initialization = init();
         const runEpoch = epoch;
         const instance = worker;
-        if (!instance || runEpoch !== epoch) throw new TransportError("cancelled");
-
-        id = ++requestSeq;
-        const promise = new Promise((resolve, reject) => {
-          item = { resolve, reject };
-          pending.set(id, item);
-        });
-        promise.catch(() => {});
+        item.instance = instance;
+        item.epoch = runEpoch;
+        const checkOwner = () => {
+          if (disposed || !instance || instance !== worker || runEpoch !== epoch ||
+              pending.get(id) !== item || signal?.aborted) {
+            throw new TransportError("cancelled");
+          }
+        };
+        await initialization;
+        checkOwner();
         let buffer = null;
         if (file) {
           emitStage("reading");
+          checkOwner();
           try {
             buffer = await file.arrayBuffer();
           } catch (_) {
+            checkOwner();
             throw new TransportError("unreadable_file");
           }
         }
-        if (runEpoch !== epoch || instance !== worker ||
-            !pending.has(id) || signal?.aborted) {
-          throw new TransportError("cancelled");
-        }
+        checkOwner();
         postOn(
           instance,
           {
@@ -465,13 +491,9 @@
           },
           buffer ? [buffer] : [],
         );
-        return await promise;
-      } catch (error) {
-        if (item && pending.delete(id)) item.reject(error);
-        throw error;
-      } finally {
-        if (abortHandler) signal.removeEventListener("abort", abortHandler);
-      }
+      };
+      dispatch().catch((error) => item.reject(error));
+      return promise;
     }
 
     function browserResult(message) {
