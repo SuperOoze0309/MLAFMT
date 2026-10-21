@@ -104,7 +104,7 @@ tasks.register('prepareMlafmtSources') {
             into generatedPython
         }
         def html = projectRoot.toPath().resolve('templates/index.html').toFile().getText('UTF-8')
-        html = html.replace('{{ version }}', appVersion).replace('{{ today }}', '')
+        html = html.replace('{{ version }}', appVersion).replace('{{ today }}', '').replace('{{ public_server }}', 'false')
         def destination = generatedAssets.get().file('index.html').asFile
         destination.parentFile.mkdirs()
         destination.setText(html, 'UTF-8')

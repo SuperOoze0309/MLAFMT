@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: formcapy
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: pip install -r requirements-web.txt
+    startCommand: gunicorn --config gunicorn.conf.py mla_web:app
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    domains:
+      - formcapy.com
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.15
+      - key: FORMCAPY_PUBLIC
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"

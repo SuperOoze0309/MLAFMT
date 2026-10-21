@@ -865,7 +865,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-public-server="{{ public_server }}">
     <div class="shell">
       <header class="topbar">
         <div class="brand">
@@ -1372,6 +1372,7 @@
     <script>
       "use strict";
       const native = typeof window.MLAFMTAndroid?.postMessage === "function";
+      const publicServer = !native && document.body.dataset.publicServer === "true";
       const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
       const nativeSend = (action, data) =>
         window.MLAFMTAndroid.postMessage(JSON.stringify({ action, data }));
@@ -1402,6 +1403,7 @@
           blank: "从空白 MLA 模板开始",
           advanced: "高级选项",
           privacy: "由运行本网页服务的电脑处理，处理结束后删除临时草稿。",
+          public_privacy: "草稿会上传到服务器排版，处理后清理临时文件。无需账号，不提供文稿存储。",
           try_demo: "试用示例草稿",
           demo_hint: "示例信息可编辑；保留你已填写的信息和已选草稿。",
           demo_ready: "示例已就绪，可编辑信息后生成文档；已有信息和草稿已保留。",
@@ -1523,6 +1525,7 @@
           blank: "Start with a blank MLA template",
           advanced: "Advanced options",
           privacy: "Processed by the computer running this page's service. Temporary drafts are deleted after processing.",
+          public_privacy: "Drafts are uploaded to this server for formatting. Temporary files are cleared after processing. No account or document storage.",
           try_demo: "Try a sample draft",
           demo_hint: "Editable examples; your existing details and draft stay in place.",
           demo_ready: "Sample ready. Edit the details, then format your document. Your existing details and draft were kept.",
@@ -1784,6 +1787,7 @@
       let lastStatus = { key: "ready", args: [], tone: "" };
       const t = (key, ...args) => {
         if (native && ["privacy", "convert", "drop"].includes(key)) key = "native_" + key;
+        else if (publicServer && key === "privacy") key = "public_privacy";
         const value = T[lang][key] ?? T.en[key] ?? T.en.failed;
         return typeof value === "function" ? value(...args) : value;
       };

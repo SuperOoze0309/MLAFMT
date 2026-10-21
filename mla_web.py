@@ -14,7 +14,7 @@ import os
 import sys
 import socket
 import tempfile
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 from zipfile import BadZipFile
 
 from docx.opc.exceptions import PackageNotFoundError
@@ -111,9 +111,32 @@ def too_large(_e):
     return jsonify({"error": "too_large"}), 413
 
 
+def _public_server():
+    """Keep server uploads explicit, including deployments missing the env flag."""
+    if os.environ.get("FORMCAPY_PUBLIC", "").lower() in ("1", "true", "yes", "on"):
+        return True
+    host = urlsplit("//" + request.host).hostname
+    return host not in ("localhost", "127.0.0.1", "::1")
+
+
+@app.after_request
+def private_responses(response):
+    # Paragraph inspection responses can contain the user's draft text.
+    if request.path.startswith("/api/") or request.path == "/healthz":
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@app.route("/healthz")
+def healthz():
+    return jsonify({"status": "ok", "version": __version__})
+
+
 @app.route("/")
 def index():
-    return render_template("index.html", version=__version__, today=today_mla())
+    return render_template("index.html", version=__version__, today=today_mla(),
+                           public_server="true" if _public_server() else "false")
 
 
 @app.route("/api/summary", methods=["POST"])
