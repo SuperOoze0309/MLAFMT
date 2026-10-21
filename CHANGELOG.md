@@ -1,6 +1,8 @@
 # Changelog
 
-## 开发中 / Unreleased
+## v2.5.0 — 2026-10-21
+
+发布准备中 / Release preparation: source changes are complete; website deployment and new download packages are pending verification.
 
 ### 中文
 
