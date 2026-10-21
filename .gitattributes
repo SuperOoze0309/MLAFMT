@@ -1,3 +1,9 @@
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.sh text eol=lf
+gradlew text eol=lf
+platforms/linux/AppRun text eol=lf
+*.yml text eol=lf
+
 # License snapshots are checked against upstream SHA-256 hashes. Preserve bytes.
 /scripts/licenses/** -text
 /platforms/android/licenses/** -text
