@@ -43,6 +43,62 @@ def _read_text(data):
         return data.decode("latin-1"), "latin-1"
 
 
+def _runtime_patchlevel(directory, component, interpreter):
+    """Read the installed runtime version without opening a Tk display."""
+    if component == "tcl":
+        return str(interpreter.eval("info patchlevel"))
+    script = directory / "tk.tcl"
+    if script.is_file():
+        match = re.search(r"(?m)^\s*package\s+require\s+-exact\s+Tk\s+(\S+)",
+                          _read_text(script.read_bytes())[0])
+        if match:
+            return match.group(1)
+    return None
+
+
+def _installed_dpkg_runtime_notice(directory, component, version):
+    """Find the actual script-owning Debian package's complete copyright file.
+
+    Ubuntu keeps these notices in /usr/share/doc, outside Tcl/Tk's script
+    directories. Do not accept an unrelated package merely because its name
+    resembles the runtime: verify ownership and the upstream patch version.
+    """
+    script = directory / ("init.tcl" if component == "tcl" else "tk.tcl")
+    if not version or not script.is_file():
+        return None
+    try:
+        ownership = subprocess.run(["dpkg-query", "-S", str(script.resolve())],
+                                   capture_output=True, text=True, check=False)
+        if ownership.returncode != 0:
+            return None
+        for line in ownership.stdout.splitlines():
+            owners, separator, owned_path = line.partition(": ")
+            if not separator or Path(owned_path).resolve() != script.resolve():
+                continue
+            for package in owners.split(", "):
+                if not re.fullmatch(r"[a-z0-9][a-z0-9+.-]*(?::[a-z0-9-]+)?", package):
+                    continue
+                installed = subprocess.run(["dpkg-query", "-W", "-f=${Version}", package],
+                                           capture_output=True, text=True, check=False)
+                if installed.returncode != 0:
+                    continue
+                package_version = installed.stdout.strip()
+                upstream = re.match(r"^(?:\d+:)?(\d+\.\d+\.\d+)(?:\D|$)", package_version)
+                if not upstream or upstream.group(1) != version:
+                    continue
+                filename = Path("/usr/share/doc") / package.split(":", 1)[0] / "copyright"
+                if filename.is_file():
+                    data = filename.read_bytes()
+                    if data.strip():
+                        return {"package": package, "package_version": package_version,
+                                "source": filename, "data": data,
+                                "script": str(script.resolve())}
+    except OSError:
+        # Non-Debian systems must provide another original notice source.
+        pass
+    return None
+
+
 def inspect_lxml():
     """Read feature/version metadata and native import tables, without tests."""
     from lxml import etree
@@ -191,6 +247,20 @@ def write_notices(root, output, target=None, release_check=False):
     if python_license is None:
         missing.append("CPython runtime license")
 
+    # These snapshots preserve the complete original upstream text and its
+    # source hash. A Tcl/Tk fallback below must match the actual patch version;
+    # an unrelated supplement cannot make the runtime notice check pass.
+    upstream_notices = []
+    sources = root / "scripts/licenses/sources.json"
+    if sources.is_file():
+        for entry in json.loads(sources.read_text(encoding="utf-8")):
+            filename = sources.parent / entry["file"]
+            data = filename.read_bytes()
+            if hashlib.sha256(data).hexdigest() != entry["sha256"]:
+                raise SystemExit(f"Upstream license snapshot changed: {filename}")
+            append(entry["component"] + " (upstream license supplement)", entry["file"], data, entry)
+            upstream_notices.append(entry)
+
     import tkinter
     interpreter = tkinter.Tcl()
     tcl_library = Path(interpreter.eval("info library"))
@@ -198,6 +268,8 @@ def write_notices(root, output, target=None, release_check=False):
     normalized_python_license = " ".join(python_text.split())
     runtime_notice_sources = []
     for directory in runtime_roots:
+        component = "tk" if directory.name.startswith("tk") else "tcl"
+        runtime_version = _runtime_patchlevel(directory, component, interpreter)
         found = 0
         if directory.is_dir():
             for filename in sorted(directory.rglob("*")):
@@ -213,22 +285,29 @@ def write_notices(root, output, target=None, release_check=False):
                            "Sun Microsystems, Inc., Scriptics Corporation, ActiveState Corporation" +
                            (", Apple Inc. and other parties." if directory.name.startswith("tk") else " and other parties."))
         combined = combined_marker in normalized_python_license
-        runtime_notice_sources.append({"component": directory.name, "standalone_notice_files": found,
-                                       "installed_python_combined_notice": combined})
+        distro_notice, pinned_notice = None, None
         if not found and not combined:
-            missing.append(f"Tcl/Tk {directory.name} license (directory or installed combined license)")
-
-    # Supplement runtime/wheel files with pinned original upstream license
-    # texts. The manifest states the exact source and any excerpt boundary.
-    # It is provenance data and never substitutes for the full texts above.
-    sources = root / "scripts/licenses/sources.json"
-    if sources.is_file():
-        for entry in json.loads(sources.read_text(encoding="utf-8")):
-            filename = sources.parent / entry["file"]
-            data = filename.read_bytes()
-            if hashlib.sha256(data).hexdigest() != entry["sha256"]:
-                raise SystemExit(f"Upstream license snapshot changed: {filename}")
-            append(entry["component"] + " (upstream license supplement)", entry["file"], data, entry)
+            if (target or sys.platform) == "linux":
+                distro_notice = _installed_dpkg_runtime_notice(directory, component, runtime_version)
+                if distro_notice:
+                    append(f"Tcl/Tk {directory.name} (installed package copyright)",
+                           str(distro_notice["source"]), distro_notice["data"],
+                           {key: value for key, value in distro_notice.items()
+                            if key not in {"data", "source"}})
+            if not distro_notice:
+                pinned_notice = next((entry for entry in upstream_notices
+                                      if entry.get("runtime_component") == component
+                                      and entry.get("runtime_version") == runtime_version), None)
+        runtime_notice_sources.append({"component": directory.name, "standalone_notice_files": found,
+                                       "runtime_version": runtime_version,
+                                       "installed_python_combined_notice": combined,
+                                       "installed_package_notice":
+                                           {key: str(value) if isinstance(value, Path) else value
+                                            for key, value in distro_notice.items() if key != "data"}
+                                           if distro_notice else None,
+                                       "version_matched_upstream_notice": pinned_notice})
+        if not (found or combined or distro_notice or pinned_notice):
+            missing.append(f"Tcl/Tk {directory.name} license (installed notice or version-matched upstream text)")
 
     if (target or sys.platform) == "linux":
         for package in ("libtcl8.6", "libtk8.6", "libfontconfig1", "libfreetype6", "libxft2",
@@ -294,8 +373,10 @@ def write_notices(root, output, target=None, release_check=False):
     (output / NOTICE_NAME).write_text(introduction + "".join(sections), encoding="utf-8")
     if release_check and not ready:
         detail = "; missing texts: " + ", ".join(missing) if missing else ""
-        raise SystemExit("Release dependency check failed" + detail + ". "
-                         "Build/install scripts/build_lxml_no_iconv.py's wheel, then prepare again. "
+        remedy = ("Build/install scripts/build_lxml_no_iconv.py's wheel, then prepare again. "
+                  if unresolved_iconv and source_kit is None else
+                  "Provide the missing original notices for the installed runtime versions, then prepare again. ")
+        raise SystemExit("Release dependency check failed" + detail + ". " + remedy +
                          "Development preparation remains available without --release-check. "
                          "See license-audit.json; notice texts alone do not resolve LGPL relinking requirements.")
     return packages

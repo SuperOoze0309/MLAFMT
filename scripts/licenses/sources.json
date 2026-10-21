@@ -1,5 +1,15 @@
 [
   {
+    "file": "tcl-8.6.16-license.terms",
+    "component": "Tcl 8.6.16",
+    "runtime_component": "tcl",
+    "runtime_version": "8.6.16",
+    "url": "https://raw.githubusercontent.com/tcltk/tcl/core-8-6-16/license.terms",
+    "source_sha256": "c0a69a2bfd757361ec7e6143973b103c90409316b49e9c88db26ad6388e79f16",
+    "sha256": "c0a69a2bfd757361ec7e6143973b103c90409316b49e9c88db26ad6388e79f16",
+    "selection": "complete source file; runtime fallback only for Tcl patchlevel 8.6.16"
+  },
+  {
     "file": "cpython-3.12.15-incorporated-software.txt",
     "component": "CPython 3.12 incorporated software notices",
     "url": "https://raw.githubusercontent.com/python/cpython/v3.12.15/Doc/license.rst",
