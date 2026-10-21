@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import browser_bridge  # noqa: E402
+from mla_formatter import __version__  # noqa: E402
 
 
 def _write_draft(tmp_path, data: bytes, name="draft.docx"):
@@ -212,7 +213,7 @@ def test_rejects_invalid_json_and_traversal_names():
 def test_initial_state_has_today_and_version():
     state = json.loads(browser_bridge.initial_state())
     assert isinstance(state["today"], str) and state["today"]
-    assert state["version"] == "2.4.0"
+    assert state["version"] == __version__
 
 
 def test_no_flask_imported():

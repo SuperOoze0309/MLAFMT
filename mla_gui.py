@@ -323,6 +323,7 @@ T["zh"].update({
     "title_page": "单独封面页", "references_title": "参考文献页标题", "sort_references": "按字母顺序排列参考文献",
     "save_template": "保存并使用", "import_template": "导入 JSON", "export_template": "导出 JSON",
     "delete_template": "删除当前模板", "template_invalid": "模板设置有误：{e}",
+    "template_validation_hint": "请检查模板名称、参考文献标题与各项数字范围，或选择 FormCapy 导出的模板 JSON 文件。",
     "template_limit": "最多保存 20 个模板。请删除一个模板，或使用已有模板的名称。",
     "template_saved": "课程模板已保存：{label}", "template_imported": "已导入课程模板：{label}",
     "template_session_only": "已使用模板 {label}，但无法保存设置；关闭应用后此修改可能丢失。",
@@ -411,6 +412,7 @@ T["en"].update({
     "title_page": "Separate title page", "references_title": "Reference page title", "sort_references": "Sort reference entries alphabetically",
     "save_template": "Save and use", "import_template": "Import JSON", "export_template": "Export JSON",
     "delete_template": "Delete current template", "template_invalid": "Check the template settings: {e}",
+    "template_validation_hint": "Check the template name, reference heading and number ranges, or choose a template JSON file exported from FormCapy.",
     "template_limit": "You can save up to 20 templates. Delete one or use an existing template name.",
     "template_saved": "Course template saved: {label}", "template_imported": "Course template imported: {label}",
     "template_session_only": "Using {label}, but settings could not be saved. This change may be lost when the app closes.",
@@ -648,6 +650,7 @@ T["es"].update({
     "export_template": "Exportar JSON",
     "delete_template": "Eliminar plantilla actual",
     "template_invalid": "Revisa los ajustes de la plantilla: {e}",
+    "template_validation_hint": "Revisa el nombre de la plantilla, el título de referencias y los rangos numéricos, o elige un archivo JSON de plantilla exportado desde FormCapy.",
     "template_limit": "Puedes guardar hasta 20 plantillas. Elimina una o usa el nombre de una existente.",
     "template_saved": "Plantilla de curso guardada: {label}",
     "template_imported": "Plantilla de curso importada: {label}",
@@ -749,9 +752,22 @@ SOFT = "#f0f0fa"
 MAX_FILE_SIZE = 20 * 1024 * 1024
 
 
+def _template_error_message(language, error):
+    """Keep validation details localizable; retain file-system diagnostics."""
+    catalog = T.get(language, T["en"])
+    if isinstance(error, OSError):
+        return catalog["template_io"].format(e=str(error))
+    # These errors are raised using localized messages by the template editor.
+    # JSON, Unicode, Tcl and core validation exceptions can contain internal
+    # field names or English implementation details, so use a localized hint.
+    known = {catalog[key] for key in ("template_too_large", "page_number_invalid")}
+    detail = str(error) if str(error) in known else catalog["template_validation_hint"]
+    return catalog["template_invalid"].format(e=detail)
+
+
 def _default_lang():
     try:
-        loc = (locale.getlocale()[0] or "") + os.environ.get("LANG", "")
+        loc = " ".join((locale.getlocale()[0] or "", os.environ.get("LANG", "")))
         if sys.platform.startswith("win"):
             import ctypes
             language_id = ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF
@@ -1610,7 +1626,7 @@ class MLAGui:
             return normalize_custom_profile(values)
 
         def invalid(error):
-            messagebox.showerror(self.t("template_title"), self.t("template_invalid", e=str(error)), parent=w)
+            messagebox.showerror(self.t("template_title"), _template_error_message(self.lang, error), parent=w)
 
         def close():
             self._template_win = None
@@ -1717,7 +1733,7 @@ class MLAGui:
                             raise ValueError(self.t("page_number_invalid"))
                         read_profile()
                     except (TypeError, ValueError, tk.TclError) as error:
-                        messagebox.showerror(self.t("advanced_custom_title"), self.t("template_invalid", e=str(error)), parent=advanced)
+                        messagebox.showerror(self.t("advanced_custom_title"), _template_error_message(self.lang, error), parent=advanced)
                         start.focus_set()
                         return
                 else:
@@ -2302,7 +2318,7 @@ def _smoke_test(require_dnd=False):
         if require_dnd and not app.has_dnd:
             raise RuntimeError("The packaged tkDnD library could not load")
         app.root.withdraw()
-        for language in ("zh", "en"):
+        for language in ("zh", "en", "es"):
             app._set_lang(language)
             app.root.update_idletasks()
         with tempfile.TemporaryDirectory(prefix="mlafmt-smoke-") as folder:

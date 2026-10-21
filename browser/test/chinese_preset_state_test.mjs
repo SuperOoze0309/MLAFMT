@@ -19,6 +19,7 @@ function section(start, end) {
 }
 
 const profileCode = section('      const CUSTOM_DEFAULT =', '      function profileSnapshot');
+const snapshotCode = section('      function profileSnapshot', '      function currentFormat');
 const controlCode = section('      function currentFormat()', '      function numberingSummary');
 const presetCode = section('      let presets = [];', '      function templateMessage');
 const restoreCode = section('      const savedFormat = store.get', '      function renderStatus');
@@ -77,6 +78,7 @@ function harness(storage = new Map(), native = false) {
   $('indent-mode').value = 'cm';
   $('date').value = $('date').defaultValue = '21 October 2026';
   run(controlCode + presetCode + restoreCode + handlers + '\nconst transfer = $("template-transfer");\n' + importHandler + '\nrenderPresets();');
+  run(snapshotCode);
   function choose(value) { $('saved-presets').value = value; $('saved-presets').trigger('change'); }
   function edit(key, value) {
     const node = $(`c-${key}`);
@@ -287,6 +289,39 @@ check('native dirty-date marker is stored and restored conservatively', () => {
   assert.equal(h.$('date').value, '21 October 2026');
   const legacy = harness(new Map([['date', '21 October 2026']]), true);
   assert.equal(legacy.run('hasAutomaticDate()'), false);
+});
+
+check('built-in display identity is captured and survives later edits', () => {
+  const h = harness();
+  h.choose('builtin:zh_course');
+  h.run('const generatedFormat = profileSnapshot({format_id: "custom", custom_profile: customProfile()})');
+  assert.equal(h.run('generatedFormat.builtin_id'), 'zh_course');
+  h.choose('builtin:zh_thesis');
+  assert.equal(h.run('formatLabel(generatedFormat)'), 'chinese_course');
+  h.edit('font_size', 14);
+  assert.equal(h.run('profileSnapshot({format_id: "custom", custom_profile: customProfile()}).builtin_id'), null);
+});
+
+check('personal and imported names equal to built-ins remain literal', () => {
+  const label = '中文课程论文（通用）';
+  const h = harness(new Map([['presets', JSON.stringify([{ label, font_size: 14 }])]]));
+  h.choose('saved:' + encodeURIComponent(label));
+  h.run('const personalFormat = profileSnapshot({format_id: "custom", custom_profile: customProfile()})');
+  assert.equal(h.run('personalFormat.builtin_id'), null);
+  assert.equal(h.run('formatLabel(personalFormat)'), label);
+  h.importProfile(h.json('BUILTIN_PRESETS[0].profile'));
+  assert.equal(h.run('formatLabel(profileSnapshot({format_id: "custom", custom_profile: customProfile()}))'), label);
+  assert.equal(h.run('formatLabel({id: "custom", label: "中文课程论文（通用）"})'), label);
+});
+
+check('bare transport metadata preserves only the matching request identity', () => {
+  const h = harness();
+  h.choose('builtin:zh_course');
+  h.run('const requested = profileSnapshot({format_id: "custom", custom_profile: customProfile()})');
+  assert.equal(h.run('resultFormat({id: requested.id, label: requested.label}, requested).builtin_id'), 'zh_course');
+  assert.equal(h.run('resultFormat(null, requested).builtin_id'), 'zh_course');
+  assert.equal(h.run('resultFormat({id: "custom", label: "Other"}, requested).builtin_id'), null);
+  assert.equal(h.run('resultFormat({id: "apa", label: "APA"}, requested).builtin_id'), null);
 });
 
 console.log(JSON.stringify({ sourcePath, sourceSha256, passed: outcomes.length, outcomes,

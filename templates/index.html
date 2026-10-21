@@ -1766,7 +1766,7 @@
       Object.assign(T.en, {
         mascot_alt: "FormCapy capybara mascot",
         progress_generating: "Generating document…", progress_processing: "Processing…", progress_sharing: "Waiting for the share action…",
-        browser_privacy: "Runs entirely in your browser. Your draft never leaves this device and is never uploaded automatically.",
+        browser_privacy: "Formatting runs on your device. Your current draft is not uploaded automatically.",
         stage_runtime: "Loading the local Python runtime…",
         stage_packages: "Loading document libraries…",
         stage_application: "Starting the formatter…",
@@ -1928,7 +1928,7 @@
         share_word: "Compartir / Guardar en Archivos",
         result_hint: "Mantén esta página abierta para volver a descargarlo. Si la recargas o la cierras, tendrás que generarlo de nuevo.",
         apple_save_hint: "iPhone / iPad: toca Descargar Word y busca el archivo en Descargas de Safari o en la app Archivos. Si se abre una vista previa, usa Compartir → Guardar en Archivos.",
-        result_details: (size, b, w, r) => `Word · ${size} · ${b} párrafos · ${w} entradas de Works Cited${r ? ` · ${r} líneas de encabezado duplicadas eliminadas` : ""}`,
+        result_details: (size, b, w, r) => `Word · ${size} · ${b} párrafos · ${w} entradas de referencias${r ? ` · ${r} líneas de encabezado duplicadas eliminadas` : ""}`,
         result_blank: (size) => `Word · ${size} · Plantilla MLA vacía`,
         share_closed: "Se cerró el panel de compartir. Puedes guardar el documento con Descargar Word.",
         share_handed_off: "Se ha enviado a la app elegida. La ubicación de guardado depende de tu selección.",
@@ -2078,7 +2078,7 @@
         warning_omitted: (count) => `${count} estructuras del borrador no se conservaron. Compáralas con el original.`,
         warning_headings: (count) => `${count} títulos de nivel 4 o superior se conservaron como texto normal. Revisa sus niveles.`,
         warning_reference_sort: "Las referencias contienen párrafos u objetos con formato conservado, así que solo se ordenaron las entradas normales consecutivas. Revisa manualmente el orden.",
-        result_retained: (paragraphs, images, tables) => `${paragraphs} párrafos sin cambios · ${images} imágenes del cuerpo · ${tables} tablas conservadas`,
+        result_retained: (paragraphs, images, tables) => `${paragraphs} ${paragraphs === 1 ? "párrafo sin cambios" : "párrafos sin cambios"} · ${images} ${images === 1 ? "imagen del cuerpo" : "imágenes del cuerpo"} · ${tables} ${tables === 1 ? "tabla conservada" : "tablas conservadas"}`,
         disclaimer: "Se conservan las imágenes y tablas del cuerpo DOCX. El tamaño de papel, los márgenes y la numeración siguen la plantilla elegida. La sintaxis de imágenes de TXT/MD no inserta imágenes. Revisa documentos complejos y citas.",
       });
       Object.assign(T.es, {
@@ -2239,15 +2239,26 @@
         syncPageControls();
       }
       function profileSnapshot(data) {
-        return { id: data.format_id, label: data.format_id === "custom" ? data.custom_profile.label : null };
+        if (data.format_id !== "custom")
+          return { id: data.format_id, label: null, builtin_id: null };
+        const profile = normalizeProfile(data.custom_profile);
+        const preset = BUILTIN_PRESETS.find((item) => selectedPreset === "builtin:" + item.id &&
+          Object.keys(CUSTOM_DEFAULT).every((key) => profile[key] === item.profile[key]));
+        return { id: "custom", label: profile.label, builtin_id: preset?.id || null };
       }
       function formatLabel(snapshot) {
         if (!snapshot) return "";
         if (snapshot.id === "custom") {
-          const preset = BUILTIN_PRESETS.find((item) => item.profile.label === snapshot.label);
+          const preset = BUILTIN_PRESETS.find((item) => item.id === snapshot.builtin_id);
           return preset ? t(preset.translation) : snapshot.label || t("format_custom");
         }
         return t(snapshot.id === "apa" ? "format_apa" : "format_mla");
+      }
+      function resultFormat(reported, requested) {
+        if (!reported || (reported.id === requested?.id &&
+            (reported.id !== "custom" || reported.label === requested.label)))
+          return requested ? { ...requested } : null;
+        return { id: reported.id, label: reported.label, builtin_id: null };
       }
       function currentFormat() { return $("format-id").value; }
       function syncPageControls() {
@@ -2702,6 +2713,7 @@
         catch (_) { profile = { ...CUSTOM_DEFAULT }; }
         if (format === "mla") profile.header = "surname_page";
         if (format === "apa") profile.title_page = true;
+        const previewFormat = profileSnapshot({ format_id: format, custom_profile: profile });
         const paper = $("paper-preview");
         const chineseTypography = profile.typography === "chinese";
         paper.classList.toggle("cover-layout", profile.title_page);
@@ -2713,15 +2725,29 @@
         const marginPercent = profile.margin_cm / (profile.paper_size === "A4" ? 21 : 21.59) * 100;
         paper.style.padding = `${profile.title_page ? 25 : marginPercent + 4}% ${marginPercent}% ${marginPercent}%`;
         $("paper-header").style.left = $("paper-header").style.right = marginPercent + "%";
-        const previewLineSpacing = profile.line_spacing_pt > 0 ? profile.line_spacing_pt / profile.font_size : profile.line_spacing;
-        document.querySelector(".paper-heading").style.lineHeight = String(previewLineSpacing);
-        document.querySelector(".paper-body").style.lineHeight = String(previewLineSpacing);
-        document.querySelector(".paper-body").style.textIndent = `${profile.first_line_chars > 0 ? profile.first_line_chars : profile.first_line_cm / 0.635}em`;
-        document.querySelector(".paper-body").style.textAlign = profile.alignment;
+        const bodyPreview = document.querySelector(".paper-body");
+        const pageWidthPx = paper.getBoundingClientRect().width;
+        const scaledChinese = chineseTypography && pageWidthPx > 0;
+        const pageCm = profile.paper_size === "A4" ? 21 : 21.59;
+        if (scaledChinese) {
+          paper.style.setProperty("--preview-cm", `${pageWidthPx / pageCm}px`);
+          paper.style.setProperty("--preview-pt", `${pageWidthPx * 2.54 / (pageCm * 72)}px`);
+        }
+        paper.style.fontSize = scaledChinese ? `calc(var(--preview-pt) * ${profile.font_size})` : "";
+        bodyPreview.style.fontSize = scaledChinese ? "1em" : "";
+        const previewLineSpacing = profile.line_spacing_pt > 0
+          ? (scaledChinese ? `calc(var(--preview-pt) * ${profile.line_spacing_pt})` : String(profile.line_spacing_pt / profile.font_size))
+          : String(profile.line_spacing);
+        document.querySelector(".paper-heading").style.lineHeight = previewLineSpacing;
+        bodyPreview.style.lineHeight = previewLineSpacing;
+        bodyPreview.style.textIndent = profile.first_line_chars > 0 ? `${profile.first_line_chars}em`
+          : scaledChinese ? `calc(var(--preview-cm) * ${profile.first_line_cm})` : `${profile.first_line_cm / 0.635}em`;
+        bodyPreview.style.textAlign = profile.alignment;
         $("paper-title").style.fontWeight = format === "mla" ? "400" : "700";
-        $("paper-title").style.lineHeight = String(previewLineSpacing);
+        $("paper-title").style.lineHeight = previewLineSpacing;
         $("paper-title").style.fontFamily = chineseTypography ? '"黑体", SimHei, sans-serif' : "";
-        $("paper-title").style.fontSize = chineseTypography ? `${16 / profile.font_size}em` : "";
+        $("paper-title").style.fontSize = scaledChinese ? "calc(var(--preview-pt) * 16)"
+          : chineseTypography ? `${16 / profile.font_size}em` : "";
         $("paper-date").textContent = $("date").value.trim() || defaultDate(format);
         $("paper-affiliation").textContent = $("affiliation").value.trim() || (format === "apa" ? t("affiliation") : "");
         $("paper-affiliation").hidden = format === "mla";
@@ -2738,7 +2764,7 @@
         $("affiliation-field").hidden = format === "mla";
         $("header-options").hidden = profile.header !== "surname_page";
         $("date-hint").textContent = t(format === "mla" ? "date_hint" : "date_hint_" + format);
-        document.querySelector("[data-t=preview_tag]").textContent = `${formatLabel({ id: format, label: profile.label })} · ${profile.paper_size}`;
+        document.querySelector("[data-t=preview_tag]").textContent = `${formatLabel(previewFormat)} · ${profile.paper_size}`;
         $("spec-font-name").textContent = chineseTypography ? `${profile.font_name} / ${profile.latin_font_name}` : profile.font_name;
         document.querySelector("[data-t=spec_font]").textContent = `${profile.font_size} ${t("unit_pt")} · ${t("spacing_summary", profile)}`;
         document.querySelector("[data-t=spec_margins_sub]").textContent = `${profile.margin_cm} ${t("unit_cm")} · ${t("indent_summary", profile)}`;
@@ -2756,7 +2782,7 @@
           t("summary_header", surname()),
           ...["paper", "font", "margins", "spacing", "indent", "block", "cited", "hanging"].map((key) => t("summary_" + key)),
         ] : [
-          formatLabel({ id: format, label: profile.label }),
+          formatLabel(previewFormat),
           t("summary_paper_line", profile.paper_size),
           t("summary_font_line", profile.font_name, profile.latin_font_name, profile.font_size, chineseTypography),
           ...(chineseTypography ? [t("chinese_typography_hint")] : []),
@@ -2779,6 +2805,16 @@
             return item;
           }),
         );
+      }
+      let observedPaperWidth = -1;
+      if (typeof ResizeObserver === "function") {
+        const previewObserver = new ResizeObserver(() => {
+          const width = $("paper-preview").getBoundingClientRect().width;
+          if (width <= 0 || Math.abs(width - observedPaperWidth) < 0.5) return;
+          observedPaperWidth = width;
+          if (currentFormat() === "custom" && $("c-typography").value === "chinese") refreshPreview();
+        });
+        previewObserver.observe($("paper-preview"));
       }
       function render() {
         document.documentElement.lang = LANGUAGE_LOCALES[lang] || "en";
@@ -3157,7 +3193,7 @@
       function showWebResult(result, isBlank, requestedFormat) {
         if (!result?.blob) throw new Error("missing document");
         const previous = webResult;
-        const format = result.format || requestedFormat;
+        const format = resultFormat(result.format, requestedFormat);
         webResult = {
           ...result,
           isBlank,
@@ -3374,9 +3410,10 @@
             busy(Boolean(message.busy), message.message ?? null);
             $("native-actions").hidden = !message.result;
             if (message.result) {
+              const previousFormat = nativeResultFormat || nativeGenerationFormat;
               nativeResultFormat = ["mla", "apa", "custom"].includes(message.result.format_id)
-                ? { id: message.result.format_id, label: message.result.format_label }
-                : nativeResultFormat || nativeGenerationFormat;
+                ? { id: message.result.format_id, label: message.result.format_label, builtin_id: null }
+                : previousFormat ? { ...previousFormat, builtin_id: null } : null;
               nativeResultWarnings = {
                 omitted: Number(message.result.stats?.omitted_elements || 0),
                 headings: Number(message.result.stats?.unsupported_headings || 0),
