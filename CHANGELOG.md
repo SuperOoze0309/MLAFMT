@@ -9,10 +9,15 @@
 - 新增 APA 7 学生论文版式：独立标题页、学校/院系信息、仅页码页眉、正文重复标题、新页 References 和悬挂缩进。
 - APA / 自定义格式识别 DOCX Heading 1–3 和 Markdown `#`–`###`，启发式标题识别仍为可选项；参考文献按完整条目的起始文字排序，引用内容保持原文。
 - 新增最多 20 个命名课程模板，支持纸张、字体、字号、行距、页边距、首行缩进、对齐、页眉、独立标题页及参考文献设置。
+- 模板设置新增二级 **高级定制**：`page_number_position` 支持 `top_right` / `bottom_center` / `bottom_right`，`page_number_start` 为 1–9999 的整数，`show_cover_page_number` 控制封面页码；旧模板默认补为右上、起始 1、封面显示。隐藏封面页码时，正文第一页从所设数字开始。
 - 桌面与网页支持 JSON 模板导入/导出；Android 通过文本框复制/粘贴同一份 JSON，各端分别在本机保存设置。
+- DOCX 可读取源正文段落，多段勾选、全选、清空或用 `2, 4-6` 等编号范围指定保留原格式；所选段落保持字体、字号、行距和缩进等段落格式。选择不进入课程模板，换稿清空；检测到源文件指纹变化时要求重新读取。
+- DOCX 转换改用源文档包保留正文图片和表格；表格整体保留，不提供表格内部逐段选择。纸张、页边距、页码及源分节、页眉和页脚按模板重建，原分页位置可能改变，原页眉页脚图片不属于正文图片保留范围。
+- 参考文献中含保留段落或对象时，仅对连续、安全的普通条目排序，并在结果中提示人工核对顺序。TXT/MD 图片链接或语法不会自动嵌图，代码围栏仅作为文字保留。
+- Android 同一草稿的段落保留选择与指纹可在旋转、折叠及界面重建后恢复；切换或移除草稿会清空，旧草稿的异步段落读取结果会被忽略。
 - 桌面、网页、离线 Android 和命令行共用 MLA / APA / 自定义排版核心，摘要与预览随所选格式更新。
-- APA / 自定义转换检测到部分复杂元素或超出 1–3 级的标题时提示核对。图片、表格、脚注、公式等内容仍不会保留；当前处理范围见[格式指南](docs/FORMATS.md)。
-- 新增[格式与模板说明](docs/FORMATS.md)及 [A4 课程报告示例](examples/course-report-a4.json)，README 区分开发版与已发布下载。
+- 结果显示实际保留的段落、正文图片和表格数量，并对部分复杂结构或超出 1–3 级的标题提示核对；这不等于完整文档检查。当前处理范围见[格式指南](docs/FORMATS.md)。
+- 新增[格式与模板说明](docs/FORMATS.md)及 [A4 课程报告示例](examples/course-report-a4.json)：页码在页脚居中、封面不编号、正文从 1 开始。README 保留 v2.3.0 下载与截图，明确区分未发布功能。
 - Markdown 代码围栏按原文字保留，避免误判其中的标题或参考文献标记；模板导入会拒绝 Word 文档不支持的字符。
 
 ### English
@@ -20,10 +25,15 @@
 - Add APA 7 student layout with a separate title page, affiliation, page-only header, repeated body title and a new References page with hanging indents.
 - Recognize DOCX Heading 1–3 and Markdown `#`–`###` in APA/custom formats; heuristic detection remains opt-in. Sort complete reference paragraphs by their initial text and leave citation text unchanged.
 - Add up to 20 named course templates for paper, font, size, spacing, margins, indentation, alignment, header, title page and reference settings.
+- Add second-level **Advanced customization** to template settings: `page_number_position` supports `top_right` / `bottom_center` / `bottom_right`, `page_number_start` is an integer from 1–9999, and `show_cover_page_number` controls cover numbering. Older templates default to top right, start at 1 and show the cover number. With the cover number hidden, the first body page starts at the chosen number.
 - Import/export template JSON on desktop and web; copy/paste the same JSON through an Android text editor. Each interface saves its settings locally.
+- Read source DOCX body paragraphs and select multiple paragraphs, select all, clear, or use ranges such as `2, 4-6` to keep fonts, sizes, spacing, indentation and other paragraph formatting. Selections are excluded from course templates and cleared on draft changes; a changed source fingerprint requires reading the paragraphs again.
+- Retain body images and tables from the source DOCX package. Tables stay whole, without individual paragraph selection inside them. Template settings rebuild paper size, margins, numbering, source sections, headers and footers. Original pagination may change; images in original headers/footers are outside body-image retention.
+- With preserved reference paragraphs or objects, sort only consecutive safe ordinary entries and display a message to check the order manually. TXT/MD image links and syntax do not embed images; fenced code is retained as text only.
+- Restore the same Android draft's paragraph selections and fingerprint after rotation, folding or interface recreation. Changing or removing drafts clears them, and asynchronous inspection results for an old draft are ignored.
 - Share MLA, APA and custom formatting across desktop, web, offline Android and CLI, with summaries and previews reflecting the selected format.
-- Warn about some detected complex elements and headings above level 3 in APA/custom conversion. Images, tables, footnotes and formulas are still omitted; see the [format guide](docs/FORMATS.md) for the current scope.
-- Add a [format and template guide](docs/FORMATS.md) and an [A4 course report example](examples/course-report-a4.json); distinguish development features from published downloads in the README.
+- Show counts of paragraphs kept unchanged, body images and tables; warn about some complex structures and headings above level 3. This is not a complete document check. See the [format guide](docs/FORMATS.md) for the current scope.
+- Add a [format and template guide](docs/FORMATS.md) and an [A4 course report example](examples/course-report-a4.json) with bottom-center numbering, an unnumbered cover and body numbering starting at 1. Keep v2.3.0 downloads and screenshots distinct from unreleased features in the README.
 - Keep fenced Markdown text literal so its headings and reference labels are not misclassified; reject template characters that cannot be written to Word documents.
 
 ## v2.3.0 — 2026-10-20

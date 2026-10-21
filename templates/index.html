@@ -230,6 +230,23 @@
       }
       .template-editor summary { cursor: pointer; font-size: 12px; font-weight: 650; }
       .template-editor .fields { margin-top: 14px; gap: 12px; }
+      .template-advanced {
+        border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px;
+      }
+      .template-advanced > summary { color: var(--accent); }
+      #preserve-options > summary { cursor: pointer; font-size: 12px; font-weight: 650; }
+      .field input:disabled, .field select:disabled { opacity: 0.55; cursor: not-allowed; }
+      .option:has(input:disabled) { opacity: 0.55; cursor: default; }
+      .paragraph-list { max-height: 310px; overflow-y: auto; margin-top: 12px; }
+      .paragraph-choice {
+        display: flex; align-items: flex-start; gap: 9px; border: 1px solid var(--line);
+        border-radius: 7px; padding: 10px; margin: 7px 0; font-size: 12px; cursor: pointer;
+        min-height: 44px;
+      }
+      .paragraph-choice input { flex-shrink: 0; margin-top: 3px; accent-color: var(--accent); }
+      .paragraph-choice span { white-space: pre-wrap; overflow-wrap: anywhere; }
+      .paragraph-choice strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+      .paragraph-range { margin-top: 12px; }
       .template-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
       .template-tools button { white-space: normal; }
       .template-message { color: var(--muted); font-size: 11px; margin: 9px 0 0; }
@@ -667,6 +684,7 @@
         font-size: 13px;
       }
       @media (pointer: coarse) {
+        .template-editor summary, #preserve-options > summary { min-height: 44px; align-content: center; }
         .field input, .field select, .field textarea {
           font-size: 16px;
           min-height: 44px;
@@ -924,6 +942,24 @@
                 </div>
                 <label class="option"><input type="checkbox" id="c-title_page" /><span data-t="title_page">Separate title page</span></label>
                 <label class="option"><input type="checkbox" id="c-sort_references" checked /><span data-t="sort_references">Sort reference entries alphabetically</span></label>
+                <details class="template-advanced" id="template-advanced">
+                  <summary data-t="advanced_customization">Advanced customization</summary>
+                  <div class="fields">
+                    <label class="field"><span data-t="page_number_position">Page number position</span>
+                      <select id="c-page_number_position">
+                        <option value="top_right" data-t="position_top_right">Top right</option>
+                        <option value="bottom_center" data-t="position_bottom_center">Bottom center</option>
+                        <option value="bottom_right" data-t="position_bottom_right">Bottom right</option>
+                      </select>
+                    </label>
+                    <label class="field"><span data-t="page_number_start">Starting page number</span>
+                      <input id="c-page_number_start" type="number" min="1" max="9999" step="1" value="1" inputmode="numeric" />
+                    </label>
+                  </div>
+                  <label class="option"><input type="checkbox" id="c-show_cover_page_number" checked /><span data-t="show_cover_page_number">Show a page number on the cover</span></label>
+                  <p class="hint" data-t="numbering_hint">When the cover number is hidden, the starting number applies to the first body page. Numbering options apply when page numbers are enabled.</p>
+                  <button type="button" class="text-button" id="open-preserve-options" data-t="open_preserve_options">Keep paragraph formatting in this draft…</button>
+                </details>
                 <div class="template-tools">
                   <button class="ghost" type="button" id="preset-save" data-t="preset_save">Save template</button>
                   <button class="ghost" type="button" id="preset-delete" data-t="preset_delete">Delete saved template</button>
@@ -1077,6 +1113,7 @@
               <p class="result-filename" id="result-filename"></p>
               <p class="result-note" id="result-details"></p>
               <p class="result-note" id="result-format"></p>
+              <p class="result-note" id="result-retained" hidden></p>
               <p class="result-warning" id="result-warning" role="status" aria-live="polite" hidden></p>
               <div class="secondary">
                 <a class="ghost" id="web-download" data-t="download_word" download>Download Word</a>
@@ -1091,6 +1128,7 @@
               <button type="button" class="ghost" id="native-share" data-t="native_share">Share</button>
             </div>
             <p class="result-note" id="native-result-format" hidden></p>
+            <p class="result-note" id="native-result-retained" hidden></p>
             <p class="result-warning" id="native-result-warning" role="status" aria-live="polite" hidden></p>
             <p class="privacy">
               <svg
@@ -1251,6 +1289,25 @@
               >Indent paragraphs starting with > as block quotes</span
             ></label
           >
+        </section>
+        <section class="dialog-section">
+          <details id="preserve-options">
+            <summary data-t="preserve_title">Keep selected paragraphs unchanged</summary>
+            <p class="hint" data-t="preserve_hint">For this Word draft only. Keep selected paragraphs' fonts, sizes, line spacing and indentation. Page size, margins and numbering still follow the document template.</p>
+            <div class="template-tools">
+              <button type="button" class="ghost" id="load-paragraphs" data-t="load_paragraphs">Read Word paragraphs</button>
+              <button type="button" class="ghost" id="select-all-paragraphs" data-t="select_all_paragraphs" disabled>Select all</button>
+              <button type="button" class="ghost" id="clear-preserved" data-t="clear_preserved" disabled>Clear selection</button>
+            </div>
+            <div class="paragraph-range" id="paragraph-range-row" hidden>
+              <label class="field"><span data-t="preserve_range">Select by paragraph number</span><input id="preserve-range" maxlength="1000" placeholder="2, 4-6" inputmode="text" /></label>
+              <p class="hint" data-t="preserve_range_hint">Use numbers or ranges, e.g. 2, 4-6. Applying them replaces the current selection. Empty paragraphs are omitted from the list.</p>
+              <button type="button" class="ghost" id="apply-preserve-range" data-t="apply_preserve_range">Apply numbers</button>
+            </div>
+            <p class="hint" id="paragraph-message" role="status" aria-live="polite"></p>
+            <div class="paragraph-list" id="paragraph-list" role="group" data-label="preserve_title"></div>
+            <button type="button" class="ghost" id="paragraph-more" data-t="paragraph_more" hidden>Show more paragraphs</button>
+          </details>
         </section>
         <section class="dialog-section">
           <h3 data-t="adv_preview">Formatting at a glance</h3>
@@ -1545,8 +1602,25 @@
         template_details: "调整并保存课程模板", saved_templates: "已保存的模板", preset_unsaved: "当前设置（尚未选择模板）",
         template_name: "模板名称", paper_size: "纸张", font_name: "字体", font_size: "字号（磅）", line_spacing: "行距（倍）",
         margin_cm: "四周页边距（厘米）", first_line_cm: "首行缩进（厘米）", alignment: "正文对齐", align_left: "左对齐", align_justify: "两端对齐",
-        header_style: "页眉", header_page: "页码", header_surname: "姓氏＋页码", header_none: "无页眉",
+        header_style: "页码内容", header_page: "仅页码", header_surname: "姓氏＋页码", header_none: "不显示页码",
+        spec_header: "姓氏与自动页码",
         references_title: "参考文献标题", title_page: "独立封面", sort_references: "参考文献条目按字母排序",
+        advanced_customization: "高级定制", page_number_position: "页码位置", page_number_start: "起始页码",
+        position_top_right: "右上角", position_bottom_center: "页脚居中", position_bottom_right: "页脚右侧",
+        show_cover_page_number: "封面显示页码",
+        numbering_hint: "隐藏封面页码时，起始数字用于正文第一页。启用页码后，这些设置才会生效。",
+        numbering_summary: (position, start) => `页码：${position} · 从 ${start} 开始`,
+        cover_number_shown: "封面显示页码", cover_number_hidden: "封面隐藏页码，正文从所设数字开始",
+        open_preserve_options: "设置本草稿的段落保留…", paragraph_more: "显示更多段落",
+        preserve_title: "指定段落保持原格式", preserve_hint: "仅用于当前 Word 草稿。保留所选段落的字体、字号、行距和缩进；纸张、页边距与页码仍使用全篇模板。正文图片和表格会自动保留。选择不会保存进课程模板。",
+        load_paragraphs: "读取 Word 段落", select_all_paragraphs: "全选段落", clear_preserved: "清空勾选", preserve_range: "按段落编号批量选择",
+        preserve_range_hint: "例如 2, 4-6；应用编号会替换当前勾选。空段不在列表中显示。", apply_preserve_range: "应用编号",
+        preserve_docx_only: "选择一个 Word（.docx）草稿后，可在这里勾选保持原格式的段落。", preserve_reading: "正在读取段落…",
+        preserve_unread: "点击“读取 Word 段落”，查看段落编号和文字。", preserve_empty: "没有可显示的段落。",
+        preserve_count: (selected, total) => `已勾选 ${selected} / ${total} 段。`, preserve_invalid_range: "请填写列表中的段落编号或范围，例如 2, 4-6。",
+        preserve_restored_count: (selected) => `已恢复 ${selected} 段的保留选择；重新读取可查看段落列表。`,
+        preserve_image: "（图片段落）", preserve_read_failed: "段落读取失败，请重新读取。",
+        draft_changed: "草稿已修改，请重新读取段落，再选择保留范围。",
         preset_save: "保存模板", preset_delete: "删除已选模板", preset_import: "导入模板", preset_export: "导出模板",
         template_local: "模板保存在这台设备的浏览器中。导出一份，可留作备份或在其他设备使用。",
         template_saved: "模板已保存。", template_deleted: "模板已删除，当前设置已保留。", template_none: "请先选择一个已保存的模板。",
@@ -1563,16 +1637,18 @@
         result_blank: (size) => `Word · ${size} · 空白模板`,
         date_hint_apa: "月（英文） 日, 年；可按课程要求修改", date_hint_custom: "按课程要求填写；留空使用今天",
         convert: "生成 Word 文档", native_convert: "生成 Word 文档", blank: "从空白模板开始",
-        spec_header_page: "自动页码", spec_header_none: "不添加页眉", spec_cited_apa: "References，另起一页",
+        spec_header_page: "自动页码", spec_header_none: "不添加页码", spec_cited_apa: "References，另起一页",
         spec_cited_custom: (title) => `${title}，另起一页`, spec_cited_keep: "保留条目顺序 · 悬挂缩进",
         summary_cover_apa: "独立封面：标题、姓名、学校／院系、课程、教师、截止日期",
         summary_apa_title: "正文新页重复加粗居中标题，保留明确的 1–3 级标题",
         summary_citations: "引用内容保持原文；请按所选规范检查作者、年份及文献资料",
         summary_custom_cover: "独立封面；正文另起一页", summary_inline_title: "个人信息与居中标题置于正文第一页",
         template_unavailable: "模板内容无法读取，请重试。",
-        warning_omitted: (count) => `原稿中有 ${count} 个图片、表格、脚注或公式结构未保留，请用原稿核对并补回。`,
+        warning_omitted: (count) => `原稿中有 ${count} 项结构未保留，请对照原稿核对。`,
         warning_headings: (count) => `${count} 个第 4 级及更深标题保留为普通文字，请检查标题层级。`,
-        disclaimer: "仅处理文字草稿，保留粗体、斜体与下划线。图片、脚注、表格和特殊样式可能丢失。引用内容不会自动改写，请检查生成文档。",
+        warning_reference_sort: "参考文献中有保留原格式的段落或对象，仅对连续的普通条目排序。请手动核对参考文献顺序。",
+        result_retained: (paragraphs, images, tables) => `保留原格式 ${paragraphs} 段 · 正文图片 ${images} 项 · 表格 ${tables} 个`,
+        disclaimer: "保留 DOCX 正文图片和表格，纸张、页边距和页码采用所选模板。TXT/MD 图像语法不会自动嵌图。请核对复杂文档与引用。",
       });
       Object.assign(T.en, {
         tagline: "Choose MLA, APA or a course template. Turn your draft into an editable Word document.",
@@ -1584,8 +1660,25 @@
         template_details: "Adjust and save a course template", saved_templates: "Saved templates", preset_unsaved: "Current settings (no saved template selected)",
         template_name: "Template name", paper_size: "Paper size", font_name: "Font", font_size: "Font size (pt)", line_spacing: "Line spacing",
         margin_cm: "Margins, all sides (cm)", first_line_cm: "First-line indent (cm)", alignment: "Body alignment", align_left: "Left", align_justify: "Justified",
-        header_style: "Page header", header_page: "Page number", header_surname: "Surname + page number", header_none: "None",
+        header_style: "Page number content", header_page: "Page number only", header_surname: "Surname + page number", header_none: "No page numbers",
+        spec_header: "Your surname and page number",
         references_title: "References heading", title_page: "Separate title page", sort_references: "Sort reference entries alphabetically",
+        advanced_customization: "Advanced customization", page_number_position: "Page number position", page_number_start: "Starting page number",
+        position_top_right: "Top right", position_bottom_center: "Bottom center", position_bottom_right: "Bottom right",
+        show_cover_page_number: "Show a page number on the cover",
+        numbering_hint: "When the cover number is hidden, the starting number applies to the first body page. Numbering options apply when page numbers are enabled.",
+        numbering_summary: (position, start) => `Page numbers: ${position} · start at ${start}`,
+        cover_number_shown: "Show cover page number", cover_number_hidden: "Hide cover number; start numbering on the first body page",
+        open_preserve_options: "Keep paragraph formatting in this draft…", paragraph_more: "Show more paragraphs",
+        preserve_title: "Keep selected paragraphs unchanged", preserve_hint: "For this Word draft only. Keep selected paragraphs' fonts, sizes, spacing and indentation. Page size, margins and numbering still follow the document template. Body images and tables are retained automatically. The selection is not saved in course templates.",
+        load_paragraphs: "Read Word paragraphs", select_all_paragraphs: "Select all", clear_preserved: "Clear selection", preserve_range: "Select by paragraph number",
+        preserve_range_hint: "Use numbers or ranges, e.g. 2, 4-6. Applying them replaces the current selection. Empty paragraphs are omitted from the list.", apply_preserve_range: "Apply numbers",
+        preserve_docx_only: "Choose a Word (.docx) draft to select paragraphs whose formatting should stay unchanged.", preserve_reading: "Reading paragraphs…",
+        preserve_unread: "Choose Read Word paragraphs to see paragraph numbers and text.", preserve_empty: "There are no paragraphs to display.",
+        preserve_count: (selected, total) => `${selected} of ${total} paragraphs selected.`, preserve_invalid_range: "Enter numbers or ranges from the paragraph list, e.g. 2, 4-6.",
+        preserve_restored_count: (selected) => `${selected} paragraph selections restored. Read the paragraphs again to review the list.`,
+        preserve_image: "(Image paragraph)", preserve_read_failed: "Could not read the paragraphs. Please try again.",
+        draft_changed: "The draft has changed. Read its paragraphs again and select what to preserve.",
         preset_save: "Save template", preset_delete: "Delete selected template", preset_import: "Import template", preset_export: "Export template",
         template_local: "Templates are saved in this browser on this device. Export a copy to keep a backup or use it elsewhere.",
         template_saved: "Template saved.", template_deleted: "Saved template deleted. Your current settings were kept.", template_none: "Select a saved template first.",
@@ -1602,16 +1695,18 @@
         result_blank: (size) => `Word · ${size} · Blank template`,
         date_hint_apa: "Month D, YYYY; adjust to your course requirements", date_hint_custom: "Use your course's date format; blank uses today",
         convert: "Create Word document", native_convert: "Create Word document", blank: "Start with a blank template",
-        spec_header_page: "Automatic page numbers", spec_header_none: "No page header", spec_cited_apa: "References, on a new page",
+        spec_header_page: "Automatic page numbers", spec_header_none: "No page numbers", spec_cited_apa: "References, on a new page",
         spec_cited_custom: (title) => `${title}, on a new page`, spec_cited_keep: "Original entry order · hanging indents",
         summary_cover_apa: "Separate title page: title, name, affiliation, course, instructor and due date",
         summary_apa_title: "Body starts on a new page with the bold, centered paper title; explicit heading levels 1–3 retained",
         summary_citations: "Citation text stays as written; check author, year and source details against the selected style",
         summary_custom_cover: "Separate title page; body starts on a new page", summary_inline_title: "Personal details and a centered title on the first body page",
         template_unavailable: "Could not read the template. Please try again.",
-        warning_omitted: (count) => `${count} image, table, footnote or equation structures from the draft were not retained. Compare with the original and restore them.`,
+        warning_omitted: (count) => `${count} structures from the draft were not retained. Compare with the original.`,
         warning_headings: (count) => `${count} headings at level 4 or deeper were kept as ordinary text. Check their heading levels.`,
-        disclaimer: "For text drafts. Bold, italic and underline are kept; images, footnotes, tables and special styles may be lost. Citation text is not rewritten. Review the generated document.",
+        warning_reference_sort: "References contain preserved paragraphs or objects, so only consecutive ordinary entries were sorted. Check the reference order manually.",
+        result_retained: (paragraphs, images, tables) => `${paragraphs} paragraphs kept unchanged · ${images} body images · ${tables} tables retained`,
+        disclaimer: "DOCX body images and tables are retained. Page size, margins and numbering follow the selected template. TXT/MD image syntax does not embed images. Check complex documents and citations.",
       });
       const $ = (id) => document.getElementById(id);
       const store = {
@@ -1641,7 +1736,11 @@
         sharing = false;
       let nativeResultFormat = null,
         nativeGenerationFormat = null,
-        nativeResultWarnings = null;
+        nativeResultWarnings = null, nativeResultRetained = null;
+      let paragraphItems = [], preservedIds = new Set(), paragraphFingerprint = null;
+      let paragraphLoading = false, paragraphRequestId = 0, paragraphController = null;
+      let paragraphNotice = null, paragraphRequestFileId = null, paragraphTimer = null;
+      let paragraphVisibleCount = 200;
       let lastStatus = { key: "ready", args: [], tone: "" };
       const t = (key, ...args) => {
         if (native && ["privacy", "convert", "drop"].includes(key)) key = "native_" + key;
@@ -1653,13 +1752,15 @@
         font_size: 12, line_spacing: 2, margin_cm: 2.54, first_line_cm: 1.27,
         alignment: "left", header: "page", title_page: false,
         references_title: "References", sort_references: true,
+        page_number_position: "top_right", show_cover_page_number: true, page_number_start: 1,
       });
-      const PROFILE_NUMBERS = { font_size: [8, 24], line_spacing: [1, 3], margin_cm: [0.5, 5.08], first_line_cm: [0, 2.54] };
+      const PROFILE_NUMBERS = { font_size: [8, 24], line_spacing: [1, 3], margin_cm: [0.5, 5.08], first_line_cm: [0, 2.54], page_number_start: [1, 9999] };
       const PROFILE_CHOICES = {
         paper_size: ["Letter", "A4"], font_name: ["Times New Roman", "Arial", "Calibri", "宋体", "黑体"],
         alignment: ["left", "justify"], header: ["surname_page", "page", "none"],
+        page_number_position: ["top_right", "bottom_center", "bottom_right"],
       };
-      const PROFILE_FLAGS = ["title_page", "sort_references"];
+      const PROFILE_FLAGS = ["title_page", "sort_references", "show_cover_page_number"];
       function profileError(field) {
         const error = new Error("invalid_profile");
         error.field = field;
@@ -1676,6 +1777,7 @@
         }
         for (const [key, range] of Object.entries(PROFILE_NUMBERS))
           if (typeof result[key] !== "number" || !Number.isFinite(result[key]) || result[key] < range[0] || result[key] > range[1]) throw profileError(key);
+        if (!Number.isInteger(result.page_number_start)) throw profileError("page_number_start");
         for (const [key, choices] of Object.entries(PROFILE_CHOICES))
           if (!choices.includes(result[key])) throw profileError(key);
         for (const key of PROFILE_FLAGS)
@@ -1683,6 +1785,7 @@
         return result;
       }
       function customProfile() {
+        syncPageControls();
         const value = {};
         for (const key of Object.keys(CUSTOM_DEFAULT)) {
           const input = $("c-" + key);
@@ -1710,6 +1813,205 @@
           : t(snapshot.id === "apa" ? "format_apa" : "format_mla");
       }
       function currentFormat() { return $("format-id").value; }
+      function syncPageControls() {
+        const noNumbers = $("c-header").value === "none";
+        const start = Number($("c-page_number_start").value);
+        if (noNumbers && (!Number.isInteger(start) || start < 1 || start > 9999))
+          $("c-page_number_start").value = CUSTOM_DEFAULT.page_number_start;
+        for (const key of ["page_number_position", "page_number_start"])
+          $("c-" + key).disabled = noNumbers;
+        $("c-show_cover_page_number").disabled = noNumbers || !$("c-title_page").checked;
+      }
+      function numberingSummary(profile) {
+        return t("numbering_summary", t("position_" + profile.page_number_position), profile.page_number_start);
+      }
+      function isWordDraft() { return Boolean(file && /\.docx$/i.test(file.name || "")); }
+      function persistParagraphPreservation() {
+        if (!native || !isWordDraft() || typeof file.id !== "string") return;
+        nativeSend("preservation", {
+          file_id: file.id,
+          preserve_paragraphs: [...preservedIds].sort((a, b) => a - b),
+          source_fingerprint: paragraphFingerprint,
+        });
+      }
+      function renderParagraphControls() {
+        const blocked = inProgress || sharing || paragraphLoading;
+        $("load-paragraphs").disabled = !isWordDraft() || blocked;
+        $("select-all-paragraphs").disabled = !paragraphItems.length || blocked;
+        $("clear-preserved").disabled = !preservedIds.size || blocked;
+        $("apply-preserve-range").disabled = !paragraphItems.length || blocked;
+        $("preserve-range").disabled = blocked;
+        $("paragraph-range-row").hidden = !paragraphItems.length;
+        $("paragraph-more").hidden = paragraphVisibleCount >= paragraphItems.length;
+        $("paragraph-more").disabled = blocked;
+        $("paragraph-list").setAttribute("aria-busy", String(paragraphLoading));
+        $("paragraph-list").querySelectorAll("input").forEach((input) => { input.disabled = blocked; });
+        for (const id of ["convert", "blank", ...(native ? [] : ["try-demo"])]) $(id).disabled = blocked;
+        $("paragraph-message").textContent = !isWordDraft() ? t("preserve_docx_only")
+          : paragraphLoading ? t("preserve_reading") : paragraphNotice ? t(paragraphNotice)
+          : paragraphItems.length ? t("preserve_count", preservedIds.size, paragraphItems.length)
+          : preservedIds.size ? t("preserve_restored_count", preservedIds.size)
+          : paragraphFingerprint ? t("preserve_empty") : t("preserve_unread");
+      }
+      function renderParagraphs() {
+        const fragment = document.createDocumentFragment();
+        paragraphItems.slice(0, paragraphVisibleCount).forEach((item) => {
+          const row = document.createElement("label");
+          row.className = "paragraph-choice";
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.checked = preservedIds.has(item.id);
+          input.addEventListener("change", () => {
+            if (input.checked) preservedIds.add(item.id);
+            else preservedIds.delete(item.id);
+            paragraphNotice = null;
+            persistParagraphPreservation();
+            renderParagraphControls();
+          });
+          const content = document.createElement("span");
+          const number = document.createElement("strong");
+          number.textContent = String(item.id) + ". ";
+          const text = item.text.slice(0, 300) + (item.text.length > 300 ? "…" : "");
+          content.append(number, document.createTextNode(text || t("preserve_image")));
+          row.append(input, content);
+          fragment.append(row);
+        });
+        $("paragraph-list").replaceChildren(fragment);
+        renderParagraphControls();
+      }
+      function resetPreservation(persist = false) {
+        paragraphController?.abort();
+        clearTimeout(paragraphTimer);
+        paragraphTimer = null;
+        paragraphController = null;
+        paragraphRequestId += 1;
+        paragraphRequestFileId = null;
+        paragraphItems = [];
+        preservedIds = new Set();
+        paragraphFingerprint = null;
+        paragraphLoading = false;
+        paragraphNotice = null;
+        paragraphVisibleCount = 200;
+        $("preserve-range").value = "";
+        if (persist) persistParagraphPreservation();
+        renderParagraphs();
+      }
+      function acceptParagraphs(data) {
+        if (!Array.isArray(data.paragraphs) || typeof data.source_fingerprint !== "string" ||
+            !/^[a-f0-9]{64}$/i.test(data.source_fingerprint)) throw new Error("paragraphs");
+        const seen = new Set();
+        const items = data.paragraphs.map((item) => {
+          if (!item || !Number.isSafeInteger(item.id) || item.id < 1 ||
+              typeof item.text !== "string" || seen.has(item.id)) throw new Error("paragraphs");
+          seen.add(item.id);
+          return { id: item.id, text: item.text, has_images: Boolean(item.has_images) };
+        });
+        const changed = preservedIds.size && (paragraphFingerprint !== data.source_fingerprint.toLowerCase() ||
+          [...preservedIds].some((id) => !seen.has(id)));
+        if (changed) preservedIds.clear();
+        paragraphItems = items;
+        paragraphFingerprint = data.source_fingerprint.toLowerCase();
+        paragraphNotice = changed ? "draft_changed" : null;
+        persistParagraphPreservation();
+      }
+      async function readParagraphs(restoration = null) {
+        if (!isWordDraft() || paragraphLoading || inProgress || sharing) return;
+        const selectedFile = file;
+        resetPreservation(!restoration);
+        if (restoration) {
+          preservedIds = new Set(restoration.preserve_paragraphs);
+          paragraphFingerprint = restoration.source_fingerprint.toLowerCase();
+        }
+        const requestId = paragraphRequestId;
+        paragraphLoading = true;
+        paragraphRequestFileId = native ? file.id : null;
+        renderParagraphControls();
+        if (native) {
+          if (typeof paragraphRequestFileId !== "string" || !paragraphRequestFileId) {
+            paragraphLoading = false;
+            paragraphNotice = "preserve_read_failed";
+            renderParagraphControls();
+            return;
+          }
+          paragraphTimer = setTimeout(() => {
+            if (requestId !== paragraphRequestId || !paragraphLoading) return;
+            paragraphLoading = false;
+            paragraphNotice = "preserve_read_failed";
+            renderParagraphControls();
+          }, 120000);
+          nativeSend("paragraphs", { request_id: requestId });
+          return;
+        }
+        const controller = new AbortController();
+        paragraphController = controller;
+        const timeout = setTimeout(() => controller.abort(), 120000);
+        try {
+          const body = new FormData();
+          body.append("file", selectedFile);
+          const response = await fetch("/api/paragraphs", { method: "POST", body, signal: controller.signal });
+          const data = await response.json();
+          if (requestId !== paragraphRequestId || selectedFile !== file) return;
+          if (!response.ok) {
+            paragraphNotice = typeof data.error === "string" && Object.hasOwn(T.en, data.error)
+              ? data.error : "preserve_read_failed";
+          } else acceptParagraphs(data);
+        } catch (_) {
+          if (requestId === paragraphRequestId && selectedFile === file) paragraphNotice = "preserve_read_failed";
+        } finally {
+          clearTimeout(timeout);
+          if (requestId === paragraphRequestId) {
+            paragraphController = null;
+            paragraphLoading = false;
+            renderParagraphs();
+          }
+        }
+      }
+      $("load-paragraphs").addEventListener("click", () => readParagraphs());
+      $("select-all-paragraphs").addEventListener("click", () => {
+        preservedIds = new Set(paragraphItems.map((item) => item.id));
+        paragraphNotice = null;
+        $("preserve-range").value = "";
+        persistParagraphPreservation();
+        renderParagraphs();
+      });
+      $("paragraph-more").addEventListener("click", () => {
+        paragraphVisibleCount += 200;
+        renderParagraphs();
+      });
+      $("clear-preserved").addEventListener("click", () => {
+        preservedIds.clear();
+        paragraphNotice = null;
+        $("preserve-range").value = "";
+        persistParagraphPreservation();
+        renderParagraphs();
+      });
+      $("apply-preserve-range").addEventListener("click", () => {
+        const text = $("preserve-range").value.trim().replace(/\s*[-–—]\s*/g, "-");
+        const parts = text.split(/[,，;；\s]+/);
+        const maximum = paragraphItems.reduce((value, item) => Math.max(value, item.id), 0);
+        const ranges = [];
+        for (const part of parts) {
+          const match = /^([1-9]\d*)(?:-([1-9]\d*))?$/.exec(part);
+          const first = match ? Number(match[1]) : NaN;
+          const last = match ? Number(match[2] || match[1]) : NaN;
+          if (!Number.isSafeInteger(first) || !Number.isSafeInteger(last) || first > last || last > maximum) {
+            paragraphNotice = "preserve_invalid_range";
+            renderParagraphControls();
+            return;
+          }
+          ranges.push([first, last]);
+        }
+        const ids = paragraphItems.filter((item) => ranges.some(([first, last]) => item.id >= first && item.id <= last)).map((item) => item.id);
+        if (!ids.length) {
+          paragraphNotice = "preserve_invalid_range";
+          renderParagraphControls();
+          return;
+        }
+        preservedIds = new Set(ids);
+        paragraphNotice = null;
+        persistParagraphPreservation();
+        renderParagraphs();
+      });
       let presets = [];
       let selectedPreset = store.get("selected_preset") || "";
       try {
@@ -1794,12 +2096,19 @@
         const notes = [];
         if (counts?.omitted > 0) notes.push(t("warning_omitted", counts.omitted));
         if (counts?.headings > 0) notes.push(t("warning_headings", counts.headings));
+        if (counts?.referenceSort > 0) notes.push(t("warning_reference_sort"));
         $(id).textContent = notes.join(" ");
         $(id).hidden = !notes.length;
       }
+      function renderRetained(id, counts) {
+        const values = counts || [0, 0, 0];
+        $(id).hidden = !values.some((value) => value > 0);
+        $(id).textContent = t("result_retained", ...values);
+      }
       function renderWebResult() {
         if (native) return;
-        for (const id of ["convert", "blank", "try-demo"]) $(id).disabled = sharing || inProgress;
+        for (const id of ["convert", "blank", "try-demo"]) $(id).disabled = sharing || inProgress || paragraphLoading;
+        renderParagraphControls();
         $("web-result").hidden = !webResult;
         if (!webResult) return;
         $("result-filename").textContent = webResult.name;
@@ -1807,6 +2116,7 @@
           ? t("result_blank", fileSize(webResult.blob.size))
           : t("result_details", fileSize(webResult.blob.size), ...webResult.stats);
         $("result-format").textContent = t("result_format", formatLabel(webResult.format));
+        renderRetained("result-retained", webResult.retained);
         renderWarnings("result-warning", webResult.warnings);
         $("web-download").href = webResult.url;
         $("web-download").download = webResult.name;
@@ -1830,6 +2140,7 @@
         $("file-actions").hidden = !file;
         if (lastStatus.key === "file_ready" && file)
           lastStatus.args = [file.name, fileSize(file.size)];
+        renderParagraphControls();
       }
       function surname() {
         if ($("lname").value.trim()) return $("lname").value.trim();
@@ -1848,6 +2159,7 @@
         return words[words.length - 1] || t("preview_surname");
       }
       function refreshPreview() {
+        syncPageControls();
         for (const id of ["name", "instructor", "course", "title"])
           $("paper-" + id).textContent =
             $(id).value.trim() ||
@@ -1876,7 +2188,14 @@
         $("paper-date").textContent = $("date").value.trim() || defaultDate(format);
         $("paper-affiliation").textContent = $("affiliation").value.trim() || (format === "apa" ? t("affiliation") : "");
         $("paper-affiliation").hidden = format === "mla";
-        $("paper-header").textContent = profile.header === "surname_page" ? surname() + " 1" : profile.header === "page" ? "1" : "";
+        const pageMarker = $("paper-header");
+        const bottomNumber = profile.page_number_position !== "top_right";
+        pageMarker.style.top = bottomNumber ? "auto" : "5.5%";
+        pageMarker.style.bottom = bottomNumber ? "5.5%" : "auto";
+        pageMarker.style.textAlign = profile.page_number_position === "bottom_center" ? "center" : "right";
+        const hideCoverNumber = profile.title_page && !profile.show_cover_page_number;
+        pageMarker.textContent = profile.header === "none" || hideCoverNumber ? ""
+          : (profile.header === "surname_page" ? surname() + " " : "") + profile.page_number_start;
         $("format-note").textContent = t("format_note_" + format);
         $("custom-editor").hidden = format !== "custom";
         $("affiliation-field").hidden = format === "mla";
@@ -1892,8 +2211,8 @@
           : `${profile.margin_cm} cm margins · ${profile.first_line_cm} cm first-line indent`;
         document.querySelector("[data-t=spec_header]").textContent = profile.header === "surname_page"
           ? t("spec_header") : t(profile.header === "page" ? "spec_header_page" : "spec_header_none");
-        document.querySelector("[data-t=spec_header_sub]").textContent = profile.header === "surname_page"
-          ? t("spec_header_sub") : profile.header === "page" ? (zh ? "右上角 · 从第 1 页开始" : "Upper right · starts at page 1") : (zh ? "按课程模板设置" : "As set in your course template");
+        document.querySelector("[data-t=spec_header_sub]").textContent = profile.header === "none"
+          ? (zh ? "按课程模板设置" : "As set in your course template") : numberingSummary(profile);
         const references = format === "mla" ? "Works Cited" : format === "apa" ? "References" : profile.references_title;
         document.querySelector("[data-t=spec_cited]").textContent = format === "mla" ? t("spec_cited")
           : format === "apa" ? t("spec_cited_apa") : t("spec_cited_custom", references);
@@ -1909,7 +2228,9 @@
           `${zh ? "四周页边距" : "Margins on all sides"}: ${profile.margin_cm} cm`,
           `${zh ? "行距" : "Line spacing"}: ${profile.line_spacing}; ${zh ? "段前段后" : "before/after"}: 0 pt`,
           `${zh ? "首行缩进" : "First-line indent"}: ${profile.first_line_cm} cm; ${t(profile.alignment === "left" ? "align_left" : "align_justify")}`,
-          `${zh ? "页眉" : "Header"}: ${t("header_" + (profile.header === "surname_page" ? "surname" : profile.header))}`,
+          `${zh ? "页码内容" : "Page number content"}: ${t("header_" + (profile.header === "surname_page" ? "surname" : profile.header))}`,
+          ...(profile.header === "none" ? [] : [numberingSummary(profile),
+            ...(profile.title_page ? [t(profile.show_cover_page_number ? "cover_number_shown" : "cover_number_hidden")] : [])]),
           format === "apa" ? t("summary_cover_apa") : t(profile.title_page ? "summary_custom_cover" : "summary_inline_title"),
           ...(format === "apa" ? [t("summary_apa_title")] : []),
           `${references}: ${zh ? "新页、居中标题、悬挂缩进 1.27 cm" : "new page, centered title, 1.27 cm hanging indent"}; ${profile.sort_references ? (zh ? "按字母排序" : "alphabetical entries") : (zh ? "保留原始顺序" : "original entry order")}`,
@@ -1944,8 +2265,10 @@
         refreshPreview();
         renderStatus();
         renderWebResult();
+        renderParagraphs();
         if (nativeResultFormat) $("native-result-format").textContent = t("result_format", formatLabel(nativeResultFormat));
         renderWarnings("native-result-warning", nativeResultWarnings);
+        renderRetained("native-result-retained", nativeResultRetained);
       }
       for (const code of ["zh", "en"])
         $("lang-" + code).addEventListener("click", () => {
@@ -1984,6 +2307,8 @@
           if (error.field) {
             $("c-" + error.field).setAttribute("aria-invalid", "true");
             $("custom-editor").open = true;
+            if (["page_number_position", "page_number_start", "show_cover_page_number"].includes(error.field))
+              $("template-advanced").open = true;
             $("c-" + error.field).focus();
           }
           templateMessage("invalid_template");
@@ -2153,6 +2478,7 @@
           return;
         }
         file = candidate;
+        resetPreservation();
         renderDrop();
         setStatus("file_ready", "", file.name, fileSize(file.size));
       }
@@ -2181,6 +2507,7 @@
           return;
         }
         file = null;
+        resetPreservation();
         $("file").value = "";
         renderDrop();
         if (!inProgress) setStatus("ready");
@@ -2189,6 +2516,12 @@
       $("adv-open").addEventListener("click", () => {
         refreshPreview();
         adv.showModal();
+      });
+      $("open-preserve-options").addEventListener("click", () => {
+        refreshPreview();
+        $("preserve-options").open = true;
+        adv.showModal();
+        $("preserve-options").scrollIntoView({ block: "start" });
       });
       function closeDialog() {
         adv.close();
@@ -2218,7 +2551,10 @@
             ["date", "date"],
             ["last_name_override", "lname"],
           ].map(([key, id]) => [key, $(id).value.trim()]),
-        ), format_id: currentFormat(), custom_profile: currentFormat() === "custom" ? customProfile() : null };
+        ), format_id: currentFormat(), custom_profile: currentFormat() === "custom" ? customProfile() : null,
+          preserve_paragraphs: isWordDraft() ? [...preservedIds].sort((a, b) => a - b) : [],
+          ...(isWordDraft() && preservedIds.size ? { source_fingerprint: paragraphFingerprint } : {}),
+        };
       }
       function validate() {
         let data;
@@ -2245,6 +2581,7 @@
         $("essay-form").setAttribute("aria-busy", String(on));
         if (on) setStatus("working", "working");
         renderWebResult();
+        renderParagraphControls();
       }
       async function prepareDownload(response, isBlank, format) {
         if (!response.ok) {
@@ -2260,6 +2597,7 @@
               : response.status === 413
                 ? "too_large"
                 : "failed";
+          if (key === "draft_changed") resetPreservation();
           setStatus(key, "err");
           return null;
         }
@@ -2291,16 +2629,23 @@
           warnings: {
             omitted: Number(response.headers.get("X-Stat-omitted-elements") || 0),
             headings: Number(response.headers.get("X-Stat-unsupported-headings") || 0),
+            referenceSort: Number(response.headers.get("X-Stat-reference-sort-skipped") || 0),
           },
+          retained: ["preserved-paragraphs", "retained-images", "retained-tables"].map((key) =>
+            Number(response.headers.get("X-Stat-" + key) || 0)),
         };
         renderWebResult();
         if (previous) URL.revokeObjectURL(previous.url);
         return webResult;
       }
       async function generate(isBlank) {
-        if (inProgress || sharing) return;
+        if (inProgress || sharing || paragraphLoading) return;
         const data = validate();
         if (!data) return;
+        if (isBlank) {
+          data.preserve_paragraphs = [];
+          delete data.source_fingerprint;
+        }
         const format = profileSnapshot(data);
         if (!isBlank && !file) {
           setStatus("need_file", "err");
@@ -2328,7 +2673,7 @@
           const body = new FormData();
           body.append("file", file);
           Object.entries(data).forEach(([key, value]) => {
-            if (value !== null) body.append(key, key === "custom_profile" ? JSON.stringify(value) : value);
+            if (value !== null) body.append(key, ["custom_profile", "preserve_paragraphs"].includes(key) ? JSON.stringify(value) : value);
           });
           body.append(
             "txt_mode",
@@ -2478,8 +2823,44 @@
               refreshPreview();
               return;
             }
+            if (message.type === "preservation") {
+              if (!isWordDraft() || message.file_id !== file.id ||
+                  !Array.isArray(message.preserve_paragraphs) || !message.preserve_paragraphs.length ||
+                  message.preserve_paragraphs.length > 10000 ||
+                  message.preserve_paragraphs.some((id) => !Number.isSafeInteger(id) || id < 1) ||
+                  typeof message.source_fingerprint !== "string" || !/^[a-f0-9]{64}$/i.test(message.source_fingerprint)) return;
+              preservedIds = new Set(message.preserve_paragraphs);
+              paragraphFingerprint = message.source_fingerprint.toLowerCase();
+              if (Array.isArray(message.paragraphs)) {
+                try { acceptParagraphs(message); }
+                catch (_) { paragraphNotice = "preserve_read_failed"; }
+                renderParagraphs();
+              } else if (!inProgress && !sharing) readParagraphs(message);
+              else renderParagraphs();
+              return;
+            }
+            if (message.type === "paragraphs") {
+              if (!paragraphLoading || message.request_id !== paragraphRequestId ||
+                  file?.id !== paragraphRequestFileId || message.file_id !== paragraphRequestFileId) return;
+              clearTimeout(paragraphTimer);
+              paragraphTimer = null;
+              paragraphLoading = false;
+              if (message.error) {
+                paragraphNotice = typeof message.error === "string" && Object.hasOwn(T.en, message.error)
+                  ? message.error : "preserve_read_failed";
+              } else {
+                try { acceptParagraphs(message); }
+                catch (_) { paragraphNotice = "preserve_read_failed"; }
+              }
+              renderParagraphs();
+              return;
+            }
             if (message.type !== "state") return;
-            file = message.file || null;
+            const nextFile = message.file || null;
+            const previousId = file?.id ?? (file ? file.name + ":" + file.size : null);
+            const nextId = nextFile?.id ?? (nextFile ? nextFile.name + ":" + nextFile.size : null);
+            file = nextFile;
+            if (nextId !== previousId) resetPreservation();
             renderDrop();
             busy(Boolean(message.busy));
             $("native-actions").hidden = !message.result;
@@ -2490,15 +2871,23 @@
               nativeResultWarnings = {
                 omitted: Number(message.result.stats?.omitted_elements || 0),
                 headings: Number(message.result.stats?.unsupported_headings || 0),
+                referenceSort: Number(message.result.stats?.reference_sort_skipped || 0),
               };
+              nativeResultRetained = ["preserved_paragraphs", "retained_images", "retained_tables"].map((key) =>
+                Number(message.result.stats?.[key] || 0));
             } else {
               nativeResultFormat = null;
               nativeResultWarnings = null;
+              nativeResultRetained = null;
             }
             $("native-result-format").hidden = !nativeResultFormat;
             if (nativeResultFormat) $("native-result-format").textContent = t("result_format", formatLabel(nativeResultFormat));
             renderWarnings("native-result-warning", nativeResultWarnings);
-            if (message.error) setStatus(message.error, "err");
+            renderRetained("native-result-retained", nativeResultRetained);
+            if (message.error) {
+              if (message.error === "draft_changed") resetPreservation(true);
+              setStatus(message.error, "err");
+            }
             else if (message.message === "file_ready" && file)
               setStatus("file_ready", "", file.name, fileSize(file.size));
             else if (message.message === "native_done" && message.result)

@@ -21,6 +21,7 @@ import tempfile
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_SECTION_START
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt, RGBColor
@@ -35,9 +36,10 @@ FONT_SIZE = 12
 SUPPORTED_EXTS = (".docx", ".txt", ".md")
 
 MLG_DISCLAIMER = (
-    "This tool reformats text drafts into the selected paper layout. Italic, bold and "
-    "underline are kept; images, footnotes, tables, lists and special styles "
-    "may not be preserved. Always proofread the result."
+    "This tool formats drafts using the selected paper layout. DOCX body images "
+    "and tables are retained. Selected paragraphs keep their original formatting; "
+    "paper size, margins, headers and footers follow the selected template. "
+    "Text and Markdown image syntax does not embed images. Review the result."
 )
 
 
@@ -410,8 +412,11 @@ def format_summary(name, last_name_override=None, *, format_id="mla", custom_pro
     profile = resolve_profile(format_id, custom_profile)
     ln = extract_last_name(name, last_name_override)
     if format_id != "mla":
-        headers = {"page": "Page number only (upper right)", "none": "None",
-                   "surname_page": f"{ln} 1 (upper right)"}
+        position = {"top_right": "upper right", "bottom_center": "footer center",
+                    "bottom_right": "footer right"}[profile["page_number_position"]]
+        start = profile["page_number_start"]
+        headers = {"page": f"Page number only ({position}, starts at {start})", "none": "None",
+                   "surname_page": f"{ln} {start} ({position})"}
         return [
             f"Format: {profile['label']}",
             f"Paper: {profile['paper_size']}",
@@ -421,6 +426,9 @@ def format_summary(name, last_name_override=None, *, format_id="mla", custom_pro
             f"First-line indent: {profile['first_line_cm']:g} cm; {profile['alignment']} alignment",
             f"Header: {headers[profile['header']]}",
             "Separate title page" if profile["title_page"] else "First-page information block",
+            ("Cover counted and numbered" if profile["show_cover_page_number"]
+             else "Cover unnumbered; body starts at the selected page number") if profile["title_page"]
+            else "Page numbering begins on the first page",
             f"{profile['references_title']}: new page, hanging indent 0.5 in; "
             + ("alphabetical order" if profile["sort_references"] else "original order"),
             "Reference wording and in-text citations are kept as supplied.",
@@ -623,12 +631,25 @@ def convert_draft_to_mla(input_path, output, name, instructor, course,
                          enable_block_quote=False,
                          markdown_emphasis=True,
                          strip_existing_heading=True, *, format_id="mla",
-                         custom_profile=None, affiliation=""):
+                         custom_profile=None, affiliation="", preserve_paragraphs=None,
+                         source_fingerprint=None):
     """Convert a draft (.docx/.txt/.md) into an MLA-formatted .docx.
 
     Returns a stats dict: {"body": n, "works_cited": n, "removed_heading_lines": n}.
     """
     profile = resolve_profile(format_id, custom_profile)
+    ext = os.path.splitext(input_path)[1].lower()
+    if ext == ".docx":
+        _ensure_distinct_output(input_path, output)
+        from docx_preserve import convert_docx_draft
+        return convert_docx_draft(
+            input_path, output, name, instructor, course, date_str, title,
+            last_name_override, txt_paragraph_mode, enable_heading_detection,
+            enable_block_quote, markdown_emphasis, strip_existing_heading,
+            profile=profile, affiliation=affiliation,
+            preserve_paragraphs=preserve_paragraphs, source_fingerprint=source_fingerprint)
+    if preserve_paragraphs:
+        raise ValueError("preserve_docx_only")
     if format_id != "mla":
         return _convert_profile_draft(
             input_path, output, name, instructor, course, date_str, title,
@@ -714,11 +735,49 @@ def _profile_spacing(paragraph, profile):
     return pf
 
 
-def _add_profile_header(doc, profile, name, last_name_override):
+def _set_page_start(section, start):
+    element = section._sectPr.find(qn("w:pgNumType"))
+    if element is None:
+        element = OxmlElement("w:pgNumType")
+        section._sectPr.insert_element_before(
+            element, "w:cols", "w:formProt", "w:vAlign", "w:noEndnote", "w:titlePg",
+            "w:textDirection", "w:bidi", "w:rtlGutter", "w:docGrid", "w:printerSettings",
+            "w:sectPrChange")
+    element.set(qn("w:fmt"), "decimal")
+    if start is None:
+        element.attrib.pop(qn("w:start"), None)
+    else:
+        element.set(qn("w:start"), str(start))
+
+
+def _configure_page_numbers(doc, profile, name, last_name_override=None, *, header_style_id=None):
+    """Create fresh page-number stories; hidden covers do not count as page 1."""
+    doc.settings.odd_and_even_pages_header_footer = False
+    hidden_cover = profile["title_page"] and not profile["show_cover_page_number"]
+    for index, section in enumerate(doc.sections):
+        for reference in list(section._sectPr):
+            if reference.tag in (qn("w:headerReference"), qn("w:footerReference")):
+                section._sectPr.remove(reference)
+        section.different_first_page_header_footer = False
+        _set_page_start(section, profile["page_number_start"]
+                        if index == (1 if hidden_cover else 0) else None)
     if profile["header"] == "none":
         return
-    paragraph = doc.sections[0].header.paragraphs[0]
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    for index, section in enumerate(doc.sections):
+        if hidden_cover and index == 0:
+            continue
+        location = profile["page_number_position"]
+        story = section.header if location == "top_right" else section.footer
+        story.is_linked_to_previous = False
+        paragraph = story.paragraphs[0]
+        if header_style_id:
+            paragraph._p.style = header_style_id
+        _add_page_number(paragraph, profile, name, last_name_override)
+
+
+def _add_page_number(paragraph, profile, name, last_name_override):
+    paragraph.alignment = (WD_ALIGN_PARAGRAPH.CENTER
+                           if profile["page_number_position"] == "bottom_center" else WD_ALIGN_PARAGRAPH.RIGHT)
     _profile_spacing(paragraph, profile)
     if profile["header"] == "surname_page":
         paragraph.add_run(extract_last_name(name, last_name_override) + " ")
@@ -726,7 +785,7 @@ def _add_profile_header(doc, profile, name, last_name_override):
     field.set(qn("w:instr"), " PAGE ")
     run = OxmlElement("w:r")
     text = OxmlElement("w:t")
-    text.text = "1"
+    text.text = str(profile["page_number_start"])
     run.append(text)
     field.append(run)
     paragraph._p.append(field)
@@ -803,7 +862,6 @@ def _new_profile_document(profile, name, instructor, course, date_str, title,
     # Keep a header inside even a narrow custom margin.
     section.header_distance = section.footer_distance = min(Inches(0.5), Cm(profile["margin_cm"] / 2))
     _configure_profile_styles(doc, profile)
-    _add_profile_header(doc, profile, name, last_name_override)
     date_text = date_str.strip() if date_str and date_str.strip() else today_for_format(profile["format_id"])
     title_segments = _parse_markdown_emphasis(title)
     if profile["title_page"]:
@@ -815,13 +873,17 @@ def _new_profile_document(profile, name, instructor, course, date_str, title,
             if value and value.strip():
                 paragraph = _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
                 paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        hidden_cover = not profile["show_cover_page_number"]
+        if hidden_cover:
+            doc.add_section(WD_SECTION_START.NEW_PAGE)
         body_title = _add_profile_paragraph(doc, title_segments, profile, role="title")
-        body_title.paragraph_format.page_break_before = True
+        body_title.paragraph_format.page_break_before = not hidden_cover
     else:
         for value in (name, affiliation, instructor, course, date_text):
             if value and value.strip():
                 _add_profile_paragraph(doc, [_seg(value.strip())], profile, role="metadata")
         _add_profile_paragraph(doc, title_segments, profile, role="title")
+    _configure_page_numbers(doc, profile, name, last_name_override)
     return doc
 
 
@@ -1031,6 +1093,16 @@ def _convert_profile_draft(input_path, output, name, instructor, course, date_st
 
 # Format-neutral name for new clients; the old entry point remains compatible.
 convert_draft = convert_draft_to_mla
+
+
+def inspect_draft_paragraphs(input_path):
+    """Read original DOCX paragraph identifiers and a source-file fingerprint."""
+    from docx_preserve import inspect_draft_paragraphs as inspect
+    return inspect(input_path)
+
+
+def list_draft_paragraphs(input_path):
+    return inspect_draft_paragraphs(input_path)["paragraphs"]
 
 
 # ======================================================================

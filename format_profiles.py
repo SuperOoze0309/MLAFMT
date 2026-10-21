@@ -18,6 +18,9 @@ DEFAULT_CUSTOM_PROFILE = {
     "title_page": False,
     "references_title": "References",
     "sort_references": True,
+    "page_number_position": "top_right",
+    "show_cover_page_number": True,
+    "page_number_start": 1,
 }
 
 
@@ -47,6 +50,7 @@ def normalize_custom_profile(profile=None):
         ("paper_size", ("Letter", "A4")), ("font_name", FONT_CHOICES),
         ("alignment", ("left", "justify")),
         ("header", ("surname_page", "page", "none")),
+        ("page_number_position", ("top_right", "bottom_center", "bottom_right")),
     ):
         if result[key] not in choices:
             raise ValueError(f"Unsupported {key} in the course template.")
@@ -58,7 +62,11 @@ def normalize_custom_profile(profile=None):
         if (isinstance(value, bool) or not isinstance(value, (int, float))
                 or not minimum <= value <= maximum or not math.isfinite(value)):
             raise ValueError(f"{key} must be a number from {minimum} to {maximum}.")
-    for key in ("title_page", "sort_references"):
+    if (isinstance(result["page_number_start"], bool)
+            or not isinstance(result["page_number_start"], int)
+            or not 1 <= result["page_number_start"] <= 9999):
+        raise ValueError("page_number_start must be an integer from 1 to 9999.")
+    for key in ("title_page", "sort_references", "show_cover_page_number"):
         if not isinstance(result[key], bool):
             raise ValueError(f"{key} must be true or false.")
     return result

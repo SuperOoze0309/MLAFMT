@@ -12,6 +12,7 @@ import locale
 import os
 import subprocess
 import queue
+import re
 import tempfile
 import threading
 from pathlib import Path
@@ -30,6 +31,7 @@ from mla_formatter import (
     extract_last_name,
     format_summary,
     generate_filename,
+    inspect_draft_paragraphs,
     today_mla,
     today_for_format,
 )
@@ -305,7 +307,7 @@ T["zh"].update({
     "profile_label": "模板名称", "paper_size": "纸张", "font_name": "字体", "font_size": "字号（pt）",
     "line_spacing": "行距（倍）", "margin_cm": "四边页边距（cm）", "first_line_cm": "正文首行缩进（cm）",
     "alignment": "正文对齐", "align_left": "左对齐", "align_justify": "两端对齐",
-    "header": "页眉", "header_surname_page": "姓氏 + 页码", "header_page": "仅页码", "header_none": "无页眉",
+    "header": "页码内容", "header_surname_page": "姓氏 + 页码", "header_page": "仅页码", "header_none": "不显示页码",
     "title_page": "单独封面页", "references_title": "参考文献页标题", "sort_references": "按字母顺序排列参考文献",
     "save_template": "保存并使用", "import_template": "导入 JSON", "export_template": "导出 JSON",
     "delete_template": "删除当前模板", "template_invalid": "模板设置有误：{e}",
@@ -314,21 +316,48 @@ T["zh"].update({
     "template_session_only": "已使用模板 {label}，但无法保存设置；关闭应用后此修改可能丢失。",
     "template_io": "无法读写模板文件：{e}", "template_json": "MLAFMT 模板（JSON）",
     "template_too_large": "模板文件超过 64 KB，请选择一个课程模板 JSON 文件。",
+    "advanced_custom": "高级定制…", "advanced_custom_title": "高级定制",
+    "advanced_custom_hint": "页码设置会随课程模板保存。",
+    "page_number_position": "页码位置", "page_number_top_right": "右上角",
+    "page_number_bottom_center": "页脚居中", "page_number_bottom_right": "页脚右侧",
+    "show_cover_page_number": "在封面显示页码", "page_number_start": "起始页码",
+    "page_number_hint": "隐藏封面页码时，起始数字用于正文第一页；没有独立封面时用于文档第一页。",
+    "page_number_summary": "{position} · 从 {start} 开始", "cover_unnumbered": "封面不编号",
+    "page_number_invalid": "起始页码必须是 1 到 9999 的整数。",
+    "preserve_title": "保持原格式的段落", "preserve_choose": "选择保留原格式的段落…",
+    "preserve_hint": "选中的 Word 段落保留字体、字号、行距和缩进；纸张、页边距与页码使用所选模板。",
+    "preserve_scope": "选择仅用于当前草稿，不保存进课程模板。",
+    "preserve_docx_only": "请先选择 Word（.docx）草稿，再选择要保留原格式的段落。",
+    "preserve_count": "当前草稿：{n} 段保留原格式", "preserve_none": "当前草稿：全部段落应用所选格式",
+    "preserve_column": "保留", "preserve_text": "原草稿段落", "preserve_images": "含图片",
+    "preserve_toggle": "点击一行切换保留状态，也可用空格键；原草稿的段落编号可能有间隔。",
+    "preserve_ranges": "按编号选择（如 2, 4-6）", "preserve_apply_ranges": "应用编号",
+    "preserve_select_all": "全选", "preserve_clear": "清空选择", "preserve_apply": "使用所选段落",
+    "preserve_invalid_ranges": "请输入列表中存在的段落编号或范围，例如 2, 4-6。",
+    "preserve_empty": "这份 Word 草稿没有可选择的段落。", "preserve_loading_error": "无法读取原稿段落：{e}",
+    "draft_changed": "草稿已更新，请重新打开段落选择并确认保留范围。",
     "format_preview": "排版设置", "spec_title": "本次应用的版式",
     "apa_hint": "APA 7 学生版：封面、页码和正文标题。请补齐学校、课程、老师；引文内容保持原文。",
     "custom_hint": "按所选课程模板排版；文献内容保持原文。",
     "mla_hint": "MLA 9：姓氏页码、首面信息块、Works Cited 新页。",
     "citation_hint": "引文和文献信息保持原文，请按课程要求核对。",
-    "review_result": "请对照原稿检查：{items}", "review_omitted": "{n} 项图片、表格、脚注或公式未保留",
+    "review_result": "请对照原稿检查：{items}", "review_omitted": "{n} 项内容未保留",
     "review_headings": "{n} 项不支持的标题按正文处理",
+    "retained_result": "已保留：{items}", "retained_paragraphs": "{n} 段原格式",
+    "retained_images": "正文图片 {n} 项", "retained_tables": "正文表格 {n} 个",
+    "review_reference_order": "保留段落或对象之间仅对连续普通文献排序，请核对完整顺序",
+    "menu_notices": "第三方许可证", "notices_missing": "尚未找到当前构建的许可证文件。请先使用构建脚本生成 THIRD-PARTY-NOTICES.txt。",
+    "disclaimer": "保留 DOCX 正文图片和表格；页面布局按当前格式设置。复杂文档请核对结果。",
     "howto": "1. 选择 MLA、APA 学生论文或自定义课程模板。\n"
              "2. 填写姓名与标题，导入 .docx / .txt / .md 草稿。\n"
              "3. 生成并保存 Word 文档。\n\n"
              "自定义模板可保存、导入和导出老师要求的版式。APA / 自定义模式可填写学校 / 院系。\n"
+             "高级选项可选择 Word 中保持原格式的段落。\n"
              "在草稿末尾写 Works Cited / References / Bibliography，每段一条文献。\n"
              "本工具调整版式，不会把引文或参考文献内容自动转换成另一规范。",
     "about": "MLAFMT v{v}\n支持 MLA 9、APA 7 学生论文和自定义课程模板。\n\n"
-             "保留文字、粗体、斜体和下划线。图片、表格、脚注、列表和公式可能丢失；请核对文档与引用。",
+             "保留 DOCX 正文图片和表格；页面布局按当前格式设置。\n"
+             "选中段落保留字体、字号与段落格式；原分页位置可能改变。复杂文档请核对结果与引用。",
 })
 T["en"].update({
     "app": "Paper and Course Formatter", "tagline": "Choose a format, add your details, and get a clean Word document.",
@@ -341,7 +370,7 @@ T["en"].update({
     "profile_label": "Template name", "paper_size": "Paper size", "font_name": "Font", "font_size": "Font size (pt)",
     "line_spacing": "Line spacing (multiple)", "margin_cm": "All page margins (cm)", "first_line_cm": "Body first-line indent (cm)",
     "alignment": "Body alignment", "align_left": "Left", "align_justify": "Justified",
-    "header": "Page header", "header_surname_page": "Surname + page number", "header_page": "Page number only", "header_none": "No header",
+    "header": "Page-number content", "header_surname_page": "Surname + page number", "header_page": "Page number only", "header_none": "No page numbers",
     "title_page": "Separate title page", "references_title": "Reference page title", "sort_references": "Sort reference entries alphabetically",
     "save_template": "Save and use", "import_template": "Import JSON", "export_template": "Export JSON",
     "delete_template": "Delete current template", "template_invalid": "Check the template settings: {e}",
@@ -350,21 +379,48 @@ T["en"].update({
     "template_session_only": "Using {label}, but settings could not be saved. This change may be lost when the app closes.",
     "template_io": "Could not read or write the template: {e}", "template_json": "MLAFMT template (JSON)",
     "template_too_large": "This template exceeds 64 KB. Choose a course template JSON file.",
+    "advanced_custom": "Advanced customization…", "advanced_custom_title": "Advanced customization",
+    "advanced_custom_hint": "Page-number settings are saved with the course template.",
+    "page_number_position": "Page-number position", "page_number_top_right": "Top right",
+    "page_number_bottom_center": "Bottom center", "page_number_bottom_right": "Bottom right",
+    "show_cover_page_number": "Show a page number on the cover", "page_number_start": "Starting page number",
+    "page_number_hint": "When the cover number is hidden, this starts the first body page. Without a separate cover, it starts the first document page.",
+    "page_number_summary": "{position} · starts at {start}", "cover_unnumbered": "Cover unnumbered",
+    "page_number_invalid": "Starting page number must be an integer from 1 to 9999.",
+    "preserve_title": "Keep selected paragraphs unchanged", "preserve_choose": "Choose paragraphs to keep unchanged…",
+    "preserve_hint": "Selected Word paragraphs keep their font, size, line spacing and indents. Paper size, margins and page numbers follow the selected template.",
+    "preserve_scope": "This selection belongs to the current draft and is not saved in a course template.",
+    "preserve_docx_only": "Choose a Word (.docx) draft before selecting paragraphs to keep unchanged.",
+    "preserve_count": "Current draft: keep {n} paragraphs unchanged", "preserve_none": "Current draft: apply the selected format to all paragraphs",
+    "preserve_column": "Keep", "preserve_text": "Original draft paragraph", "preserve_images": "Includes an image",
+    "preserve_toggle": "Click a row or press Space to toggle it. Original paragraph numbers may have gaps.",
+    "preserve_ranges": "Select numbers (e.g. 2, 4-6)", "preserve_apply_ranges": "Apply numbers",
+    "preserve_select_all": "Select all", "preserve_clear": "Clear selection", "preserve_apply": "Use selected paragraphs",
+    "preserve_invalid_ranges": "Enter paragraph numbers or ranges from the list, such as 2, 4-6.",
+    "preserve_empty": "This Word draft has no paragraphs to select.", "preserve_loading_error": "Could not read the draft paragraphs: {e}",
+    "draft_changed": "The draft has changed. Reopen paragraph selection and confirm what to keep.",
     "format_preview": "Formatting settings", "spec_title": "Formatting for this document",
     "apa_hint": "APA 7 student layout: title page, page numbers and repeated paper title. Add your affiliation, course and instructor. Citation text is unchanged.",
     "custom_hint": "Apply the selected course template. Reference text is unchanged.",
     "mla_hint": "MLA 9: surname/page header, first-page details, and a new Works Cited page.",
     "citation_hint": "Citation and reference text is unchanged. Check it against your course requirements.",
-    "review_result": "Compare with your original draft: {items}", "review_omitted": "{n} image, table, footnote, or equation elements were not retained",
+    "review_result": "Compare with your original draft: {items}", "review_omitted": "{n} content elements were not retained",
     "review_headings": "{n} unsupported headings were kept as body text",
+    "retained_result": "Retained: {items}", "retained_paragraphs": "{n} paragraphs with their original formatting",
+    "retained_images": "{n} body image elements", "retained_tables": "{n} body tables",
+    "review_reference_order": "Only consecutive plain references between retained paragraphs or objects were sorted; check the full order",
+    "menu_notices": "Third-party licenses", "notices_missing": "No license file was found for this build. Generate THIRD-PARTY-NOTICES.txt using the build script first.",
+    "disclaimer": "DOCX body images and tables are retained; page layout follows the selected format. Review complex documents.",
     "howto": "1. Choose MLA, APA student paper, or a custom course template.\n"
              "2. Add your name and title, then choose a .docx / .txt / .md draft.\n"
              "3. Create and save your Word document.\n\n"
              "Save, import, or export custom templates for your instructor's requirements. APA and custom formats include a school / department field.\n"
+             "Use Advanced options to choose Word paragraphs that keep their original formatting.\n"
              "End your draft with Works Cited / References / Bibliography and one source per paragraph.\n"
              "The tool adjusts layout; it does not convert citation or reference text between citation styles.",
     "about": "MLAFMT v{v}\nMLA 9, APA 7 student papers, and custom course templates.\n\n"
-             "Text, bold, italic, and underline are kept. Images, tables, footnotes, lists, and equations may be lost. Check the document and citations.",
+             "DOCX body images and tables are retained; page layout follows the selected format.\n"
+             "Selected paragraphs keep their font, size and paragraph formatting; page breaks may move. Review complex documents and citations.",
 })
 
 ACCENT = "#4446a6"
@@ -468,8 +524,15 @@ class MLAGui:
         self._input_file = None
         self._last_output = None
         self._review_counts = (0, 0)
+        self._reference_sort_skipped = False
+        self._retained_counts = (0, 0, 0)
         self._adv_win = None
         self._template_win = None
+        self._preserve_win = None
+        self._preserved_paragraphs = set()
+        self._preservation_fingerprint = None
+        self._preservation_source = None
+        self._preserve_count_labels = []
         self._busy = False
         self._choosing_output = False
         self._closing = False
@@ -679,6 +742,7 @@ class MLAGui:
         self._result_row.pack(fill=tk.X, pady=(8, 0))
         self._render_result()
         self._review_note = ttk.Label(left, foreground="#936221", wraplength=420, font=(self.font[0], 9))
+        self._retained_note = ttk.Label(left, foreground="#24725b", wraplength=420, font=(self.font[0], 9))
         self._render_review()
         preview = self._card(right, padding=16)
         ttk.Label(preview, text=self.t("preview"), style="Step.TLabel").pack(anchor=tk.W)
@@ -735,14 +799,20 @@ class MLAGui:
                     ["Times New Roman · 12 pt", "Double spacing · Letter · 1-inch margins", "Title page · automatic page-number header", "References: new page · 0.5-inch hanging indents"])
         p = self._custom_profile()
         font = f"{p['font_name']} · {p['font_size']:g} pt · {p['paper_size']}"
+        page_numbers = self.t("header_" + p["header"])
+        if p["header"] != "none":
+            page_numbers += " · " + self.t("page_number_summary", position=self.t("page_number_" + p.get("page_number_position", "top_right")),
+                                           start=p.get("page_number_start", 1))
+            if p["title_page"] and not p.get("show_cover_page_number", True):
+                page_numbers += " · " + self.t("cover_unnumbered")
         if self.lang == "zh":
             return [font, f"{p['line_spacing']:g} 倍行距 · 页边距 {p['margin_cm']:g} cm",
                     f"首行缩进 {p['first_line_cm']:g} cm · {self.t('align_' + p['alignment'])}",
-                    self.t("header_" + p["header"]) + (" · 独立封面" if p["title_page"] else ""),
+                    page_numbers + (" · 独立封面" if p["title_page"] else ""),
                     p["references_title"] + " · 另起一页" + (" · 字母排序" if p["sort_references"] else " · 保留顺序")]
         return [font, f"{p['line_spacing']:g}× spacing · {p['margin_cm']:g} cm margins",
                 f"First-line indent: {p['first_line_cm']:g} cm · {self.t('align_' + p['alignment'])}",
-                self.t("header_" + p["header"]) + (" · title page" if p["title_page"] else ""),
+                page_numbers + (" · title page" if p["title_page"] else ""),
                 p["references_title"] + " · new page" + (" · alphabetical" if p["sort_references"] else " · original order")]
 
     def _draw_preview(self, *_):
@@ -765,8 +835,14 @@ class MLAGui:
         header = profile["header"] if kind == "custom" else ("page" if kind == "apa" else "surname_page")
         font = profile["font_name"] if kind == "custom" else "Times New Roman"
         text_size = max(6, min(16, round(profile["font_size"] * 0.75))) if kind == "custom" else 9
-        if header != "none":
-            c.create_text(right, 24, text=f"{last[:28]} 1" if header == "surname_page" else "1", anchor="e", font=(font, text_size), fill=TEXT)
+        page_position = profile.get("page_number_position", "top_right") if kind == "custom" else "top_right"
+        page_start = profile.get("page_number_start", 1) if kind == "custom" else 1
+        cover_hidden = kind == "custom" and profile["title_page"] and not profile.get("show_cover_page_number", True)
+        if header != "none" and not cover_hidden:
+            x = width / 2 if page_position == "bottom_center" else right
+            y = 308 if page_position.startswith("bottom_") else 24
+            c.create_text(x, y, text=f"{last[:28]} {page_start}" if header == "surname_page" else str(page_start),
+                          anchor="center" if page_position == "bottom_center" else "e", font=(font, text_size), fill=TEXT)
         title = self.v["title"].get().strip() or self.t("preview_title")
         if kind == "apa" or (kind == "custom" and profile["title_page"]):
             title_item = c.create_text(width / 2, 86, text=title[:100], width=right-left, anchor="n",
@@ -796,7 +872,8 @@ class MLAGui:
         title_item = c.create_text(width / 2, title_top, text=title[:100], width=right-left, anchor="n", font=title_font, fill=TEXT)
         body_top = max(title_top + 43, c.bbox(title_item)[3] + 18)
         line_step = profile["line_spacing"] * 8.5 if kind == "custom" else 17
-        for index in range(max(0, min(12, int((312 - body_top) / line_step) + 1))):
+        body_bottom = 288 if header != "none" and page_position.startswith("bottom_") else 312
+        for index in range(max(0, min(12, int((body_bottom - body_top) / line_step) + 1))):
             y = body_top + index * line_step
             indent = (page_width * profile["first_line_cm"] / (21 if profile["paper_size"] == "A4" else 21.59) if kind == "custom" else 12) if index in (0, 5) else 0
             end = right - (38 if index in (4, 7) else 0)
@@ -819,6 +896,7 @@ class MLAGui:
         mb.add_cascade(label=self.t("menu_settings"), menu=settings)
         help_menu = tk.Menu(mb, tearoff=0)
         help_menu.add_command(label=self.t("menu_howto"), command=lambda: messagebox.showinfo(self.t("menu_howto"), self.t("howto"), parent=self.root))
+        help_menu.add_command(label=self.t("menu_notices"), command=self._show_third_party_notices)
         help_menu.add_command(label=self.t("menu_about"), command=lambda: messagebox.showinfo(self.t("menu_about"), self.t("about", v=__version__), parent=self.root))
         mb.add_cascade(label=self.t("menu_help"), menu=help_menu)
         self.root.config(menu=mb)
@@ -852,6 +930,192 @@ class MLAGui:
         cfg.update({key: value.get() for key, value in self.opt.items()})
         return _save_config(cfg)
 
+    def _preservation_section(self, parent):
+        card = self._card(parent)
+        ttk.Label(card, text=self.t("preserve_title"), style="Step.TLabel").pack(anchor=tk.W, pady=(0, 6))
+        ttk.Label(card, text=self.t("preserve_hint"), style="Muted.TLabel", wraplength=510).pack(anchor=tk.W)
+        count = ttk.Label(card, style="Muted.TLabel", wraplength=510)
+        count.pack(anchor=tk.W, pady=(8, 6))
+        button = ttk.Button(card, text=self.t("preserve_choose"), style="Ghost.TButton",
+                            command=lambda: self._select_preserved_paragraphs(parent.winfo_toplevel()))
+        button.pack(anchor=tk.W)
+        ttk.Label(card, text=self.t("preserve_docx_only"), style="Muted.TLabel", wraplength=510).pack(anchor=tk.W, pady=(6, 0))
+        ttk.Label(card, text=self.t("preserve_scope"), style="Muted.TLabel", wraplength=510).pack(anchor=tk.W, pady=(4, 0))
+        self._preserve_count_labels.append((count, button))
+        self._refresh_preservation_controls()
+        return card
+
+    def _refresh_preservation_controls(self):
+        controls = []
+        valid = bool(self._input_file and Path(self._input_file).suffix.lower() == ".docx")
+        count = len(self._preserved_paragraphs) if self._preservation_source == self._input_file else 0
+        for label, button in self._preserve_count_labels:
+            if not label.winfo_exists() or not button.winfo_exists():
+                continue
+            label.configure(text=self.t("preserve_count", n=count) if count else self.t("preserve_none"))
+            button.state(["!disabled"] if valid and not self._busy and not self._choosing_output else ["disabled"])
+            controls.append((label, button))
+        self._preserve_count_labels = controls
+
+    def _select_preserved_paragraphs(self, parent=None):
+        if self._busy or self._choosing_output:
+            return
+        parent = parent or self.root
+        if self._preserve_win is not None and self._preserve_win.winfo_exists():
+            self._preserve_win.lift()
+            return
+        source = self._input_file
+        if not source or Path(source).suffix.lower() != ".docx":
+            messagebox.showinfo(self.t("preserve_title"), self.t("preserve_docx_only"), parent=parent)
+            return
+        try:
+            inspection = inspect_draft_paragraphs(source)
+            fingerprint = inspection["source_fingerprint"]
+            paragraphs = inspection["paragraphs"]
+        except Exception as error:
+            messagebox.showerror(self.t("preserve_title"), self.t("preserve_loading_error", e=str(error)), parent=parent)
+            return
+        if not paragraphs:
+            messagebox.showinfo(self.t("preserve_title"), self.t("preserve_empty"), parent=parent)
+            return
+        same_draft = self._preservation_source == source and self._preservation_fingerprint == fingerprint
+        available = {item["id"]: item for item in paragraphs}
+        selected = set(self._preserved_paragraphs) & set(available) if same_draft else set()
+        previous_grab = self.root.grab_current()
+        w = tk.Toplevel(parent)
+        self._preserve_win = w
+        w.title(self.t("preserve_title"))
+        w.configure(bg=BG)
+        w.transient(parent)
+        w.geometry("820x620")
+        w.minsize(660, 450)
+        w.grab_set()
+        body = ttk.Frame(w, padding=18)
+        body.pack(fill=tk.BOTH, expand=True)
+        ttk.Label(body, text=self.t("preserve_hint"), foreground=MUTED, wraplength=760).pack(anchor=tk.W, pady=(0, 6))
+        ttk.Label(body, text=self.t("preserve_toggle"), foreground=MUTED, wraplength=760).pack(anchor=tk.W, pady=(0, 10))
+        if self._preserved_paragraphs and self._preservation_source == source and not same_draft:
+            ttk.Label(body, text=self.t("draft_changed"), foreground="#936221", wraplength=760).pack(anchor=tk.W, pady=(0, 8))
+        listing = ttk.Frame(body)
+        listing.pack(fill=tk.BOTH, expand=True)
+        tree = ttk.Treeview(listing, columns=("keep", "number", "text"), show="headings", selectmode="browse")
+        tree.heading("keep", text=self.t("preserve_column"))
+        tree.heading("number", text="#")
+        tree.heading("text", text=self.t("preserve_text"))
+        tree.column("keep", width=52, stretch=False, anchor="center")
+        tree.column("number", width=60, stretch=False, anchor="center")
+        tree.column("text", width=590, stretch=True)
+        scrollbar = ttk.Scrollbar(listing, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        tree.pack(fill=tk.BOTH, expand=True)
+        previews = {}
+        for identifier, item in available.items():
+            text = " ".join(item["text"].split())[:220]
+            if item.get("has_images"):
+                text += " · " + self.t("preserve_images")
+            previews[identifier] = text
+            tree.insert("", tk.END, iid=str(identifier), values=("☑" if identifier in selected else "☐", identifier, text))
+        ranges = tk.StringVar(w, value=", ".join(str(identifier) for identifier in sorted(selected)))
+        selection_count = tk.StringVar(w)
+
+        def refresh_selection():
+            ranges.set(", ".join(str(identifier) for identifier in sorted(selected)))
+            selection_count.set(self.t("preserve_count", n=len(selected)))
+            for identifier in available:
+                tree.item(str(identifier), values=("☑" if identifier in selected else "☐", identifier, previews[identifier]))
+
+        def toggle(identifier):
+            if not identifier:
+                return
+            identifier = int(identifier)
+            if identifier in selected:
+                selected.remove(identifier)
+            else:
+                selected.add(identifier)
+            refresh_selection()
+
+        def click(event):
+            identifier = tree.identify_row(event.y)
+            if identifier:
+                tree.focus(identifier)
+                tree.selection_set(identifier)
+                toggle(identifier)
+
+        tree.bind("<Button-1>", click)
+        tree.bind("<space>", lambda _event: toggle(tree.focus()))
+        numbers = ttk.Frame(body)
+        numbers.pack(fill=tk.X, pady=(12, 6))
+        ttk.Label(numbers, text=self.t("preserve_ranges")).pack(anchor=tk.W)
+        range_entry = ttk.Entry(numbers, textvariable=ranges)
+        range_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, pady=(4, 0))
+
+        def apply_ranges():
+            try:
+                text = ranges.get().strip()
+                if len(text) > 20000:
+                    raise ValueError()
+                numbers = set()
+                for token in re.split(r"[,，;；\s]+", text) if text else []:
+                    match = re.fullmatch(r"([0-9]+)(?:[-–—]([0-9]+))?", token)
+                    if not match:
+                        raise ValueError()
+                    start = int(match.group(1))
+                    end = int(match.group(2) or match.group(1))
+                    if start < 1 or start > end or end > max(available):
+                        raise ValueError()
+                    found = {identifier for identifier in available if start <= identifier <= end}
+                    if not found:
+                        raise ValueError()
+                    numbers.update(found)
+                selected.clear()
+                selected.update(numbers)
+                refresh_selection()
+                return True
+            except (TypeError, ValueError):
+                messagebox.showerror(self.t("preserve_title"), self.t("preserve_invalid_ranges"), parent=w)
+                range_entry.focus_set()
+                return False
+
+        ttk.Button(numbers, text=self.t("preserve_apply_ranges"), style="Ghost.TButton", command=apply_ranges).pack(side=tk.RIGHT, padx=(8, 0), pady=(4, 0))
+        actions = ttk.Frame(body)
+        actions.pack(fill=tk.X, pady=(6, 10))
+
+        def set_selection(all_paragraphs):
+            selected.clear()
+            if all_paragraphs:
+                selected.update(available)
+            refresh_selection()
+
+        ttk.Button(actions, text=self.t("preserve_select_all"), style="Ghost.TButton", command=lambda: set_selection(True)).pack(side=tk.LEFT)
+        ttk.Button(actions, text=self.t("preserve_clear"), style="Ghost.TButton", command=lambda: set_selection(False)).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Label(actions, textvariable=selection_count, foreground=MUTED).pack(side=tk.RIGHT)
+
+        def close():
+            self._preserve_win = None
+            w.destroy()
+            if previous_grab is not None and previous_grab.winfo_exists():
+                previous_grab.grab_set()
+            self._refresh_preservation_controls()
+
+        def use_selected():
+            if self._input_file != source:
+                messagebox.showwarning(self.t("preserve_title"), self.t("draft_changed"), parent=w)
+                close()
+                return
+            if not apply_ranges():
+                return
+            self._preserved_paragraphs = set(selected)
+            self._preservation_fingerprint = fingerprint
+            self._preservation_source = source
+            close()
+
+        ttk.Label(body, text=self.t("preserve_scope"), foreground=MUTED, wraplength=760).pack(anchor=tk.W, pady=(0, 10))
+        ttk.Button(body, text=self.t("preserve_apply"), style="Accent.TButton", command=use_selected).pack(fill=tk.X)
+        refresh_selection()
+        w.protocol("WM_DELETE_WINDOW", close)
+        w.bind("<Escape>", lambda _event: close())
+
     def _edit_template(self):
         if self._busy or self._choosing_output:
             return
@@ -882,13 +1146,16 @@ class MLAGui:
         card = self._card(body)
         for column in (0, 1):
             card.columnconfigure(column, weight=1)
-        current = self._custom_profile()
+        current = {"page_number_position": "top_right", "show_cover_page_number": True,
+                   "page_number_start": 1, **self._custom_profile()}
         variables = {key: (tk.BooleanVar(w, value=value) if isinstance(value, bool)
                            else tk.StringVar(w, value=f"{value:g}" if isinstance(value, (int, float)) else value))
                      for key, value in current.items()}
         choice_maps = {
             "alignment": {self.t("align_" + key): key for key in ("left", "justify")},
             "header": {self.t("header_" + key): key for key in ("surname_page", "page", "none")},
+            "page_number_position": {self.t("page_number_" + key): key
+                                     for key in ("top_right", "bottom_center", "bottom_right")},
         }
         display_vars = {key: tk.StringVar(w, value=next(label for label, value in choices.items() if value == current[key]))
                         for key, choices in choice_maps.items()}
@@ -919,6 +1186,7 @@ class MLAGui:
                 values[key] = choices[display_vars[key].get()]
             for key in ranges:
                 values[key] = float(values[key])
+            values["page_number_start"] = int(values["page_number_start"])
             return normalize_custom_profile(values)
 
         def invalid(error):
@@ -927,6 +1195,90 @@ class MLAGui:
         def close():
             self._template_win = None
             w.destroy()
+
+        advanced_window = None
+
+        def advanced_custom():
+            nonlocal advanced_window
+            if advanced_window is not None and advanced_window.winfo_exists():
+                advanced_window.lift()
+                return
+            advanced = tk.Toplevel(w)
+            advanced_window = advanced
+            advanced.title(self.t("advanced_custom_title"))
+            advanced.configure(bg=BG)
+            advanced.transient(w)
+            advanced.geometry("620x660")
+            advanced.minsize(540, 420)
+            advanced.grab_set()
+            original_pages = {key: variables[key].get() for key in
+                              ("show_cover_page_number", "page_number_start")}
+            original_position = display_vars["page_number_position"].get()
+            advanced_canvas = tk.Canvas(advanced, bg=BG, highlightthickness=0)
+            advanced_bar = ttk.Scrollbar(advanced, orient="vertical", command=advanced_canvas.yview)
+            advanced_bar.pack(side=tk.RIGHT, fill=tk.Y)
+            advanced_canvas.pack(fill=tk.BOTH, expand=True)
+            advanced_canvas.configure(yscrollcommand=advanced_bar.set)
+            content = ttk.Frame(advanced_canvas, padding=18)
+            advanced_item = advanced_canvas.create_window(0, 0, window=content, anchor="nw")
+            advanced_canvas.bind("<Configure>", lambda event: advanced_canvas.itemconfigure(advanced_item, width=event.width))
+            content.bind("<Configure>", lambda _event: advanced_canvas.configure(scrollregion=advanced_canvas.bbox("all")))
+            for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                advanced.bind(sequence, lambda event: advanced_canvas.yview_scroll(_wheel_units(event), "units"))
+            ttk.Label(content, text=self.t("advanced_custom_hint"), foreground=MUTED,
+                      wraplength=550).pack(anchor=tk.W, pady=(0, 12))
+            options = self._card(content)
+            options.columnconfigure(1, weight=1)
+            ttk.Label(options, text=self.t("page_number_position"), style="Card.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 16), pady=6)
+            position = ttk.Combobox(options, textvariable=display_vars["page_number_position"],
+                                    values=list(choice_maps["page_number_position"]), state="readonly")
+            position.grid(row=0, column=1, sticky="ew", pady=6)
+            ttk.Label(options, text=self.t("page_number_start"), style="Card.TLabel").grid(row=1, column=0, sticky="w", padx=(0, 16), pady=6)
+            start = ttk.Spinbox(options, textvariable=variables["page_number_start"], from_=1, to=9999, increment=1)
+            start.grid(row=1, column=1, sticky="ew", pady=6)
+            cover = ttk.Checkbutton(options, text=self.t("show_cover_page_number"),
+                                    variable=variables["show_cover_page_number"], style="Card.TCheckbutton")
+            cover.grid(row=2, column=0, columnspan=2, sticky="w", pady=6)
+            ttk.Label(content, text=self.t("page_number_hint"), foreground=MUTED,
+                      wraplength=550).pack(anchor=tk.W, pady=(0, 14))
+            self._preservation_section(content)
+
+            def update_enabled(*_):
+                enabled = choice_maps["header"].get(display_vars["header"].get()) != "none"
+                position.state(["!disabled"] if enabled else ["disabled"])
+                start.state(["!disabled"] if enabled else ["disabled"])
+                cover.state(["!disabled"] if enabled and variables["title_page"].get() else ["disabled"])
+
+            traces = [(display_vars["header"], display_vars["header"].trace_add("write", update_enabled)),
+                      (variables["title_page"], variables["title_page"].trace_add("write", update_enabled))]
+            update_enabled()
+
+            def close_advanced(save=True):
+                nonlocal advanced_window
+                if save:
+                    try:
+                        first_page = int(variables["page_number_start"].get())
+                        if not 1 <= first_page <= 9999:
+                            raise ValueError(self.t("page_number_invalid"))
+                    except (TypeError, ValueError, tk.TclError):
+                        messagebox.showerror(self.t("advanced_custom_title"), self.t("page_number_invalid"), parent=advanced)
+                        start.focus_set()
+                        return
+                else:
+                    for key, value in original_pages.items():
+                        variables[key].set(value)
+                    display_vars["page_number_position"].set(original_position)
+                for variable, trace in traces:
+                    variable.trace_remove("write", trace)
+                advanced_window = None
+                advanced.destroy()
+                if w.winfo_exists():
+                    w.grab_set()
+                    w.lift()
+
+            ttk.Button(content, text=self.t("close"), style="Accent.TButton", command=close_advanced).pack(fill=tk.X, side=tk.BOTTOM)
+            advanced.protocol("WM_DELETE_WINDOW", lambda: close_advanced(False))
+            advanced.bind("<Escape>", lambda _e: close_advanced(False))
 
         def use_profile(profile, status_key="template_saved"):
             profiles = [p for p in self.custom_profiles if p["label"] != profile["label"]]
@@ -1011,6 +1363,7 @@ class MLAGui:
 
         row = ttk.Frame(body)
         row.pack(fill=tk.X, pady=(0, 10))
+        ttk.Button(body, text=self.t("advanced_custom"), style="Ghost.TButton", command=advanced_custom).pack(anchor=tk.W, pady=(0, 12), before=row)
         ttk.Button(row, text=self.t("import_template"), style="Ghost.TButton", command=import_profile).pack(side=tk.LEFT)
         ttk.Button(row, text=self.t("export_template"), style="Ghost.TButton", command=export_profile).pack(side=tk.LEFT, padx=8)
         ttk.Button(body, text=self.t("delete_template"), style="Ghost.TButton", command=delete_profile).pack(anchor=tk.W, pady=(0, 12))
@@ -1060,6 +1413,7 @@ class MLAGui:
         card = section("adv_body")
         for key in ("strip", "headings", "bq"):
             ttk.Checkbutton(card, text=self.t(key), variable=self.opt[key], style="Card.TCheckbutton").pack(anchor=tk.W)
+        self._preservation_section(body)
         card = section("adv_after")
         ttk.Checkbutton(card, text=self.t("open_after"), variable=self.opt["open_after"], style="Card.TCheckbutton").pack(anchor=tk.W)
         card = section("adv_preview")
@@ -1097,6 +1451,10 @@ class MLAGui:
         if self._busy:
             return
         self._input_file = None
+        self._preserved_paragraphs.clear()
+        self._preservation_fingerprint = None
+        self._preservation_source = None
+        self._refresh_preservation_controls()
         self._refresh_drop()
         self._set_status("status_ready")
 
@@ -1121,6 +1479,10 @@ class MLAGui:
             self._set_status("empty_file", "err")
             return False
         self._input_file = os.path.abspath(path)
+        self._preserved_paragraphs.clear()
+        self._preservation_fingerprint = None
+        self._preservation_source = None
+        self._refresh_preservation_controls()
         self._refresh_drop()
         self._set_status("loaded", f=os.path.basename(path))
         return True
@@ -1171,6 +1533,8 @@ class MLAGui:
         return {k: self.v[k].get().strip() for k in ("name", "title", "instructor", "course", "date")} | {
             "last_name": self.v["last_name"].get().strip() or None,
             "format_id": self.format_id.get(), "custom_profile": self._custom_profile(), "affiliation": self.affiliation.get().strip(),
+            "preserve_paragraphs": sorted(self._preserved_paragraphs) if self._preservation_source == self._input_file else [],
+            "source_fingerprint": self._preservation_fingerprint if self._preservation_source == self._input_file else None,
         }
 
     def _check(self, meta):
@@ -1214,6 +1578,33 @@ class MLAGui:
             ttk.Button(self._result_row, text=self.t("open_result"), style="Ghost.TButton", command=lambda: self._open_file(self._last_output)).pack(side=tk.LEFT)
             ttk.Button(self._result_row, text=self.t("reveal_result" if sys.platform == "darwin" else "view_folder"), style="Ghost.TButton", command=self._reveal_result).pack(side=tk.LEFT, padx=8)
 
+    def _show_third_party_notices(self):
+        resource_root = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+        candidates = [resource_root / "THIRD-PARTY-NOTICES.txt",
+                      Path(sys.executable).parent / "THIRD-PARTY-NOTICES.txt",
+                      Path(__file__).parent / "build" / "windows" / "THIRD-PARTY-NOTICES.txt"]
+        try:
+            filename = next((path for path in candidates if path.is_file()), None)
+            if filename is None:
+                messagebox.showinfo(self.t("menu_notices"), self.t("notices_missing"), parent=self.root)
+                return
+            notices = filename.read_text(encoding="utf-8", errors="replace")
+        except OSError as error:
+            messagebox.showerror(self.t("menu_notices"), str(error), parent=self.root)
+            return
+        window = tk.Toplevel(self.root)
+        window.title(self.t("menu_notices"))
+        window.geometry("820x620")
+        container = ttk.Frame(window, padding=12)
+        container.pack(fill=tk.BOTH, expand=True)
+        scrollbar = ttk.Scrollbar(container)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        content = tk.Text(container, wrap=tk.WORD, yscrollcommand=scrollbar.set)
+        content.pack(fill=tk.BOTH, expand=True)
+        scrollbar.configure(command=content.yview)
+        content.insert("1.0", notices)
+        content.configure(state=tk.DISABLED)
+
     def _render_review(self):
         omitted, headings = self._review_counts
         items = []
@@ -1221,14 +1612,25 @@ class MLAGui:
             items.append(self.t("review_omitted", n=omitted))
         if headings:
             items.append(self.t("review_headings", n=headings))
+        if self._reference_sort_skipped:
+            items.append(self.t("review_reference_order"))
         if items:
             self._review_note.configure(text=self.t("review_result", items=("；" if self.lang == "zh" else "; ").join(items)))
             self._review_note.pack(fill=tk.X, pady=(8, 0))
         else:
             self._review_note.pack_forget()
+        retained = [self.t(key, n=count) for key, count in zip(
+            ("retained_paragraphs", "retained_images", "retained_tables"), self._retained_counts) if count]
+        if retained:
+            self._retained_note.configure(text=self.t("retained_result", items=("；" if self.lang == "zh" else "; ").join(retained)))
+            self._retained_note.pack(fill=tk.X, pady=(8, 0))
+        else:
+            self._retained_note.pack_forget()
 
     def _report_error(self, e):
-        if isinstance(e, PermissionError):
+        if isinstance(e, ValueError) and str(e) == "draft_changed":
+            key, kw = "draft_changed", {}
+        elif isinstance(e, PermissionError):
             key, kw = "perm", {}
         elif isinstance(e, FileNotFoundError):
             key, kw = "missing_source", {}
@@ -1241,6 +1643,7 @@ class MLAGui:
 
     def _set_busy(self, busy):
         self._busy = busy
+        self._refresh_preservation_controls()
         for button in (self._btn, self._blank_btn, self._advanced_btn, self._remove_btn, self._format_combo,
                        self._profile_combo, self._edit_profile_btn, *self._language_buttons):
             if button is None:
@@ -1256,6 +1659,9 @@ class MLAGui:
     def _generate(self, blank):
         if self._busy or self._choosing_output:
             return
+        if self._preserve_win is not None and self._preserve_win.winfo_exists():
+            self._preserve_win.lift()
+            return
         if not blank and not self._input_file:
             self._set_status("need_file", "err")
             self._on_browse()
@@ -1263,6 +1669,7 @@ class MLAGui:
                 return
         meta, source = self._meta(), self._input_file
         options = dict(txt_paragraph_mode=self.txt_mode.get(), enable_heading_detection=self.opt["headings"].get(), enable_block_quote=self.opt["bq"].get(), markdown_emphasis=self.opt["md"].get(), strip_existing_heading=self.opt["strip"].get())
+        options.update(preserve_paragraphs=meta["preserve_paragraphs"], source_fingerprint=meta["source_fingerprint"])
         # Native save/date dialogs run their own event loop. Queue Finder's
         # document events until the dialog ends, keeping this draft fixed.
         self._choosing_output = True
@@ -1304,12 +1711,15 @@ class MLAGui:
             else:
                 self._last_output = os.path.abspath(out)
                 self._review_counts = ((stats or {}).get("omitted_elements", 0), (stats or {}).get("unsupported_headings", 0))
+                self._reference_sort_skipped = bool((stats or {}).get("reference_sort_skipped", 0))
+                self._retained_counts = tuple((stats or {}).get(key, 0) for key in
+                                              ("preserved_paragraphs", "retained_images", "retained_tables"))
                 if blank:
                     self._set_status("done_blank", "ok", f=os.path.basename(out))
                 else:
                     removed = stats.get("removed_heading_lines", 0)
                     self._set_status("done_removed" if removed else "done", "ok", f=os.path.basename(out), b=stats["body"], w=stats["works_cited"], r=removed if removed else "")
-                    if stats["body"] == 0:
+                    if stats["body"] == 0 and not (stats.get("retained_images", 0) or stats.get("retained_tables", 0)):
                         messagebox.showwarning(self.t("app"), self.t("empty"), parent=self.root)
                 self._render_result()
                 self._render_review()

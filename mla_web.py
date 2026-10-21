@@ -30,6 +30,7 @@ from mla_formatter import (
     create_blank_template,
     format_summary,
     generate_filename,
+    inspect_draft_paragraphs,
     today_mla,
     validate_inputs,
 )
@@ -40,7 +41,7 @@ MAX_FILE_SIZE = 20 * 1024 * 1024
 # Leave room for multipart boundaries and form fields; validate the file itself below.
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE + 1024 * 1024
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override", "affiliation", "format_id")
+TEXT_FIELDS = ("name", "title", "instructor", "course", "date", "last_name_override", "affiliation", "format_id", "source_fingerprint")
 
 
 def _json_fields():
@@ -99,7 +100,9 @@ def _docx_response(buf, filename, stats=None, profile=None):
             resp.headers[f"X-Stat-{k.replace('_', '-')}"] = str(v)
     resp.headers["Access-Control-Expose-Headers"] = (
         "X-Filename, X-Format-Id, X-Format-Label, X-Stat-body, X-Stat-works-cited, "
-        "X-Stat-removed-heading-lines, X-Stat-omitted-elements, X-Stat-unsupported-headings")
+        "X-Stat-removed-heading-lines, X-Stat-omitted-elements, X-Stat-unsupported-headings, "
+        "X-Stat-preserved-paragraphs, X-Stat-retained-images, X-Stat-retained-tables, "
+        "X-Stat-reference-sort-skipped")
     return resp
 
 
@@ -149,6 +152,31 @@ def api_blank():
     return _docx_response(buf, generate_filename(name, override, **layout), profile=profile)
 
 
+@app.route("/api/paragraphs", methods=["POST"])
+def api_paragraphs():
+    draft = request.files.get("file")
+    if not draft or not draft.filename:
+        return jsonify({"error": "no_file"}), 400
+    if os.path.splitext(draft.filename)[1].lower() != ".docx":
+        return jsonify({"error": "preserve_docx_only"}), 400
+    fd, path = tempfile.mkstemp(prefix="mlafmt_inspect_", suffix=".docx")
+    os.close(fd)
+    try:
+        draft.save(path)
+        if os.path.getsize(path) > MAX_FILE_SIZE:
+            return jsonify({"error": "too_large"}), 413
+        if not os.path.getsize(path):
+            return jsonify({"error": "empty_file"}), 400
+        return jsonify(inspect_draft_paragraphs(path))
+    except Exception as error:
+        return jsonify({"error": "bad_doc", "detail": str(error)}), 400
+    finally:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
 @app.route("/api/convert", methods=["POST"])
 def api_convert():
     f = request.files.get("file")
@@ -169,6 +197,10 @@ def api_convert():
     override = _form(form, "last_name_override") or None
     try:
         layout, profile = _layout_options(form, multipart=True)
+        preserve = json.loads(form.get("preserve_paragraphs", "[]"))
+        if (not isinstance(preserve, list) or len(preserve) > 10000
+                or any(isinstance(value, bool) or not isinstance(value, int) or value < 1 for value in preserve)):
+            raise ValueError("Choose valid Word paragraph numbers.")
     except ValueError as error:
         return jsonify({"error": "invalid_options", "detail": str(error)}), 400
 
@@ -192,8 +224,11 @@ def api_convert():
             markdown_emphasis=_flag(form, "markdown", True),
             strip_existing_heading=_flag(form, "strip_heading", True),
             affiliation=_form(form, "affiliation"), **layout,
+            preserve_paragraphs=preserve, source_fingerprint=_form(form, "source_fingerprint") or None,
         )
     except Exception as e:  # noqa
+        if isinstance(e, ValueError) and str(e) in ("draft_changed", "preserve_docx_only", "invalid_options", "unsupported_document"):
+            return jsonify({"error": str(e)}), 409 if str(e) == "draft_changed" else 400
         invalid_docx = ext == ".docx" and isinstance(
             e, (BadZipFile, PackageNotFoundError, KeyError, ValueError, XMLSyntaxError))
         code = "bad_doc" if invalid_docx else "failed"

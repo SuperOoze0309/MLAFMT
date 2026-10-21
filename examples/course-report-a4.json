@@ -8,6 +8,9 @@
   "first_line_cm": 1,
   "alignment": "left",
   "header": "page",
+  "page_number_position": "bottom_center",
+  "show_cover_page_number": false,
+  "page_number_start": 1,
   "title_page": true,
   "references_title": "References",
   "sort_references": true

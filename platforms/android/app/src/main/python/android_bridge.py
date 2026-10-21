@@ -16,6 +16,7 @@ from format_profiles import resolve_profile
 from mla_formatter import (
     SUPPORTED_EXTS, convert_draft_to_mla, create_blank_template,
     generate_filename, today_mla, validate_inputs,
+    inspect_draft_paragraphs,
 )
 
 MAX_FILE_SIZE = 20 * 1024 * 1024
@@ -43,6 +44,19 @@ def _check_docx(path):
             raise ValueError("Not a DOCX package")
 
 
+def paragraphs(input_path):
+    try:
+        if not input_path or not os.path.isfile(input_path):
+            return json.dumps({"error": "no_file"})
+        if os.path.splitext(input_path)[1].lower() != ".docx":
+            return json.dumps({"error": "preserve_docx_only"})
+        if os.path.getsize(input_path) > MAX_FILE_SIZE:
+            return json.dumps({"error": "too_large"})
+        return json.dumps(inspect_draft_paragraphs(input_path), ensure_ascii=True)
+    except Exception:
+        return json.dumps({"error": "bad_doc"})
+
+
 def generate(request_json, input_path, output_directory):
     """Return a small JSON result; documents never cross the JavaScript bridge."""
     output_path = None
@@ -62,6 +76,12 @@ def generate(request_json, input_path, output_directory):
         if data.get("txt_mode", "blank_line") not in ("blank_line", "line_by_line"):
             return json.dumps({"error": "invalid_options"})
         if any(k in data and not isinstance(data[k], bool) for k in FLAGS):
+            return json.dumps({"error": "invalid_options"})
+        preserve = data.get("preserve_paragraphs", [])
+        fingerprint = data.get("source_fingerprint")
+        if (not isinstance(preserve, list) or len(preserve) > 10000
+                or any(isinstance(value, bool) or not isinstance(value, int) or value < 1 for value in preserve)
+                or (fingerprint is not None and (not isinstance(fingerprint, str) or len(fingerprint) > 64))):
             return json.dumps({"error": "invalid_options"})
         format_id = data.get("format_id", "mla")
         custom_profile = data.get("custom_profile")
@@ -106,6 +126,7 @@ def generate(request_json, input_path, output_directory):
                 enable_block_quote=data.get("block_quote", False),
                 markdown_emphasis=data.get("markdown", True),
                 strip_existing_heading=data.get("strip_heading", True),
+                preserve_paragraphs=preserve, source_fingerprint=fingerprint,
             )
         return json.dumps({"name": filename, "path": output_path, "stats": stats,
                            "blank": data["kind"] == "blank", "format_id": format_id,
@@ -115,6 +136,8 @@ def generate(request_json, input_path, output_directory):
     except Exception as error:
         if output_path and os.path.isfile(output_path):
             os.remove(output_path)
+        if isinstance(error, ValueError) and str(error) in ("draft_changed", "preserve_docx_only", "invalid_options", "unsupported_document"):
+            return json.dumps({"error": str(error)})
         invalid = ext == ".docx" and isinstance(error, (
             zipfile.BadZipFile, PackageNotFoundError, KeyError, ValueError, XMLSyntaxError))
         return json.dumps({"error": "bad_doc" if invalid else "failed"})

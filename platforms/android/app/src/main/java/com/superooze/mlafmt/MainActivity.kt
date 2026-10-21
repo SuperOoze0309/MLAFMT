@@ -101,11 +101,12 @@ class MainActivity : ComponentActivity() {
             WebViewCompat.addWebMessageListener(web, "MLAFMTAndroid", setOf(ORIGIN)) { _, message, origin, mainFrame, _ ->
                 if (mainFrame && origin.toString().trimEnd('/') == ORIGIN && web.url == PAGE) {
                     val payload = message.data ?: ""
-                    if (payload.length <= 65536) handle(payload)
+                    if (payload.length <= 131072) handle(payload)
                 }
             }
         }
         model.state.observe(this) { if (pageReady) sendState(it) }
+        model.paragraphInspection.observe(this) { if (pageReady && it != null) deliver(it) }
         web.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> sendLayout() }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -138,11 +139,14 @@ class MainActivity : ComponentActivity() {
                     val date = java.text.SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH).format(java.util.Date())
                     deliver(JSONObject().put("type", "init").put("today", date))
                     sendState(model.state.value!!)
+                    model.paragraphRestoration()?.let { deliver(it) }
                     sendLayout()
                 }
                 "pick" -> if (!model.state.value!!.busy) pick.launch(arrayOf(DOCX_MIME, "text/plain", "text/markdown", "text/x-markdown", "application/octet-stream"))
                 "clear" -> model.clearDraft()
                 "generate" -> model.generate(request.getJSONObject("data"))
+                "paragraphs" -> model.inspectParagraphs(request.optJSONObject("data")?.optInt("request_id") ?: 0)
+                "preservation" -> request.optJSONObject("data")?.let { model.updateParagraphPreservation(it) }
                 "save" -> if (!model.state.value!!.busy) model.resultFile()?.let { file ->
                     model.pendingSave = file
                     save.launch(file.name)
@@ -170,7 +174,7 @@ class MainActivity : ComponentActivity() {
 
     private fun sendState(state: DocumentState) {
         val payload = JSONObject().put("type", "state").put("busy", state.busy)
-        state.draft?.let { payload.put("file", JSONObject().put("name", it.name).put("size", it.size)) }
+        state.draft?.let { payload.put("file", JSONObject().put("id", it.file.name).put("name", it.name).put("size", it.size)) }
         state.result?.let { result ->
             // Private filesystem paths are never sent to JavaScript.
             payload.put("result", JSONObject(result.toString()).apply { remove("path") })

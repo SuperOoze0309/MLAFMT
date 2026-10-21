@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.UUID
@@ -27,6 +28,7 @@ data class DocumentState(
 /** Keeps processing alive across rotations without retaining an Activity or WebView. */
 class DocumentViewModel(application: Application, private val saved: SavedStateHandle) : AndroidViewModel(application) {
     val state = MutableLiveData(restore())
+    val paragraphInspection = MutableLiveData<JSONObject?>()
     private val worker = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private var disposed = false
@@ -62,10 +64,60 @@ class DocumentViewModel(application: Application, private val saved: SavedStateH
 
     private fun execute(task: () -> Unit) { worker.execute(task) }
 
+    /** Draft exceptions survive a WebView recreation, but never become course-template settings. */
+    fun updateParagraphPreservation(request: JSONObject) {
+        val draft = state.value?.draft ?: return
+        if (!draft.file.extension.equals("docx", true) || request.optString("file_id") != draft.file.name) return
+        val ids = request.optJSONArray("preserve_paragraphs") ?: return
+        if (!validParagraphIds(ids)) return
+        if (ids.length() == 0) {
+            saved.remove<String>("paragraphPreservation")
+            return
+        }
+        val fingerprint = request.optString("source_fingerprint")
+        if (!fingerprint.matches(Regex("[a-fA-F0-9]{64}"))) return
+        val inspection = paragraphInspection.value ?: return
+        if (inspection.optString("file_id") != draft.file.name ||
+            !inspection.optString("source_fingerprint").equals(fingerprint, true)) return
+        saved["paragraphPreservation"] = JSONObject().put("file_id", draft.file.name)
+            .put("preserve_paragraphs", ids).put("source_fingerprint", fingerprint.lowercase()).toString()
+    }
+
+    private fun validParagraphIds(ids: JSONArray): Boolean = ids.length() <= 10000 &&
+        (0 until ids.length()).all { index ->
+            val value = ids.get(index)
+            (value is Int || value is Long) && (value as Number).toLong() in 1L..Int.MAX_VALUE.toLong()
+        }
+
+    fun paragraphRestoration(): JSONObject? {
+        val draft = state.value?.draft ?: return null
+        val selection = try { saved.get<String>("paragraphPreservation")?.let { JSONObject(it) } }
+            catch (_: Exception) { null } ?: return null
+        val ids = selection.optJSONArray("preserve_paragraphs")
+        if (!draft.file.extension.equals("docx", true) || selection.optString("file_id") != draft.file.name ||
+            ids == null || ids.length() == 0 || !validParagraphIds(ids) ||
+            !selection.optString("source_fingerprint").matches(Regex("[a-fA-F0-9]{64}"))) {
+            saved.remove<String>("paragraphPreservation")
+            return null
+        }
+        // Keep paragraph text out of SavedStateHandle; its cached inspection can be reused on rotation.
+        paragraphInspection.value?.takeIf {
+            it.optString("file_id") == draft.file.name &&
+                it.optString("source_fingerprint").equals(selection.optString("source_fingerprint"), true)
+        }?.optJSONArray("paragraphs")?.let { selection.put("paragraphs", it) }
+        return selection.put("type", "preservation")
+    }
+
+    private fun clearParagraphPreservation() {
+        saved.remove<String>("paragraphPreservation")
+        paragraphInspection.value = null
+    }
+
     fun clearDraft() {
         val old = state.value!!
         if (old.busy) return
         old.draft?.file?.delete()
+        clearParagraphPreservation()
         publish(old.copy(draft = null, error = null, message = "ready"))
     }
 
@@ -110,6 +162,7 @@ class DocumentViewModel(application: Application, private val saved: SavedStateH
                 val draft = Draft(target, display.take(255), size)
                 main.post {
                     old.draft?.file?.delete()
+                    clearParagraphPreservation()
                     publish(old.copy(busy = false, draft = draft, error = null, message = "file_ready"))
                 }
             } catch (error: Exception) {
@@ -132,12 +185,35 @@ class DocumentViewModel(application: Application, private val saved: SavedStateH
                 ).toString()
                 val result = JSONObject(response)
                 main.post {
+                    if (result.optString("error") == "draft_changed") clearParagraphPreservation()
                     if (result.has("error")) publish(old.copy(busy = false, error = result.getString("error"), message = null))
                     else publish(old.copy(busy = false, result = result, error = null, message = "native_done"))
                 }
             } catch (error: Exception) {
                 android.util.Log.e("MLAFMT", "Offline formatter could not start", error)
                 main.post { publish(old.copy(busy = false, error = "failed", message = null)) }
+            }
+        }
+    }
+
+    fun inspectParagraphs(requestId: Int) {
+        val draft = state.value?.draft
+        if (state.value?.busy == true) return
+        if (draft == null) {
+            paragraphInspection.value = JSONObject().put("type", "paragraphs")
+                .put("request_id", requestId).put("error", "no_file")
+            return
+        }
+        execute {
+            val response = try {
+                if (!Python.isStarted()) Python.start(AndroidPlatform(context))
+                JSONObject(Python.getInstance().getModule("android_bridge")
+                    .callAttr("paragraphs", draft.file.absolutePath).toString())
+            } catch (_: Exception) { JSONObject().put("error", "bad_doc") }
+            response.put("type", "paragraphs").put("request_id", requestId).put("file_id", draft.file.name)
+            main.post {
+                if (!disposed && state.value?.draft?.file?.name == draft.file.name)
+                    paragraphInspection.value = response
             }
         }
     }
