@@ -1,10 +1,9 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Release status:** the v2.7.0 source passed the local acceptance checks recorded
-below; it is not yet the public website. The public site remains v2.6.0, and published offline
-installers remain v2.5.0. The new update prompt and citation assistant described
-below belong to the v2.7.0 source. See [deployment notes](DEPLOYMENT.md) for the
-production record.
+**Release status:** v2.7.0 is live on the static public website, including the
+update prompt and local citation assistant. Published offline installers remain
+v2.5.0. Local debug evidence and the separate production checks are recorded
+below. See [deployment notes](DEPLOYMENT.md) for the production record and limits.
 
 FormCapy runs as a native Tk desktop app, an Android app with an offline Python
 bridge, or a Flask local web app. This document describes the additional
@@ -22,7 +21,7 @@ The static build is separate from the Flask local web mode. The native desktop
 interface uses Tk; Android keeps its native Python bridge and never downloads
 Pyodide. The DSH refactor commit `0e5e923` was merged in `adeca89`.
 
-The v2.6.0 static build is live on **Cloudflare's free Workers Static Assets plan** at
+The v2.7.0 static build is live on **Cloudflare's free Workers Static Assets plan** at
 [formcapy.com](https://formcapy.com/) and
 [www.formcapy.com](https://www.formcapy.com/). The original v2.4.0 launch used
 code commit `f7c3444` as Worker `formcapy`, version `6769274b`; those identifiers
@@ -136,7 +135,7 @@ download result are separate from this export.
 - **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
 
-### Local citation path (v2.7.0 source, not deployed)
+### Local citation path (v2.7.0 static website)
 
 The collapsed reference assistant accepts manually entered **books, journal
 articles and webpages**, including multiple people or a literal organization
@@ -407,8 +406,9 @@ warning that complex documents and citations must be reviewed.
 ## 6. Compatibility
 
 The table below summarizes **earlier formatter-build evidence**, not v2.7.0
-citation-assistant or update-prompt acceptance. Production v2.7.0, fresh browser
-downloads and device/Safari results must be recorded for that build separately.
+citation-assistant or update-prompt acceptance. Separate v2.7.0 production
+checks are recorded below; fresh browser-download inspection and device/Safari
+results remain separate and unverified for this release.
 
 | Environment | Status |
 | --- | --- |
@@ -435,7 +435,7 @@ users to use Share → Save to Files. This behavior was not tested on a device.
 
 ## 7. Verification performed
 
-### Current v2.7.0 local debug acceptance (not deployed)
+### v2.7.0 local debug acceptance
 
 The post-debug artifact is `dist/formcapy-v2.7.0-debug/`: **145 manifest file
 entries**, **118,835,570 total bytes**, cache version
@@ -470,10 +470,37 @@ Real-browser evidence is recorded in
 `offline-browser.json` and `offline-bibliography.png`. This round has not
 freshly downloaded and inspected browser-generated DOCX files;
 creating their links is a separate result. No new Safari or physical-device
-acceptance is claimed. Production remains **v2.6.0**, published offline
-installers remain **v2.5.0**, and this v2.7.0 artifact is **not deployed**.
+acceptance is claimed. The same frozen artifact is now deployed as **v2.7.0**;
+its production checks are recorded separately below. Published offline
+installers remain **v2.5.0**.
 See the [citation guide](CITATIONS.md) for current local evidence and
 [deployment notes](DEPLOYMENT.md) for the production record.
+
+### v2.7.0 production acceptance — 2026-10-22
+
+Cloudflare production version `890b8ee5` is **Ready, 100%**, serving the frozen
+post-debug artifact from application source `866e0cb4bc48767f96d5a8681c46609a25390c43`.
+[CI run 39718820575](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39718820575)
+passed all seven jobs; this website release does not publish their native artifacts.
+One Worker sweep verified **144/144 downloadable files**, **118,834,929 bytes**.
+Root/www matched **38/38 key files**, with zero injected analytics beacons;
+source archives and notices are reachable. **18/18 HTTPS checks** passed with
+trusted TLS 1.3. No WAF, DNS or TLS settings were changed.
+
+Public Edge checks on the root domain generated the main MLA demo result and
+independent MLA/APA Word links from a reviewed three-type fictional library.
+Chinese/English/Spanish switching retained the manual date, main-paper link,
+APA link and three-entry preview; console warnings/errors were zero. The first
+Edge visit used its old v2.5.0 cache: a normal demo run followed by closing only
+the agent's old test tab and reopening loaded v2.7.0. No cache/storage clearing,
+forced activation or user-tab closure was used.
+
+Evidence is under `build/v2.7-web-release/production/`, including
+`public-http-verification.md` and `public-browser.json`. The
+[public screenshot](images/formcapy-live-v2.7-citations.png) uses fictional data
+and retains visible citation-component attribution. These output-link results
+do not establish fresh downloaded-DOCX inspection, Safari or physical-device
+acceptance. See [deployment notes](DEPLOYMENT.md) for the full record.
 
 ### Historical v2.4.0/refactor evidence
 

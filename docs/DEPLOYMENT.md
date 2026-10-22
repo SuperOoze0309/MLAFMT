@@ -1,6 +1,61 @@
 # FormCapy web deployment
 
-## Current public website — v2.6.0
+## Current public website — v2.7.0
+
+The checked static website is live at [formcapy.com](https://formcapy.com/)
+and [www.formcapy.com](https://www.formcapy.com/). The owner uploaded the frozen
+H-drive artifact on **22 October 2026**. Cloudflare automatically deployed
+production version `890b8ee5`, observed as **Ready, 100% traffic**. This is a
+web-only release; downloadable desktop and Android apps remain
+[v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0).
+
+The release adds safe update notices and a browser-local reference assistant
+for books, journal articles and webpages, with MLA 9 / APA 7 previews, independent
+Word reference lists and citation-library JSON. It also fixes cancellation,
+recovery and stale asynchronous results. No visitor account, database or server
+conversion service was added. Citation libraries are session-only unless the
+user explicitly saves them on the device; template exports exclude them.
+
+| Item | Recorded result |
+| --- | --- |
+| Application source | `866e0cb4bc48767f96d5a8681c46609a25390c43` |
+| CI | [39718820575](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39718820575): all 7 jobs passed; native artifacts were not published in this web release |
+| Local regression | 309 Node checks, 228 Python tests and 159 subtests passed |
+| Uploaded frozen folder | `dist/formcapy-v2.7.0-debug/`; 145 manifest entries plus `manifest.json`; 118,835,570 declared file bytes |
+| Manifest SHA-256 | `fbf3eeed6b54d7fb95f61e90864c92acb929edcb4afe262b9be3c8ca187100c8` |
+| Public cache | `formcapy-2.7.0-pyodide-314.0.7-a3c606097254` |
+| Recovery integrity | After the unexpected shutdown, Git object checks found no missing/corrupt objects, and all 145 artifact hashes/sizes still matched |
+| Worker sweep | 144/144 downloadable resources match size and SHA-256; 118,834,929 bytes verified in one full sweep; all required security headers and 14 MIME checks passed |
+| Root / www | 38/38 key-file comparisons match; both manifests and SWs match the frozen version; zero injected analytics beacons |
+| Source and notices | Provenance/license pages and both original source archive routes are reachable; the archive's full hash is included in the Worker sweep |
+| HTTPS | 18/18 checks passed with trusted TLS 1.3; HTTP upgrades preserve encoded paths and queries |
+| Public Edge | Root domain v2.7.0 generated the built-in MLA draft; reviewed/imported three fictional book/article/web records; MLA and APA previews and independent Word output links succeeded |
+| State retention | Chinese, English and Spanish switching retained the manual paper date, title, main paper output link, APA reference-list link and preview; zero console warnings/errors |
+| Downloads / devices | This round did not download a fresh browser DOCX for inspection; independent WASM ZIP checks are separate. Safari and physical devices remain unverified |
+
+Edge initially served its older v2.5.0 offline cache. A normal built-in demo
+conversion initialized registration; closing only the agent's completed test
+tab and reopening the root domain loaded v2.7.0. No cache/storage clearing,
+forced activation or closure of user tabs was used. For the first upgrade from
+an older page without the new notice, save/download current work before closing
+old FormCapy tabs and reopening. The v2.7 notice itself requires explicit
+save-and-update consent and protects active processing and other same-scope tabs.
+
+The static artifact was not rebuilt after acceptance. The HTTP audit ran one
+full resource sweep. Its domain helper initially omitted two SW MIME result
+fields; the final report derives those fields from the already captured
+`text/javascript` headers, retaining the original response record and hash.
+No HTTP retry or production security/DNS/TLS setting change was made.
+
+Evidence is under `build/v2.7-web-release/production/`:
+`public-http-verification.md`, `cloudflare-worker-asset-audit.json`,
+`domain-asset-verification.json`, `https-audit.log`, `public-browser.json` and
+`cloudflare-ready-890b8ee5.png`. The [public reference-assistant screenshot](images/formcapy-live-v2.7-citations.png)
+contains fictional paper details, fictional references and the visible processor
+attribution. Local debugging is separately recorded in `build/debug-v2.7/report.md`;
+the post-shutdown integrity record is `build/v2.7-web-release/recovery-integrity.md`.
+
+## Public v2.6.0 deployment record
 
 The v2.6.0 source adds self-contained `FC1.` course-template codes, versioned
 sharing JSON and review before applying. The existing layout-only JSON remains
@@ -10,8 +65,8 @@ static-website update.
 
 The owner uploaded the checked H-drive folder on 21 October 2026. The existing
 Cloudflare Worker automatically deployed production version `a4500358`, shown
-as **Ready, 100%**. Both [formcapy.com](https://formcapy.com/) and
-[www.formcapy.com](https://www.formcapy.com/) serve the v2.6.0 snapshot.
+as **Ready, 100%**. At that deployment, both [formcapy.com](https://formcapy.com/)
+and [www.formcapy.com](https://www.formcapy.com/) served the v2.6.0 snapshot.
 
 | Item | Recorded result |
 | --- | --- |

@@ -1,8 +1,8 @@
 # 独立参考文献助手 / Citation assistant
 
-状态：**v2.7.0 参考文献助手已接入主页面，本地预览与独立 Word 导出已接通并通过本地验收，尚未正式部署。** 当前正式网站仍为 v2.6.0，离线下载仍为 v2.5.0；本指南描述 v2.7.0 源码功能。
+状态：**v2.7.0 参考文献助手已在静态正式网站上线，支持本地预览与独立 Word 导出。** [正式网站](https://formcapy.com/)现为 v2.7.0，离线下载仍为 v2.5.0；生产文件、HTTPS 与 Edge 主要流程已核对，范围见[部署记录](DEPLOYMENT.md)。
 
-Status: **the v2.7.0 reference assistant is mounted in the main page. Local preview and standalone Word export are connected and have passed local acceptance; it is not deployed yet.** Production remains v2.6.0 and published offline downloads remain v2.5.0. This guide describes the v2.7.0 source.
+Status: **the v2.7.0 reference assistant is live on the static public website, with local preview and standalone Word export.** The [public website](https://formcapy.com/) is v2.7.0; published offline downloads remain v2.5.0. Public assets, HTTPS and the main Edge workflows were checked; see the [deployment record](DEPLOYMENT.md) for their scope.
 
 ---
 
@@ -206,9 +206,9 @@ CSL mapping:
 
 ## 9. 页面入口与维护接口 / Page entry and maintainer interface
 
-`templates/index.html` 已包含页面下方可展开的助手入口、引用引擎及可见来源声明。静态浏览器模式已连接本地 Word 文献表导出；普通 Flask 本地预览模式提供编辑、CSL 预览、复制、JSON 和 HTML，未提供该 Word 入口。原生 Android 界面未启用此助手。上述集成不等于本版已经部署或完成设备验收。
+`templates/index.html` 已包含页面下方可展开的助手入口、引用引擎及可见来源声明。静态浏览器模式已连接本地 Word 文献表导出；普通 Flask 本地预览模式提供编辑、CSL 预览、复制、JSON 和 HTML，未提供该 Word 入口。原生 Android 界面未启用此助手。本版生产部署已核对，见[部署记录](DEPLOYMENT.md)；页面集成本身不等于完成设备验收。
 
-`templates/index.html` already includes the expandable assistant, citation engine and visible attribution. Static browser mode is connected to local Word-bibliography export. The ordinary Flask local preview provides editing, CSL preview, copy, JSON and HTML without that Word action. The native Android interface does not enable this assistant. Integration does not establish production deployment or device acceptance.
+`templates/index.html` already includes the expandable assistant, citation engine and visible attribution. Static browser mode is connected to local Word-bibliography export. The ordinary Flask local preview provides editing, CSL preview, copy, JSON and HTML without that Word action. The native Android interface does not enable this assistant. The production deployment was checked separately in the [deployment record](DEPLOYMENT.md); integration alone does not establish device acceptance.
 
 <details>
 <summary>维护者：资源顺序和组件接口 / Maintainers: asset order and component API</summary>
@@ -271,7 +271,7 @@ The code block illustrates the API shape; `currentLanguage` and `localTransport`
 - Library JSON uses compact fallback near 1 MiB; a library whose compact JSON exceeds 1 MiB cannot be saved/downloaded and shows an explicit error.
 - JSON/HTML download blob URLs are revoked after a short safety delay; the current Word result remains until preview invalidation, replacement, or disposal.
 - A language switch is label-only: the current preview is kept; edits or style changes invalidate it.
-- Main-page mounting and static-browser Word export are connected; v2.7.0 is still awaiting production deployment. Safari and physical-device workflows remain unverified.
+- Main-page mounting and static-browser Word export are connected and live on the v2.7.0 static website. Public evidence is recorded separately below; Safari and physical-device workflows remain unverified.
 
 ## 11. 实现阶段测试记录 / Implementation-stage test record
 
@@ -307,10 +307,19 @@ These results concern the post-debug local artifact and local Chromium, **not a 
 
 本轮真实浏览器证据为 `build/debug-v2.7/word-cancel-real.json`、`word-cancelled.png`、`offline-browser.json` 和 `offline-bibliography.png`。取消／重试使用本地 8614 端口，离线重载／转换使用停止服务器后的 8613 端口；均属于本地验收。Current real-browser evidence is recorded in those files: cancellation/retry used local port 8614, and offline reload/conversion used port 8613 after its server was stopped. These are local acceptance results.
 
-本轮**没有重新下载并检查浏览器生成的 DOCX 文件**；浏览器已生成下载链接不等于完成下载文件验收。上表中的 ZIP／内容检查来自独立 CSL→Pyodide 检查。窄视口结果来自桌面 Chromium，不代表手机／平板实机。Safari、物理设备及 v2.7.0 正式网站流程仍未验收。
+本轮**没有重新下载并检查浏览器生成的 DOCX 文件**；浏览器已生成下载链接不等于完成下载文件验收。上表中的 ZIP／内容检查来自独立 CSL→Pyodide 检查。窄视口结果来自桌面 Chromium，不代表手机／平板实机。Safari 与物理设备仍未验收；v2.7.0 正式网站的有限验收范围另见下节。
 
-This round **did not freshly download and inspect browser-generated DOCX files**. Creating a download link is separate from downloaded-file acceptance; the ZIP/content results above came from the independent CSL→Pyodide checks. Narrow-viewport observations used desktop Chromium, not physical phones/tablets. Safari, physical devices and the v2.7.0 production site remain unverified.
+This round **did not freshly download and inspect browser-generated DOCX files**. Creating a download link is separate from downloaded-file acceptance; the ZIP/content results above came from the independent CSL→Pyodide checks. Narrow-viewport observations used desktop Chromium, not physical phones/tablets. Safari and physical devices remain unverified; the limited v2.7.0 public-site checks are recorded separately below.
 
 ---
 
 本指南记录源码集成状态；生产发布结果以[部署记录](DEPLOYMENT.md)为准。 / This guide records source integration; consult the [deployment record](DEPLOYMENT.md) for production release results.
+
+
+## 13. 正式网站核对 / Public-site checks — 2026-10-22
+
+Cloudflare 生产版本 `890b8ee5` 为 **Ready / 100%**，使用上述冻结的调试后产物，应用源码为 `866e0cb4bc48767f96d5a8681c46609a25390c43`。[CI 39718820575](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39718820575) 的 7 项任务全部通过，本轮仅发布静态网页版。一次 Worker 扫描核对 **144/144** 个可下载文件、**118,834,929 字节**；root／www 的 **38/38** 个关键文件一致，未注入 analytics beacon，源码归档与许可可访问，可信 TLS 1.3 下 **18/18 HTTPS** 检查通过。
+
+正式根域的 Edge 流程完成：内置 Markdown 草稿生成 MLA 论文链接；书籍、期刊文章、网页三类虚构条目的库 JSON 经审阅、明确确认后导入；MLA／APA 预览和各自的独立 Word 链接均生成成功。中、英、西班牙语切换保留手填日期 `3 February 2027`、论文链接、APA 文献链接和三条预览，控制台无警告或错误。证据为 `build/v2.7-web-release/production/public-browser.json`；[正式网站截图](images/formcapy-live-v2.7-citations.png)保留虚构示例和可见归属。
+
+The public root-domain Edge workflow generated the main MLA demo result, reviewed and explicitly imported a fictional three-type library, previewed MLA/APA bibliographies and prepared both standalone Word links. Language changes retained the manual date, paper result, APA result and three-entry preview, with no console warnings/errors. The independent HTTP checks establish the exact frozen static snapshot and trusted HTTPS; the browser checks establish those observed UI flows. They **do not establish fresh downloaded-DOCX inspection, Safari or physical-device acceptance**. See the [deployment record](DEPLOYMENT.md) for cache-upgrade observations and the full scope.

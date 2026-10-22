@@ -1,14 +1,14 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：已上线 v2.6.0 静态网页版、待上线 v2.7.0 源码，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码、分享 JSON 或参考文献助手。
+**适用版本 / Applies to：已上线 v2.7.0 静态网页版与源码，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码、分享 JSON 或参考文献助手。
 
-中文预设与四项新增排版字段自 v2.5.0 起具备，**[公网网站](https://formcapy.com/)现为 v2.6.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
+中文预设与四项新增排版字段自 v2.5.0 起具备，**[公网网站](https://formcapy.com/)现为 v2.7.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
-The public website now runs v2.6.0. Chinese presets and the four additional typography fields below remain available in both the website and v2.5.0 packages. Older v2.4.0 builds do not accept those four additional fields.
+The public website now runs v2.7.0. Chinese presets and the four additional typography fields below remain available in both the website and v2.5.0 packages. Older v2.4.0 builds do not accept those four additional fields.
 
-**上线状态 / Deployment status：**下方“课程模板分享”已在 v2.6.0 静态网页版上线，不属于现有 v2.5.0 安装包。本轮没有新发布、已验证的桌面或 Android 包。Course-template sharing is live on the v2.6.0 static website; offline downloads remain v2.5.0 without this feature. This update does not release a new desktop or Android package.
+**上线状态 / Deployment status：**下方“课程模板分享”自 v2.6.0 起上线，当前 v2.7.0 继续提供，不属于现有 v2.5.0 安装包。本轮没有新发布、已验证的桌面或 Android 包。Introduced in v2.6.0, course-template sharing remains live on the v2.7.0 static website; offline downloads remain v2.5.0 without this feature. This update does not release a new desktop or Android package.
 
-**v2.7.0 状态 / Status：本地开发与验收中，尚未部署。** 下方参考文献助手与安全更新提示描述当前源码；公网仍为 v2.6.0。The reference assistant and safe update notice below describe the v2.7.0 source under local acceptance; production remains v2.6.0.
+**v2.7.0 状态 / Status：静态网页版已上线。** 下方参考文献助手与安全更新提示可在正式网站使用；线上核对范围见[部署记录](DEPLOYMENT.md)。The reference assistant and safe update notice below are live on the v2.7.0 static website; see the deployment record for verification scope.
 
 ## 中文
 
@@ -155,7 +155,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 #### 课程模板分享
 
-本节描述已上线的 v2.6.0 静态网页版功能。分享只传递模板，不需要服务器、注册或集中保存模板。
+本节功能自 v2.6.0 起上线，当前 v2.7.0 静态网页版继续提供。分享只传递模板，不需要服务器、注册或集中保存模板。
 
 | 方式 | 内容 | 使用范围 |
 | --- | --- | --- |
@@ -180,7 +180,7 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 分享 JSON 中 `settings` 必须列全 19 项排版字段，`labels` 必须列全 `school_name`、`school_abbr`、`course_code`、`campus_term`；未填标签用空字符串。现有兼容裸 JSON 仍走原导入规则和 32 KB 文件上限，不要给它增加分享包装。现有 v2.5.0 安装包不识别模板码或分享 JSON 包装格式；跨旧端使用兼容裸 JSON。协议及校验范围见[分享设计](SHARING-DESIGN.md)。
 
-### 参考文献助手（v2.7.0 源码，待上线）
+### 参考文献助手（v2.7.0 静态网页版）
 
 原稿转换与助手有不同的输入：
 
@@ -193,11 +193,11 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 文献库默认只在当前会话内保留；**保存到本设备**、**载入已保存的库**、**删除已保存的库**只操作独立的 `formcapy.citations.v1` 保存副本。导入库 JSON 先核对条目数和题名，再明确确认替换，并保留撤销快照。删除保存副本不会清空正在使用的库。库 JSON 上限 1 MiB，最多 200 条；与模板 JSON 分开，不含论文信息、草稿或生成结果。`FC1.`、ShareV1 和兼容排版 JSON 的协议保持不变，也不带文献库。
 
-MLA／APA 使用自托管固定字节的 citeproc-js、官方 CSL 样式和 en-US locale；中文／西班牙语界面不翻译作者或题名。GB/T 条目渲染、自动解析既有条目、文内引用同步和联网 DOI 查询尚未实现。操作见[文献助手指南](CITATIONS.md)，源码、完整许可及可见归属见[引用组件分发说明](CITATION-LICENSES.md)。本版 Safari、物理设备与公开网站下载流程尚未验收。
+MLA／APA 使用自托管固定字节的 citeproc-js、官方 CSL 样式和 en-US locale；中文／西班牙语界面不翻译作者或题名。GB/T 条目渲染、自动解析既有条目、文内引用同步和联网 DOI 查询尚未实现。操作见[文献助手指南](CITATIONS.md)，源码、完整许可及可见归属见[引用组件分发说明](CITATION-LICENSES.md)。本版 Safari、物理设备与浏览器新下载 DOCX 的文件检查仍未验收；线上核对范围见[部署记录](DEPLOYMENT.md)。
 
-### 网站更新提示（v2.7.0 源码，待上线）
+### 网站更新提示（v2.7.0 静态网页版）
 
-新版准备完成后先提示保存／下载文稿及文献库，点击 **更新 → 已保存，更新** 才重新加载。正在处理或仍有其他同作用域 FormCapy 标签页时，会先阻止激活并提示处理步骤；不会自动刷新其他页面或清除文稿存储。当前 v2.6.0 旧页面须先正常升级一次，才会拥有此新提示。
+新版准备完成后先提示保存／下载文稿及文献库，点击 **更新 → 已保存，更新** 才重新加载。正在处理或仍有其他同作用域 FormCapy 标签页时，会先阻止激活并提示处理步骤；不会自动刷新其他页面或清除文稿存储。v2.6.0 旧页面须先正常升级一次，才会拥有此新提示。
 
 ### 5. DOCX 段落选择与对象保留
 
@@ -214,7 +214,7 @@ MLA／APA 使用自托管固定字节的 citeproc-js、官方 CSL 样式和 en-U
 
 ### 6. 限制
 
-草稿转换整理版式并保留已有引用文字；待上线的 v2.7.0 助手另从结构化字段生成独立 MLA／APA 文献列表。两者都不核验资料来源，也不判断论文是否符合课程要求。
+草稿转换整理版式并保留已有引用文字；v2.7.0 助手另从结构化字段生成独立 MLA／APA 文献列表。两者都不核验资料来源，也不判断论文是否符合课程要求。
 
 - **原稿中的 APA 参考文献**：草稿转换不解析、改写或核验文内引用或条目内容，也不实现复杂的同作者、同年份书目排序。独立助手的结构化条目按 CSL 处理；它不关联原稿引用。不提供专业论文 running head 或作者注。
 - **模板范围**：仅支持字段表中的布局项。没有账号或云同步。
@@ -366,7 +366,7 @@ Import and export notes:
 
 #### Course-template sharing
 
-This feature is live on the v2.6.0 static website. Existing v2.5.0 packages do not support ShareV1; no new desktop or Android package is released in this round.
+Introduced in v2.6.0, this feature remains live on the v2.7.0 static website. Existing v2.5.0 packages do not support ShareV1; no new desktop or Android package is released in this round.
 
 | Method | Content | Compatibility |
 | --- | --- | --- |
@@ -382,7 +382,7 @@ Names, drafts, paper titles, instructors, file bytes, paragraph choices and resu
 
 Codes are limited to 8,192 ASCII characters and decoded JSON to 4,096 bytes; sharing JSON has the same 4,096-byte input limit. Invalid, unknown-version or oversized data does not replace current settings. Existing bare JSON retains its import rules and 32 KB file limit. Sharing JSON requires all 19 settings and all four label keys; use the compatible bare format with older desktop/Android apps. See the [sharing protocol](SHARING-DESIGN.md).
 
-### Reference assistant (v2.7.0 source, awaiting deployment)
+### Reference assistant (v2.7.0 static website)
 
 | Workflow | Input | Output and scope |
 | --- | --- | --- |
@@ -393,9 +393,9 @@ Expand **Reference assistant**, add records and enter the title, ordered persona
 
 The library is session-only by default. **Save on this device**, **Load saved library** and **Remove saved library** explicitly operate on the separate `formcapy.citations.v1` key. JSON import reviews the count and titles before explicit replacement and keeps an undo snapshot. Removing the saved copy leaves the active library intact. Library JSON is limited to 1 MiB and 200 records and excludes paper details, draft bytes and generated results. It is separate from templates: `FC1.`, ShareV1 and compatible layout JSON keep their existing protocols and never carry this library.
 
-The renderer self-hosts pinned citeproc-js, official CSL styles and en-US locale data. Chinese/Spanish interface choices do not translate authors or titles. GB/T entry rendering, arbitrary-text parsing, in-text synchronization and online DOI lookup are not implemented. See the [assistant guide](CITATIONS.md) and [component/source distribution record](CITATION-LICENSES.md). Safari, physical-device and new public download workflows have not been accepted for this release yet.
+The renderer self-hosts pinned citeproc-js, official CSL styles and en-US locale data. Chinese/Spanish interface choices do not translate authors or titles. GB/T entry rendering, arbitrary-text parsing, in-text synchronization and online DOI lookup are not implemented. See the [assistant guide](CITATIONS.md) and [component/source distribution record](CITATION-LICENSES.md). Safari, physical-device and fresh browser-downloaded DOCX inspection remain unverified; see the [deployment record](DEPLOYMENT.md) for public checks.
 
-### Website update notice (v2.7.0 source, awaiting deployment)
+### Website update notice (v2.7.0 static website)
 
 A prepared update first asks you to save/download your document and library. **Update → Saved — update** explicitly reloads the page. Processing or another FormCapy tab in the same scope blocks activation with guidance; other pages are not reloaded automatically and document storage is not cleared. Existing v2.6.0 pages need one normal upgrade before they can show this new notice.
 
@@ -414,7 +414,7 @@ The result shows counts of paragraphs kept unchanged, body images and tables. Co
 
 ### 6. Limits
 
-Draft conversion handles layout and preserves existing citation wording. The pending v2.7.0 assistant separately renders MLA/APA bibliographies from structured fields. Neither workflow verifies source data or assesses whether a paper meets course requirements.
+Draft conversion handles layout and preserves existing citation wording. The v2.7.0 assistant separately renders MLA/APA bibliographies from structured fields. Neither workflow verifies source data or assesses whether a paper meets course requirements.
 
 - **APA references already in a draft:** conversion does not parse, rewrite or verify citation content or implement complex same-author/year bibliographic ordering. The independent assistant uses CSL for its structured records without linking them to draft citations. No professional-paper running head or author note is produced.
 - **Template scope:** only the listed layout fields are supported. There is no account or cloud sync.
