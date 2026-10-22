@@ -1,12 +1,14 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：已上线 v2.6.0 静态网页版，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码或分享 JSON。
+**适用版本 / Applies to：已上线 v2.6.0 静态网页版、待上线 v2.7.0 源码，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码、分享 JSON 或参考文献助手。
 
 中文预设与四项新增排版字段自 v2.5.0 起具备，**[公网网站](https://formcapy.com/)现为 v2.6.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
 The public website now runs v2.6.0. Chinese presets and the four additional typography fields below remain available in both the website and v2.5.0 packages. Older v2.4.0 builds do not accept those four additional fields.
 
 **上线状态 / Deployment status：**下方“课程模板分享”已在 v2.6.0 静态网页版上线，不属于现有 v2.5.0 安装包。本轮没有新发布、已验证的桌面或 Android 包。Course-template sharing is live on the v2.6.0 static website; offline downloads remain v2.5.0 without this feature. This update does not release a new desktop or Android package.
+
+**v2.7.0 状态 / Status：本地开发与验收中，尚未部署。** 下方参考文献助手与安全更新提示描述当前源码；公网仍为 v2.6.0。The reference assistant and safe update notice below describe the v2.7.0 source under local acceptance; production remains v2.6.0.
 
 ## 中文
 
@@ -178,6 +180,25 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 分享 JSON 中 `settings` 必须列全 19 项排版字段，`labels` 必须列全 `school_name`、`school_abbr`、`course_code`、`campus_term`；未填标签用空字符串。现有兼容裸 JSON 仍走原导入规则和 32 KB 文件上限，不要给它增加分享包装。现有 v2.5.0 安装包不识别模板码或分享 JSON 包装格式；跨旧端使用兼容裸 JSON。协议及校验范围见[分享设计](SHARING-DESIGN.md)。
 
+### 参考文献助手（v2.7.0 源码，待上线）
+
+原稿转换与助手有不同的输入：
+
+| 路径 | 输入 | 输出与边界 |
+| --- | --- | --- |
+| 草稿页面排版 | DOCX、TXT、Markdown 中已有的参考文献文字 | 调整参考文献页标题、新页、缩进、行距及普通条目的排序；保留引用文字 |
+| 独立参考文献助手 | 用户手动录入的书籍、期刊文章或网页字段 | 通过本地 CSL 渲染 MLA 9／APA 7，预览并导出独立文献列表；不改写原稿或文中引用编号 |
+
+展开 **参考文献助手**，添加条目并填写标题、作者、出版日期及适用的出版社、期刊／网站、卷期页、DOI／URL。支持多作者顺序及机构作者；允许资料缺少作者或出版日期，提示用户核对，不编造字段。选择 **MLA 9 / APA 7 → 预览文献表** 后，可复制纯文本／带格式文本、导出 HTML，或通过静态网页版的 Word 入口导出独立文献表。修改数据或样式后需重新预览，CSL 决定条目顺序与格式。
+
+文献库默认只在当前会话内保留；**保存到本设备**、**载入已保存的库**、**删除已保存的库**只操作独立的 `formcapy.citations.v1` 保存副本。导入库 JSON 先核对条目数和题名，再明确确认替换，并保留撤销快照。删除保存副本不会清空正在使用的库。库 JSON 上限 1 MiB，最多 200 条；与模板 JSON 分开，不含论文信息、草稿或生成结果。`FC1.`、ShareV1 和兼容排版 JSON 的协议保持不变，也不带文献库。
+
+MLA／APA 使用自托管固定字节的 citeproc-js、官方 CSL 样式和 en-US locale；中文／西班牙语界面不翻译作者或题名。GB/T 条目渲染、自动解析既有条目、文内引用同步和联网 DOI 查询尚未实现。操作见[文献助手指南](CITATIONS.md)，源码、完整许可及可见归属见[引用组件分发说明](CITATION-LICENSES.md)。本版 Safari、物理设备与公开网站下载流程尚未验收。
+
+### 网站更新提示（v2.7.0 源码，待上线）
+
+新版准备完成后先提示保存／下载文稿及文献库，点击 **更新 → 已保存，更新** 才重新加载。正在处理或仍有其他同作用域 FormCapy 标签页时，会先阻止激活并提示处理步骤；不会自动刷新其他页面或清除文稿存储。当前 v2.6.0 旧页面须先正常升级一次，才会拥有此新提示。
+
 ### 5. DOCX 段落选择与对象保留
 
 在 **高级选项 → 指定段落保持原格式** 中读取当前 Word 草稿，也可从模板 **高级定制** 的段落保留入口进入。支持多段勾选、全选、清空，以及 `2, 4-6` 这样的编号范围；应用范围会替换当前勾选。
@@ -193,9 +214,9 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 
 ### 6. 限制
 
-本工具只整理版式，不生成或核验引文，也不判断论文是否符合课程要求。
+草稿转换整理版式并保留已有引用文字；待上线的 v2.7.0 助手另从结构化字段生成独立 MLA／APA 文献列表。两者都不核验资料来源，也不判断论文是否符合课程要求。
 
-- **APA 参考文献**：不解析、改写或核验文内引用或条目内容，也不实现复杂的同作者、同年份书目排序。不提供专业论文 running head 或作者注。
+- **原稿中的 APA 参考文献**：草稿转换不解析、改写或核验文内引用或条目内容，也不实现复杂的同作者、同年份书目排序。独立助手的结构化条目按 CSL 处理；它不关联原稿引用。不提供专业论文 running head 或作者注。
 - **模板范围**：仅支持字段表中的布局项。没有账号或云同步。
 - **转换内容**：DOCX 正文图片和表格从源包保留；选择的段落保持原字体、字号与段落格式。页面设置及源分节、页眉和页脚会替换，不能保证原分页或原页眉页脚对象。复杂对象、修订和异常结构请对照原稿检查；部分结构和高于 3 级的标题会出现结果提示，高于 3 级的标题文字可保留为普通段落。这不等于完整文档检查。
 - **平台与要求**：已上线网页版在设备浏览器本地处理，无需旁边有电脑或连接同一局域网；原 Flask 局域网模式仍可用于本地预览。桌面与 Android 可离线使用。教师或学校要求优先于预设。
@@ -361,6 +382,23 @@ Names, drafts, paper titles, instructors, file bytes, paragraph choices and resu
 
 Codes are limited to 8,192 ASCII characters and decoded JSON to 4,096 bytes; sharing JSON has the same 4,096-byte input limit. Invalid, unknown-version or oversized data does not replace current settings. Existing bare JSON retains its import rules and 32 KB file limit. Sharing JSON requires all 19 settings and all four label keys; use the compatible bare format with older desktop/Android apps. See the [sharing protocol](SHARING-DESIGN.md).
 
+### Reference assistant (v2.7.0 source, awaiting deployment)
+
+| Workflow | Input | Output and scope |
+| --- | --- | --- |
+| Draft page layout | Existing reference text inside a DOCX, TXT or Markdown draft | Reference-page heading, page break, indentation, spacing and ordinary-entry sorting; citation wording stays as written |
+| Independent reference assistant | Manually entered book, journal-article or webpage fields | Local CSL renders MLA 9 / APA 7 for review and a separate bibliography; the draft and in-text citation numbers stay intact |
+
+Expand **Reference assistant**, add records and enter the title, ordered personal/organization authors, publication date and applicable publisher, journal/site, volume, issue, pages, DOI or URL. Missing author/date information is flagged for review rather than invented. Choose **MLA 9 / APA 7 → Preview bibliography**, then copy plain/formatted text or export HTML; the static browser build also exports a separate Word bibliography. Editing entries or the style requires a fresh preview. CSL determines entry order and formatting.
+
+The library is session-only by default. **Save on this device**, **Load saved library** and **Remove saved library** explicitly operate on the separate `formcapy.citations.v1` key. JSON import reviews the count and titles before explicit replacement and keeps an undo snapshot. Removing the saved copy leaves the active library intact. Library JSON is limited to 1 MiB and 200 records and excludes paper details, draft bytes and generated results. It is separate from templates: `FC1.`, ShareV1 and compatible layout JSON keep their existing protocols and never carry this library.
+
+The renderer self-hosts pinned citeproc-js, official CSL styles and en-US locale data. Chinese/Spanish interface choices do not translate authors or titles. GB/T entry rendering, arbitrary-text parsing, in-text synchronization and online DOI lookup are not implemented. See the [assistant guide](CITATIONS.md) and [component/source distribution record](CITATION-LICENSES.md). Safari, physical-device and new public download workflows have not been accepted for this release yet.
+
+### Website update notice (v2.7.0 source, awaiting deployment)
+
+A prepared update first asks you to save/download your document and library. **Update → Saved — update** explicitly reloads the page. Processing or another FormCapy tab in the same scope blocks activation with guidance; other pages are not reloaded automatically and document storage is not cleared. Existing v2.6.0 pages need one normal upgrade before they can show this new notice.
+
 ### 5. DOCX paragraph selection and object retention
 
 Open **Advanced options → Keep selected paragraphs unchanged** and read the current Word draft. The paragraph-preservation entry under template **Advanced customization** opens the same options. Select multiple paragraphs, select all, clear the selection, or enter ranges such as `2, 4-6`; applying a range replaces the selection.
@@ -376,9 +414,9 @@ The result shows counts of paragraphs kept unchanged, body images and tables. Co
 
 ### 6. Limits
 
-MLAFMT handles layout only. It does not create or verify citations, or assess whether a paper meets course requirements.
+Draft conversion handles layout and preserves existing citation wording. The pending v2.7.0 assistant separately renders MLA/APA bibliographies from structured fields. Neither workflow verifies source data or assesses whether a paper meets course requirements.
 
-- **APA references:** MLAFMT does not parse, rewrite or verify in-text citations or entry content, and does not implement complex same-author/year bibliographic ordering. No professional-paper running head or author note is produced.
+- **APA references already in a draft:** conversion does not parse, rewrite or verify citation content or implement complex same-author/year bibliographic ordering. The independent assistant uses CSL for its structured records without linking them to draft citations. No professional-paper running head or author note is produced.
 - **Template scope:** only the listed layout fields are supported. There is no account or cloud sync.
 - **Conversion contents:** body images and tables are retained from the source DOCX package, and selected paragraphs keep their fonts, sizes and paragraph formatting. Page settings, source sections, headers and footers are replaced; original pagination and header/footer objects are not guaranteed. Compare complex objects, revisions and unusual structures with the original. Warnings may identify some structures or headings above level 3; higher-level heading text may appear as ordinary paragraphs. This is not a complete document check.
 - **Platforms and requirements:** the public website processes documents locally in the device's browser without a nearby computer or shared LAN. The original Flask LAN preview remains available. Desktop and Android work offline. Instructor or institution requirements take priority over presets.

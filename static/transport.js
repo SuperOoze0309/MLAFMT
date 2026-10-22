@@ -308,6 +308,9 @@
     function registerOffline() {
       if (offlineRegistered || options.offline === false) return;
       offlineRegistered = true;
+      // The page-level updater registers at startup, before Python is needed.
+      // Keep this path only for older hosts that do not include that module.
+      if (window.FormCapyUpdates) return;
       if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
       try {
         navigator.serviceWorker

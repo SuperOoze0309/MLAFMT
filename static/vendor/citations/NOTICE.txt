@@ -1,0 +1,63 @@
+FormCapy citation-component distribution
+
+citeproc-js is distributed here under Common Public Attribution License 1.0
+(CPAL-1.0), exercising the upstream dual-license choice. The original upstream
+dual-license notice is preserved in citeproc.js and citeproc-LICENSE.txt, and
+both CPAL-1.0.txt and AGPL-3.0.txt are included. No upstream code was modified,
+minified or combined into an application bundle. Application adapter code is
+separate and remains under the repository MIT license; MIT does not replace
+the licenses of these third-party files.
+
+CPAL attribution (also displayed in the citation assistant):
+(c) Frank Bennett
+citeproc-js implements the Citation Style Language
+https://citationstyles.org/
+
+Source code: citeproc-source.tar.gz contains the upstream core source snapshot at commit
+cc9153c45293af878de08cafddbefe6ea150c380, including src/, tools/, the original
+processor files and original license notices. citeproc.js is also the directly
+readable, unmodified file served to the browser. No network service executes it:
+the user's browser performs citation rendering. Local publication, not merely
+an upstream link, supplies the corresponding source with the application.
+Exact original bytes, archive digest and provenance are in sources.json.
+This GitHub source snapshot does not embed optional Git submodule contents;
+the selected runtime styles and locale are separately published below. The
+original README describes upstream's full external test/build environment.
+
+Upstream CPAL Exhibit A notice, reproduced for this distribution:
+
+The contents of this file are subject to the Common Public Attribution License
+Version 1.0 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+https://opensource.org/licenses/CPAL-1.0. The License is based on the Mozilla
+Public License Version 1.1 but Sections 14 and 15 have been added to cover use
+of software over a computer network and provide for limited attribution for
+the Original Developer. In addition, Exhibit A has been modified to be
+consistent with Exhibit B.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Original Code is citeproc-js.
+The Initial Developer and Original Developer are Frank Bennett.
+All portions of the code written by Frank Bennett are Copyright (c) 2009-2015.
+All Rights Reserved. The preserved processor header records Copyright (c)
+2009-2019 Frank Bennett. There are no FormCapy modifications to Covered Code.
+
+Alternatively, the contents of the upstream files may be used under the terms
+of the GNU AFFERO GENERAL PUBLIC LICENSE, version 3 or later, in which case the
+provisions of that license are applicable instead of CPAL. Upstream's original
+choice is not removed by this distribution.
+
+Citation Style Language styles and locale data:
+
+This product uses the Citation Style Language (CSL) project:
+https://citationstyles.org/
+The unmodified MLA and APA style files and en-US locale are distributed under
+Creative Commons Attribution-ShareAlike 3.0 Unported. CC-BY-SA-3.0.txt contains
+the complete license. Authors/contributors/translators and rights metadata
+remain exactly as supplied inside each XML file. Original project licensing
+statements are in styles-README.md and locales-README.md. Sources and commit
+pins are in sources.json. No official manual prose or example papers are
+included. These components do not represent institutional endorsement.

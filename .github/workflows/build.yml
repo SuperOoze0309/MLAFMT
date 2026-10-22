@@ -33,12 +33,17 @@ jobs:
       - run: xvfb-run -a python -m pytest -q
       - name: Check browser state and template-code protocol
         run: |
+          python scripts/verify_citation_assets.py
           node browser/test/chinese_preset_state_test.mjs
           node browser/test/spanish_catalog_test.mjs
           node browser/test/transport_lifecycle_test.mjs
           node browser/test/service_worker_redirect_test.mjs
           node browser/test/template_share_codec_test.mjs
           node browser/test/template_sharing_state_test.mjs
+          node browser/test/update_notice_test.mjs
+          node browser/test/citation_library_test.mjs
+          node browser/test/citation_engine_test.mjs
+          node browser/test/citation_assistant_test.mjs
 
   windows-exe:
     needs: test

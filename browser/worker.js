@@ -17,6 +17,7 @@ const PYTHON_MODULES = [
   "mla_formatter.py",
   "format_profiles.py",
   "docx_preserve.py",
+  "bibliography_export.py",
   "browser_bridge.py",
 ];
 
@@ -181,7 +182,7 @@ async function handleRequest(message) {
       return;
     }
     const action = message.action === "paragraphs" ? "paragraphs" : "generate";
-    if (action === "generate" && request.kind !== "blank" && request.kind !== "convert") {
+    if (action === "generate" && !["blank", "convert", "bibliography"].includes(request.kind)) {
       postFailure(id, "invalid_options");
       return;
     }

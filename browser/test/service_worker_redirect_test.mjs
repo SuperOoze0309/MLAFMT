@@ -33,7 +33,7 @@ function redirectedResponse(body = 'redirected home', options = {}) {
   return mark(response);
 }
 
-function setup({ scope = 'https://formcapy.example/', network, existingCaches = [] } = {}) {
+function setup({ scope = 'https://formcapy.example/', network, existingCaches = [], windows } = {}) {
   const handlers = new Map();
   const cachesByName = new Map();
   const fetchCalls = [];
@@ -42,6 +42,9 @@ function setup({ scope = 'https://formcapy.example/', network, existingCaches = 
   const timeline = [];
   const skipWaitingCalls = [];
   const forbiddenClientCalls = [];
+  const updateReplies = [];
+  const clientQueries = [];
+  let inUpdateRequest = false;
   environments.push({ forbiddenClientCalls });
   function forbidden(name) {
     forbiddenClientCalls.push(name);
@@ -85,7 +88,11 @@ function setup({ scope = 'https://formcapy.example/', network, existingCaches = 
     registration: { scope },
     clients: {
       claim: () => forbidden('clients.claim'),
-      matchAll: () => forbidden('clients.matchAll'),
+      matchAll: async (options) => {
+        if (!inUpdateRequest) return forbidden('clients.matchAll');
+        clientQueries.push(options);
+        return windows || [{ id: 'requesting-tab', url: scope, type: 'window' }];
+      },
       openWindow: () => forbidden('clients.openWindow'),
     },
     async skipWaiting() { timeline.push('skip-waiting'); skipWaitingCalls.push(timeline.length - 1); },
@@ -96,6 +103,19 @@ function setup({ scope = 'https://formcapy.example/', network, existingCaches = 
   return {
     handlers, caches, cachesByName, fetchCalls, cacheMatches, added, scope,
     timeline, skipWaitingCalls, forbiddenClientCalls,
+    updateReplies, clientQueries,
+    async message(data, { source = { id: 'requesting-tab', url: scope, type: 'window' }, withPort = true } = {}) {
+      let pending;
+      inUpdateRequest = true;
+      try {
+        handlers.get('message')({
+          data, source,
+          ports: withPort ? [{ postMessage(value) { updateReplies.push(value); } }] : [],
+          waitUntil(value) { pending = value; },
+        });
+        await pending;
+      } finally { inUpdateRequest = false; }
+    },
     async install() {
       for (const key of existingCaches) await caches.open(key);
       let pending;
@@ -306,6 +326,71 @@ await check('the exact broken cache cannot skip waiting if precaching fails', as
 await check('install, migration and activation do not claim clients, navigate or reload pages', async () => {
   assert(environments.length > 0);
   for (const env of environments) assert.deepEqual(env.forbiddenClientCalls, []);
+});
+
+const updateMessage = { type: 'FORMCAPY_ACTIVATE_UPDATE', confirmed: true };
+await check('explicit update asks only for scoped windows and activates the requesting page', async () => {
+  const env = setup();
+  await env.install();
+  await env.message(updateMessage);
+  assert.equal(env.skipWaitingCalls.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(env.clientQueries)), [{ type: 'window', includeUncontrolled: true }]);
+  assert.equal(env.updateReplies.at(-1).status, 'activating');
+  assert.deepEqual(env.forbiddenClientCalls, []);
+});
+
+await check('another same-scope page prevents explicit activation without touching it', async () => {
+  const env = setup({ windows: [
+    { id: 'requesting-tab', url: 'https://formcapy.example/' },
+    { id: 'another-draft', url: 'https://formcapy.example/index.html?draft=1' },
+  ] });
+  await env.message(updateMessage);
+  assert.equal(env.skipWaitingCalls.length, 0);
+  assert.equal(env.updateReplies.at(-1).status, 'other-tabs');
+  assert.deepEqual(env.forbiddenClientCalls, []);
+});
+
+await check('unrelated origins and paths outside a subdirectory scope do not block update', async () => {
+  const env = setup({ scope: 'https://formcapy.example/app/', windows: [
+    { id: 'requesting-tab', url: 'https://formcapy.example/app/' },
+    { id: 'other-app', url: 'https://formcapy.example/other/' },
+    { id: 'similar', url: 'https://formcapy.example/application/' },
+    { id: 'third-party', url: 'https://elsewhere.example/app/' },
+    { id: 'malformed', url: 'not a URL' },
+  ] });
+  await env.message(updateMessage);
+  assert.equal(env.skipWaitingCalls.length, 1);
+  assert.equal(env.updateReplies.at(-1).status, 'activating');
+});
+
+await check('unknown messages and requests without confirmed user action or response port are ignored', async () => {
+  const env = setup();
+  for (const data of [null, {}, { type: 'SKIP_WAITING' }, { type: 'FORMCAPY_ACTIVATE_UPDATE' },
+    { type: 'FORMCAPY_ACTIVATE_UPDATE', confirmed: 'true' }]) await env.message(data);
+  await env.message(updateMessage, { withPort: false });
+  assert.equal(env.skipWaitingCalls.length, 0);
+  assert.equal(env.clientQueries.length, 0);
+  assert.equal(env.updateReplies.length, 0);
+});
+
+await check('an unverified, external or non-window request cannot activate the worker', async () => {
+  const env = setup({ scope: 'https://formcapy.example/app/' });
+  for (const source of [null, {}, { id: '', url: env.scope, type: 'window' },
+    { id: 'requesting-tab', url: env.scope, type: 'sharedworker' },
+    { id: 'requesting-tab', url: 'https://elsewhere.example/app/', type: 'window' },
+    { id: 'requesting-tab', url: 'https://formcapy.example/application/', type: 'window' },
+    { id: 'requesting-tab', url: 'not a URL', type: 'window' }]) {
+    await env.message(updateMessage, { source });
+    assert.equal(env.updateReplies.at(-1).status, 'unavailable');
+  }
+  assert.equal(env.skipWaitingCalls.length, 0);
+});
+
+await check('a requesting page absent from the live client list cannot activate', async () => {
+  const env = setup({ windows: [] });
+  await env.message(updateMessage);
+  assert.equal(env.skipWaitingCalls.length, 0);
+  assert.equal(env.updateReplies.at(-1).status, 'unavailable');
 });
 
 const failed = checks.filter((entry) => !entry.passed);

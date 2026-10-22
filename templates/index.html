@@ -7,6 +7,9 @@
     <meta name="mlafmt-mode" content="server" />
     <meta name="mlafmt-runtime" content="" />
     <meta name="mlafmt-materials" content="none" />
+    <meta name="formcapy-version" content="{{ version }}" />
+    <meta name="formcapy-offline" content="false" />
+    <link rel="stylesheet" href="static/citation-assistant.css" />
     <title>FormCapy · Paper Formatter</title>
     <link rel="icon" type="image/png" sizes="64x64" href="static/capybara-64.png" />
     <style>
@@ -54,6 +57,7 @@
         width: min(1120px, calc(100% - 64px));
         margin: auto;
       }
+      #citation-credits { font-size: 14px; line-height: 1.5; margin: 14px 0 24px; overflow-wrap: anywhere; }
       .topbar {
         display: flex;
         justify-content: space-between;
@@ -1035,6 +1039,7 @@
                 </div>
                 <details class="template-sharing" id="template-sharing" hidden>
                   <summary data-share-t="sharing">Share a course template</summary>
+                  <p class="hint" data-share-t="steps">Copy code → paste into Import template → preview → apply.</p>
                   <p class="hint" data-share-t="labels_hint">Optional labels describe this template. They do not fill in your paper details.</p>
                   <div class="fields">
                     <label class="field"><span data-share-t="school_name">School name</span><input id="share-school_name" maxlength="240" /></label>
@@ -1329,6 +1334,11 @@
             </p>
           </aside>
         </div>
+        <section id="citation-assistant-mount" hidden></section>
+        <p id="citation-credits" class="hint" hidden>
+          <a href="https://citationstyles.org/" target="_blank" rel="noopener noreferrer">(c) Frank Bennett — citeproc-js implements the Citation Style Language</a>
+          · <a href="static/vendor/citations/index.html" target="_blank" rel="noopener noreferrer">CSL styles, locale, licenses &amp; source</a>
+        </p>
       </main>
       <footer>
         <span>FormCapy v{{ version }}</span
@@ -1474,6 +1484,10 @@
     <script src="static/transport.js"></script>
     <script src="static/template-share.js"></script>
     <script src="static/template-sharing-ui.js"></script>
+    <script src="static/update-notice.js"></script>
+    <script src="static/citation-library.js"></script>
+    <script src="static/citation-engine.js"></script>
+    <script src="static/citation-assistant.js"></script>
     <script>
       "use strict";
       const MLAFMT_MODE = document.querySelector('meta[name="mlafmt-mode"]')?.content || "server";
@@ -2212,7 +2226,12 @@
         page_number_position: "top_right", show_cover_page_number: true, page_number_start: 1,
         typography: "western", latin_font_name: "Times New Roman", first_line_chars: 0, line_spacing_pt: 0,
       });
-      let templateSharing = null;
+      let templateSharing = null, citationAssistant = null, updateNotice = null;
+      let citationWordBusy = false, updateInProgress = false;
+      function syncWorkLocks() {
+        $("essay-form").inert = citationWordBusy || updateInProgress;
+        $("citation-assistant-mount").inert = updateInProgress;
+      }
       const BUILTIN_PRESETS = Object.freeze([
         { id: "zh_course", translation: "chinese_course", profile: Object.freeze({ ...CUSTOM_DEFAULT,
           label: "中文课程论文（通用）", paper_size: "A4", font_name: "宋体", font_size: 12,
@@ -2897,6 +2916,8 @@
         renderWarnings("native-result-warning", nativeResultWarnings);
         renderRetained("native-result-retained", nativeResultRetained);
         templateSharing?.render(lang);
+        citationAssistant?.render();
+        updateNotice?.render();
       }
       for (const code of LANGUAGES)
         $("lang-" + code).addEventListener("click", () => {
@@ -3286,7 +3307,7 @@
           setStatus("failed", "err");
           return;
         }
-        if (inProgress || sharing || paragraphLoading) return;
+        if (inProgress || sharing || paragraphLoading || citationWordBusy || updateInProgress) return;
         const data = validate();
         if (!data) return;
         if (isBlank) {
@@ -3524,7 +3545,7 @@
         for (const action of ["save", "open", "share"])
           $("native-" + action).addEventListener("click", () => nativeSend(action));
       }
-      transport?.onStage?.(setStage);
+      transport?.onStage?.((stage) => { if (!citationWordBusy) setStage(stage); });
       $("cancel-processing").addEventListener("click", () => {
         generationSeq += 1;
         transport?.cancel?.();
@@ -3554,6 +3575,39 @@
           renderProcessingProgress();
         }
       });
+      if (transport?.kind === "browser" && window.FormCapyUpdates) {
+        updateNotice = window.FormCapyUpdates.start({
+          enabled: document.querySelector('meta[name="formcapy-offline"]')?.content === "true",
+          version: document.querySelector('meta[name="formcapy-version"]')?.content || "",
+          getLocale: () => lang,
+          isBusy: () => inProgress || sharing || paragraphLoading || citationWordBusy || Boolean(citationAssistant?.state()?.previewBusy),
+          onUpdating: (active) => { updateInProgress = active; syncWorkLocks(); },
+        });
+      }
+      if (!native && window.FormCapyCitationAssistant && $("citation-assistant-mount")) {
+        $("citation-assistant-mount").hidden = false;
+        $("citation-credits").hidden = false;
+        citationAssistant = window.FormCapyCitationAssistant.create({
+          mount: $("citation-assistant-mount"),
+          getLocale: () => lang,
+          allowDownloads: true,
+          onExportWord: transport?.kind === "browser" ? async (bibliography) => {
+            if (inProgress || sharing || paragraphLoading || citationWordBusy || updateInProgress) throw new Error("busy");
+            citationWordBusy = true;
+            syncWorkLocks();
+            for (const id of ["convert", "blank"]) $(id).disabled = true;
+            try {
+              const result = await transport.generate({ request: { kind: "bibliography", bibliography }, file: null });
+              if (!result?.blob) throw new Error("failed");
+              return { downloadUrl: URL.createObjectURL(result.blob), name: result.name };
+            } finally {
+              citationWordBusy = false;
+              syncWorkLocks();
+              for (const id of ["convert", "blank"]) $(id).disabled = inProgress;
+            }
+          } : undefined,
+        });
+      }
       render();
       if (!transport) setStatus("failed", "err");
       if (native) transport.init();

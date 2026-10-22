@@ -10,6 +10,8 @@
 
 **v2.6.0 静态网页版已上线，新增课程模板码与分享 JSON；离线下载仍为 v2.5.0，不包含这两项功能。** **The static website now runs v2.6.0**, with template codes and sharing JSON; offline downloads remain v2.5.0 without these features. [网页版发布说明 / Web release notes](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.6.0) · [部署状态 / Deployment status](docs/DEPLOYMENT.md)
 
+**v2.7.0 源码正在本地验收，尚未上线。** 新增安全更新提示和本地参考文献助手；以下 v2.7.0 说明描述待发布的静态网页版。**The v2.7.0 source is under local acceptance and is not deployed yet.** Its update notice and reference assistant are described below; offline downloads remain v2.5.0.
+
 ## 三步开始 / Get started
 
 1. 打开 [formcapy.com](https://formcapy.com/)，选择格式并填写论文信息。Open the site, choose a format and enter your paper details.
@@ -30,7 +32,7 @@
 
 **[FormCapy v2.5.0 已发布 / Released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)** · 2026-10-21
 
-本轮 v2.6.0 面向静态网页版，不发布新的桌面或 Android 安装包；以下 v2.5.0 下载不含模板码／分享 JSON，仍可用兼容裸 JSON 交换排版设置。This v2.6.0 update targets the static website. The v2.5.0 packages below do not support template codes or sharing JSON; compatible bare layout JSON remains available.
+模板分享及待发布的 v2.7.0 新功能面向静态网页版；本轮不发布新的桌面或 Android 安装包。以下 v2.5.0 下载不含模板码、分享 JSON 或参考文献助手，仍可用兼容裸 JSON 交换排版设置。Template sharing and the pending v2.7.0 features target the static website. The v2.5.0 packages below do not include template codes, sharing JSON or the reference assistant; compatible bare layout JSON remains available.
 
 | 设备 / Device | v2.5.0 下载 / Download | 安装 / Install |
 | --- | --- | --- |
@@ -64,7 +66,7 @@ v2.5.0 提供三种选择：**MLA 9 / APA 7 学生论文 / 自定义课程模板
 - **正文对象保留**：从源 DOCX 包保留正文图片和表格；表格整体保留，不逐段勾选。纸张、页边距、页码及源分节、页眉和页脚按所选模板重建，原分页位置可能改变。TXT/MD 图片语法不会嵌入图片。
 - **课程报告示例**：[A4 模板](examples/course-report-a4.json) 使用 Arial 11 pt、1.5 倍行距和 2.5 cm 页边距；页码在页脚居中，封面不编号，正文从 1 开始。可导入后修改；它是示例，不代表任何学校规范。
 
-三种格式共用同一排版核心，Tk 桌面、本地 Flask 网页、浏览器本地静态版和离线 Android 使用同一套规则。Android 已通过 CI 编译与模拟器验证，实机尚未验证。参考文献内容保持原文，版式和完整字段说明见[格式指南](docs/FORMATS.md)。
+三种格式共用同一排版核心，Tk 桌面、本地 Flask 网页、浏览器本地静态版和离线 Android 使用同一套规则。Android 已通过 CI 编译与模拟器验证，实机尚未验证。草稿内参考文献内容保持原文；独立助手另见下节。版式和完整字段说明见[格式指南](docs/FORMATS.md)。
 
 APA 官方参考：[Paper format](https://apastyle.apa.org/style-grammar-guidelines/paper-format) · [Title page](https://apastyle.apa.org/style-grammar-guidelines/paper-format/title-page)。
 
@@ -94,7 +96,7 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 
 ![FormCapy v2.6.0 正式网站：课程模板码包含完整排版设置和用户填写的课程标签](docs/images/formcapy-live-v2.6-template-code.png)
 
-*v2.6.0 正式网站的 Edge 截图；UCSB／LING36 仅为用户自填的课程标签示例，不代表学校官方模板或课程认证。Live v2.6.0 website in Edge; UCSB/LING36 are user-entered example labels, without institutional verification.*
+*历史 v2.6.0 正式网站的 Edge 截图；UCSB／LING36 仅为用户自填的课程标签示例，不代表学校官方模板或课程认证。Historical v2.6.0 live website in Edge; UCSB/LING36 are user-entered example labels, without institutional verification.*
 
 - 学校全名、学校简称、课程代码、校区／学期可分别填写，不根据 `UCSBLING36` 等代码猜学校，也不声明课程标签唯一或官方认证。
 - 分享内容包含模板名称、排版设置及主动填写的课程标签；不会自动带入文稿、姓名、论文标题、教师、段落保留选择或生成结果。可选 **本次分享使用通用名称**，不修改当前模板名；持有码或文件的人可以读取其中的名称和标签。
@@ -102,7 +104,22 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 
 **These features are live on the v2.6.0 static website; offline packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
 
-操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。参考文献结构化编辑和 MLA/APA/GB/T 条目转换仍仅为设计，未实现。
+操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。v2.7.0 继续使用相同的 `FC1.` 协议；文献库与模板分享数据分开。
+
+### v2.7.0 待上线：更新提示与参考文献助手 / Pending: updates and reference assistant
+
+**本节描述本地验收中的 v2.7.0 源码；当前公网仍为 v2.6.0。**
+
+- **主动更新**：新版准备完成后显示提示。先保存或下载文稿及文献库，点 **更新 → 已保存，更新** 才重新加载。处理过程中或还有其他同作用域 FormCapy 标签页时，更新会被阻止并提示处理步骤。旧 v2.6.0 页面须先正常升级一次，才会具备此提示。
+- **参考文献助手**：展开页面下方的入口，添加书籍、期刊文章或网页，填写作者、标题、出版日期等资料；支持多作者及机构作者。选择 **MLA 9 / APA 7 → 预览文献表**，再复制纯文本／带格式文本，或导出独立的 Word 文献表和 HTML。修改条目或样式后需重新预览。
+- **单独保存文献**：默认只保留在当前页面会话；**保存到本设备**、**载入已保存的库**和**删除已保存的库**均为明确操作。文献库 JSON 可独立导入／导出，导入先核对再确认替换，并提供撤销。文献资料不会进入课程模板码、分享 JSON 或兼容排版 JSON。
+- 助手按用户填写的字段生成独立列表，原稿及文中引用编号保持原样。资料来源和字段准确性仍由用户核对；尚不提供 GB/T 条目格式化或联网 DOI 查询。
+
+步骤与字段见[参考文献助手指南](docs/CITATIONS.md)，渲染器、样式和源码分发说明见[引用组件许可](docs/CITATION-LICENSES.md)。界面支持中文、English、Español；切换界面语言不翻译作者、题名或文献内容。Safari、物理设备及本版公开网站下载流程尚未验收。
+
+**This section describes the v2.7.0 source under local acceptance; production remains v2.6.0.** Once installed, the update notice lets you save first and explicitly reload; processing or another FormCapy tab in the same scope blocks activation. Existing v2.6.0 pages need one normal upgrade before they can display this new notice.
+
+Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citation numbers are left intact; source accuracy, GB/T formatting and online DOI lookup are outside this release. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). No Safari, physical-device or new public download result is claimed yet.
 
 ## 中文
 
@@ -171,7 +188,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前仓库源码及静态网页版为 v2.6.0，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码为待发布的 v2.7.0，公网静态网页版仍为 v2.6.0，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -187,9 +204,9 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 ### 使用限制
 
-本工具只整理版式，不生成或核验引文，也不判断作文是否符合课程要求。
+草稿转换负责页面和段落版式，保留已有引用文字；待发布的 v2.7.0 参考文献助手另从用户录入的结构化字段生成独立 MLA／APA 文献列表。两条流程都不核验资料来源，也不判断作文是否符合课程要求。
 
-- **APA 参考文献**：References 按完整条目的起始文本排序；含保留段落或对象时，仅对连续、安全的普通条目排序，并提示核对顺序。不解析或改写文内引用或文献内容，也不实现复杂的同作者、同年份书目排序。不提供专业论文 running head 或作者注。
+- **原稿中的 APA 参考文献**：草稿转换按完整条目的起始文本排序；含保留段落或对象时，仅对连续、安全的普通条目排序，并提示核对顺序。它不解析或改写引用内容，也不实现复杂的同作者、同年份书目排序。独立助手则按结构化字段及 CSL 样式处理，不关联原稿文内引用。不提供专业论文 running head 或作者注。
 - **自定义模板**：仅支持字段表中的布局项。没有账号或云同步；导出的 JSON 只含布局设置，不含文档。
 - **DOCX 转换**：保留源包中的正文图片和表格；所选段落保留字体、字号和段落格式。源分节、页眉和页脚会被模板设置替换，原页眉页脚中的图片不属于正文图片保留范围，原分页也可能改变。复杂对象、修订及异常结构请对照原稿核对；部分结构和高于 3 级的标题会出现结果提示，这不等于完整文档检查。
 - **TXT/MD**：图片链接或图片语法不会自动嵌图；代码围栏只作为文字保留。段落保留选择仅支持 DOCX，表格整体保留且不提供表格内逐段选择。
@@ -205,13 +222,13 @@ macOS / Linux 使用 `.venv/bin/python`。网页端默认只监听本机；需�
 
 # Windows 打包使用 Python 3.12 x64 和独立环境
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.6.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.7.0
 ```
 
 `requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.6.0-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
+- `MLAFMT-v2.7.0-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
@@ -291,7 +308,7 @@ Put `Works Cited` on its own line after the essay, with one source per paragraph
 - **Retain body objects:** preserve body images and tables from the source DOCX package. Tables are retained as whole objects, without paragraph-by-paragraph selection inside them. Paper size, margins, numbering, source sections, headers and footers are rebuilt for the chosen template; original pagination may change. TXT/MD image syntax does not embed images.
 - **Course report example:** import the [A4 template](examples/course-report-a4.json), which uses Arial 11 pt, 1.5 spacing and 2.5 cm margins, with bottom-center page numbers, an unnumbered cover and body numbering starting at 1. Adjust this example for your course; it is not an institution's standard.
 
-All three layouts share the same core on the Tk desktop app, Flask local web app, browser-local static build and offline Android app. The updated Android app passed CI compilation and emulator checks; physical devices remain unverified. Reference text is unchanged. See the [format guide](docs/FORMATS.md) for layout rules, fields and transfer instructions.
+All three layouts share the same core on the Tk desktop app, Flask local web app, browser-local static build and offline Android app. The updated Android app passed CI compilation and emulator checks; physical devices remain unverified. Reference text inside a draft is unchanged; the separate assistant is described above. See the [format guide](docs/FORMATS.md) for layout rules, fields and transfer instructions.
 
 Open **Advanced customization** inside template settings for numbering. Under **Advanced options → Keep selected paragraphs unchanged**, read the Word paragraphs and select them or enter number ranges. IDs follow paragraph positions in the source DOCX body; empty paragraphs are hidden, so numbers may have gaps. Selected paragraphs keep fonts, sizes, spacing and indentation while page layout follows the template. Android restores the same draft's selections after rotation or folding recreates the interface.
 
@@ -299,7 +316,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-The source and static website are v2.6.0; offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
+The source is the pending v2.7.0; the public static website remains v2.6.0 and offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 
@@ -335,9 +352,9 @@ stats = convert_draft(
 
 ### Limits
 
-MLAFMT handles layout only. It does not create or verify citations, or assess whether a paper meets course requirements.
+Draft conversion handles page/paragraph layout and preserves existing citation text. The pending v2.7.0 reference assistant separately renders MLA/APA bibliography entries from user-entered structured fields. Neither workflow verifies the source data or assesses whether a paper meets course requirements.
 
-- **APA references:** References are sorted by each complete entry's initial text. With preserved paragraphs or objects, only consecutive safe ordinary entries are sorted, with a message to check the order. MLAFMT does not parse or rewrite in-text citations or reference content, and does not implement complex same-author/year bibliographic ordering. No professional-paper running head or author note is produced.
+- **APA references already in a draft:** conversion sorts each complete entry's initial text. With preserved paragraphs or objects, only consecutive safe ordinary entries are sorted, with a message to check the order. This path does not parse/rewrite citation content or implement complex same-author/year bibliographic ordering. The independent assistant uses structured fields and CSL without linking to draft citations. No professional-paper running head or author note is produced.
 - **Custom templates:** only the listed layout fields are supported. There is no account or cloud sync, and exported JSON contains layout settings only, not documents.
 - **DOCX conversion:** retains body images and tables from the source package, plus fonts, sizes and paragraph formatting in selected paragraphs. Template settings replace source sections, headers and footers; images in original headers/footers are outside body-image retention, and pagination may change. Compare complex objects, revisions and unusual structures with the original. Warnings about some structures or headings above level 3 are not a complete document check.
 - **TXT/MD:** image links and syntax do not automatically embed images; fenced code is retained as text only. Paragraph selection requires DOCX. Tables are kept whole, without selections for individual paragraphs inside them.
@@ -351,7 +368,7 @@ Run `python -m pytest -q` after installing `pytest` and `requirements.txt` in a 
 
 ```powershell
 py -3.12 -m venv .venv-build
-.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.6.0
+.\scripts\build_windows.ps1 -PythonPath .\.venv-build\Scripts\python.exe -InstallDependencies -ExpectedVersion 2.7.0
 ```
 
 The script installs the locked `requirements-build.txt` into that virtual environment, bundles the tkDnD native libraries and creates the EXE and versioned ZIP in `dist/release/`. The ZIP includes build information for the source commit, source hashes, Python and dependencies. Byte-for-byte identity across operating system or Python patch versions is not guaranteed.
@@ -365,6 +382,8 @@ GitHub Actions tests and uploads platform packages for pushes, pull requests and
 项目源码采用 MIT 许可证，见 [LICENSE](LICENSE)；项目许可证不替代各项依赖的许可证。
 
 Project source is licensed under MIT; see [LICENSE](LICENSE). The project license does not replace dependency licenses.
+
+v2.7.0 引用组件自托管未修改的 **citeproc-js 1.4.61（CPAL 1.0）**、官方 MLA／APA CSL 样式及 en-US locale，并随静态构建分发原始源码快照、完整许可、作者元数据与可见界面归属。详见[引用组件许可与来源](docs/CITATION-LICENSES.md)。The v2.7.0 citation component supplies its unmodified processor, official style/locale data, original source snapshot, full licenses and visible attribution locally; these components retain their own licenses.
 
 v2.5.0 安装包包含 `THIRD-PARTY-NOTICES.txt`、原始许可文本与依赖清单。桌面应用的 **帮助 → 第三方许可证** 可查看声明；附带对应源码包的 Windows 构建可通过 **保存对应源码…** 导出。许可与构建材料说明见[依赖分发说明](docs/DEPENDENCIES.md)。历史 v2.3.0 文件未被替换；请使用上方 v2.5.0 下载。
 

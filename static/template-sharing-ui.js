@@ -4,6 +4,7 @@
   const TEXT = {
     zh: {
       sharing: "分享课程模板", preview: "核对导入的模板", outgoing: "分享课程模板",
+      steps: "复制模板码 → 对方在“导入模板”粘贴 → 预览核对 → 应用此模板。",
       school_name: "学校名称", school_abbr: "学校简称", course_code: "课程代码", campus_term: "校区／学期",
       labels_hint: "课程标签可留空，由你填写，不代表学校认证；不会填入论文信息。",
       generic_name: "本次分享使用通用名称（不修改当前模板名）",
@@ -25,6 +26,7 @@
     },
     en: {
       sharing: "Share a course template", preview: "Review imported template", outgoing: "Share a course template",
+      steps: "Copy code → paste into Import template → review the preview → apply the template.",
       school_name: "School name", school_abbr: "School abbreviation", course_code: "Course code", campus_term: "Campus / term",
       labels_hint: "Optional labels are supplied by you, without institutional verification. They do not fill in your paper details.",
       generic_name: "Use a generic name for this share (keep the current template name)",
@@ -46,6 +48,7 @@
     },
     es: {
       sharing: "Compartir una plantilla de curso", preview: "Revisar la plantilla importada", outgoing: "Compartir una plantilla de curso",
+      steps: "Copiar código → pegar en Importar plantilla → revisar → aplicar la plantilla.",
       school_name: "Nombre de la institución", school_abbr: "Abreviatura de la institución", course_code: "Código del curso", campus_term: "Campus / periodo",
       labels_hint: "Las etiquetas son opcionales y las escribes tú; no están verificadas por la institución ni rellenan los datos del trabajo.",
       generic_name: "Usar un nombre genérico al compartir (sin cambiar el nombre actual)",

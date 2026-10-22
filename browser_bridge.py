@@ -33,6 +33,7 @@ from docx.opc.exceptions import PackageNotFoundError
 from lxml.etree import XMLSyntaxError
 
 from format_profiles import resolve_profile
+from bibliography_export import render_bibliography_docx
 
 from mla_formatter import (
     SUPPORTED_EXTS,
@@ -55,7 +56,7 @@ MAX_FINGERPRINT = 64
 DOCX_MIME = (
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
-KINDS = ("blank", "convert", "paragraphs")
+KINDS = ("blank", "convert", "paragraphs", "bibliography")
 TEXT_FIELDS = (
     "name",
     "title",
@@ -138,6 +139,8 @@ def finish(request_json, workdir):
         kind = request["kind"]
         if kind == "paragraphs":
             return _paragraphs(request, workdir), b""
+        if kind == "bibliography":
+            return _bibliography(request)
         return _generate(request, workdir)
     except RequestError as error:
         return _metadata(_error_payload(error.code, error.detail)), b""
@@ -354,6 +357,24 @@ def _generate(request, workdir):
         "format_label": profile["label"],
     }
     return _metadata(metadata), document
+
+
+def _bibliography(request):
+    """A standalone CSL list: no draft, paper identity or formatter sorting."""
+    bibliography = request.get("bibliography")
+    document = render_bibliography_docx(bibliography)
+    style = bibliography["style"]
+    return _metadata({
+        "ok": True,
+        "kind": "bibliography",
+        "blank": False,
+        "name": f"FormCapy-{style.upper()}-References.docx",
+        "mime": DOCX_MIME,
+        "bytes": len(document),
+        "stats": {"body": 0, "works_cited": len(bibliography["entries"])},
+        "format_id": style,
+        "format_label": f"{style.upper()} independent bibliography",
+    }), document
 
 
 def _paragraphs(request, workdir):

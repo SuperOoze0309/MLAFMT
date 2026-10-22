@@ -42,8 +42,13 @@ PYTHON_MODULES = (
     "format_profiles.py",
     "docx_preserve.py",
     "browser_bridge.py",
+    "bibliography_export.py",
 )
-STATIC_ASSETS = ("transport.js", "template-share.js", "template-sharing-ui.js", "capybara-64.png")
+STATIC_ASSETS = (
+    "transport.js", "template-share.js", "template-sharing-ui.js", "capybara-64.png",
+    "update-notice.js", "citation-library.js", "citation-engine.js",
+    "citation-assistant.js", "citation-assistant.css",
+)
 MAX_FILE_SIZE = 20 * 1024 * 1024
 MAX_DOCX_EXPANDED = 80 * 1024 * 1024
 MAX_DOCX_ENTRIES = 2000
@@ -431,6 +436,12 @@ def build(
     materials_choice: str,
     refresh_materials: bool,
 ) -> dict:
+    citation_check = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "verify_citation_assets.py")],
+        capture_output=True, text=True, check=False,
+    )
+    if citation_check.returncode:
+        raise BuildError("citation asset verification failed: " + (citation_check.stderr or citation_check.stdout)[-1500:])
     version = project_version()
     runtime = json.loads((BROWSER / "runtime.json").read_text(encoding="utf-8"))
     catalog = json.loads((BROWSER / "licenses.json").read_text(encoding="utf-8"))
@@ -457,6 +468,10 @@ def build(
     if html.count(mode_source) != 1:
         raise BuildError("index.html must contain exactly one mlafmt-mode meta tag")
     html = html.replace(mode_source, mode_target)
+    offline_tag = '<meta name="formcapy-offline" content="false" />'
+    if html.count(offline_tag) != 1:
+        raise BuildError("index.html must contain exactly one formcapy-offline meta tag")
+    html = html.replace(offline_tag, f'<meta name="formcapy-offline" content="{str(offline).lower()}" />')
     runtime_source = '<meta name="mlafmt-runtime" content="" />'
     runtime_target = f'<meta name="mlafmt-runtime" content="{pyodide_version}" />'
     if html.count(runtime_source) != 1:
@@ -477,6 +492,9 @@ def build(
 
     for name in STATIC_ASSETS:
         shutil.copyfile(ROOT / "static" / name, out / "static" / name)
+    # Citation styles, locale, original processor source and license notices
+    # are served locally with the application, including its offline cache.
+    shutil.copytree(ROOT / "static" / "vendor" / "citations", out / "static" / "vendor" / "citations")
     shutil.copyfile(BROWSER / "worker.js", out / "browser" / "worker.js")
     for name in PYTHON_MODULES:
         shutil.copyfile(ROOT / name, out / "python" / name)
@@ -501,6 +519,12 @@ def build(
         wheels.append((wheel["file"], wheel_path))
 
     collect_licenses(out, catalog, wheels, version)
+    with (out / "THIRD-PARTY-NOTICES.txt").open("a", encoding="utf-8") as notice:
+        notice.write("\n" + "=" * 78 + "\nCitation processor, styles and locale\n" + "=" * 78 + "\n\n")
+        citation_dir = ROOT / "static" / "vendor" / "citations"
+        for name in ("NOTICE.txt", "citeproc-LICENSE.txt", "CPAL-1.0.txt", "AGPL-3.0.txt", "CC-BY-SA-3.0.txt"):
+            notice.write(f"\n--- static/vendor/citations/{name} ---\n\n")
+            notice.write((citation_dir / name).read_text(encoding="utf-8") + "\n")
     materials_info = None
     if materials_source:
         materials_info = copy_materials(

@@ -1,5 +1,11 @@
 # Browser-local FormCapy (MLAFMT)
 
+**Release status:** the v2.7.0 source is undergoing local acceptance; it is not
+yet the public website. The public site remains v2.6.0, and published offline
+installers remain v2.5.0. The new update prompt and citation assistant described
+below belong to the v2.7.0 source. See [deployment notes](DEPLOYMENT.md) for the
+production record.
+
 FormCapy runs as a native Tk desktop app, an Android app with an offline Python
 bridge, or a Flask local web app. This document describes the additional
 **static, browser-local** build:
@@ -16,13 +22,13 @@ The static build is separate from the Flask local web mode. The native desktop
 interface uses Tk; Android keeps its native Python bridge and never downloads
 Pyodide. The DSH refactor commit `0e5e923` was merged in `adeca89`.
 
-The static build is live on **Cloudflare's free Workers Static Assets plan** at
+The v2.6.0 static build is live on **Cloudflare's free Workers Static Assets plan** at
 [formcapy.com](https://formcapy.com/) and
-[www.formcapy.com](https://www.formcapy.com/), deployed from code commit
-`f7c3444` as Worker `formcapy`, version `6769274b`. Both entry points passed
-trusted TLS and HTTP-to-HTTPS checks. The domains use **Workers Routes** with
-existing proxied DNS and Universal SSL. See [deployment notes](DEPLOYMENT.md)
-for the launch record and remaining device checks.
+[www.formcapy.com](https://www.formcapy.com/). The original v2.4.0 launch used
+code commit `f7c3444` as Worker `formcapy`, version `6769274b`; those identifiers
+are historical. The domains use **Workers Routes** with existing proxied DNS
+and Universal SSL. The current and earlier public-integrity/TLS results are
+recorded separately in [deployment notes](DEPLOYMENT.md).
 
 ---
 
@@ -32,15 +38,22 @@ for the launch record and remaining device checks.
 browser
   index.html
     static/transport.js         one interface: server | browser | native
+    static/update-notice.js     explicit website-update flow, no draft access
+    static/template-share.js    FC1 template-code and sharing-JSON protocol
+    static/citation-library.js  separate structured reference data
+    static/citation-assistant.js / .css  local editor and reviewed preview
+    static/citation-engine.js   same-origin CSL adapter, lazy renderer loading
+      static/vendor/citations/ original processor, styles, locale, source/licenses
     browser/worker.js           single module Worker, serial queue
       Pyodide 314.0.7           runtime/pyodide/314.0.7/
         lxml 6.1.3              wasm wheel from the Pyodide distribution
         typing_extensions       Pyodide package
         python-docx 1.2.0       pure-Python wheel installed into MEMFS
       python/browser_bridge.py  browser-only adapter
-      python/mla_formatter.py   unchanged project formatter
-      python/format_profiles.py unchanged
-      python/docx_preserve.py   unchanged (synced from the main branch)
+      python/bibliography_export.py standalone reviewed reference-list DOCX
+      python/mla_formatter.py   shared project formatter
+      python/format_profiles.py shared layout profiles
+      python/docx_preserve.py   shared DOCX preservation
 ```
 
 ### Runtime choices
@@ -53,6 +66,8 @@ browser
 | typing_extensions | 4.15.0 | Official Pyodide package table |
 | python-docx | 1.2.0 | Pure-Python wheel installed from a same-origin file |
 | Emscripten | 5.0.3 | Build input of the pinned runtime; source materials included |
+| citeproc-js | Actual processor 1.4.61 | Original pinned processor; CPAL 1.0 option, with source and full notices |
+| CSL styles / locale | Pinned official commits | MLA 9, APA 7 and en-US data; CC BY-SA 3.0 |
 
 `python-docx` is **not** in Pyodide's package table. The desktop native wheel
 cannot be used in wasm; only the pure-Python `py3-none-any` wheel is installed.
@@ -87,11 +102,19 @@ discard(workdir)              -> {"ok": true}
 initial_state()               -> {"today": ..., "version": ...}
 ```
 
-`finish()` supports `blank`, `convert` and `paragraphs`, preserves the Android
+`finish()` supports `blank`, `convert`, `paragraphs` and the browser-only
+`bibliography` request, preserves the existing Android
 error codes (`no_file`, `too_large`, `empty_file`, `unsupported`,
 `preserve_docx_only`, `missing_fields`, `invalid_fields`, `invalid_options`,
 `bad_doc`, `failed`, `draft_changed`, `unsupported_document`), enforces the same
 limits, and never imports Flask.
+
+`bibliography` receives an explicitly reviewed CSL result rather than a draft
+file or paper details. `bibliography_export.py` creates a separate Word list
+from bounded, allowlisted entry HTML, preserving the processor's order and
+supported rich formatting. It does not sort the result a second time or modify
+an existing paper's in-text citations. The original draft conversion and its
+download result are separate from this export.
 
 ### Transports
 
@@ -112,6 +135,37 @@ limits, and never imports Flask.
   cannot post into the new Worker.
 - **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
+
+### Local citation path (v2.7.0 source, under acceptance)
+
+The collapsed reference assistant accepts manually entered **books, journal
+articles and webpages**, including multiple people or a literal organization
+author. It maps its separate versioned library to CSL JSON and renders a
+reviewed **MLA 9 or APA 7** list locally. Missing metadata is shown for review;
+the app does not invent authors, dates or DOIs, query a DOI service, parse an
+arbitrary existing bibliography, or synchronize in-text citation numbering.
+
+The assistant supports plain/formatted copying, standalone HTML, separate
+library JSON, and a standalone Word list through the browser bridge. Changing
+inputs or style makes the old preview stale until the user previews again.
+Library JSON imports are reviewed before explicit replacement. Citation data
+does not enter FC1 codes, ShareV1 settings/labels or layout-only template JSON.
+
+The library is **session-only by default**. Saving, loading and removing the
+saved library are explicit actions using only `formcapy.citations.v1`; removing
+the saved copy leaves the active library intact. The page does not
+automatically load or save a library. Save or export this library separately
+before reloading, as well as saving any current paper.
+
+The processor, official styles and en-US locale are all same-origin files.
+Their original core source snapshot, complete licenses, provenance hashes and
+visible attribution ship with the static build. The chosen processor license
+is **CPAL 1.0**; the preserved dual-license notice also includes AGPL 3.0-or-later.
+Application MIT licensing does not replace component licenses. The interface's
+Chinese/English/Spanish switch does not translate reference titles or authors
+or change the chosen citation style. See [citation guide](CITATIONS.md) and
+[component distribution details](CITATION-LICENSES.md). GB/T entry rendering is
+not included in this version.
 
 ### Cancellation and busy ownership
 
@@ -134,6 +188,9 @@ No Node/npm or bundler is required.
 
 ```sh
 python scripts/build_browser_static.py
+# Versioned v2.7.0 staging directory, with integrity checks
+python scripts/verify_citation_assets.py
+python scripts/build_browser_static.py --out dist/formcapy-v2.7.0 --check
 ```
 
 The default output is `dist/browser-local/` (git-ignored). The builder:
@@ -143,7 +200,13 @@ The default output is `dist/browser-local/` (git-ignored). The builder:
 - replaces the Jinja version/date/public-server placeholders in
   `templates/index.html`, sets `public_server` to `false`, and switches the
   transport meta tag to `browser`;
-- copies the Python core and `browser_bridge.py`;
+- copies the Python core, `browser_bridge.py` and `bibliography_export.py`;
+- verifies the citation component pins and copies all files from
+  `static/vendor/citations/`, including the unmodified processor, styles,
+  locale, core source snapshot and license files; component notices are also
+  appended to `THIRD-PARTY-NOTICES.txt`;
+- copies the template-sharing, update-prompt and citation modules/styles, and
+  records the offline feature in the `formcapy-offline` meta tag;
 - runs or reuses `scripts/collect_browser_runtime_materials.py` and publishes its
   output under `licenses/runtime-materials/`;
 - writes `manifest.json` (versions, per-file size/SHA-256, cache version,
@@ -176,6 +239,8 @@ Preview:
 ```sh
 python -m http.server 8080 --directory dist/browser-local
 # open http://127.0.0.1:8080/
+# Or preview the versioned staging directory
+python -m http.server 8080 --directory dist/formcapy-v2.7.0
 ```
 
 `http://127.0.0.1`/`localhost` counts as a secure context, so the service worker
@@ -184,7 +249,11 @@ workers and service workers require an HTTP(S) origin.
 
 ### Output size
 
-The exact numbers are in `dist/browser-local/manifest.json`.
+The exact numbers for each build are in its `manifest.json`. The table below
+records the **historical v2.4.0** artifact and is not a size or file-count claim
+for v2.7.0. The new citation component adds its own processor/data/source files;
+measure the final v2.7.0 manifest after acceptance rather than reusing these
+launch counts.
 
 | Part | Approx. size | Precached offline? |
 | --- | ---: | --- |
@@ -215,10 +284,11 @@ the 95 MiB kit.
 Consequences:
 
 - Old FormCapy caches are deleted on activation of a new cache.
-- Ordinary upgrades do **not** call `skipWaiting()` or `clients.claim()`. A
-  replacement service worker waits until the old worker's controlled tabs are
-  gone. For pages already controlled by the old worker, its cached UI, Worker,
-  runtime and Python modules stay together during that session.
+- Background updates do **not** call `skipWaiting()` or `clients.claim()`. A
+  replacement service worker waits, so cached UI, Worker, runtime and Python
+  modules remain together while a controlled page is in use. The v2.7.0
+  prompt offers an explicit activation path described below; it never calls
+  `clients.claim()`.
 - One repair exception recognizes only the exact first public cache name
   `formcapy-2.4.0-pyodide-314.0.7-f7d959ab5df8`. After the replacement precache
   is complete, that case calls `skipWaiting()` to repair failed home-page
@@ -234,8 +304,8 @@ Consequences:
   service worker and needs another navigation after installation. During an
   uncontrolled load, assets come from the network; this cache design does not
   guarantee that every possible page avoids mixing assets across a deployment.
-- Service-worker updates do not auto-refresh the page or deliberately discard
-  the in-memory draft. New code applies on a later navigation after activation.
+- A background service-worker update does not auto-refresh a page. New code
+  applies on a later navigation or the user's explicitly confirmed update.
   Offline use also depends on successful installation and browser cache
   retention; storage eviction can require another online load.
 - Only the explicit precache list is cached. Unknown URLs, POST requests and
@@ -243,6 +313,28 @@ Consequences:
 - If a cache upgrade is undesirable for a first release, build with
   `--no-offline`; the site still works online and the manifest records
   `offline.service_worker: false`.
+
+### Update prompt in the v2.7.0 source
+
+Browser-mode startup registers the update module without waiting for Python
+initialization or a conversion. It checks for a waiting replacement worker at
+startup and during later foreground/periodic checks. First installation does
+not show an update banner, and failed checks leave formatting available.
+
+When a replacement is ready, **Update** first asks the user to save/download
+the paper and save/export the separate reference library. Only the subsequent
+**Saved — update** confirmation asks the worker to activate and reloads the
+consenting page. **Later** keeps the current page and its work. Processing
+blocks activation; another window within the same FormCapy worker scope also
+blocks it and prompts the user to save and close those other site tabs first.
+Other pages are not forcibly refreshed, and no document/storage clearing is
+performed. During confirmed activation, the host temporarily locks the working
+forms so a new task cannot start immediately before the reload.
+
+An already loaded **v2.6.0** page does not contain this module and cannot gain a
+banner in place. Save work and upgrade/reopen once to enter v2.7.0; only then
+can later releases use its update prompt. Local source/fixture checks and a
+future production check must be reported separately.
 
 ---
 
@@ -278,17 +370,24 @@ warning that complex documents and citations must be reviewed.
 
 - No analytics, no telemetry, no account database, no authentication.
 - No request contains document bytes. The static build has no upload endpoint.
+- Citation records are processed locally too. Only fixed program/style/locale
+  URLs are fetched; input metadata is not added to a request body, URL or query.
 - All program assets are same-origin relative URLs; no CDN, font, analytics or
   PyPI request occurs at runtime.
-- The only external links are the published source/notice pages and the
-  repository URLs inside those static documents.
-- The Worker CSP on Android was extended only to allow the same-origin
-  `static/transport.js`; `connect-src` remains `'none'` and `worker-src` remains
-  `'none'`, so Android never downloads Pyodide.
+- Attribution/source links are navigation links, not metadata lookups. Safe
+  DOI/URL links in the reviewed reference list are opened only by the user.
+- Native Android retains a fixed same-origin asset allowlist;
+  `connect-src` remains `'none'` and `worker-src` remains `'none'`. It never
+  downloads Pyodide, and the new browser citation assistant is not activated
+  by the native interface.
 
 ---
 
 ## 6. Compatibility
+
+The table below summarizes **earlier formatter-build evidence**, not v2.7.0
+citation-assistant or update-prompt acceptance. Production v2.7.0, fresh browser
+downloads and device/Safari results must be recorded for that build separately.
 
 | Environment | Status |
 | --- | --- |
@@ -314,6 +413,10 @@ users to use Share → Save to Files. This behavior was not tested on a device.
 ---
 
 ## 7. Verification performed
+
+The results in this section are retained **historical v2.4.0/refactor evidence**.
+They do not establish v2.7.0 browser, source-license, asset-integrity or device
+acceptance. Current release checks belong in [deployment notes](DEPLOYMENT.md).
 
 ### Public deployment checks
 

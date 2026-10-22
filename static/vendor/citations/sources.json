@@ -1,0 +1,94 @@
+{
+  "schema": "formcapy-citation-assets",
+  "v": 1,
+  "pins": {
+    "processor": "cc9153c45293af878de08cafddbefe6ea150c380",
+    "styles": "3e2bce83321ef96b678acd82249bb446b7c3aa26",
+    "locales": "6b70fe79264543aa538f8927fcc98d5b72425a94"
+  },
+  "processor": {
+    "name": "citeproc-js",
+    "version": "1.4.61",
+    "selected_license": "CPAL-1.0",
+    "unmodified": true
+  },
+  "entries": [
+    {
+      "path": "citeproc.js",
+      "source": "https://raw.githubusercontent.com/Juris-M/citeproc-js/cc9153c45293af878de08cafddbefe6ea150c380/citeproc.js",
+      "sha256": "db98d3341d39eb7a9f166231b6c51118ed499f79821daa3e41f1ea8d7f8d0cbb",
+      "size": 970020,
+      "modified": false
+    },
+    {
+      "path": "citeproc-LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/Juris-M/citeproc-js/cc9153c45293af878de08cafddbefe6ea150c380/LICENSE",
+      "sha256": "b96ca8e1716f93449b480083c7510c18d129fa9afa4644d62c6347c06177ce30",
+      "size": 1017,
+      "modified": false
+    },
+    {
+      "path": "CPAL-1.0.txt",
+      "source": "https://raw.githubusercontent.com/Juris-M/citeproc-js/cc9153c45293af878de08cafddbefe6ea150c380/CPAL",
+      "sha256": "a953615139d8c767eb5e95f14215bf5c356ea23397a15137f6e119babf3fe69b",
+      "size": 28740,
+      "modified": false
+    },
+    {
+      "path": "AGPL-3.0.txt",
+      "source": "https://raw.githubusercontent.com/Juris-M/citeproc-js/cc9153c45293af878de08cafddbefe6ea150c380/AGPLv3",
+      "sha256": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6",
+      "size": 34520,
+      "modified": false
+    },
+    {
+      "path": "citeproc-source.tar.gz",
+      "source": "https://codeload.github.com/Juris-M/citeproc-js/tar.gz/cc9153c45293af878de08cafddbefe6ea150c380",
+      "sha256": "679916762393f61ee417a534903db3b95adb75e1f4d96951ba36347a0a30f6b9",
+      "size": 1443252,
+      "modified": false
+    },
+    {
+      "path": "modern-language-association.csl",
+      "source": "https://raw.githubusercontent.com/citation-style-language/styles/3e2bce83321ef96b678acd82249bb446b7c3aa26/modern-language-association.csl",
+      "sha256": "ad5398ee478760737ad04ec6f95ead6dfbea7d2ae5252fc21f337110dd564b58",
+      "size": 44381,
+      "modified": false
+    },
+    {
+      "path": "apa.csl",
+      "source": "https://raw.githubusercontent.com/citation-style-language/styles/3e2bce83321ef96b678acd82249bb446b7c3aa26/apa.csl",
+      "sha256": "41b4f3c9c61b58b7428ab21d653891995db7b4648d2f0a906eabcb8b2742e7ae",
+      "size": 85817,
+      "modified": false
+    },
+    {
+      "path": "styles-README.md",
+      "source": "https://raw.githubusercontent.com/citation-style-language/styles/3e2bce83321ef96b678acd82249bb446b7c3aa26/README.md",
+      "sha256": "eeda35e6ab1c71ef74ba98e8d63f3f5c07e1b1c458b92d54cdd7515afcb1b04e",
+      "size": 6573,
+      "modified": false
+    },
+    {
+      "path": "locales-en-US.xml",
+      "source": "https://raw.githubusercontent.com/citation-style-language/locales/6b70fe79264543aa538f8927fcc98d5b72425a94/locales-en-US.xml",
+      "sha256": "6f2cd3d1d5527ff07a2981f7ec237753e3b6787568d053c08485802cc3d04ac0",
+      "size": 32649,
+      "modified": false
+    },
+    {
+      "path": "locales-README.md",
+      "source": "https://raw.githubusercontent.com/citation-style-language/locales/6b70fe79264543aa538f8927fcc98d5b72425a94/README.md",
+      "sha256": "f8e1b34d3e1b66f101b45bc45e5fca0397aa923fe4abeab6f98139c8f731c320",
+      "size": 1777,
+      "modified": false
+    },
+    {
+      "path": "CC-BY-SA-3.0.txt",
+      "source": "https://creativecommons.org/licenses/by-sa/3.0/legalcode.txt",
+      "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+      "size": 22240,
+      "modified": false
+    }
+  ]
+}

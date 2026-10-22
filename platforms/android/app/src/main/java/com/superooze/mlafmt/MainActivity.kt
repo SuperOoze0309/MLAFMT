@@ -86,7 +86,8 @@ class MainActivity : ComponentActivity() {
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = request.url.toString() != PAGE
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
-                if (request.url.toString() in setOf(PAGE, MASCOT, TRANSPORT, TEMPLATE_SHARE, TEMPLATE_SHARING)) {
+                if (request.url.toString() in setOf(PAGE, MASCOT, TRANSPORT, TEMPLATE_SHARE, TEMPLATE_SHARING,
+                        UPDATE_NOTICE, CITATION_LIBRARY, CITATION_ENGINE, CITATION_ASSISTANT, CITATION_CSS)) {
                     val response = assets.shouldInterceptRequest(request.url)
                     if (response != null) {
                         if (request.url.toString() == PAGE)
@@ -230,6 +231,11 @@ class MainActivity : ComponentActivity() {
         const val TRANSPORT = "$ORIGIN/assets/static/transport.js"
         const val TEMPLATE_SHARE = "$ORIGIN/assets/static/template-share.js"
         const val TEMPLATE_SHARING = "$ORIGIN/assets/static/template-sharing-ui.js"
+        const val UPDATE_NOTICE = "$ORIGIN/assets/static/update-notice.js"
+        const val CITATION_LIBRARY = "$ORIGIN/assets/static/citation-library.js"
+        const val CITATION_ENGINE = "$ORIGIN/assets/static/citation-engine.js"
+        const val CITATION_ASSISTANT = "$ORIGIN/assets/static/citation-assistant.js"
+        const val CITATION_CSS = "$ORIGIN/assets/static/citation-assistant.css"
         const val DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     }
 }

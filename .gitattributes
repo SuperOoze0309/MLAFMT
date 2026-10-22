@@ -9,3 +9,4 @@ platforms/linux/AppRun text eol=lf
 /platforms/android/licenses/** -text
 /platforms/linux/licenses/** -text
 /browser/licenses/** -text
+/static/vendor/citations/** -text

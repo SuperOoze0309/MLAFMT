@@ -12,6 +12,46 @@ const CACHE_NAME = "__CACHE_VERSION__";
 const PRECACHE = __PRECACHE__;
 const PRECACHE_SET = new Set(PRECACHE);
 const BROKEN_REDIRECT_CACHE = "formcapy-2.4.0-pyodide-314.0.7-f7d959ab5df8";
+const UPDATE_REQUEST = "FORMCAPY_ACTIVATE_UPDATE";
+
+// Only a page which has asked its user to save may request this transition.
+// A second open app window prevents activation: an update must not replace
+// another page's worker while it may still be loading the old runtime.
+self.addEventListener("message", (event) => {
+  if (!event.data || event.data.type !== UPDATE_REQUEST ||
+      event.data.confirmed !== true || !event.ports || !event.ports[0]) return;
+  const port = event.ports[0];
+  const answer = (status) => port.postMessage({ type: UPDATE_REQUEST, status });
+  event.waitUntil((async () => {
+    try {
+      const source = event.source;
+      if (!source || typeof source.id !== "string" || !source.id ||
+          source.type !== "window" || typeof source.url !== "string") {
+        answer("unavailable"); return;
+      }
+      const scope = new URL(self.registration.scope);
+      const sourceURL = new URL(source.url);
+      if (sourceURL.origin !== scope.origin || !sourceURL.pathname.startsWith(scope.pathname)) {
+        answer("unavailable"); return;
+      }
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const scoped = windows.filter((client) => {
+        try {
+          const url = new URL(client.url);
+          return url.origin === scope.origin && url.pathname.startsWith(scope.pathname);
+        } catch (_) { return false; }
+      });
+      if (!scoped.some((client) => client.id === source.id)) {
+        answer("unavailable"); return;
+      }
+      if (scoped.some((client) => client.id !== source.id)) {
+        answer("other-tabs"); return;
+      }
+      await self.skipWaiting();
+      answer("activating");
+    } catch (_) { answer("unavailable"); }
+  })());
+});
 
 function withoutRedirect(response) {
   // CacheStorage preserves the redirected flag after a fetch follows a

@@ -1,0 +1,194 @@
+/* Citation assistant styling. Scoped under .fc-citations and built on the
+   existing FormCapy theme variables; no remote fonts or assets. */
+.fc-citations {
+  --fc-ink: var(--ink, #242843);
+  --fc-muted: var(--muted, #717386);
+  --fc-accent: var(--accent, #5755cc);
+  --fc-accent-dark: var(--accent-dark, #4140a9);
+  --fc-bg: var(--bg, #f6f5f1);
+  --fc-line: var(--line, #e6e5ed);
+  --fc-soft: var(--soft, #f2f1fc);
+  --fc-ok: var(--ok, #257454);
+  --fc-error: var(--error, #af3c49);
+  --fc-warn: #815b20;
+  margin: 22px 0;
+  border: 1px solid var(--fc-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--fc-ink);
+  overflow: hidden;
+}
+.fc-citations[hidden],
+.fc-citations [hidden] { display: none !important; }
+.fc-citations summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+  padding: 15px 18px;
+  cursor: pointer;
+  list-style-position: inside;
+}
+.fc-citations summary:focus-visible { outline: 3px solid #a29ef4; outline-offset: -3px; }
+.fc-citations-summary-title { font-weight: 700; font-size: 15px; }
+.fc-citations-summary-hint { color: var(--fc-muted); font-size: 12px; }
+.fc-citations-body { padding: 0 18px 18px; border-top: 1px solid var(--fc-line); }
+.fc-citations-scope,
+.fc-citations-note,
+.fc-citations-hint { color: var(--fc-muted); font-size: 12px; line-height: 1.5; margin: 10px 0; }
+.fc-citations-scope { max-width: 74ch; }
+.fc-citations-toolbar {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end;
+  padding: 12px 0 16px;
+}
+.fc-citations-status { margin-left: auto; color: var(--fc-muted); font-size: 12px; align-self: center; }
+.fc-citations-status.is-ok { color: var(--fc-ok); }
+.fc-citations-status.is-err { color: var(--fc-error); }
+.fc-citations-status.is-warn { color: var(--fc-warn); }
+.fc-citations-status.is-working { color: var(--fc-accent-dark); }
+.fc-citations-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(280px, 1.35fr) minmax(280px, 1.2fr);
+  gap: 16px;
+  align-items: start;
+}
+.fc-citations-library,
+.fc-citations-editor,
+.fc-citations-preview {
+  border: 1px solid var(--fc-line); border-radius: 10px;
+  padding: 14px; background: #fff; min-width: 0;
+}
+.fc-citations h3 { font-size: 13px; margin: 0 0 8px; letter-spacing: 0.01em; }
+.fc-citations h4 { font-size: 12px; margin: 14px 0 6px; }
+.fc-citations-count { color: var(--fc-muted); font-size: 11px; margin: 0 0 8px; }
+.fc-citations-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; max-height: 340px; overflow: auto; }
+.fc-citations-list-item { min-width: 0; }
+.fc-citations-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; text-align: left; border: 1px solid var(--fc-line);
+  background: #fff; color: var(--fc-ink); border-radius: 8px;
+  padding: 8px 10px; cursor: pointer;
+}
+.fc-citations-item:hover { background: var(--fc-soft); }
+.fc-citations-item.is-selected { border-color: var(--fc-accent); background: var(--fc-soft); }
+.fc-citations-item-title { font-size: 12px; font-weight: 650; overflow-wrap: anywhere; }
+.fc-citations-item-meta { font-size: 10px; color: var(--fc-muted); }
+.fc-citations-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fc-citations-label { color: var(--fc-muted); font-size: 11px; font-weight: 600; }
+.fc-citations-input,
+.fc-citations-select,
+.fc-citations-textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--fc-line);
+  border-radius: 7px; background: #fff; color: var(--fc-ink);
+  padding: 8px 9px; font: inherit; font-size: 12px;
+}
+.fc-citations-input:focus,
+.fc-citations-select:focus,
+.fc-citations-textarea:focus { outline: 2px solid #a29ef4; outline-offset: 1px; border-color: var(--fc-accent); }
+.fc-citations-textarea { min-height: 140px; resize: vertical; font-family: ui-monospace, Consolas, monospace; }
+.fc-citations-editor-fields { display: grid; gap: 10px; }
+.fc-citations-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fc-citations-date { border: 1px solid var(--fc-line); border-radius: 8px; padding: 8px 10px 10px; margin: 0; }
+.fc-citations-date legend { font-size: 11px; color: var(--fc-muted); font-weight: 600; padding: 0 4px; }
+.fc-citations-date-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fc-citations-date-field { min-width: 0; }
+.fc-citations-authors-fieldset { border: 1px solid var(--fc-line); border-radius: 8px; padding: 8px 10px 10px; margin: 0; }
+.fc-citations-authors-fieldset legend { font-size: 11px; color: var(--fc-muted); font-weight: 600; padding: 0 4px; }
+.fc-citations-authors { display: grid; gap: 8px; }
+.fc-citations-author {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end;
+  padding: 8px; border: 1px solid var(--fc-line); border-radius: 8px; background: #fcfcff;
+}
+.fc-citations-author > .fc-citations-field { flex: 1 1 140px; min-width: 0; }
+.fc-citations-author-mode { flex: 0 1 150px; }
+.fc-citations-author-name { flex: 2 1 180px; }
+.fc-citations-author-actions { display: flex; gap: 3px; align-self: center; margin-left: auto; }
+.fc-citations-icon {
+  border: 1px solid var(--fc-line); background: #fff; color: var(--fc-ink);
+  width: 28px; height: 28px; border-radius: 6px; padding: 0; line-height: 1;
+  cursor: pointer;
+}
+.fc-citations-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+.fc-citations-button {
+  border: 1px solid var(--fc-line); border-radius: 8px; background: #fff;
+  color: var(--fc-ink); padding: 8px 11px; font: inherit; font-size: 12px;
+  cursor: pointer; min-height: 34px;
+}
+.fc-citations-button:hover { background: var(--fc-soft); }
+.fc-citations-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.fc-citations-button.is-primary { background: var(--fc-accent); border-color: var(--fc-accent); color: #fff; }
+.fc-citations-button.is-primary:hover { background: var(--fc-accent-dark); }
+.fc-citations-button.is-danger { color: var(--fc-error); border-color: #eccbd0; }
+.fc-citations-persistence { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.fc-citations-saved-state { flex: 1 1 100%; font-size: 11px; color: var(--fc-muted); margin: 0; }
+.fc-citations-persistence .fc-citations-hint { flex: 1 1 100%; margin: 0; }
+.fc-citations-io { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.fc-citations-io h4 { flex: 1 1 100%; }
+.fc-citations-editor .fc-citations-input[aria-invalid="true"],
+.fc-citations-editor .fc-citations-select[aria-invalid="true"] { border-color: var(--fc-error); }
+.fc-citations-issues { margin-top: 12px; display: grid; gap: 8px; }
+.fc-citations-issues-error,
+.fc-citations-issues-warning { border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+.fc-citations-issues-error { background: #fff3f4; border: 1px solid #f0c7cd; color: #7d2530; }
+.fc-citations-issues-warning { background: #fff8e9; border: 1px solid #eedcb5; color: var(--fc-warn); }
+.fc-citations-issues-title { margin: 0 0 4px; font-weight: 700; }
+.fc-citations-issues-list { margin: 0; padding-left: 18px; }
+.fc-citations-original { margin-top: 12px; border-top: 1px dashed var(--fc-line); padding-top: 10px; }
+.fc-citations-original summary { padding: 0; font-size: 12px; font-weight: 600; cursor: pointer; }
+.fc-citations-original-text {
+  white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 11px;
+  background: var(--fc-bg); border-radius: 7px; padding: 9px; margin: 8px 0 0;
+}
+.fc-citations-preview-status { margin: 8px 0; font-size: 11px; color: var(--fc-muted); min-height: 16px; }
+.fc-citations-preview-status.is-err { color: var(--fc-error); }
+.fc-citations-preview-status.is-warn { color: var(--fc-warn); }
+.fc-citations-preview-status.is-ok { color: var(--fc-ok); }
+.fc-citations-preview-status.is-working { color: var(--fc-accent-dark); }
+.fc-citations-preview-heading { margin: 12px 0 4px; font-size: 12px; text-align: center; }
+.fc-citations-preview-body {
+  min-height: 80px; border: 1px solid var(--fc-line); border-radius: 8px;
+  background: #fff; padding: 14px; font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px; line-height: 2; overflow-wrap: anywhere;
+}
+/* Both supported styles use double spacing and a half-inch hanging indent.
+   This standalone list panel is not a full-page document-size preview. */
+.fc-citations-preview-body .csl-entry { padding-left: 0.5in; text-indent: -0.5in; margin: 0; }
+.fc-citations-preview-body a { color: inherit; }
+.fc-citations-preview-text { white-space: pre-wrap; margin: 0; font: inherit; }
+.fc-citations-preview-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.fc-citations-word-link { margin: 8px 0; font-size: 12px; overflow-wrap: anywhere; }
+.fc-citations-word-link a { color: var(--fc-accent-dark); }
+.fc-citations-fallback { margin-top: 8px; min-height: 90px; }
+.fc-citations-import { margin-top: 18px; border-top: 1px solid var(--fc-line); padding-top: 14px; }
+.fc-citations-import > .fc-citations-textarea { margin: 6px 0 8px; }
+.fc-citations-file-label { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 11px; color: var(--fc-muted); margin-bottom: 8px; }
+.fc-citations-file { max-width: 100%; font: inherit; font-size: 11px; }
+.fc-citations-review { margin-top: 12px; border: 1px solid var(--fc-line); border-radius: 8px; padding: 10px; background: var(--fc-bg); }
+.fc-citations-review-list { max-height: 160px; overflow: auto; margin: 4px 0 8px; padding-left: 20px; font-size: 11px; }
+.fc-citations-undo {
+  margin-top: 14px; display: flex; justify-content: flex-start;
+  border-top: 1px solid var(--fc-line); padding-top: 10px;
+}
+@media (max-width: 1000px) {
+  .fc-citations-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .fc-citations-library { grid-column: 1 / -1; }
+  .fc-citations-list { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); max-height: none; }
+}
+@media (max-width: 680px) {
+  .fc-citations-body { padding: 0 12px 14px; }
+  .fc-citations-grid { grid-template-columns: minmax(0, 1fr); }
+  .fc-citations-library { grid-column: auto; }
+  .fc-citations-fields { grid-template-columns: minmax(0, 1fr); }
+  .fc-citations-author { flex-direction: column; align-items: stretch; }
+  .fc-citations-author > .fc-citations-field,
+  .fc-citations-author-mode,
+  .fc-citations-author-name { flex: 1 1 auto; }
+  .fc-citations-author-actions { justify-content: flex-end; margin-left: 0; }
+  .fc-citations-status { margin-left: 0; flex: 1 1 100%; }
+  .fc-citations-preview-actions .fc-citations-button { flex: 1 1 42%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-citations *,
+  .fc-citations *::before,
+  .fc-citations *::after { animation: none !important; transition: none !important; }
+}

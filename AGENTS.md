@@ -16,6 +16,12 @@ The main checkout is `H:\DSHworkspace\Codex\MLAFMT`.
   recursive cleanup, and preserve other worktrees' uncommitted changes.
 - On other machines without that drive, use the current project workspace.
 
+## DSH delegation
+
+- When delegating work to DeepSeek Harness, default to DeepSeek Flash with
+  Max reasoning unless the owner requests a different setting. Confirm the
+  model and reasoning setting in DSH before sending the task.
+
 ## Website and privacy
 
 - The public website is a static, anonymous application. Keep document
