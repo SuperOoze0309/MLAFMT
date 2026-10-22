@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.7.1 — 待发布 / Unreleased
+
+### 中文
+
+- 调整静态网页版视觉：采用湖蓝、纸白与暖棕配色，增加水豚与纸张装饰，区分文稿表单、纸张预览和参考文献区域。
+- 优化低分辨率与窄屏布局：压缩短屏页头、收起装饰，窄屏工作区改为单栏，并限制纸张预览宽度；短屏预览不再吸顶。
+- 统一模板设置、二级高级定制、对话框与次级按钮的样式，强化键盘焦点、展开箭头、选中状态及禁用状态。
+- 改善长中英西文案换行、提示文字对比度及触屏点击区域；错误输入使用虚线边框，成功和错误提示增加不同形状，减少仅依靠颜色区分状态的情况。
+- 本轮为网页版界面优化；文稿处理与导出范围保持原有能力，离线安装包仍为 v2.5.0。此节为待发布记录，不代表 v2.7.1 已上线或完成 Safari／实机验收。
+
+### English
+
+- Refresh the static web interface with lake blue, paper white and warm brown, capybara/paper details, and clearer separation between the paper form, layout preview and reference assistant.
+- Improve narrow and low-resolution layouts with a compact short-screen header, fewer decorations, a single-column workspace at narrow widths and a bounded paper preview. Disable the sticky preview on short screens.
+- Unify template settings, advanced customization, dialogs and secondary controls, with clearer keyboard focus, disclosure arrows, selected states and disabled states.
+- Improve wrapping for long Chinese, English and Spanish labels, muted-text contrast and touch targets. Add dashed invalid-field borders and distinct success/error shapes so state is not conveyed by color alone.
+- This is a web-interface update with the existing document-processing and export scope; offline installers remain v2.5.0. This unreleased entry does not establish a v2.7.1 deployment, Safari or physical-device acceptance.
+
 ## v2.7.0 — 2026-10-22
 
 - 静态网页版增加新版可用提示：先保存，再明确确认更新；处理中或同作用域还有其他标签页时保护当前工作，不自动刷新文稿。
