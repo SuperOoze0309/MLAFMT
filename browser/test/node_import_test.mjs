@@ -4,7 +4,7 @@
 // Run: node browser/test/node_import_test.mjs
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import vm from "node:vm";
 import { createHash, webcrypto } from "node:crypto";
@@ -196,3 +196,124 @@ json.dumps({"bytes":len(content),"entries":len(expected["entries"]),"links":link
   ]);
   console.log("OK: actual CSL to Pyodide bibliography DOCX", style, actualReport);
 }
+
+// Real edge cases which previously previewed successfully but either produced
+// a wrong DOI target or were rejected by the Word parser. Source records stay
+// unchanged; only fixed program files are fetched by the engine above.
+const boundaryItems = [
+  {id:"reserved-doi",type:"article-journal",title:"An invented URI study",author:[{literal:"Example Laboratory"}],issued:{"date-parts":[[2024]]},"container-title":"Fictional URI Journal",DOI:'10.9999/a<b>c"d?e#f%g'},
+  {id:"quoted-url",type:"webpage",title:"An imaginary quoted URL",URL:'https://example.org/"<&>'},
+  {id:"unicode-url",type:"webpage",title:"عنوان عبري עברית 🦫",URL:'https://例子.中国/文稿?x=壹&y=two'},
+  {id:"literal-text",type:"book",title:'A  title &amp; XML <record> with <sc>Small Caps</sc>',author:[{family:"García",given:"María"}],publisher:"Fictional Press"},
+];
+const boundarySnapshot=JSON.stringify(boundaryItems);
+for(const style of ["mla","apa"]){
+  const rendered=await citationContext.FormCapyCitationEngine.render(boundaryItems,style);
+  assert.equal(JSON.stringify(boundaryItems),boundarySnapshot);
+  pyodide.globals.set("edge_csl_request",JSON.stringify({kind:"bibliography",bibliography:rendered}));
+  const edgeReport=JSON.parse(pyodide.runPython(`
+from docx import Document
+expected = json.loads(edge_csl_request)["bibliography"]
+cycles = []
+for cycle in range(3):
+    # A failed request must not poison the next request or leave MEMFS drafts.
+    bad = json.loads(edge_csl_request)
+    bad["bibliography"]["entries"][0]["html"] = '<div class="csl-entry">Lost original text.</div>'
+    started = json.loads(browser_bridge.begin())
+    metadata, content = browser_bridge.finish(json.dumps(bad), started["workdir"])
+    assert json.loads(metadata)["error"] == "invalid_options" and not content
+    assert not os.path.exists(started["workdir"])
+    started = json.loads(browser_bridge.begin())
+    metadata, content = browser_bridge.finish(edge_csl_request, started["workdir"])
+    meta = json.loads(metadata)
+    assert meta["ok"], meta
+    document = Document(io.BytesIO(content))
+    actual = [paragraph.text for paragraph in document.paragraphs]
+    reference = [expected["heading"]] + [entry["text"] for entry in expected["entries"]]
+    assert [value.replace("\\u00a0", " ") for value in actual] == [value.replace("\\u00a0", " ") for value in reference]
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        relationships = etree.fromstring(archive.read("word/_rels/document.xml.rels"))
+        links = relationships.xpath("//*[local-name()='Relationship' and @TargetMode='External']/@Target")
+        assert archive.testzip() is None
+    assert 'https://doi.org/10.9999/a%3Cb%3Ec%22d%3Fe%23f%25g' in links
+    assert 'https://example.org/%22%3C&%3E' in links
+    assert 'https://xn--fsqu00a.xn--fiqs8s/%E6%96%87%E7%A8%BF?x=%E5%A3%B9&y=two' in links
+    assert not os.path.exists(started["workdir"])
+    cycles.append(meta["bytes"])
+json.dumps({"cycles":len(cycles),"entries":len(expected["entries"]),"links_once_encoded":True,"content_preserved":True,"cleaned":True})
+`));
+  assert.equal(edgeReport.cycles,3);
+  assert.equal(edgeReport.entries,4);
+  assert.equal(edgeReport.links_once_encoded,true);
+  assert.equal(edgeReport.content_preserved,true);
+  assert.equal(edgeReport.cleaned,true);
+  console.log("OK: edge CSL to Pyodide, failure/success continuity",style,edgeReport);
+}
+
+// Run the actual browser worker request queue with a second real WASM runtime.
+// Node's Pyodide loader needs a filesystem indexURL rather than a file: URL;
+// only that module-loading boundary and same-origin static fetches are adapted.
+const workerMessages=[];
+let workerClosed=false;
+let failWorkerModuleOnce=true;
+const testWorkerSelf={
+  postMessage(message){workerMessages.push(message);},
+  addEventListener(){},
+  close(){workerClosed=true;},
+};
+const fetchWorkerAsset=async(value)=>{
+  const url=new URL(value);
+  assert.equal(url.origin,"http://localhost");
+  assert.ok(/^\/(?:wheels\/python_docx-1\.2\.0-py3-none-any\.whl|python\/(?:mla_formatter|format_profiles|docx_preserve|bibliography_export|browser_bridge)\.py)$/.test(url.pathname));
+  if(failWorkerModuleOnce && url.pathname==="/python/bibliography_export.py"){
+    failWorkerModuleOnce=false;
+    return {ok:false,status:503};
+  }
+  const local=url.pathname.startsWith("/wheels/")?path.join(runtimeDir,PYTHON_DOCX_WHEEL_NAME):path.join(root,path.basename(url.pathname));
+  const data=await readFile(local);
+  return {ok:true,arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)};
+};
+const PYTHON_DOCX_WHEEL_NAME="python_docx-1.2.0-py3-none-any.whl";
+const workerSource=await readFile(path.join(root,"browser/worker.js"),"utf8");
+const importStatement='const module = await import(new URL("pyodide.mjs", config.indexURL).href);';
+assert.equal(workerSource.split(importStatement).length,2,"worker loader test hook must match exactly once");
+const makeWorker=new Function("self","fetch","console","loadWorkerModule",
+  workerSource.replace(importStatement,'const module = await loadWorkerModule(new URL("pyodide.mjs", config.indexURL).href);')+
+  "\nreturn {drain:()=>queue,runtime:()=>pyodide};");
+const workerHarness=makeWorker(testWorkerSelf,fetchWorkerAsset,console,async(url)=>{
+  assert.equal(url,pathToFileURL(path.join(runtimeDir,"pyodide.mjs")).href);
+  return {loadPyodide:options=>loadPyodide({...options,indexURL:runtimeURL})};
+});
+const workerConfig={indexURL:pathToFileURL(runtimeDir+path.sep).href,baseURL:"http://localhost/",runtimeVersion:pyodide.version};
+testWorkerSelf.onmessage({data:{type:"init",id:10,config:workerConfig}});
+await workerHarness.drain();
+assert.ok(workerMessages.some(message=>message.type==="init-error" && message.id===10));
+testWorkerSelf.onmessage({data:{type:"init",id:11,config:workerConfig}});
+await workerHarness.drain();
+assert.ok(workerMessages.some(message=>message.type==="ready" && message.id===11));
+const queueBibliography=await citationContext.FormCapyCitationEngine.render(boundaryItems,"apa");
+for(const [id,bibliography]of [[20,{}],[21,queueBibliography],[22,queueBibliography],[23,queueBibliography]]){
+  testWorkerSelf.onmessage({data:{type:"request",id,action:"generate",request:{kind:"bibliography",bibliography},file:null}});
+}
+testWorkerSelf.onmessage({data:{type:"cancel",id:22}});
+testWorkerSelf.onmessage({data:{type:"request",id:24,action:"generate",request:null,file:null}});
+testWorkerSelf.onmessage({data:{type:"request",id:25,action:"generate",request:{kind:"bibliography",bibliography:queueBibliography},file:null}});
+await workerHarness.drain();
+const workerReplies=workerMessages.filter(message=>["result","aborted","error"].includes(message.type));
+assert.deepEqual(workerReplies.map(message=>message.id),[20,21,22,23,24,25]);
+assert.equal(workerReplies[0].meta.error,"invalid_options");
+assert.equal(workerReplies[2].type,"aborted");
+assert.equal(workerReplies[4].code,"invalid_json");
+for(const index of [1,3,5]){
+  const reply=workerReplies[index];
+  assert.equal(reply.meta.ok,true);
+  assert.ok(reply.buffer instanceof ArrayBuffer);
+  assert.equal(reply.buffer.byteLength,reply.meta.bytes);
+  assert.equal(new Uint8Array(reply.buffer)[0],0x50);
+  assert.equal(new Uint8Array(reply.buffer)[1],0x4b);
+}
+const workerTempDirs=JSON.parse(workerHarness.runtime().runPython("import glob, json; json.dumps(glob.glob('/tmp/mlafmt-*'))"));
+assert.deepEqual(workerTempDirs,[]);
+testWorkerSelf.onmessage({data:{type:"dispose"}});
+assert.equal(workerClosed,true);
+console.log("OK: actual worker queue/WASM init retry, failure/success, cancellation, cleanup and dispose");

@@ -263,7 +263,16 @@ def validate_bibliography(data):
         text_total += len(text.encode("utf-8"))
         if html_total > MAX_HTML_BYTES or text_total > MAX_TEXT_BYTES:
             _reject()
-        parsed.append(_EntryHTML().parsed(html))
+        segments = _EntryHTML().parsed(html)
+        # The reviewed plain-text preview and Word's rich-text path must
+        # describe the same content. HTML uses nonbreaking spaces to preserve
+        # CSL spacing, and Word normalizes CR/LF into line breaks; account for
+        # those representational differences without dropping any other text.
+        def comparable(value):
+            return value.replace("\r\n", "\n").replace("\r", "\n").replace("\u00a0", " ")
+        if comparable("".join(segment.text for segment in segments)) != comparable(text):
+            _reject()
+        parsed.append(segments)
     return parsed
 
 

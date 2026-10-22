@@ -186,6 +186,55 @@ for(const [label,input]of invalidCases)test(`rejects ${label}`,async()=>{await a
 test("bad DOI has a dedicated actionable code",async()=>{await assert.rejects(shared.engine.render([book({DOI:"not-a-doi"})],"apa"),error=>error.code==="invalid_citation_doi");});
 test("full doi.org DOI is normalized without a network request",async()=>{const result=await shared.engine.render([book({DOI:"https://doi.org/10.9999/sample"})],"apa");assert.match(result.text,/https:\/\/doi\.org\/10\.9999\/sample/);assert.doesNotMatch(result.text,/doi\.org\/https/);});
 test("valid leap date and emoji are accepted",()=>{assert.equal(shared.engine.validateItems([book({title:"Fictional 🦫",issued:{"date-parts":[[2024,2,29]]}})])[0].title,"Fictional 🦫");});
+test("engine metadata rejects the same controls and invalid XML characters as the model",()=>{
+  const controls=[...Array.from({length:32},(_,index)=>index),...Array.from({length:33},(_,index)=>127+index),0x202a,0x202b,0x202c,0x202d,0x202e,0x2066,0x2067,0x2068,0x2069,0x200e,0x200f,0x061c,0xfffe,0xffff];
+  for(const code of controls){
+    const title=`A${String.fromCodePoint(code)}B`;
+    assert.throws(()=>shared.engine.validateItems([book({title})]),error=>error.code==="invalid_citations",`U+${code.toString(16)}`);
+  }
+  const title="العربية עברית 中文 🦫 𝄞";
+  assert.equal(shared.engine.validateItems([book({title})])[0].title,title);
+});
+test("DOI reserved characters are encoded exactly once in both styles without changing source data",async()=>{
+  for(const style of ["mla","apa"]){
+    const input=book({DOI:'10.9999/a<b>c"d?e#f%g'}),snapshot=JSON.stringify(input);
+    const result=await shared.engine.render([input],style);
+    const expected="https://doi.org/10.9999/a%3Cb%3Ec%22d%3Fe%23f%25g";
+    assert.ok(result.entries[0].html.includes(`href="${expected}"`));
+    assert.ok(result.entries[0].text.includes(expected));
+    assert.doesNotMatch(result.entries[0].html,/%253C|%2522|%253F/);
+    assert.equal(JSON.stringify(input),snapshot);
+  }
+});
+test("an encoded doi.org URL and bare DOI resolve to the same once-encoded target",async()=>{
+  for(const DOI of ['10.9999/a<b>','https://doi.org/10.9999/a%3Cb%3E']){
+    const result=await shared.engine.render([book({DOI})],"apa");
+    assert.ok(result.entries[0].html.includes('href="https://doi.org/10.9999/a%3Cb%3E"'));
+  }
+  assert.throws(()=>shared.engine.validateItems([book({DOI:"https://doi.org/10.9999/a%00b"})]),error=>error.code==="invalid_citation_doi");
+});
+test("valid URL quotes and Unicode use an encoded URI without malformed anchor attributes",async()=>{
+  for(const URL of ['https://example.org/"<&>','https://例子.中国/文稿?x=壹&y=two']){
+    const input=book({URL}),snapshot=JSON.stringify(input);
+    const result=await shared.engine.render([input],"apa");
+    const uri=new globalThis.URL(URL).href;
+    assert.ok(result.entries[0].text.includes(uri));
+    assert.ok(result.entries[0].html.includes(`href="${uri.replaceAll("&","&#38;")}"`));
+    assert.equal(JSON.stringify(input),snapshot);
+  }
+  assert.throws(()=>shared.engine.validateItems([book({URL:"https://example.org/\\record"})]),error=>error.code==="invalid_citations");
+});
+test("render rejects an output larger than Word's per-entry bound before previewing",async()=>{
+  const input=book({title:"文".repeat(5000),publisher:"社".repeat(5000),author:[{literal:"組".repeat(5000)}]});
+  const snapshot=JSON.stringify(input);
+  assert.equal(shared.engine.validateItems([input]).length,1);
+  await assert.rejects(shared.engine.render([input],"apa"),error=>error.code==="citation_output_too_large");
+  assert.equal(JSON.stringify(input),snapshot);
+});
+test("real CSL output nesting is bounded before a preview can promise Word export",async()=>{
+  const title="<i>".repeat(40)+"Nested"+"</i>".repeat(40);
+  for(const style of ["mla","apa"])await assert.rejects(shared.engine.render([book({title})],style),error=>error.code==="unsafe_citation_output");
+});
 test("model → actual engine roundtrip excludes originalText",async()=>{
   const library=shared.model.createLibrary([{id:"model",type:"book",title:"Model generated fiction",authors:[{family:"Ortega",given:"Luz"}],issued:{year:2025},publisher:"Example Publisher",originalText:"Keep my original; not rendered"}]);
   const csl=shared.model.toCslItems(library);
@@ -232,6 +281,14 @@ test("safeFragment accepts only safe absolute links and adds rel",()=>{
   const f=shared.engine.safeFragment('<a href="https://example.org/a">link</a>',fixtureDocument([node]));
   assert.ok(f.childNodes[0].attributes.some(attr=>attr.name==="rel" && attr.value==="noopener noreferrer"));
   assert.ok(f.childNodes[0].attributes.some(attr=>attr.name==="target" && attr.value==="_blank"));
+});
+test("safeFragment rejects oversized UTF-8 and deep nesting before DOM parsing",()=>{
+  let parsed=false;
+  const document={createElement(){parsed=true;throw new Error("must not parse");}};
+  for(const html of ["<div>"+"文".repeat(700000)+"</div>","<i>".repeat(34)+"Text"+"</i>".repeat(34)]){
+    assert.throws(()=>shared.engine.safeFragment(html,document),error=>error.code==="unsafe_citation_output");
+  }
+  assert.equal(parsed,false);
 });
 test("safeFragment rejects input target attributes instead of adopting navigation targets",()=>{
   for(const target of ["_self","_parent","_top","_blank","named-window"]){

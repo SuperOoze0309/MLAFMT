@@ -73,7 +73,7 @@ def test_apa_heading_bold_and_csl_layout_spacing():
 
 def test_nested_font_semantics_line_breaks_and_unicode():
     data = bibliography()
-    data["entries"] = [{"id": "unicode", "text": "中文 🦫 Café Test xy\nnext",
+    data["entries"] = [{"id": "unicode", "text": "中文 🦫 Café Test x2y\nnext",
         "html": '<div class="csl-entry"><span style="font-variant:small-caps;">中文 🦫 Café</span> <i>Test <span style="font-style:normal;font-weight:700;text-decoration:underline;">x</span></i><sup>2</sup><sub>y</sub><br/>next</div>'}]
     _, _, xml = package(data)
     assert xml.xpath("//w:smallCaps", namespaces=NS)
@@ -83,6 +83,29 @@ def test_nested_font_semantics_line_breaks_and_unicode():
     assert xml.xpath("//w:vertAlign/@w:val", namespaces=NS) == ["superscript", "subscript"]
     assert xml.xpath("//w:br", namespaces=NS)
     assert "中文 🦫 Café" in "".join(xml.xpath("//w:t/text()", namespaces=NS))
+
+
+@pytest.mark.parametrize("html,text", [
+    ('<div class="csl-entry">Shortened citation.</div>', "Full original citation."),
+    ('<div class="csl-entry">A&#0;B</div>', "A\x00B"),
+    ('<div class="csl-entry">Missing <sup>2</sup></div>', "Missing"),
+    ('<div class="csl-entry">Different &amp; title</div>', "Different title"),
+])
+def test_reject_html_that_does_not_match_the_reviewed_plain_text(html, text):
+    data = bibliography()
+    data["entries"] = [{"id": "mismatch", "html": html, "text": text}]
+    with pytest.raises(BibliographyExportError):
+        render_bibliography_docx(data)
+
+
+def test_matching_nbsp_line_breaks_and_literal_entities_preserve_all_text():
+    data = bibliography()
+    data["entries"] = [{"id": "representations",
+        "html": '<div class="csl-entry">A&nbsp;  title &amp;lt;XML&amp;gt;<br/>Next 🦫</div>',
+        "text": "A   title &lt;XML&gt;\r\nNext 🦫"}]
+    content = render_bibliography_docx(data)
+    text = Document(BytesIO(content)).paragraphs[1].text
+    assert text == "A\u00a0  title &lt;XML&gt;\nNext 🦫"
 
 
 @pytest.mark.parametrize("html", [
@@ -164,10 +187,32 @@ def test_full_entry_limit_is_supported_without_sorting():
 
 def test_total_html_limit_is_enforced_across_separate_entries():
     data = bibliography()
-    data["entries"] = [{"id": f"item-{index}", "html": "x" * (32 * 1024), "text": "x"}
+    data["entries"] = [{"id": f"item-{index}", "html": "x" * (32 * 1024), "text": "x" * (32 * 1024)}
                        for index in range(65)]
     with pytest.raises(BibliographyExportError):
         render_bibliography_docx(data)
+
+
+def test_bridge_recovers_after_bad_rich_text_and_cleans_every_request(tmp_path):
+    with patch.object(browser_bridge.tempfile, "tempdir", str(tmp_path)):
+        for index in range(4):
+            bad = bibliography()
+            bad["entries"][0]["html"] = '<div class="csl-entry">Silently shortened.</div>'
+            for payload, expected_ok in ((bad, False), (bibliography(), True)):
+                started = json.loads(browser_bridge.begin())
+                metadata, content = browser_bridge.finish(json.dumps({
+                    "kind": "bibliography", "bibliography": payload,
+                }), started["workdir"])
+                meta = json.loads(metadata)
+                assert meta["ok"] is expected_ok
+                if expected_ok:
+                    assert content.startswith(b"PK")
+                    assert meta["stats"]["works_cited"] == 2
+                else:
+                    assert meta["error"] == "invalid_options"
+                    assert content == b""
+                assert not Path(started["workdir"]).exists()
+        assert not list(tmp_path.glob("mlafmt-*"))
 
 
 def test_bridge_independent_request_and_cleanup_on_success(tmp_path):

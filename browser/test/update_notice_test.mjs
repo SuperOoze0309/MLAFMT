@@ -24,7 +24,7 @@ class Node extends Target {
   click() { if (!this.disabled) this.emit('click'); }
 }
 const flush = async () => { for (let n = 0; n < 12; n++) await Promise.resolve(); };
-function setup({ active = true, waiting = true, controller = true, enabled = true, secure = true, registerError = false, updateError = false, channel = true, reply, workerState = 'installed', pageURL = 'https://formcapy.example/app/?a=1', registrationThrows = false, onUpdating } = {}) {
+function setup({ active = true, waiting = true, controller = true, enabled = true, secure = true, registerError = false, updateError = false, channel = true, reply, workerState = 'installed', pageURL = 'https://formcapy.example/app/?a=1', registrationThrows = false, onUpdating, registerPromise } = {}) {
   const doc = new Target(); doc.body = new Node('body'); doc.documentElement = { lang: 'zh-CN' }; doc.visibilityState = 'visible';
   doc.createElement = (tag) => new Node(tag);
   const page = new Target(); page.document = doc; page.isSecureContext = secure;
@@ -43,7 +43,7 @@ function setup({ active = true, waiting = true, controller = true, enabled = tru
   sw.register = (url, options) => {
     registers.push({ url, options });
     if (registrationThrows) throw new Error('registration denied');
-    return registerError ? Promise.reject(new Error('offline registration')) : Promise.resolve(reg);
+    return registerError ? Promise.reject(new Error('offline registration')) : registerPromise || Promise.resolve(reg);
   };
   page.navigator = { serviceWorker: sw };
   const timers = new Map(); let sequence = 0;
@@ -57,7 +57,8 @@ function setup({ active = true, waiting = true, controller = true, enabled = tru
     }
   }
   if (channel) page.MessageChannel = Channel;
-  const context = vm.createContext({ window: page, URL, console });
+  let clock = Date.now();
+  const context = vm.createContext({ window: page, URL, console, Date: { now: () => clock } });
   vm.runInContext(source, context, { filename: 'static/update-notice.js' });
   let busy = false; let language = 'zh';
   const transitions = [];
@@ -67,6 +68,7 @@ function setup({ active = true, waiting = true, controller = true, enabled = tru
   const primary = () => node.children[2].children[0]; const secondary = () => node.children[2].children[1];
   return { api, doc, page, sw, reg, worker, registers, updates, messages, reloads, timers, node, primary, secondary, transitions,
     language(value) { language = value; api.render(); }, busy(value) { busy = value; },
+    advance(ms) { clock += ms; },
     async ready() { await flush(); return this; },
     expire(ms) { for (const [id, task] of [...timers]) if (task.ms === ms) { timers.delete(id); task.callback(); } },
   };
@@ -112,6 +114,53 @@ await check('registration rejection and synchronous failure do not escape or aff
     assert.equal(env.reloads.length, 0); assert.equal(env.messages.length, 0);
     assert.equal(env.api.state().phase, 'hidden');
   }
+});
+await check('a transient registration failure can recover in the same page after the connection returns', async () => {
+  for (const initialFailure of [{ registerError: true }, { registrationThrows: true }]) {
+  const env = await setup(initialFailure).ready();
+  assert.equal(env.api.state().registered, false);
+  const before = env.registers.length;
+  env.sw.register = (url, options) => {
+    env.registers.push({ url, options });
+    return Promise.resolve(env.reg);
+  };
+  await env.api.check(); await flush();
+  assert.equal(env.registers.length, before + 1, 'manual retry should attempt registration after connectivity returns');
+  assert.equal(env.api.state().registered, true);
+  assert.equal(env.api.state().phase, 'ready');
+  assert.equal(env.reloads.length, 0); assert.equal(env.messages.length, 0);
+  env.api.dispose();
+  }
+});
+await check('the online event retries failed registration without waiting for a page reload or focus throttle', async () => {
+  const env = await setup({ registerError: true }).ready();
+  env.sw.register = (url, options) => { env.registers.push({ url, options }); return Promise.resolve(env.reg); };
+  env.page.emit('online'); await flush();
+  assert.equal(env.registers.length, 2); assert.equal(env.api.state().registered, true);
+  assert.equal(env.reloads.length, 0); assert.equal(env.messages.length, 0); env.api.dispose();
+});
+await check('the retry timer remains live after an initial registration failure', async () => {
+  const env = await setup({ registerError: true }).ready();
+  env.sw.register = (url, options) => { env.registers.push({ url, options }); return Promise.resolve(env.reg); };
+  env.advance(300000); env.expire(300000); await flush();
+  assert.equal(env.registers.length, 2); assert.equal(env.api.state().registered, true);
+  assert.equal(env.reloads.length, 0); env.api.dispose();
+});
+await check('concurrent startup, online and manual checks share one pending registration', async () => {
+  let release;
+  const pending = new Promise((resolve) => { release = resolve; });
+  const env = setup({ registerPromise: pending });
+  env.api.check(); env.page.emit('online'); env.api.check();
+  assert.equal(env.registers.length, 1); release(env.reg); await flush();
+  assert.equal(env.api.state().registered, true); assert.equal(env.updates.length, 1); env.api.dispose();
+});
+await check('disposing during a pending registration prevents late registration state and retries', async () => {
+  let release;
+  const pending = new Promise((resolve) => { release = resolve; });
+  const env = setup({ registerPromise: pending }); env.api.dispose(); release(env.reg); await flush();
+  env.page.emit('online'); await env.api.check();
+  assert.equal(env.api.state().registered, false); assert.equal(env.registers.length, 1);
+  assert.equal(env.timers.size, 0); assert.equal(env.reloads.length, 0);
 });
 await check('an offline update failure leaves the ready prompt and document available', async () => {
   const env = await setup({ updateError: true }).ready();

@@ -20,7 +20,7 @@ function section(start, end, input = html) {
 const profileCode = section('      const CUSTOM_DEFAULT = ', '      function profileSnapshot');
 const syncCode = section('      function syncPageControls()', '      function numberingSummary');
 const applyCode = section('        applyProfile(profile) {', '\n        },\n      }) || null;') + '\n        }';
-const importCode = section('      $("transfer-apply").addEventListener', '      $("transfer-copy").addEventListener');
+const importCode = section('      let transferOpener = null;', '      $("transfer-copy").addEventListener');
 
 function harness({ native = false, clipboardFails = false } = {}) {
   const nodes = new Map(), copied = [], downloads = [];
@@ -116,6 +116,7 @@ function harness({ native = false, clipboardFails = false } = {}) {
        let webResult = { name: 'PRIVATE_RESULT_527.docx', url: 'blob:PRIVATE_RESULT_527' };
        let dateWasEdited = true;
        const transfer = $('template-transfer');
+       function checkedProfile() { return customProfile(); }
        const applyHook = ({ ${applyCode} }).applyProfile;
        templateSharing = FormCapyTemplateSharing.attach({
          getProfile: customProfile, normalizeLegacy: normalizeProfile, translate: t, native,
@@ -249,10 +250,89 @@ await check('clipboard fallback selects the full code; native export never offer
 });
 await check('invalid UTF-8 file import cannot mutate current state', async () => {
   const h = harness(), before = h.snapshot();
+  h.run('openTransfer(false)');
   const candidate = { size: 1, async arrayBuffer() { return Uint8Array.from([255]).buffer; } };
   await h.$('template-file').trigger('change', { target: { files: [candidate] } });
   assert.equal(h.snapshot(), before);
   assert.equal(h.$('transfer-message').textContent, 'template_unavailable');
+});
+
+function pendingTemplate() {
+  let resolve, reject;
+  const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
+  return { file: { size: 50, arrayBuffer: () => promise },
+    finish: (text) => resolve(new TextEncoder().encode(text).buffer), reject };
+}
+function readTemplate(h, file) {
+  return h.$('template-file').trigger('change', { target: { files: file ? [file] : [] } });
+}
+await check('newer template file wins when older file finishes late', async () => {
+  const h = harness(), first = pendingTemplate(), second = pendingTemplate();
+  h.run('openTransfer(false)');
+  const a = readTemplate(h, first.file), b = readTemplate(h, second.file);
+  second.finish('newer B'); await b;
+  first.finish('older A'); await a;
+  assert.equal(h.$('transfer-text').value, 'newer B');
+});
+await check('late import cannot replace a newly opened current-template export', async () => {
+  const h = harness(), old = pendingTemplate(), before = h.protected();
+  h.run('openTransfer(false)');
+  const reading = readTemplate(h, old.file);
+  h.$('template-transfer').close(); h.run('openTransfer(true)');
+  const expected = h.$('transfer-text').value;
+  old.finish('{"label":"Wrong late template"}'); await reading;
+  assert.equal(h.$('transfer-text').value, expected);
+  assert.equal(h.$('transfer-download').hidden, false);
+  assert.equal(h.protected(), before);
+});
+await check('typing while a file is pending preserves the edited template text', async () => {
+  const h = harness(), old = pendingTemplate();
+  h.run('openTransfer(false)');
+  const reading = readTemplate(h, old.file);
+  h.$('transfer-text').value = 'user pasted code';
+  await h.$('transfer-text').trigger('input');
+  old.finish('late file text'); await reading;
+  assert.equal(h.$('transfer-text').value, 'user pasted code');
+});
+await check('closing and reopening import invalidates the previous file and its errors', async () => {
+  const h = harness(), old = pendingTemplate();
+  h.run('openTransfer(false)'); const reading = readTemplate(h, old.file);
+  h.$('template-transfer').close(); h.run('openTransfer(false)');
+  old.reject(new Error('old cloud file unavailable')); await reading;
+  assert.equal(h.$('transfer-text').value, '');
+  assert.equal(h.$('transfer-message').textContent, '');
+});
+await check('an oversize newer choice keeps its error when an older read completes', async () => {
+  const h = harness(), old = pendingTemplate();
+  h.run('openTransfer(false)'); const reading = readTemplate(h, old.file);
+  await readTemplate(h, { size: 32769, arrayBuffer() { throw new Error('must not read'); } });
+  old.finish('late data'); await reading;
+  assert.equal(h.$('transfer-message').textContent, 'template_file_large');
+  assert.equal(h.$('transfer-text').value, '');
+});
+await check('cancelling the dialog invalidates a pending template read', async () => {
+  const h = harness(), old = pendingTemplate();
+  h.run('openTransfer(false)'); const reading = readTemplate(h, old.file);
+  await h.$('template-transfer').trigger('cancel');
+  old.finish('cancelled file'); await reading;
+  assert.equal(h.$('transfer-text').value, '');
+});
+await check('cancelled chooser selection cannot allow an older read to reappear', async () => {
+  const h = harness(), old = pendingTemplate();
+  h.run('openTransfer(false)'); const reading = readTemplate(h, old.file);
+  await readTemplate(h, null);
+  old.finish('old selection'); await reading;
+  assert.equal(h.$('transfer-text').value, '');
+});
+await check('same file can be chosen again and a stale close event does not cancel the new read', async () => {
+  const h = harness(), old = pendingTemplate();
+  h.run('openTransfer(false)'); h.$('template-transfer').close(); h.run('openTransfer(false)');
+  const input = { files: [old.file], value: 'chosen.json' };
+  const reading = h.$('template-file').trigger('change', { target: input });
+  assert.equal(input.value, '');
+  await h.$('template-transfer').trigger('close');
+  old.finish('new dialog data'); await reading;
+  assert.equal(h.$('transfer-text').value, 'new dialog data');
 });
 
 console.log(JSON.stringify({

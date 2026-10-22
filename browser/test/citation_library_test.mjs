@@ -259,3 +259,21 @@ test("standalone HTML/library JSON does not expose draft or paper state", () => 
     assert.equal(text.includes(forbidden), false);
   }
 });
+
+test("rejects XML noncharacters before preview or library export", () => {
+  for (const code of [0xfffe, 0xffff]) {
+    const invalid = "Source " + String.fromCodePoint(code);
+    assert.equal(M.validateItem(raw({ title: invalid })).valid, false);
+    assert.equal(M.validateItem(raw({ authors: [{ literal: invalid }] })).valid, false);
+    const result = M.parseLibraryJson(JSON.stringify(library([raw({ title: invalid })])));
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((issue) => issue.code === "invalid_unicode"));
+  }
+  assert.equal(M.validateItem(raw({ title: "中文 العربية 🦫" })).valid, true);
+});
+
+test("rejects backslash URLs consistently with Word export", () => {
+  assert.equal(M.validateItem(raw({ URL: "https://example.org/a\\b" })).valid, false);
+  assert.equal(M.validateItem(raw({ URL: "https://example.org/a%5Cb" })).valid, true);
+  assert.equal(M.validateItem(raw({ URL: "https://example.org/中文" })).valid, true);
+});

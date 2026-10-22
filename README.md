@@ -10,7 +10,7 @@
 
 **v2.6.0 静态网页版已上线，新增课程模板码与分享 JSON；离线下载仍为 v2.5.0，不包含这两项功能。** **The static website now runs v2.6.0**, with template codes and sharing JSON; offline downloads remain v2.5.0 without these features. [网页版发布说明 / Web release notes](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.6.0) · [部署状态 / Deployment status](docs/DEPLOYMENT.md)
 
-**v2.7.0 源码正在本地验收，尚未上线。** 新增安全更新提示和本地参考文献助手；以下 v2.7.0 说明描述待发布的静态网页版。**The v2.7.0 source is under local acceptance and is not deployed yet.** Its update notice and reference assistant are described below; offline downloads remain v2.5.0.
+**v2.7.0 源码已通过本地排错验收，尚未上线。** 新增安全更新提示和本地参考文献助手；以下 v2.7.0 说明描述待发布的静态网页版。**The v2.7.0 source passed local debugging and is not deployed yet.** Its update notice and reference assistant are described below; offline downloads remain v2.5.0.
 
 ## 三步开始 / Get started
 

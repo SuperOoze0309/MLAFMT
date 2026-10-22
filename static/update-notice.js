@@ -51,6 +51,7 @@
     let reloaded = false;
     let updating = false;
     let pendingCheck = null;
+    let pendingRegistration = null;
     let lastCheck = -Infinity;
     let interval = null;
     let requestTimer = null;
@@ -149,15 +150,39 @@
       listen(installing, "statechange", inspect);
       inspect();
     }
+    function ensureRegistration() {
+      if (!alive) return Promise.resolve(false);
+      if (registration) return Promise.resolve(true);
+      if (pendingRegistration) return pendingRegistration;
+      try {
+        const promise = Promise.resolve(serviceWorker.register(scriptURL, { updateViaCache: "none" }))
+          .then((result) => {
+            if (!alive) return false;
+            registration = result;
+            listen(registration, "updatefound", trackInstalling);
+            trackInstalling(); inspect();
+            return true;
+          }).catch(() => false);
+        pendingRegistration = promise;
+        const clear = () => { if (pendingRegistration === promise) pendingRegistration = null; };
+        promise.then(clear, clear);
+        return promise;
+      } catch (_) { return Promise.resolve(false); }
+    }
     async function check(force = false) {
-      if (!alive || !registration) return false;
+      if (!alive || !started) return false;
       inspect();
       const now = Date.now();
       if (!force && now - lastCheck < 60000) return false;
       if (pendingCheck) return pendingCheck;
       lastCheck = now;
       pendingCheck = (async () => {
-        try { await registration.update(); inspect(); return true; }
+        try {
+          if (!(await ensureRegistration()) || !alive) return false;
+          await registration.update();
+          if (!alive) return false;
+          inspect(); return true;
+        }
         catch (_) { return false; }
         finally { pendingCheck = null; }
       })();
@@ -235,15 +260,11 @@
     started = true;
     listen(serviceWorker, "controllerchange", reloadOnce);
     listen(win, "focus", () => check());
+    listen(win, "online", () => check(true));
     listen(doc, "visibilitychange", () => { if (doc.visibilityState === "visible") check(); });
-    try {
-      Promise.resolve(serviceWorker.register(scriptURL, { updateViaCache: "none" })).then((result) => {
-        if (!alive) return;
-        registration = result;
-        listen(registration, "updatefound", trackInstalling);
-        trackInstalling(); inspect(); check(true); tick();
-      }).catch(() => {});
-    } catch (_) { /* Offline/unsupported registration never blocks formatting. */ }
+    // Keep retry triggers alive even if the first registration fails offline.
+    // Formatting remains available; registration errors are intentionally quiet.
+    check(true); tick();
     return api;
   }
   root.FormCapyUpdates = Object.freeze({ start });

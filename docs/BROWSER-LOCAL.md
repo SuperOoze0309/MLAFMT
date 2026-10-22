@@ -1,7 +1,7 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Release status:** the v2.7.0 source is undergoing local acceptance; it is not
-yet the public website. The public site remains v2.6.0, and published offline
+**Release status:** the v2.7.0 source passed the local acceptance checks recorded
+below; it is not yet the public website. The public site remains v2.6.0, and published offline
 installers remain v2.5.0. The new update prompt and citation assistant described
 below belong to the v2.7.0 source. See [deployment notes](DEPLOYMENT.md) for the
 production record.
@@ -136,7 +136,7 @@ download result are separate from this export.
 - **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
 
-### Local citation path (v2.7.0 source, under acceptance)
+### Local citation path (v2.7.0 source, not deployed)
 
 The collapsed reference assistant accepts manually entered **books, journal
 articles and webpages**, including multiple people or a literal organization
@@ -150,6 +150,27 @@ library JSON, and a standalone Word list through the browser bridge. Changing
 inputs or style makes the old preview stale until the user previews again.
 Library JSON imports are reviewed before explicit replacement. Citation data
 does not enter FC1 codes, ShareV1 settings/labels or layout-only template JSON.
+
+Word generation has its own cancel button outside the locked paper form.
+Cancellation releases that form and keeps the entries and a still-current
+preview, allowing an immediate retry. Entry/style edits and assistant disposal
+also abort pending Word work; edits make the preview stale. Cancelled or stale
+results never replace the original paper link, and late bibliography URLs are
+revoked. The existing manually entered paper date is retained.
+
+The host callback is `onExportWord(bibliography, {signal})`. Its adapter **must
+forward the second argument's `signal` to `transport.generate()`**, including
+while runtime initialization is pending. The current page supplies the local
+adapter and busy guards. Browser cancellation terminates the current worker;
+retry creates a fresh worker. The native transport's five-minute timeout is
+separate and does not supply a browser initialization timeout.
+
+The renderer and Word validator enforce UTF-8 output limits: **32 KiB for each
+entry's HTML and plain text**, with separate **2 MiB aggregate/full-output
+caps**. Entry HTML has at most 32 nesting levels; the full safe preview permits
+one additional bibliography wrapper (33 levels total). Oversize or unsafe
+output is an explicit failure, leaving the source library and paper intact.
+Library JSON separately permits 1 MiB, 32 nesting levels and 50,000 parsed nodes.
 
 The library is **session-only by default**. Saving, loading and removing the
 saved library are explicit actions using only `formcapy.citations.v1`; removing
@@ -414,9 +435,50 @@ users to use Share → Save to Files. This behavior was not tested on a device.
 
 ## 7. Verification performed
 
-The results in this section are retained **historical v2.4.0/refactor evidence**.
-They do not establish v2.7.0 browser, source-license, asset-integrity or device
-acceptance. Current release checks belong in [deployment notes](DEPLOYMENT.md).
+### Current v2.7.0 local debug acceptance (not deployed)
+
+The post-debug artifact is `dist/formcapy-v2.7.0-debug/`: **145 manifest file
+entries**, **118,835,570 total bytes**, cache version
+`formcapy-2.7.0-pyodide-314.0.7-a3c606097254`. Its `manifest.json` SHA-256 is
+`fbf3eeed6b54d7fb95f61e90864c92acb929edcb4afe262b9be3c8ca187100c8`.
+The older `dist/formcapy-v2.7.0/` directory predates this debug pass.
+
+- All **11 Node scripts passed 309 checks**. The focused citation library and
+  assistant account for **19 + 44 = 63**; another **10 host-state integration
+  tests** exercise actual page callbacks with a bounded DOM/transport adapter.
+- The full Python regression passed **228 tests plus 159 subtests**.
+- Independent real CSL → Pyodide MLA/APA DOCX checks and the actual worker's
+  serial request queue passed. These checks are distinct from browser-download
+  inspection.
+- Real Chromium controlled-runtime-download checks confirmed a reachable Word
+  cancel button, paper-form `inert` changing from `true` to `false`, and retained
+  entries, the exact three-entry preview and manual date `3 February 2027`.
+  The held resource was `/runtime/pyodide/314.0.7/pyodide.mjs` on local port 8614.
+  After release, retry succeeded and produced the
+  `FormCapy-MLA-References.docx` link.
+- With the local static server on port 8613 stopped and no listener remaining,
+  real Chromium reloaded offline. The library did not load automatically;
+  explicitly loading its three saved entries enabled successful APA preview and
+  Word generation. Main-paper MLA demo generation then kept the existing APA
+  link; switching the assistant to MLA and generating its Word result kept the
+  main paper link unchanged. Console warnings/errors were zero.
+- Real Chromium recovery after an update check returned HTTP 503 passed. The
+  real-Service-Worker fixture update checks also passed; these were local tests.
+
+Real-browser evidence is recorded in
+`build/debug-v2.7/word-cancel-real.json`, `word-cancelled.png`,
+`offline-browser.json` and `offline-bibliography.png`. This round has not
+freshly downloaded and inspected browser-generated DOCX files;
+creating their links is a separate result. No new Safari or physical-device
+acceptance is claimed. Production remains **v2.6.0**, published offline
+installers remain **v2.5.0**, and this v2.7.0 artifact is **not deployed**.
+See the [citation guide](CITATIONS.md) for current local evidence and
+[deployment notes](DEPLOYMENT.md) for the production record.
+
+### Historical v2.4.0/refactor evidence
+
+The following results retain their original historical numbers. They do not
+establish acceptance of the current v2.7.0 artifact.
 
 ### Public deployment checks
 

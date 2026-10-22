@@ -44,6 +44,7 @@ jobs:
           node browser/test/citation_library_test.mjs
           node browser/test/citation_engine_test.mjs
           node browser/test/citation_assistant_test.mjs
+          node browser/test/citation_host_state_test.mjs
 
   windows-exe:
     needs: test

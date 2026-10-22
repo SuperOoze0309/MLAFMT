@@ -214,7 +214,7 @@ function setup({ locale = "en", manual = false, onExportWord = null, allowDownlo
   const navigator = { clipboard: undefined };
   const context = vm.createContext({
     document, navigator, localStorage: storage,
-    Blob: makeBlob, URL: URLStub, TextDecoder, TextEncoder,
+    Blob: makeBlob, URL: URLStub, TextDecoder, TextEncoder, AbortController,
     setTimeout, clearTimeout, console, queueMicrotask,
   });
   vm.runInContext(modelSource, context);
@@ -694,14 +694,18 @@ test("unsafe engine output fails preview instead of downgrading to plaintext", a
 });
 
 test("stale Word result is revoked and never shown after an edit", async () => {
-  let resolveWord;
-  const h = setup({ onExportWord: () => new Promise((resolve) => { resolveWord = resolve; }) });
+  let resolveWord, exportSignal;
+  const h = setup({ onExportWord: (_, { signal }) => {
+    exportSignal = signal;
+    return new Promise((resolve) => { resolveWord = resolve; });
+  } });
   await addAndFill(h);
   await action(h, "preview").click();
   URLStub.revoked.length = 0;
   const pending = action(h, "word").click();
   await flush();
   await fill(h, "Edited while Word was exporting");
+  assert.equal(exportSignal.aborted, true);
   resolveWord({ downloadUrl: "blob:stale-word", name: "stale.docx" });
   await pending;
   assert.ok(URLStub.revoked.includes("blob:stale-word"));
@@ -713,14 +717,18 @@ test("stale Word result is revoked and never shown after an edit", async () => {
 });
 
 test("disposing during Word export revokes the late URL and leaves no UI mutation", async () => {
-  let resolveWord;
-  const h = setup({ onExportWord: () => new Promise((resolve) => { resolveWord = resolve; }) });
+  let resolveWord, exportSignal;
+  const h = setup({ onExportWord: (_, { signal }) => {
+    exportSignal = signal;
+    return new Promise((resolve) => { resolveWord = resolve; });
+  } });
   await addAndFill(h);
   await action(h, "preview").click();
   URLStub.revoked.length = 0;
   const pending = action(h, "word").click();
   await flush();
   h.assistant.dispose();
+  assert.equal(exportSignal.aborted, true);
   resolveWord({ downloadUrl: "blob:disposed-word", name: "disposed.docx" });
   await pending;
   assert.ok(URLStub.revoked.includes("blob:disposed-word"));
@@ -942,4 +950,81 @@ test("ordinary Word copy and explicit import label are present", async () => {
   assert.match(action(h, "import-toggle").textContent, /Import library JSON/);
   assert.match(status(h), /Download the independent reference list for Word/);
   assert.doesNotMatch(status(h), /host page|页面提供/i);
+});
+
+test("Word export can be cancelled without losing the preview and immediately retried", async () => {
+  let calls = 0, exportSignal;
+  const h = setup({ onExportWord: (_, { signal }) => {
+    exportSignal = signal;
+    calls += 1;
+    if (calls > 1) return Promise.resolve({ downloadUrl: "blob:word-retry", name: "retry.docx" });
+    return new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("cancelled")), { once: true }));
+  } });
+  await addAndFill(h); await action(h, "preview").click();
+  const before = h.assistant.state();
+  const pending = action(h, "word").click(); await flush();
+  assert.equal(action(h, "word-cancel").hidden, false);
+  assert.equal(action(h, "word-cancel").type, "button");
+  await action(h, "word-cancel").click(); await pending;
+  assert.equal(exportSignal.aborted, true);
+  assert.equal(action(h, "word-cancel").hidden, true);
+  assert.equal(action(h, "word").disabled, false);
+  assert.equal(h.assistant.state().previewStale, false);
+  assert.deepEqual(h.assistant.state().items, before.items);
+  assert.equal(h.assistant.state().preview.text, before.preview.text);
+  assert.match(status(h), /Word generation cancelled/);
+  await action(h, "word").click();
+  assert.equal(exportSignal.aborted, false);
+  assert.equal(tag(h, "A").href, "blob:word-retry");
+});
+
+test("a host result arriving after Word cancellation is revoked and never displayed", async () => {
+  let finish;
+  const h = setup({ onExportWord: () => new Promise((resolve) => { finish = resolve; }) });
+  await addAndFill(h); await action(h, "preview").click();
+  const pending = action(h, "word").click(); await flush();
+  await action(h, "word-cancel").click();
+  finish({ downloadUrl: "blob:late-cancelled-word", name: "late.docx" }); await pending;
+  assert.ok(URLStub.revoked.includes("blob:late-cancelled-word"));
+  assert.equal(tag(h, "A").hidden, true);
+  assert.equal(action(h, "word").disabled, false);
+  assert.match(status(h), /Word generation cancelled/);
+});
+
+test("oversize rendered output has an actionable message in all three locales", async () => {
+  const messages = { en: /size limit/, zh: /大小限制/, es: /límite de exportación/ };
+  for (const locale of ["en", "zh", "es"]) {
+    const h = setup({ locale });
+    await addAndFill(h);
+    h.engine.render = async () => { const error = new Error("too large"); error.code = "citation_output_too_large"; throw error; };
+    await action(h, "preview").click();
+    assert.match(status(h), messages[locale]);
+    assert.equal(h.assistant.state().previewStale, true);
+    assert.equal(action(h, "html").disabled, true);
+  }
+});
+
+test("saved-library access failure keeps its error instead of claiming no saved library", async () => {
+  const h = setup(); await addAndFill(h);
+  const before = h.assistant.state().items;
+  h.storage.getItem = () => { throw new DOMException("blocked", "SecurityError"); };
+  await action(h, "load").click();
+  const notice = tag(h, "SPAN", (node) => node.className.split(/\s+/).includes("fc-citations-status"));
+  assert.match(notice.textContent, /storage operation failed/i);
+  assert.doesNotMatch(notice.textContent, /not saved/i);
+  assert.deepEqual(h.assistant.state().items, before);
+  h.storage.getItem = () => null;
+  await action(h, "load").click();
+  assert.match(notice.textContent, /not saved/i);
+});
+
+test("editing after a successful Word export clears the old success status", async () => {
+  const h = setup({ onExportWord: async () => ({ downloadUrl: "blob:old-ready", name: "old.docx" }) });
+  await addAndFill(h); await action(h, "preview").click(); await action(h, "word").click();
+  await fill(h, "Changed after Word export");
+  const notice = tag(h, "SPAN", (node) => node.className.split(/\s+/).includes("fc-citations-status"));
+  assert.match(notice.textContent, /changes have not been previewed/i);
+  assert.doesNotMatch(notice.textContent, /ready/i);
+  assert.equal(tag(h, "A").hidden, true);
+  assert.equal(h.assistant.state().previewStale, true);
 });

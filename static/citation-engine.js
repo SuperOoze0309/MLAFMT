@@ -17,6 +17,8 @@
   const STRINGS = new Set(["title", "container-title", "publisher", "publisher-place", "volume", "issue", "page", "DOI", "URL", "edition", "language"]);
   const KEYS = new Set(["id", "type", "author", "issued", "accessed", ...STRINGS]);
   const MAX_ITEMS = 200;
+  const MAX_ENTRY_BYTES = 32 * 1024;
+  const MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
   const textCache = new Map();
   let processorPromise = null;
 
@@ -26,7 +28,7 @@
   function invalid() { throw new CitationError("invalid_citations"); }
   function record(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
   function text(value, maximum = 5000) {
-    if (typeof value !== "string" || value.length > maximum || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value) || /[\ud800-\udfff]/u.test(value)) invalid();
+    if (typeof value !== "string" || value.length > maximum || /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069\u200e\u200f\u061c\ufffe\uffff]/u.test(value) || /[\ud800-\udfff]/u.test(value)) invalid();
     return value;
   }
   function date(value) {
@@ -45,6 +47,7 @@
   }
   function safeURL(value) {
     try {
+      if(typeof value!=="string" || /\s|\\/u.test(value))return null;
       const url = new URL(value);
       return ["http:","https:"].includes(url.protocol) && !url.username && !url.password ? url.href : null;
     } catch (_) { return null; }
@@ -59,9 +62,17 @@
       ids.add(item.id);
       const result = {id:item.id,type:item.type};
       for (const key of STRINGS) if (key in item) result[key]=text(item[key]);
-      if (result.URL && !safeURL(result.URL)) invalid();
+      if (result.URL) {
+        const url=safeURL(result.URL);
+        if(!url)invalid();
+        result.URL=url;
+      }
       if (result.DOI) {
-        result.DOI=result.DOI.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, "");
+        const linked=/^https?:\/\/(?:dx\.)?doi\.org\/(.*)$/i.exec(result.DOI);
+        if(linked){
+          try {result.DOI=text(decodeURIComponent(linked[1]));}
+          catch(_){throw new CitationError("invalid_citation_doi");}
+        }
         if (!/^10\.\d{4,9}\/\S+$/i.test(result.DOI)) throw new CitationError("invalid_citation_doi");
       }
       for (const key of ["issued","accessed"]) if (key in item) result[key]=date(item[key]);
@@ -144,6 +155,19 @@
     if (new Set(order).size !== ids.length || order.some(id=>!ids.includes(id))) throw new CitationError("citation_render_failed");
     return {parameters:output[0],values:output[1],order};
   }
+  function checkMarkupDepth(html, maximum) {
+    const stack=[];
+    for(const match of html.matchAll(/<\s*(\/?)\s*([A-Za-z][\w:-]*)\b[^>]*>/g)){
+      const tag=match[2].toLowerCase();
+      if(match[1]){
+        if(stack.pop()!==tag)throw new CitationError("unsafe_citation_output");
+      } else if(tag!=="br"){
+        stack.push(tag);
+        if(stack.length>maximum)throw new CitationError("unsafe_citation_output");
+      }
+    }
+    if(stack.length)throw new CitationError("unsafe_citation_output");
+  }
   async function render(items, style="mla") {
     if (!Object.hasOwn(STYLES,style)) throw new CitationError("invalid_citation_style");
     const values=validateItems(items);
@@ -151,7 +175,12 @@
     if (!values.length) return {style,heading,html:"",text:"",entries:[],layout:{hangingindent:true,linespacing:2,entryspacing:0,"second-field-align":false,maxoffset:0}};
     try {
       const [CSL,xml,locale]=await Promise.all([processor(),asset(STYLES[style]),asset("locales-en-US.xml")]);
-      const byId=new Map(values.map(item=>[item.id,item]));
+      // Supplying the DOI as its full URI avoids the pinned processor's
+      // double-encoding branch when URL wrapping and a doi.org style prefix
+      // are both active. The caller's original record remains unchanged.
+      const byId=new Map(values.map(item=>[item.id,item.DOI ? {
+        ...item,DOI:"https://doi.org/"+encodeURIComponent(item.DOI).replace(/%2F/gi,"/"),
+      } : item]));
       const sys={retrieveLocale:lang=>["en-US","en"].includes(lang)?locale:false,retrieveItem:id=>byId.get(String(id))};
       // A fresh processor owns each render; the caller's records are not mutated.
       const engine=new CSL.Engine(sys,xml,"en-US",true);
@@ -161,9 +190,20 @@
       const plain=entriesFor(engine,ids,"text");
       if (JSON.stringify(html.order)!==JSON.stringify(plain.order)) throw new CitationError("citation_render_failed");
       const entries=html.order.map((id,index)=>({id,html:html.values[index].trim(),text:plain.values[index].trim()}));
+      const bytes=value=>new TextEncoder().encode(value).length;
+      let htmlBytes=0,textBytes=0;
+      for(const entry of entries){
+        const entryHtml=bytes(entry.html),entryText=bytes(entry.text);
+        htmlBytes+=entryHtml;textBytes+=entryText;
+        if(entryHtml>MAX_ENTRY_BYTES || entryText>MAX_ENTRY_BYTES || htmlBytes>MAX_OUTPUT_BYTES || textBytes>MAX_OUTPUT_BYTES)throw new CitationError("citation_output_too_large");
+        checkMarkupDepth(entry.html,32);
+      }
       const layout={};
       for(const key of ["hangingindent","linespacing","entryspacing","second-field-align","maxoffset"]) layout[key]=html.parameters[key] ?? (key==="hangingindent" || key==="second-field-align"?false:0);
-      return {style,heading,html:`<div class="csl-bib-body">\n${entries.map(entry=>entry.html).join("\n")}\n</div>`,text:entries.map(entry=>entry.text).join("\n\n"),entries,layout};
+      const renderedHtml=`<div class="csl-bib-body">\n${entries.map(entry=>entry.html).join("\n")}\n</div>`;
+      const renderedText=entries.map(entry=>entry.text).join("\n\n");
+      if(bytes(renderedHtml)>MAX_OUTPUT_BYTES || bytes(renderedText)>MAX_OUTPUT_BYTES)throw new CitationError("citation_output_too_large");
+      return {style,heading,html:renderedHtml,text:renderedText,entries,layout};
     } catch (error) {
       if(error instanceof CitationError)throw error;
       throw new CitationError("citation_render_failed",error?.message || error);
@@ -191,11 +231,13 @@
     return result.join("; ");
   }
   function safeFragment(html, document=root.document) {
-    if(typeof html!=="string" || html.length>2*1024*1024 || !document?.createElement) throw new CitationError("unsafe_citation_output");
+    if(typeof html!=="string" || html.length>MAX_OUTPUT_BYTES || new TextEncoder().encode(html).length>MAX_OUTPUT_BYTES || !document?.createElement) throw new CitationError("unsafe_citation_output");
     // Reject resource-bearing or executable nodes before parsing. An inert
     // template never enters the live DOM; only newly built allowlisted nodes do.
     if(/<!|<\?/.test(html))throw new CitationError("unsafe_citation_output");
     for(const match of html.matchAll(/<\s*\/?\s*([A-Za-z][\w:-]*)/g)) if(!TAGS.has(match[1].toLowerCase()))throw new CitationError("unsafe_citation_output");
+    // One extra wrapper is used by the complete bibliography around entries.
+    checkMarkupDepth(html,33);
     const template=document.createElement("template");
     template.innerHTML=html;
     const fragment=document.createDocumentFragment();

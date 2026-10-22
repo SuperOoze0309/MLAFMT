@@ -74,6 +74,10 @@
     if (value.length > maximum) add(errors, "text_too_long", path);
     for (let index = 0; index < value.length; index += 1) {
       const code = value.charCodeAt(index);
+      if (code === 0xfffe || code === 0xffff) {
+        add(errors, "invalid_unicode", path);
+        continue;
+      }
       if (code >= 0xd800 && code <= 0xdbff) {
         const next = value.charCodeAt(index + 1);
         if (next >= 0xdc00 && next <= 0xdfff) {
@@ -149,7 +153,7 @@
 
   function checkUrl(value, path, errors) {
     if (!value) return;
-    if (value.trim() !== value || /\s/.test(value)) {
+    if (value.trim() !== value || /[\s\\]/.test(value)) {
       add(errors, "url_invalid", path);
       return;
     }

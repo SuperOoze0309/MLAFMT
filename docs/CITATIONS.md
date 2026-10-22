@@ -37,6 +37,8 @@ English:
 7. 预览刷新后可复制纯文本/带格式文本或下载独立 HTML。需要 Word 时，点击“下载 Word 文献表”，准备完成后再点击助手内显示的文件名链接。
 8. 可选：点击“保存到本设备”保留文献库，或用“下载库 JSON”保存为文件；两者都是单独动作，不会自动发生。
 
+Word 准备期间可点击“取消 Word 生成”；当前条目和仍有效的预览会保留，随后可以立即重试。生成期间编辑条目或切换样式也会中止该次 Word 工作；编辑后需重新预览。现有论文下载链接和手填日期不会被替换。
+
 English:
 
 1. Expand **Reference assistant** on the page.
@@ -47,6 +49,8 @@ English:
 6. Select MLA 9 or APA 7 and choose **Preview bibliography**. Rendering runs locally; program assets come from this site or its completed offline cache.
 7. After the preview refreshes, copy plain/formatted text or download standalone HTML. For Word, choose **Download Word reference list**, then click the filename link shown in the assistant once it is ready.
 8. Optionally use **Save library on this device** to retain the library or **Download library JSON** to save a file. Each is a separate, explicit action.
+
+Use **Cancel Word generation** while Word is being prepared. Entries and a still-current preview are kept, allowing an immediate retry. Editing entries or changing style also stops that Word operation; edits require a fresh preview. The existing paper-download link and manually entered date remain intact.
 
 ## 3. 字段 / Entry fields
 
@@ -74,10 +78,11 @@ English:
 - 普通字段最多 5000 字符 / ordinary field max 5000 characters.
 - `originalText` 最多 10000 字符 / max 10000 characters.
 - 原始库 JSON 最多 1 MiB（UTF-8）；导出优先美化，美化超出时使用紧凑 JSON；紧凑也超出则明确报错。/ Raw library JSON max 1 MiB UTF-8. Export uses pretty JSON when it fits, otherwise compact JSON; compact overflow is an explicit error.
+- 库 JSON 的嵌套深度最多 32 层，解析节点最多 50,000 个。/ Library JSON permits at most 32 nesting levels and 50,000 parsed nodes.
 - ID 必须唯一 / IDs must be unique.
 - 不接受未知字段、未知 schema/版本、重复 JSON 键、原型污染键或未配对代理字符。/ Unknown fields, unknown schema/version, duplicate JSON keys, prototype-pollution keys, and unpaired surrogate code units are rejected.
 - 仅允许安全 `http(s)` URL；DOI 做本地检查，不访问目标地址。/ Only safe `http(s)` URLs; DOI checks are local and never fetch the target.
-- Word 导出另有安全上限：单条排版 HTML 不超过 32 KiB，合计不超过 2 MiB；过长内容需缩短后重试，不会改写库或原稿。/ Word export additionally limits formatted entry HTML to 32 KiB per entry and 2 MiB in total. Shorten oversized entries and retry; the library and draft stay intact.
+- 预览及 Word 导出的排版结果也有限制：单条 HTML 和纯文本各不超过 32 KiB（UTF-8），各自合计及完整输出各不超过 2 MiB。单条 HTML 最多嵌套 32 层；完整预览允许额外一层文献表容器，共 33 层。超限会明确报错，需缩短内容或减少条目后重试，不会改写库或原稿。/ Preview and Word output limit each entry's HTML and plain text to 32 KiB each (UTF-8), with separate 2 MiB aggregate/full-output caps. Entry HTML permits 32 nesting levels; the complete preview permits one additional bibliography wrapper, 33 levels total. Oversize output is an explicit error: shorten fields or use fewer entries and retry. The library and draft stay intact.
 
 ## 4. 预览、提醒和错误 / Preview, warnings, errors
 
@@ -107,7 +112,7 @@ English:
 - 文件读取使用致命 UTF-8 解码并有 1 MiB 上限。选择新文件、修改文本、关闭面板、取消或确认后，旧异步读取会失效；确认时还会核对生成号与当前原始文本。
 - 粘贴一个 URL 只会作为无效 JSON 处理，**不会发起网络请求**。
 - **独立 HTML**：只把引擎安全片段序列化进无脚本、无远程资源的 HTML，包含 CSL 的悬挂缩进/行距/条目间距和本地来源说明。CSL 布尔值 `hangingindent:true` 按半英寸（48px）处理，`false` 不缩进；数值像素适配器保留。
-- **Word**：在浏览器本地生成独立 `.docx` 文献表，准备完成后在助手内显示下载链接，不修改现有论文结果。它使用 Letter 纸张、1 英寸页边距、Times New Roman 12 pt，以及所选 MLA／APA 的标题和文献块格式，不套用主页的自定义课程模板。
+- **Word**：在浏览器本地生成独立 `.docx` 文献表，准备完成后在助手内显示下载链接，不修改现有论文结果。它使用 Letter 纸张、1 英寸页边距、Times New Roman 12 pt，以及所选 MLA／APA 的标题和文献块格式，不套用主页的自定义课程模板。生成期间有单独的取消按钮；取消释放论文表单，保留条目和仍有效的预览，晚到的结果链接不会显示。
 
 English:
 
@@ -117,7 +122,7 @@ English:
 - File reads use fatal UTF-8 decoding and a 1 MiB limit. Choosing another file, editing the text, closing the panel, cancelling, or confirming invalidates older asynchronous reads. Confirmation also checks the generation and current raw text.
 - Pasting a URL is treated as invalid JSON; it **never triggers a network request**.
 - **Standalone HTML**: serializes only the engine's safe fragment into a script-free, remote-resource-free HTML file, using the CSL hanging indent/line spacing/entry spacing and a local-source note. CSL boolean `hangingindent:true` is exported as a half-inch (48px) hanging indent, `false` as no indent; numeric pixel adapters are preserved.
-- **Word**: generates a separate `.docx` bibliography locally and shows its download link inside the assistant, leaving paper results unchanged. It uses Letter paper, 1-inch margins, Times New Roman 12 pt, and the selected MLA/APA heading and bibliography layout. It does not apply the main page's custom course template.
+- **Word**: generates a separate `.docx` bibliography locally and shows its download link inside the assistant, leaving paper results unchanged. It uses Letter paper, 1-inch margins, Times New Roman 12 pt, and the selected MLA/APA heading and bibliography layout. It does not apply the main page's custom course template. A separate cancel button releases the paper form while keeping entries and a still-current preview; late result links are not displayed.
 
 ## 6. 本地保存 / Local persistence
 
@@ -226,9 +231,16 @@ const citations = FormCapyCitationAssistant.create({
   engine: FormCapyCitationEngine,    // optional; global default
   model: FormCapyCitations,          // optional; global default
   storage: window.localStorage,      // optional; safe fallback
-  // Static browser mode supplies the existing local Word export adapter here.
-  // See templates/index.html for its transport call and busy-state guards.
-  onExportWord: localWordExportAdapter,
+  // Forward the second argument's signal to the local transport.
+  // The actual page also owns busy guards and form locks; see index.html.
+  onExportWord: async (bibliography, { signal } = {}) => {
+    const result = await localTransport.generate({
+      request: { kind: "bibliography", bibliography },
+      file: null,
+      signal,
+    });
+    return { downloadUrl: URL.createObjectURL(result.blob), name: result.name };
+  },
   allowDownloads: true, // false on restricted native surfaces
 });
 
@@ -236,14 +248,15 @@ const citations = FormCapyCitationAssistant.create({
 // preview, and error state.
 citations.render();
 
-// Optional teardown: removes the UI, clears timers, revokes owned blob URLs.
+// Optional teardown: aborts pending Word work, removes the UI,
+// clears timers and revokes owned blob URLs.
 citations.dispose();
 
 // Detached status snapshot for host tests/status.
 citations.state();
 ```
 
-The code block is an API-shape illustration; `currentLanguage` and `localWordExportAdapter` refer to host-provided values, not standalone globals. `onExportWord` receives `{style,heading,html,text,entries,layout}` and returns a local download URL/name after the separate DOCX has been built. The actual page already provides this adapter through the browser bridge. The assistant displays the link only inside its panel. `allowDownloads:false` hides JSON/HTML/Word download controls; copy remains available.
+The code block illustrates the API shape; `currentLanguage` and `localTransport` are host-provided values, not standalone globals. `onExportWord(bibliography, {signal})` receives `{style,heading,html,text,entries,layout}` as its first argument and the cancellation signal as its second. A host adapter **must pass that signal through to `transport.generate()`** so cancel/edit/disposal stops pending initialization and worker work. It returns `{downloadUrl, name}` after the separate DOCX has been built. The actual page already supplies the adapter, busy guards and locks through the browser bridge. The assistant displays the link only inside its panel and revokes URLs from cancelled, stale or disposed operations. `allowDownloads:false` hides JSON/HTML/Word download controls; copy remains available.
 
 </details>
 
@@ -268,27 +281,31 @@ Focused Node tests (fictional data; no browser download of user documents). Thes
 node --test browser/test/citation_library_test.mjs browser/test/citation_assistant_test.mjs
 ```
 
-当前结果 / current result: **56 passed, 0 failed** (17 model tests, 39 assistant DOM tests). The assistant tests use a small in-memory DOM adapter and injected engine/storage/clipboard stubs; they remain separate from the real Chromium checks below.
+当前结果 / current result: **63 passed, 0 failed** (19 model tests, 44 assistant DOM tests). The assistant tests use a small in-memory DOM adapter and injected engine/storage/clipboard stubs; they remain separate from the real Chromium checks below. An additional **10 host-state integration tests** in `browser/test/citation_host_state_test.mjs` exercise the actual page callbacks, cancellation/retry ownership, lock release and original-paper state retention.
 
-Coverage includes: JSON roundtrip and compact 1 MiB cap; Unicode; partial/leap dates; multiple/literal/whitespace authors; no fabricated metadata; malformed/version/duplicate/prototype/oversize imports leaving state intact; explicit-only storage; trilingual field preservation and scoped date labels; stale preview/race; invalid date preservation; DOI renderer rejection; unsafe engine output; stale Word edit/dispose and URL revocation; import file/review races; issue-list caps; download timers; standalone HTML layout/attribution; clipboard fallback and escaped XSS.
+Coverage includes: JSON roundtrip and compact 1 MiB cap; Unicode; partial/leap dates; multiple/literal/whitespace authors; no fabricated metadata; malformed/version/duplicate/prototype/oversize imports leaving state intact; explicit-only storage and storage-read errors; trilingual field preservation and scoped date labels; stale preview/race; invalid date preservation; DOI renderer rejection; unsafe/oversize engine output; explicit Word cancel/retry, automatic edit/dispose abortion and late-URL revocation; import file/review races; issue-list caps; download timers; standalone HTML layout/attribution; clipboard fallback and escaped XSS.
 
 ## 12. 最终本地验收 / Final local acceptance
 
-以下记录来自 `dist/formcapy-v2.7.0/`，属于本地静态构建和本地浏览器验收，**不是生产部署证明**。构建包含 145 项 manifest 文件记录，总计 118,827,803 字节；离线缓存标识为 `formcapy-2.7.0-pyodide-314.0.7-067d00d3c8d6`。
+本轮调试后构建为 `dist/formcapy-v2.7.0-debug/`，属于本地静态构建和本地浏览器验收，**不是生产部署证明**。构建包含 145 项 manifest 文件记录，总计 **118,835,570 字节**；离线缓存标识为 `formcapy-2.7.0-pyodide-314.0.7-a3c606097254`，`manifest.json` SHA-256 为 `fbf3eeed6b54d7fb95f61e90864c92acb929edcb4afe262b9be3c8ca187100c8`。旧 `dist/formcapy-v2.7.0/` 是本轮调试前的构建，不能代替此产物记录。
 
-These results concern the local static artifact and local Chromium, **not a production deployment**. The artifact has 145 manifest file entries, totals 118,827,803 bytes, and uses the cache identifier recorded above.
+These results concern the post-debug local artifact and local Chromium, **not a production deployment**. The artifact has 145 manifest file entries, totals **118,835,570 bytes**, and uses the cache identifier and manifest digest above. The older `dist/formcapy-v2.7.0/` directory predates this debug pass.
 
 | 检查 / Check | 本地结果 / Local result |
 | --- | --- |
-| 全部 Node 检查 / All Node checks | 267 项通过；其中模型 17、助手 DOM 39，共 56 项 / 267 passed, including 17 model and 39 assistant DOM cases |
-| Python 回归 / Python regression | 222 项及 159 项子检查通过 / 222 tests and 159 subtests passed |
+| 全部 Node 检查 / All Node checks | 11 个脚本共 309 项通过；其中模型 19、助手 DOM 44，共 63 项，另有 host 集成 10 项 / 309 passed across 11 scripts, including 19 model, 44 assistant DOM and 10 additional host integration cases |
+| Python 回归 / Python regression | 228 项及 159 项子检查通过 / 228 tests and 159 subtests passed |
 | 真实 CSL → Pyodide → DOCX | MLA、APA 各 4 条原创虚构记录的 ZIP／内容检查通过；与浏览器文件下载检查分开 / Four fictional entries per style passed ZIP/content checks, separate from browser-download inspection |
 | 真实 Chromium 助手 / Real Chromium assistant | 书籍、期刊、网页 → MLA／APA 预览及独立 Word 下载链接生成通过 / All three source types produced MLA/APA previews and standalone Word download links |
 | 错误保留 / Error preservation | 日期 `0` 跨语言保留并明确报错；异常 DOI 提示核对或清空 / Date `0` remained visible across languages with an error; invalid DOI prompted correction or clearing |
 | 文献数据与保存 / Library data and persistence | 实际库 JSON 仅含 `schema`、`v`、`items`；显式保存及删除保存副本不清空活动库 / JSON contained only the three schema fields; explicit save/remove left the active library intact |
 | 论文流程隔离 / Paper-flow separation | 原论文示例生成及后续 APA 文献 Word 均成功；论文结果链接与手填日期保持原样 / Demo-paper generation and later APA bibliography Word generation succeeded without changing the paper-result link or manual date |
+| Word 取消与重试 / Word cancellation and retry | 真实 Chromium 受控暂停 `pyodide.mjs` 下载期间，取消按钮可操作，论文表单由锁定恢复；三条文献的预览及手填日期 `3 February 2027` 完全保留。放行后重试成功，生成 `FormCapy-MLA-References.docx` 链接 / During a controlled `pyodide.mjs` download hold, cancellation remained reachable and released the paper form; the three-entry preview and manual date were unchanged. Retry after release produced the standalone MLA Word link |
+| 离线重载与转换 / Offline reload and conversion | 停止本地静态服务器且确认端口无监听后，真实 Chromium 离线重载成功；文献库未自动载入，手动载入已保存的三条后，APA／MLA 预览与 Word 链接均生成成功。期间原论文 MLA 示例生成成功，文献／论文既有链接分别保留；控制台警告／错误为 0 / With the local server stopped and no listener remaining, Chromium reloaded offline. The library stayed empty until explicitly loaded; all three saved entries produced APA/MLA previews and Word links. Main-paper MLA generation also succeeded while keeping the separate existing bibliography/paper links; zero console warnings/errors |
 | 窄视口与语言 / Narrow viewports and languages | 390／768 px 的中文、英文、西班牙语界面未见横向溢出；警告／错误控制台记录为 0 / No horizontal overflow at 390/768 px in zh/en/es; zero console warnings/errors |
-| 更新提示 / Update notice | 真实 Service Worker 独立测试页的更新流程通过；与助手和生产网站检查分开记录 / The real-Service-Worker fixture flow passed, separately from assistant and production checks |
+| 更新提示 / Update notice | 真实 Service Worker 独立测试页的更新流程及真实 Chromium 的 HTTP 503 后恢复通过；与生产网站检查分开记录 / The real-Service-Worker fixture flow and real Chromium recovery after HTTP 503 passed, separately from production checks |
+
+本轮真实浏览器证据为 `build/debug-v2.7/word-cancel-real.json`、`word-cancelled.png`、`offline-browser.json` 和 `offline-bibliography.png`。取消／重试使用本地 8614 端口，离线重载／转换使用停止服务器后的 8613 端口；均属于本地验收。Current real-browser evidence is recorded in those files: cancellation/retry used local port 8614, and offline reload/conversion used port 8613 after its server was stopped. These are local acceptance results.
 
 本轮**没有重新下载并检查浏览器生成的 DOCX 文件**；浏览器已生成下载链接不等于完成下载文件验收。上表中的 ZIP／内容检查来自独立 CSL→Pyodide 检查。窄视口结果来自桌面 Chromium，不代表手机／平板实机。Safari、物理设备及 v2.7.0 正式网站流程仍未验收。
 

@@ -3017,6 +3017,16 @@
       });
       const transfer = $("template-transfer");
       let transferOpener = null;
+      let transferRevision = 0, transferExporting = false;
+      function invalidateTransferRead() { transferRevision += 1; }
+      transfer.addEventListener("cancel", invalidateTransferRead);
+      transfer.addEventListener("close", () => {
+        if (!transfer.open) invalidateTransferRead();
+      });
+      $("transfer-text").addEventListener("input", () => {
+        invalidateTransferRead();
+        $("transfer-message").textContent = "";
+      });
       function openTransfer(exporting) {
         let text = "";
         if (exporting) {
@@ -3024,6 +3034,8 @@
           if (!profile) return;
           text = JSON.stringify(profile, null, 2);
         }
+        invalidateTransferRead();
+        transferExporting = exporting;
         transferOpener = $(exporting ? "preset-export" : "preset-import");
         $("transfer-text").value = text;
         $("transfer-message").textContent = native ? (templateSharing?.nativeImportHint() || t("native_transfer_hint")) : "";
@@ -3069,23 +3081,36 @@
       });
       $("transfer-file").addEventListener("click", () => $("template-file").click());
       $("template-file").addEventListener("change", async (event) => {
+        const revision = ++transferRevision;
         const candidate = event.target.files[0];
-        if (!candidate) return;
+        // Capture the File before clearing the chooser; selecting the same file
+        // again must still produce a change event, even while its read is pending.
+        event.target.value = "";
+        if (!candidate || !transfer.open || transferExporting) return;
+        const originalText = $("transfer-text").value;
+        const isCurrent = () => revision === transferRevision && transfer.open &&
+          !transferExporting && $("transfer-text").value === originalText;
         try {
           if (candidate.size > 32768) $("transfer-message").textContent = t("template_file_large");
           else {
-            $("transfer-text").value = new TextDecoder("utf-8", { fatal: true }).decode(await candidate.arrayBuffer());
+            const bytes = await candidate.arrayBuffer();
+            if (!isCurrent()) return;
+            $("transfer-text").value = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
             $("transfer-message").textContent = "";
           }
-        } catch (_) { $("transfer-message").textContent = t("template_unavailable"); }
-        finally { $("template-file").value = ""; }
+        } catch (_) {
+          if (isCurrent()) $("transfer-message").textContent = t("template_unavailable");
+        }
       });
       $("transfer-copy").addEventListener("click", async () => {
+        const revision = transferRevision;
+        const isCurrent = () => revision === transferRevision && transfer.open && transferExporting;
         try {
           if (!navigator.clipboard?.writeText) throw new Error("clipboard");
           await navigator.clipboard.writeText($("transfer-text").value);
-          $("transfer-message").textContent = t("template_copied");
+          if (isCurrent()) $("transfer-message").textContent = t("template_copied");
         } catch (_) {
+          if (!isCurrent()) return;
           $("transfer-text").focus();
           $("transfer-text").select();
           $("transfer-message").textContent = t("template_copy_manual");
@@ -3560,19 +3585,28 @@
         setStatus("cancelled");
       });
       $("browser-retry").addEventListener("click", async () => {
+        if (inProgress || sharing || paragraphLoading || citationWordBusy || updateInProgress) return;
+        const retryGeneration = generationSeq;
+        const canReport = () => retryGeneration === generationSeq &&
+          !inProgress && !sharing && !paragraphLoading && !citationWordBusy && !updateInProgress;
         $("browser-retry").hidden = true;
         stageKey = "stage_runtime";
         setStatus("stage_runtime", "working");
         renderProcessingProgress();
         try {
           await transport.init();
+          if (!canReport()) return;
           setStatus("engine_ready", "ok");
-        } catch (_) {
-          setStatus("browser_init_failed", "err");
+        } catch (error) {
+          if (!canReport()) return;
+          if (transport.errorCode(error) === "cancelled") setStatus("cancelled");
+          else setStatus("browser_init_failed", "err");
           $("browser-retry").hidden = false;
         } finally {
-          stageKey = null;
-          renderProcessingProgress();
+          if (canReport()) {
+            stageKey = null;
+            renderProcessingProgress();
+          }
         }
       });
       if (transport?.kind === "browser" && window.FormCapyUpdates) {
@@ -3591,13 +3625,13 @@
           mount: $("citation-assistant-mount"),
           getLocale: () => lang,
           allowDownloads: true,
-          onExportWord: transport?.kind === "browser" ? async (bibliography) => {
+          onExportWord: transport?.kind === "browser" ? async (bibliography, { signal } = {}) => {
             if (inProgress || sharing || paragraphLoading || citationWordBusy || updateInProgress) throw new Error("busy");
             citationWordBusy = true;
             syncWorkLocks();
             for (const id of ["convert", "blank"]) $(id).disabled = true;
             try {
-              const result = await transport.generate({ request: { kind: "bibliography", bibliography }, file: null });
+              const result = await transport.generate({ request: { kind: "bibliography", bibliography }, file: null, signal });
               if (!result?.blob) throw new Error("failed");
               return { downloadUrl: URL.createObjectURL(result.blob), name: result.name };
             } finally {

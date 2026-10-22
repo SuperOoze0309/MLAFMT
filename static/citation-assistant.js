@@ -44,6 +44,7 @@
       copy_text: "复制纯文本", copy_rich: "复制带格式文本", copy_json: "复制库 JSON",
       download_json: "下载库 JSON", download_html: "下载 HTML", download_word: "下载 Word 文献表",
       word_busy: "正在准备 Word 文献表…", word_error: "无法生成 Word 文献表。",
+      word_cancel: "取消 Word 生成", word_cancelled: "已取消 Word 生成，条目和预览已保留。",
       word_ready: "Word 文献表已准备好。", copied: "已复制。", copy_failed: "无法复制，请手动选择文本。",
       copy_manual: "内容已选中，请使用系统的复制操作。", json_copied: "库 JSON 已复制。",
       import_export: "导入 / 导出",
@@ -88,6 +89,7 @@
       error_engine: "引用渲染器返回了无效结果。",
       error_engine_content: "渲染器拒绝了这些条目数据。请检查不常见的 Unicode 字符或缺失字段。",
       error_doi_engine: "渲染器不接受这个 DOI 格式。请检查或清空 DOI 后再预览。",
+      error_engine_size: "文献表超过导出大小限制。请缩短过长字段或减少条目后重新预览。",
       preview_unsafe: "预览内容无法安全显示，复制和导出仍保持禁用。",
       status_ready: "就绪。", status_changed: "有未预览的更改。",
       session_note: "默认只在当前页面会话中保留；保存到本设备是单独操作。",
@@ -131,6 +133,7 @@
       copy_text: "Copy plain text", copy_rich: "Copy formatted text", copy_json: "Copy library JSON",
       download_json: "Download library JSON", download_html: "Download HTML", download_word: "Download Word reference list",
       word_busy: "Preparing Word reference list…", word_error: "The Word reference list could not be created.",
+      word_cancel: "Cancel Word generation", word_cancelled: "Word generation cancelled. Entries and preview are kept.",
       word_ready: "The Word reference list is ready.", copied: "Copied.", copy_failed: "Could not copy. Select the text manually.",
       copy_manual: "Content selected. Use your system's copy action.", json_copied: "Library JSON copied.",
       import_export: "Import / export",
@@ -175,6 +178,7 @@
       error_engine: "The citation renderer returned an invalid result.",
       error_engine_content: "The renderer rejected these entry records. Check unusual Unicode characters or missing fields.",
       error_doi_engine: "The renderer rejected this DOI format. Check or clear the DOI before previewing.",
+      error_engine_size: "The reference list exceeds the export size limit. Shorten very long fields or use fewer entries, then preview again.",
       preview_unsafe: "The preview could not be displayed safely. Copy and export remain disabled.",
       status_ready: "Ready.", status_changed: "Changes have not been previewed.",
       session_note: "By default this library lives only in this page session; saving to this device is a separate action.",
@@ -218,6 +222,7 @@
       copy_text: "Copiar texto sin formato", copy_rich: "Copiar texto con formato", copy_json: "Copiar JSON de la biblioteca",
       download_json: "Descargar JSON de la biblioteca", download_html: "Descargar HTML", download_word: "Descargar lista Word",
       word_busy: "Preparando la lista Word…", word_error: "No se pudo crear la lista Word.",
+      word_cancel: "Cancelar generación Word", word_cancelled: "Generación Word cancelada. Se conservan las entradas y la vista previa.",
       word_ready: "La lista Word está lista.", copied: "Copiado.", copy_failed: "No se pudo copiar. Selecciona el texto manualmente.",
       copy_manual: "Contenido seleccionado. Usa la acción Copiar del sistema.", json_copied: "JSON de la biblioteca copiado.",
       import_export: "Importar / exportar",
@@ -262,6 +267,7 @@
       error_engine: "El motor de citas devolvió un resultado no válido.",
       error_engine_content: "El motor rechazó estos datos. Revisa caracteres Unicode poco habituales o campos ausentes.",
       error_doi_engine: "El motor rechazó este formato de DOI. Revisa o borra el DOI antes de previsualizar.",
+      error_engine_size: "La lista supera el límite de exportación. Acorta los campos muy largos o reduce las entradas y vuelve a previsualizar.",
       preview_unsafe: "La vista previa no se pudo mostrar de forma segura. Copiar y exportar siguen desactivados.",
       status_ready: "Listo.", status_changed: "Hay cambios sin previsualizar.",
       session_note: "Por defecto, la biblioteca solo existe en esta sesión de página; guardarla en el dispositivo es una acción aparte.",
@@ -358,6 +364,7 @@
     const nodes = {};
     const labelNodes = {};
     const downloadTimers = new Set();
+    let wordController = null;
     const DOWNLOAD_URL_TTL = 1000;
 
     function readLocale() {
@@ -495,11 +502,13 @@
     }
 
     function invalidatePreview() {
+      wordController?.abort();
       state.previewToken += 1;
       state.previewBusy = false;
       state.previewStale = true;
       state.previewIssues = { errors: [], warnings: [] };
       clearWordUrl();
+      setStatus("status_changed", null, "warn");
     }
 
     function snapshot(kind) {
@@ -815,6 +824,10 @@
           engine && typeof engine.safeFragment === "function" && root.ClipboardItem);
       }
       if (nodes.wordButton) nodes.wordButton.hidden = !(allowDownloads && onExportWord);
+      if (nodes.wordCancel) {
+        nodes.wordCancel.hidden = !state.busyExport || !wordController;
+        nodes.wordCancel.disabled = Boolean(wordController?.signal.aborted);
+      }
       if (nodes.wordNote) nodes.wordNote.hidden = !(allowDownloads && onExportWord);
       if (nodes.htmlButton) nodes.htmlButton.disabled = !fresh || !canDownload();
       if (nodes.wordLink) nodes.wordLink.hidden = !state.wordLink;
@@ -912,6 +925,7 @@
       setText(nodes.exportJsonButton, t("download_json"));
       setText(nodes.htmlButton, t("download_html"));
       setText(nodes.wordButton, t("download_word"));
+      setText(nodes.wordCancel, t("word_cancel"));
       setText(nodes.importExportHeading, t("import_export"));
       setText(nodes.importToggle, t("import_library_json"));
       setText(nodes.importHint, t("import_hint"));
@@ -1173,6 +1187,14 @@
     nodes.copyJsonButton = nodes.copyJsonButton || button(t("copy_json"), "json-copy");
     nodes.htmlButton = button(t("download_html"), "html");
     nodes.wordButton = button(t("download_word"), "word");
+    nodes.wordCancel = button(t("word_cancel"), "word-cancel");
+    nodes.wordCancel.hidden = true;
+    nodes.wordCancel.addEventListener("click", () => {
+      if (!state.busyExport || !wordController || wordController.signal.aborted) return;
+      wordController.abort();
+      setStatus("word_cancelled");
+      render();
+    });
     nodes.wordNote = make("p", "fc-citations-note", t("word_note"));
     nodes.wordLinkWrap = make("p", "fc-citations-word-link");
     nodes.wordLink = make("a", "");
@@ -1182,7 +1204,7 @@
     nodes.wordLinkWrap.append(nodes.wordLink);
     nodes.previewActions = make("div", "fc-citations-preview-actions");
     append(nodes.previewActions, nodes.copyButton, nodes.copyRichButton,
-      nodes.htmlButton, nodes.wordButton);
+      nodes.htmlButton, nodes.wordButton, nodes.wordCancel);
     nodes.fallback = make("textarea", "fc-citations-fallback");
     nodes.fallback.readOnly = true;
     nodes.fallback.hidden = true;
@@ -1287,8 +1309,8 @@
     }
 
     function getStored() {
-      if (!storage) { setStatus("storage_unavailable", null, "err"); return null; }
-      try { return storage.getItem(STORAGE_KEY); } catch (error) { storageError(error); return null; }
+      if (!storage) { setStatus("storage_unavailable", null, "err"); return undefined; }
+      try { return storage.getItem(STORAGE_KEY); } catch (error) { storageError(error); return undefined; }
     }
 
     function saveLibrary() {
@@ -1318,6 +1340,7 @@
     function loadLibrary() {
       if (!model) { setStatus("model_missing", null, "err"); return; }
       const text = getStored();
+      if (text === undefined) { render(); return; }
       if (text === null) { setStatus("not_saved"); render(); return; }
       const parsed = model.parseLibraryJson(text);
       if (!parsed.ok) {
@@ -1487,6 +1510,8 @@
           const code = error && error.code;
           if (code === "invalid_citation_doi") {
             setStatus("error_doi_engine", null, "err");
+          } else if (code === "citation_output_too_large") {
+            setStatus("error_engine_size", null, "err");
           } else if (code === "invalid_citations") {
             setStatus("error_engine_content", null, "err");
           } else if (code === "unsafe_preview" || code === "unsafe_citation_output") {
@@ -1694,14 +1719,21 @@
       const token = state.previewToken;
       const style = state.style;
       const started = fingerprint();
+      const controller = typeof root.AbortController === "function" ? new root.AbortController() : null;
+      wordController = controller;
       state.busyExport = true;
       setStatus("word_busy", null, "working");
       render();
       try {
-        const result = await onExportWord(preview);
+        const result = await onExportWord(preview, { signal: controller?.signal });
         const resultUrl = result && typeof result.downloadUrl === "string" ? result.downloadUrl : null;
         if (disposed) {
           if (resultUrl) revokeUrl(resultUrl);
+          return;
+        }
+        if (controller?.signal.aborted) {
+          if (resultUrl) revokeUrl(resultUrl);
+          if (token === state.previewToken && !state.previewStale) setStatus("word_cancelled");
           return;
         }
         if (token !== state.previewToken || state.preview !== preview ||
@@ -1722,9 +1754,11 @@
         setStatus("word_ready", null, "ok");
       } catch (_) {
         if (!disposed && token === state.previewToken && !state.previewStale) {
-          setStatus("word_error", null, "err");
+          setStatus(controller?.signal.aborted ? "word_cancelled" : "word_error", null,
+            controller?.signal.aborted ? "" : "err");
         }
       } finally {
+        if (wordController === controller) wordController = null;
         state.busyExport = false;
         if (!disposed) {
           if (state.statusKey === "word_busy" &&
@@ -1756,6 +1790,7 @@
     }
 
     function dispose() {
+      wordController?.abort();
       disposed = true;
       state.previewToken += 1;
       state.importRevision += 1;

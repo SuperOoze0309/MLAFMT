@@ -353,6 +353,69 @@ await check('AbortSignal after dispatch immediately rejects and terminates', asy
   cancelled(task, 'signal aborted after dispatch');
 });
 
+await check('a current initialization failure rejects the task and a fresh worker can retry', async h => {
+  const first = track(h.blank());
+  const failedWorker = h.workers[0];
+  failedWorker.emit({ type: 'init-error', code: 'engine_init_failed', detail: 'synthetic offline import' });
+  await flush();
+  assert.equal(first.status, 'rejected'); assert.equal(first.error.code, 'engine_init_failed');
+  assert.equal(failedWorker.terminated, true);
+  const retry = track(h.blank()); const next = h.workers[1];
+  h.ready(next); await flush(); h.complete(next); await flush();
+  assert.equal(retry.status, 'fulfilled'); assert.equal(retry.value.name, 'fresh.docx');
+});
+
+await check('a current worker failure resets ownership and cannot poison the next generation', async h => {
+  const first = track(h.blank()); const failedWorker = h.workers[0];
+  h.ready(failedWorker); await flush();
+  failedWorker.emit({ type: 'worker-error', detail: 'synthetic runtime failure' }); await flush();
+  assert.equal(first.status, 'rejected'); assert.equal(first.error.code, 'failed');
+  assert.equal(failedWorker.terminated, true);
+  const retry = track(h.blank()); const next = h.workers[1];
+  h.ready(next); await flush(); h.complete(next); await flush();
+  assert.equal(retry.status, 'fulfilled');
+});
+
+await check('a rejected file read preserves the ready worker and the next request succeeds', async h => {
+  const read = deferred(); const first = track(h.draft(read)); const worker = h.workers[0];
+  h.ready(worker); await flush(); read.reject(new Error('synthetic file unavailable')); await flush();
+  assert.equal(first.status, 'rejected'); assert.equal(first.error.code, 'unreadable_file');
+  assert.equal(worker.requests().length, 0); assert.equal(worker.terminated, false);
+  const retry = track(h.blank()); await flush();
+  assert.equal(h.workers.length, 1); assert.equal(worker.requests().length, 1);
+  assert.equal(worker.requests()[0].file, null, 'an unreadable old draft must not be posted later');
+  h.complete(worker); await flush(); assert.equal(retry.status, 'fulfilled');
+});
+
+await check('an old completed request removes its abort listener before the next request reuses the worker', async h => {
+  const controller = new AbortController(); const first = track(h.blank(controller.signal));
+  const worker = h.workers[0]; h.ready(worker); await flush(); h.complete(worker); await flush();
+  assert.equal(first.status, 'fulfilled');
+  const second = track(h.blank()); await flush(); controller.abort(); await flush();
+  assert.equal(worker.terminated, false); assert.equal(second.status, 'pending');
+  h.complete(worker); await flush(); assert.equal(second.status, 'fulfilled');
+});
+
+await check('aborting a queued bibliography settles the old worker tasks and preserves an immediate fresh retry', async h => {
+  const preceding = track(h.blank());
+  const controller = new AbortController();
+  const bibliographyRequest = { kind: 'bibliography', bibliography: { style: 'mla', entries: [] } };
+  const queued = track(h.transport.generate({ request: bibliographyRequest, file: null, signal: controller.signal }));
+  const oldWorker = h.workers[0]; h.ready(oldWorker); await flush();
+  assert.equal(oldWorker.requests().length, 2, 'both requests should be posted to the sequential worker queue');
+  assert.equal(oldWorker.requests()[1].request.kind, 'bibliography');
+  const oldId = oldWorker.requests()[1].id;
+  controller.abort();
+  const retry = track(h.transport.generate({ request: bibliographyRequest, file: null }));
+  const newWorker = h.workers[1]; h.ready(newWorker); await flush();
+  cancelled(preceding, 'the terminated worker preceding task'); cancelled(queued, 'queued bibliography');
+  assert.equal(oldWorker.terminated, true); assert.equal(newWorker.terminated, false);
+  oldWorker.emit({ type: 'result', id: oldId, meta: { ok: true, name: 'obsolete-reference.docx' }, buffer: bytes('old bibliography') });
+  await flush(); assert.equal(retry.status, 'pending');
+  h.complete(newWorker, 'fresh-references.docx'); await flush();
+  assert.equal(retry.status, 'fulfilled'); assert.equal(retry.value.name, 'fresh-references.docx');
+});
+
 const failures = outcomes.filter(item => item.status === 'FAIL');
 console.log(JSON.stringify({
   sourcePath, sourceSha256,
