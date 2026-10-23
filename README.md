@@ -8,7 +8,7 @@
 
 **Free, no account required. Formatting runs on your device; the current draft is not uploaded automatically.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
-**v2.7.0 静态网页版已上线：新增安全更新提示和本地参考文献助手，延续课程模板码与分享 JSON。** **The static website now runs v2.7.0**, adding a safe update notice and local reference assistant alongside course-template sharing. 离线安装包仍为 v2.5.0，不包含这些网页版新增功能。Offline installers remain v2.5.0 without these web additions. [网页版发布说明 / Web release notes](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.7.0) · [部署与验证范围 / Deployment and verification scope](docs/DEPLOYMENT.md)
+**v2.7.1 静态网页版已上线：湖蓝纸白的新界面，更清楚的表单、预览与文献区域，以及低分辨率、窄屏和触屏优化。** **The static website now runs v2.7.1**, with a lake-blue/paper-white interface, clearer workspace sections and improved narrow-screen, low-resolution and touch layouts. 更新提示、本地参考文献助手及课程模板分享继续提供；离线安装包仍为 v2.5.0。The update notice, local reference assistant and course-template sharing remain available; offline installers remain v2.5.0. [网页版发布说明 / Web release notes](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.7.1) · [部署与验证范围 / Deployment and verification scope](docs/DEPLOYMENT.md)
 
 ## 三步开始 / Get started
 
@@ -16,9 +16,18 @@
 2. 选入草稿；DOCX 可选多段保留原格式。Choose a draft; optionally keep selected DOCX paragraphs unchanged.
 3. 点 **生成 Word 文档 → 下载 Word**。Select **Format document → Download Word**.
 
+![FormCapy v2.7.1 正式网站：湖蓝纸白界面、水豚装饰与虚构示例资料](docs/images/formcapy-live-v2.7.1.png)
+
+*v2.7.1 正式网站的 Edge 截图，使用虚构示例资料。纸张区域是版式示意，参考文献表与论文结果分开。Live v2.7.1 in Edge with fictional example data. The paper panel illustrates layout; bibliography and paper results are separate.*
+
+<details>
+<summary>历史 v2.7.0 参考文献助手截图 / Historical v2.7.0 assistant screenshot</summary>
+
 ![FormCapy v2.7.0 正式网站：参考文献助手、三条虚构示例和独立 APA Word 下载入口](docs/images/formcapy-live-v2.7-citations.png)
 
-*v2.7.0 正式网站的 Edge 截图，使用内置 Markdown 草稿和虚构书籍、期刊、网页资料；参考文献列表与论文结果分开。Live v2.7.0 in Edge, with a built-in Markdown draft and fictional book, journal and webpage sources; bibliography and paper results are separate.*
+*历史 v2.7.0 正式网站的 Edge 截图，使用内置 Markdown 草稿和虚构书籍、期刊、网页资料。Historical live v2.7.0 in Edge with a built-in Markdown draft and fictional book, journal and webpage sources.*
+
+</details>
 
 <details>
 <summary>历史 v2.5.0 网站截图 / Historical v2.5.0 screenshot</summary>
@@ -31,7 +40,7 @@
 
 首次使用需要联网下载程序。iPhone/iPad 的保存步骤见 [Apple 指南 / Apple guide](docs/APPLE.md)；Safari 与 Apple 实机流程尚未验证。First use needs an internet connection; Safari and Apple device workflows remain unverified.
 
-若仍显示旧版，先下载当前文稿，再关闭本站旧标签页并重新打开。If an old version remains open, download your current document before closing the site's old tabs and reopening.
+看到更新提示时，先保存文稿和文献库，再确认更新。若更早的旧版没有提示，先下载当前文稿，再关闭本站旧标签页并重新打开。When an update notice appears, save your draft and citation library before confirming. If an older version has no notice, download your current document before closing the site's old tabs and reopening.
 
 应用名为 **FormCapy**，GitHub 项目保持 **MLAFMT**。App: FormCapy; repository: MLAFMT.
 
@@ -39,7 +48,7 @@
 
 **[FormCapy v2.5.0 已发布 / Released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)** · 2026-10-21
 
-模板分享与 v2.7.0 新功能面向静态网页版；本轮不发布新的桌面或 Android 安装包。以下 v2.5.0 下载不含模板码、分享 JSON 或参考文献助手，仍可用兼容裸 JSON 交换排版设置。Template sharing and the v2.7.0 features target the static website. The v2.5.0 packages below do not include template codes, sharing JSON or the reference assistant; compatible bare layout JSON remains available.
+模板分享、参考文献助手和 v2.7.1 界面更新面向静态网页版；本轮不发布新的桌面或 Android 安装包。以下 v2.5.0 下载不含模板码、分享 JSON 或参考文献助手，仍可用兼容裸 JSON 交换排版设置。Template sharing, the reference assistant and the v2.7.1 interface update target the static website. The v2.5.0 packages below do not include template codes, sharing JSON or the reference assistant; compatible bare layout JSON remains available.
 
 | 设备 / Device | v2.5.0 下载 / Download | 安装 / Install |
 | --- | --- | --- |
@@ -99,7 +108,7 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 
 ### v2.6.0 网页版新增：课程模板分享 / New on the website: course-template sharing
 
-**以下功能自 v2.6.0 起上线，当前 v2.7.0 静态网页版继续提供；离线安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
+**以下功能自 v2.6.0 起上线，当前 v2.7.1 静态网页版继续提供；离线安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
 
 ![FormCapy v2.6.0 正式网站：课程模板码包含完整排版设置和用户填写的课程标签](docs/images/formcapy-live-v2.6-template-code.png)
 
@@ -109,24 +118,30 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 - 分享内容包含模板名称、排版设置及主动填写的课程标签；不会自动带入文稿、姓名、论文标题、教师、段落保留选择或生成结果。可选 **本次分享使用通用名称**，不修改当前模板名；持有码或文件的人可以读取其中的名称和标签。
 - 模板码完整自带设置，不使用链接、服务器、账号或后台查码。设置修改后需重新复制；旧码不会更新或撤销。保存到 **我的模板** 仅保存排版设置，课程标签需用模板码或分享 JSON 留存。
 
-**Introduced in v2.6.0, these features remain live on the v2.7.0 static website; offline packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
+**Introduced in v2.6.0, these features remain live on the v2.7.1 static website; offline packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
 
-操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。v2.7.0 继续使用相同的 `FC1.` 协议；文献库与模板分享数据分开。
+操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。v2.7.1 继续使用相同的 `FC1.` 协议；文献库与模板分享数据分开。
 
 ### v2.7.0 网页版新增：更新提示与参考文献助手 / New on the website: updates and reference assistant
 
-**以下功能已在 v2.7.0 静态网页版上线。** 线上文件、HTTPS 与 Edge 主要流程已核对，具体范围见[部署记录](docs/DEPLOYMENT.md)。
+**以下功能自 v2.7.0 起上线，当前 v2.7.1 继续提供。** 线上文件、HTTPS 与 Edge 主要流程的版本及核对范围见[部署记录](docs/DEPLOYMENT.md)。
 
 - **主动更新**：新版准备完成后显示提示。先保存或下载文稿及文献库，点 **更新 → 已保存，更新** 才重新加载。处理过程中或还有其他同作用域 FormCapy 标签页时，更新会被阻止并提示处理步骤。旧 v2.6.0 页面须先正常升级一次，才会具备此提示。
 - **参考文献助手**：展开页面下方的入口，添加书籍、期刊文章或网页，填写作者、标题、出版日期等资料；支持多作者及机构作者。选择 **MLA 9 / APA 7 → 预览文献表**，再复制纯文本／带格式文本，或导出独立的 Word 文献表和 HTML。修改条目或样式后需重新预览。
 - **单独保存文献**：默认只保留在当前页面会话；**保存到本设备**、**载入已保存的库**和**删除已保存的库**均为明确操作。文献库 JSON 可独立导入／导出，导入先核对再确认替换，并提供撤销。文献资料不会进入课程模板码、分享 JSON 或兼容排版 JSON。
 - 助手按用户填写的字段生成独立列表，原稿及文中引用编号保持原样。资料来源和字段准确性仍由用户核对；尚不提供 GB/T 条目格式化或联网 DOI 查询。
 
-步骤与字段见[参考文献助手指南](docs/CITATIONS.md)，渲染器、样式和源码分发说明见[引用组件许可](docs/CITATION-LICENSES.md)。界面支持中文、English、Español；切换界面语言不翻译作者、题名或文献内容。Safari、物理设备及本轮浏览器新下载 DOCX 的文件检查仍未验收。
+步骤与字段见[参考文献助手指南](docs/CITATIONS.md)，渲染器、样式和源码分发说明见[引用组件许可](docs/CITATION-LICENSES.md)。界面支持中文、English、Español；切换界面语言不翻译作者、题名或文献内容。v2.7.1 已检查正式网站实际下载的 MLA/APA 文稿与独立文献表的 ZIP/XML 结构；Word 页面渲染、Safari 和实机尚未验收。
 
-**These features are live on the v2.7.0 static website.** Public assets, HTTPS and the main Edge workflows were checked; see the [deployment record](docs/DEPLOYMENT.md) for their scope. Once installed, the update notice lets you save first and explicitly reload; processing or another FormCapy tab in the same scope blocks activation. Existing v2.6.0 pages need one normal upgrade before they can display this new notice.
+**Introduced in v2.7.0, these features remain live on the v2.7.1 static website.** See the [deployment record](docs/DEPLOYMENT.md) for versioned public-asset, HTTPS and Edge checks. Once installed, the update notice lets you save first and explicitly reload; processing or another FormCapy tab in the same scope blocks activation. Existing v2.6.0 pages need one normal upgrade before they can display this new notice.
 
-Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citation numbers are left intact; source accuracy, GB/T formatting and online DOI lookup are outside this release. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). Safari, physical-device and fresh browser-downloaded DOCX inspection remain unverified.
+Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citation numbers are left intact; source accuracy, GB/T formatting and online DOI lookup are outside this release. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). Four fresh public-site DOCX downloads passed ZIP/XML checks in v2.7.1: MLA/APA papers and separate bibliographies. Word page rendering, Safari and physical devices remain unverified.
+
+### v2.7.1 网页版更新：界面与小屏 / Website update: interface and small screens
+
+湖蓝、纸白和水豚暖棕让表单、版式示意及参考文献助手的层次更清楚。模板设置、高级选项和对话框采用一致的控件样式；增强键盘焦点、触屏按钮和成功／错误提示。低分辨率与窄屏下压缩页头装饰，长英文、西班牙语标签可换行。此版本更新界面，不增加处理或导出种类。
+
+Lake blue, paper white and warm capybara accents clarify the form, layout illustration and reference assistant. Template settings, advanced options and dialogs share consistent controls, with clearer keyboard focus, touch targets and status messages. Smaller layouts reduce decorative header space and wrap long English and Spanish labels. This release changes the interface without adding processing or export formats.
 
 ## 中文
 
@@ -195,7 +210,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前仓库源码与公网静态网页版为 v2.7.0，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码与公网静态网页版为 v2.7.1，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -235,7 +250,7 @@ py -3.12 -m venv .venv-build
 `requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.7.0-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
+- `MLAFMT-v2.7.1-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
@@ -323,7 +338,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-The source and public static website are v2.7.0; offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
+The source and public static website are v2.7.1; offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 

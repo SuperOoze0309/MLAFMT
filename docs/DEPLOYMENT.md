@@ -1,8 +1,62 @@
 # FormCapy web deployment
 
-## Current public website — v2.7.0
+## Current public website — v2.7.1
 
-The checked static website is live at [formcapy.com](https://formcapy.com/)
+The static website is live at [formcapy.com](https://formcapy.com/)
+and [www.formcapy.com](https://www.formcapy.com/). The frozen H-drive folder was
+uploaded on **22 October 2026**; Cloudflare production version `0cf62f91` was
+observed as **Ready, 100% traffic**. This is a web-only interface update;
+downloadable desktop and Android apps remain
+[v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0).
+
+The lake-blue/paper-white theme adds clearer workspace sections and capybara
+details. Template controls, advanced options, dialogs and status messages now
+share consistent borders, focus indicators and touch targets. Narrow and
+low-resolution layouts reduce header space and allow long translated labels
+to wrap. Existing update notices, course-template sharing and the reference
+assistant remain available. Processing remains browser-local, anonymous and
+static, without a new account, database or conversion service.
+
+| Item | Recorded result |
+| --- | --- |
+| Application source | `166d739813e3cbea8f98d12b1cd9ded08f4e1e78` |
+| CI | [39821220581](https://github.com/SuperOoze0309/MLAFMT/actions/runs/39821220581): all 7 jobs passed; native artifacts were not published in this web release |
+| Local regression | 309 Node checks, 228 Python tests and 159 subtests passed |
+| Layout / accessibility | Main form and expanded citation assistant each passed three languages at five viewport sizes, down to 320×568; no horizontal overflow. Coarse-pointer simulation verified 44 px targets and 16 px citation fields; these are Edge simulations, not physical-device checks |
+| Uploaded frozen folder | `dist/formcapy-v2.7.1/`; 145 manifest entries plus `manifest.json` (146 files); 118,848,863 declared file bytes |
+| Manifest SHA-256 | `a390e1fc52610a69ecf029d62da345eef74202e0210653357b1f03e12da4ff88` |
+| Public cache | `formcapy-2.7.1-pyodide-314.0.7-29810afbf0a4` |
+| Worker sweep | 144/144 downloadable resources match size and SHA-256; 118,848,222 bytes verified in one full sweep; 144/144 required security-header sets and 14/14 MIME checks passed |
+| Root / www | 38/38 key-file comparisons and header checks pass; both homepages match the 211,042-byte frozen HTML; manifests and service workers match the frozen version/cache |
+| Analytics | Zero injected Cloudflare analytics beacon scripts across both homepages |
+| Source and notices | Both provenance pages retain license/source links; both source archive routes return matching gzip prefixes; the archive's full hash is included in the Worker sweep |
+| HTTPS | 18/18 checks passed with trusted TLS 1.3 and verified certificate chains/hostnames; HTTP upgrades preserve encoded paths and queries |
+| Public Edge update | The existing v2.7.0 page displayed its normal update notice; explicit saved-work confirmation loaded v2.7.1 and its new theme |
+| Actual paper downloads | Edge selected a fictional DOCX through the system picker, retained paragraphs 3 and 8, and saved MLA (56,743 bytes) / APA (56,816 bytes) outputs directly to H. ZIP/XML checks confirmed preserved paragraph XML, image SHA, table/order, new reference page, alphabetical sorting, spacing/indentation, margins and PAGE fields |
+| Actual bibliography downloads | Separate MLA (37,186 bytes) and APA (37,166 bytes) Word files match the three fictional sources' actual DOM previews, entry order, italics and safe hyperlinks; APA heading boldness, font, spacing and hanging indents passed |
+| Language retention | Chinese, English and Spanish retained the paper title/date, main APA result link, independent APA result link and citation preview; zero console warnings/errors |
+| Devices / rendering | Downloaded-file checks establish ZIP/XML structure, not visual pagination. Word rendering, Safari and physical devices remain unverified |
+
+The static artifact was not rebuilt after acceptance. The HTTP wrapper exited
+0 after one full resource sweep. No request retry, repeated sweep, WAF/DNS/TLS
+setting change or new credential/security permission was needed. Both original
+service-worker response records already contain the JavaScript MIME result;
+the finalizer validates the original captures without deriving missing fields.
+
+Evidence is under `build/v2.7.1/production/`: `public-http-verification.md`,
+`cloudflare-worker-asset-audit.json`, `domain-asset-verification.json`,
+`http-verification-summary.json`, `https-audit.log` and
+`cloudflare-ready-0cf62f91.png`, `public-browser.json`,
+`browser-docx-inspection-papers.md`, `browser-docx-inspection-references.md` and
+`browser-docx-inspection-all-four.json`. Actual browser files are saved under
+`build/v2.7.1/downloads/` and are distinct from the local Python API fixtures.
+The [v2.7.1 public-site screenshot](images/formcapy-live-v2.7.1.png)
+uses fictional example data; the paper panel illustrates layout rather than
+proving Word pagination.
+
+## Public v2.7.0 deployment record
+
+The checked v2.7.0 static website was deployed at [formcapy.com](https://formcapy.com/)
 and [www.formcapy.com](https://www.formcapy.com/). The owner uploaded the frozen
 H-drive artifact on **22 October 2026**. Cloudflare automatically deployed
 production version `890b8ee5`, observed as **Ready, 100% traffic**. This is a
