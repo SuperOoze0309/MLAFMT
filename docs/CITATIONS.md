@@ -1,8 +1,8 @@
 # 独立参考文献助手 / Citation assistant
 
-状态：**v2.7.0 参考文献助手已在静态正式网站上线，支持本地预览与独立 Word 导出。** [正式网站](https://formcapy.com/)现为 v2.7.0，离线下载仍为 v2.5.0；生产文件、HTTPS 与 Edge 主要流程已核对，范围见[部署记录](DEPLOYMENT.md)。
+状态：**v2.9.0 支持批量 DOI、勾选追加与离线书目导入，最终本地构建已通过验收。** 451 项 Node、228 项 Python 及 159 项子检查、31 项真实浏览器检查通过；实际 MLA／APA Word 下载已独立核对，见[测试范围](TESTING-v2.9.md)。[正式网站](https://formcapy.com/)的版本以[部署记录](DEPLOYMENT.md)为准；离线下载仍为 v2.5.0。
 
-Status: **the v2.7.0 reference assistant is live on the static public website, with local preview and standalone Word export.** The [public website](https://formcapy.com/) is v2.7.0; published offline downloads remain v2.5.0. Public assets, HTTPS and the main Edge workflows were checked; see the [deployment record](DEPLOYMENT.md) for their scope.
+Status: **v2.9.0 adds DOI batches and selective append to offline import; its final local build passed acceptance.** The actual MLA/APA Word downloads were independently checked. See [test scope](TESTING-v2.9.md) and [public deployment status](DEPLOYMENT.md). Offline downloads remain v2.5.0.
 
 ---
 
@@ -13,7 +13,7 @@ Status: **the v2.7.0 reference assistant is live on the static public website, w
 - 该助手只生成一份**独立的参考文献表**。现有论文、论文信息、正文、文中引用和生成结果不会被改写。
 - 当前只支持 **MLA 9** 和 **APA 7**，以及 **book / article-journal / webpage** 三类来源。
 - 不生成文中引用，不替换论文中的引用，不支持 GB/T 7714 或其他样式。
-- 不联网查询 DOI、不联网补全作者/日期/出版社，不调用 AI，不上传到服务器，不使用账户或云端书库。
+- 支持在本地粘贴或导入 BibTeX、RIS、CSL-JSON。点击“查询 DOI”才连接 Crossref 获取这一条 DOI 的公开书目信息；核对后追加，缺项不编造。没有 AI、转换服务器、账户或云端书库。
 - 标签会随界面语言翻译；用户输入的标题、姓名、机构名等**不会被翻译或自动改写**。
 
 English:
@@ -21,7 +21,7 @@ English:
 - The assistant creates a **standalone reference list only**. It does not rewrite the paper, paper details, body text, in-text citations, or generated results.
 - It currently supports **MLA 9** and **APA 7**, and the source types **book / article-journal / webpage**.
 - It does not create in-text citations, replace citations in a paper, or support GB/T 7714 or other styles.
-- It does not look up DOIs, fill in missing authors/dates/publishers, call AI, upload to a server, use accounts, or provide a cloud library.
+- Paste or import BibTeX, RIS or CSL-JSON locally. Only **Look up DOI** contacts Crossref for that DOI's public metadata; review before appending. Missing fields are never invented. There is no AI, conversion server, account or cloud library.
 - UI labels are translated; user-entered titles, names, and organization names are **not translated or automatically rewritten**.
 
 ## 2. 快速使用 / Quick start
@@ -29,7 +29,7 @@ English:
 中文：
 
 1. 展开页面中的“参考文献助手”。
-2. 点击“添加条目”，选择条目类型并填写标题。
+2. 在“快速添加”逐行粘贴 DOI 或 doi.org 链接（最多 50 行），明确点击联网查询；或切换“离线导入”，粘贴／选择 `.bib`、`.ris`、`.json` 文件。先核对候选条目、缺项和重复数，勾选需要的结果，再点击“追加到文献库”。追加保留原条目，并可整批撤销。没有结构化书目信息时仍可手动录入。
 3. 添加作者；每个作者可以选“个人作者”（姓/名）或“机构/团体作者”。作者按列表顺序保存。
 4. 填写可用的出版日期；允许只填年或年+月。网页可填写访问日期。
 5. 按类型填写出版社、期刊/网站名称、卷/期/页码、版次、DOI、网址、语言等。
@@ -42,7 +42,7 @@ Word 准备期间可点击“取消 Word 生成”；当前条目和仍有效的
 English:
 
 1. Expand **Reference assistant** on the page.
-2. Choose **Add entry**, then select a type and enter a title.
+2. Use **Quick add** to explicitly query up to 50 DOIs / doi.org links, one per line, or import BibTeX, RIS or CSL-JSON offline. Review candidates, warnings and duplicates, select the records to keep, then **Append to library**. Existing entries stay intact and the append can be undone as one operation. Manual entry remains available.
 3. Add authors. Each author can be a **person** (family/given) or an **organization / group** (literal). Authors keep their list order.
 4. Enter the publication date you actually have; a year alone, or year + month, is allowed. Webpages can also have an access date.
 5. Fill type-specific fields such as publisher, journal/site name, volume/issue/pages, edition, DOI, URL, and language.
@@ -65,7 +65,7 @@ Use **Cancel Word generation** while Word is being prepared. Entries and a still
 | `containerTitle` | 期刊名称或网站名称。 / Journal or site name. |
 | `volume`, `issue`, `page` | 期刊卷、期、页码。 / Journal volume, issue, pages. |
 | `edition` | 书籍版次。 / Book edition. |
-| `DOI` | 保留原文并提示异常；预览若拒绝该值，需核对或清空后重试，不联网查询。 / Preserved with a format warning; if preview rejects it, check or clear the value and retry. No online lookup. |
+| `DOI` | 手动编辑只做本地校验；只有“快速添加 → 查询 DOI”会连接 Crossref。异常值需核对或清空后重试。 / Manual editing only validates locally. Only Quick add → Look up DOI contacts Crossref. Check or clear malformed values before retrying. |
 | `URL` | 必须是安全的 `http(s)` 地址，不能带用户名/密码。 / Must be a safe `http(s)` URL without username/password. |
 | `accessed` | 网页访问日期，结构同 `issued`。 / Webpage access date, same shape as `issued`. |
 | `language` | 可选，最多 64 字符。 / Optional, max 64 characters. |
@@ -146,9 +146,21 @@ English:
 
 ## 7. 隐私 / Privacy
 
-中文：所有书目输入都在浏览器本地处理。没有账户、转换服务器、后台书库存储、自动上传、云书库、DOI 查询或 AI 服务。只有用户点击预览才运行引用渲染；处理器、样式和 locale 均由本站提供，可能在首次访问或建立离线缓存时下载。输入内容不用于请求路径、查询参数或上传正文，也不请求外部书目元数据。
+中文：文稿排版、书目导入和引用渲染均在浏览器本地完成，不自动上传文稿、文献库或论文信息。只有用户明确点击“查询 DOI”，浏览器才以 HTTPS 向 `api.crossref.org/works/{DOI}` 发送该 DOI；Crossref 会收到 DOI、IP 地址及常规网络请求信息。请求不带本站 cookie 或 referrer，不发送作者／题名搜索、整篇参考文献、文稿或整个文献库。没有自动查询、自动重试、云端书库、账户或 AI。查询结果仅在当前会话缓存，最多 40 条；网站 service worker 不缓存外部查询。离线导入不联网，查询失败可改用导入或手动编辑。处理器、样式和 locale 仍由本站提供。
 
-English: All bibliography input is processed locally in the browser. There are no accounts, conversion servers, backend library storage, automatic uploads, cloud library, DOI lookups, or AI services. Citation rendering runs only after Preview is requested; the self-hosted processor, styles and locale may download on the first visit or during offline-cache installation. Bibliographic input is never placed in request paths, query strings or upload bodies, and no external bibliographic metadata is requested.
+English: Draft formatting, bibliography import and citation rendering run locally. Drafts, libraries and paper details are not uploaded automatically. Only an explicit **Look up DOI** click sends that DOI over HTTPS to `api.crossref.org/works/{DOI}`. Crossref receives the DOI, IP address and normal request information. Requests omit credentials and referrer; no author/title search, reference-list text, draft or full library is sent. There are no automatic lookups/retries, accounts, cloud library or AI. Up to 40 successful results are cached only in session memory; the service worker does not cache external queries. Offline import needs no lookup. Failed queries can be replaced with offline import or manual entry. Processor/style/locale assets remain self-hosted.
+
+## 7a. 快速添加的范围 / Quick-add limits
+
+- DOI：只接受 DOI 或 doi.org 链接，固定查询 Crossref，不抓取任意网页。Crossref 未收录的 DOI、书籍章节等不支持类型、超出模型限制的记录会明确报错，不猜测作者或出版信息。结果需先核对，不能据此保证来源真实或课程格式完全合规。
+- 批次最多 50 条非空行、32 KiB 文本；每次最多一个查询，两次开始至少间隔 1.3 秒，单次 15 秒超时、响应上限 2 MiB。逐行显示状态，普通失败仍保留其他成功结果；取消保留已完成结果供勾选，编辑输入则清空旧候选。429 会停止本批，等待后由用户重新启动，不自动重试。不会跟随出版商链接、联网读取文稿或请求私有代理。
+- BibTeX / RIS / CSL-JSON：UTF-8，最多 1 MiB、200 条；追加后整个库仍最多 200 条。只映射现有 book / article-journal / webpage 模型。宏、复杂 LaTeX、章节／会议论文等不支持内容会给出错误或提醒，不执行导入文本。未导入字段、格式和原文截断会显示提醒。
+- 只识别结构化书目数据，不把任意已排版参考文献或普通网页链接当成可靠的自动解析结果。建议从 Google Scholar、Zotero、期刊或图书馆导出 `.bib`／`.ris`。
+- 新导入默认追加并跳过可确认的重复条目；旧的 **FormCapy 文献库 JSON → 确认替换** 仍单独保留。替换及追加均有撤销快照。导入文件不会进入模板导出或草稿状态。
+
+DOI batches accept up to 50 nonempty lines and 32 KiB of DOI / doi.org-link text. Crossref requests run sequentially, at least 1.3 seconds between starts, with a 15-second timeout and 2 MiB cap per response. Cancellation retains completed candidates; input edits discard stale candidates. Ordinary failures retain other successes; HTTP 429 stops the batch for a later manual restart. Arbitrary pages are not scraped. Unsupported types are explicit errors. Select candidates before append; metadata still needs review. Offline UTF-8 BibTeX, RIS and CSL-JSON imports remain limited to 1 MiB / 200 records, including the final library limit. Unsupported/lossy data is reported. These are structured records, not arbitrary reference prose. Append skips confirmed duplicates and retains undo; FormCapy JSON replacement stays separate.
+
+Provider documentation: [Crossref REST API](https://www.crossref.org/documentation/retrieve-metadata/rest-api/), [public access and limits](https://www.crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication/).
 
 ## 8. 数据格式 / Data schema
 

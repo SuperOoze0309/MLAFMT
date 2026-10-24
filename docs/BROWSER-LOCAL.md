@@ -1,9 +1,9 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Release status:** v2.7.0 is live on the static public website, including the
-update prompt and local citation assistant. Published offline installers remain
-v2.5.0. Local debug evidence and the separate production checks are recorded
-below. See [deployment notes](DEPLOYMENT.md) for the production record and limits.
+**Release status:** source v2.9.0 is in development, with DOI batches,
+selective append and offline citation import. It is not deployed. The last public release is
+v2.7.1; offline installers remain v2.5.0. Earlier debug/production records below
+do not verify the new features. See [deployment notes](DEPLOYMENT.md).
 
 FormCapy runs as a native Tk desktop app, an Android app with an offline Python
 bridge, or a Flask local web app. This document describes the additional
@@ -40,6 +40,9 @@ browser
     static/update-notice.js     explicit website-update flow, no draft access
     static/template-share.js    FC1 template-code and sharing-JSON protocol
     static/citation-library.js  separate structured reference data
+    static/citation-import.js   offline BibTeX / RIS / CSL-JSON parser
+    static/citation-lookup.js   explicit, bounded single-DOI Crossref request
+    static/citation-doi-batch.js sequential DOI batches and partial results
     static/citation-assistant.js / .css  local editor and reviewed preview
     static/citation-engine.js   same-origin CSL adapter, lazy renderer loading
       static/vendor/citations/ original processor, styles, locale, source/licenses
@@ -135,14 +138,19 @@ download result are separate from this export.
 - **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
 
-### Local citation path (v2.7.0 static website)
+### Local citation path (v2.9.0 development; public release remains v2.7.1)
 
-The collapsed reference assistant accepts manually entered **books, journal
-articles and webpages**, including multiple people or a literal organization
-author. It maps its separate versioned library to CSL JSON and renders a
-reviewed **MLA 9 or APA 7** list locally. Missing metadata is shown for review;
-the app does not invent authors, dates or DOIs, query a DOI service, parse an
-arbitrary existing bibliography, or synchronize in-text citation numbering.
+The reference assistant accepts **books, journal articles and webpages** by
+manual entry or offline BibTeX/RIS/CSL-JSON import. Optional, explicit DOI
+lookup accepts up to 50 DOI lines and obtains Crossref records sequentially
+over HTTPS; it sends only each DOI and
+normal network request information, without draft/library bytes. Candidates
+are reviewed and selected before appending, with duplicate handling and batch undo.
+Cancellation retains completed candidates; rate limiting stops the batch without
+automatic retry. Its
+separate versioned library maps to CSL JSON and renders **MLA 9 or APA 7**
+locally. Missing metadata is flagged. No author/date/DOI is invented, arbitrary
+reference prose is not parsed and in-text citation numbering is not synchronized.
 
 The assistant supports plain/formatted copying, standalone HTML, separate
 library JSON, and a standalone Word list through the browser bridge. Changing
@@ -390,11 +398,15 @@ warning that complex documents and citations must be reviewed.
 
 - No analytics, no telemetry, no account database, no authentication.
 - No request contains document bytes. The static build has no upload endpoint.
-- Citation records are processed locally too. Only fixed program/style/locale
-  URLs are fetched; input metadata is not added to a request body, URL or query.
+- Citation import and rendering run locally. The optional **Look up DOI** action
+  sends that DOI in a fixed Crossref HTTPS endpoint path; the provider also sees
+  normal network request information. Cookies/referrer, drafts, libraries and
+  paper details are not sent. There is no automatic lookup or retry. External
+  results are bounded and reviewed before append; only session-memory caching
+  is used. Offline import makes no metadata request.
 - All program assets are same-origin relative URLs; no CDN, font, analytics or
   PyPI request occurs at runtime.
-- Attribution/source links are navigation links, not metadata lookups. Safe
+- Attribution/source links are navigation links. Safe
   DOI/URL links in the reviewed reference list are opened only by the user.
 - Native Android retains a fixed same-origin asset allowlist;
   `connect-src` remains `'none'` and `worker-src` remains `'none'`. It never

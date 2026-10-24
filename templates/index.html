@@ -1696,6 +1696,9 @@
     <script src="static/template-sharing-ui.js"></script>
     <script src="static/update-notice.js"></script>
     <script src="static/citation-library.js"></script>
+    <script src="static/citation-import.js"></script>
+    <script src="static/citation-lookup.js"></script>
+    <script src="static/citation-doi-batch.js"></script>
     <script src="static/citation-engine.js"></script>
     <script src="static/citation-assistant.js"></script>
     <script>
@@ -3824,7 +3827,11 @@
           enabled: document.querySelector('meta[name="formcapy-offline"]')?.content === "true",
           version: document.querySelector('meta[name="formcapy-version"]')?.content || "",
           getLocale: () => lang,
-          isBusy: () => inProgress || sharing || paragraphLoading || citationWordBusy || Boolean(citationAssistant?.state()?.previewBusy),
+          isBusy: () => {
+            const citationState = citationAssistant?.state();
+            return inProgress || sharing || paragraphLoading || citationWordBusy ||
+              Boolean(citationState?.previewBusy || citationState?.intakeBusy);
+          },
           onUpdating: (active) => { updateInProgress = active; syncWorkLocks(); },
         });
       }

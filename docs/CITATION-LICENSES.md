@@ -1,8 +1,12 @@
 # Browser citation component distribution
 
-The reference assistant renders structured, user-entered records locally with
-the CSL processor. It does not parse an arbitrary existing reference list or
-synchronize in-text citation numbers. No citation input is sent to a service.
+The reference assistant renders structured records locally with the CSL
+processor. Source v2.9.0 adds locally parsed BibTeX/RIS/CSL-JSON and optional
+Crossref DOI batches: only an explicit query action sends each DOI and normal
+network request information to Crossref. Drafts and libraries are not sent.
+The new import and lookup adapters are project code, with no new bundled
+third-party parser. Arbitrary reference prose and in-text synchronization
+remain outside its scope. See [privacy and import limits](CITATIONS.md#7-隐私--privacy).
 
 ## Selected component and license
 

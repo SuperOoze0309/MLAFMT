@@ -10,6 +10,18 @@
 
 **v2.7.1 静态网页版已上线：湖蓝纸白的新界面，更清楚的表单、预览与文献区域，以及低分辨率、窄屏和触屏优化。** **The static website now runs v2.7.1**, with a lake-blue/paper-white interface, clearer workspace sections and improved narrow-screen, low-resolution and touch layouts. 更新提示、本地参考文献助手及课程模板分享继续提供；离线安装包仍为 v2.5.0。The update notice, local reference assistant and course-template sharing remain available; offline installers remain v2.5.0. [网页版发布说明 / Web release notes](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.7.1) · [部署与验证范围 / Deployment and verification scope](docs/DEPLOYMENT.md)
 
+### v2.9.0：减少引用手填 / Quicker references
+
+源码新增 **最多 50 条 DOI 顺序补全**、**逐条勾选追加**与 **BibTeX / RIS / CSL-JSON 批量导入**。在“参考文献助手 → 快速添加”中先核对题名、作者、日期和提醒，再追加到现有文献库；可跳过重复条目、整批撤销。手动编辑与原 FormCapy 库 JSON 替换功能继续提供。只有明确点击“查询 DOI”才向 Crossref 发送该 DOI 和常规网络请求信息；文稿、论文信息与整个文献库不发送。离线导入和文献渲染仍在本地完成。
+
+Source v2.9.0 adds **optional DOI batches (up to 50 lines)**, **selective append** and **offline BibTeX / RIS / CSL-JSON import**. Review candidates, append to the existing library, skip confirmed duplicates and undo the batch. Only an explicit DOI query contacts Crossref with each DOI and normal request information; drafts and libraries are not sent. **451 Node checks, 228 Python tests plus 159 subtests, and 31 real-browser checks passed.** Both clicked MLA/APA Word downloads were independently inspected. See [usage and limits](docs/CITATIONS.md), [verification scope](docs/TESTING-v2.9.md) and [deployment status](docs/DEPLOYMENT.md).
+
+1. 在“参考文献助手 → 快速添加”逐行粘贴 DOI，或离线导入 `.bib`／`.ris`／CSL-JSON。
+2. 明确查询后核对结果；无效和重复行不查询。取消保留已完成结果，限流时停止。
+3. 勾选需要的条目，点击追加；随后可修改字段、预览和导出独立 MLA／APA 文献表。
+
+![DOI 批量查询、逐行状态与勾选追加 / DOI batch status and selective append](docs/images/formcapy-v2.9-quick-references.png)
+
 ## 三步开始 / Get started
 
 1. 打开 [formcapy.com](https://formcapy.com/)，选择格式并填写论文信息。Open the site, choose a format and enter your paper details.
@@ -129,13 +141,13 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 - **主动更新**：新版准备完成后显示提示。先保存或下载文稿及文献库，点 **更新 → 已保存，更新** 才重新加载。处理过程中或还有其他同作用域 FormCapy 标签页时，更新会被阻止并提示处理步骤。旧 v2.6.0 页面须先正常升级一次，才会具备此提示。
 - **参考文献助手**：展开页面下方的入口，添加书籍、期刊文章或网页，填写作者、标题、出版日期等资料；支持多作者及机构作者。选择 **MLA 9 / APA 7 → 预览文献表**，再复制纯文本／带格式文本，或导出独立的 Word 文献表和 HTML。修改条目或样式后需重新预览。
 - **单独保存文献**：默认只保留在当前页面会话；**保存到本设备**、**载入已保存的库**和**删除已保存的库**均为明确操作。文献库 JSON 可独立导入／导出，导入先核对再确认替换，并提供撤销。文献资料不会进入课程模板码、分享 JSON 或兼容排版 JSON。
-- 助手按用户填写的字段生成独立列表，原稿及文中引用编号保持原样。资料来源和字段准确性仍由用户核对；尚不提供 GB/T 条目格式化或联网 DOI 查询。
+- 正式网站 v2.7.1 的助手按填写字段生成独立列表，不改原稿或文中引用；尚无联网 DOI 查询。开发中的 v2.9.0 快速添加见上文。资料准确性仍需核对，GB/T 条目格式化仍不支持。
 
 步骤与字段见[参考文献助手指南](docs/CITATIONS.md)，渲染器、样式和源码分发说明见[引用组件许可](docs/CITATION-LICENSES.md)。界面支持中文、English、Español；切换界面语言不翻译作者、题名或文献内容。v2.7.1 已检查正式网站实际下载的 MLA/APA 文稿与独立文献表的 ZIP/XML 结构；Word 页面渲染、Safari 和实机尚未验收。
 
 **Introduced in v2.7.0, these features remain live on the v2.7.1 static website.** See the [deployment record](docs/DEPLOYMENT.md) for versioned public-asset, HTTPS and Edge checks. Once installed, the update notice lets you save first and explicitly reload; processing or another FormCapy tab in the same scope blocks activation. Existing v2.6.0 pages need one normal upgrade before they can display this new notice.
 
-Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citation numbers are left intact; source accuracy, GB/T formatting and online DOI lookup are outside this release. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). Four fresh public-site DOCX downloads passed ZIP/XML checks in v2.7.1: MLA/APA papers and separate bibliographies. Word page rendering, Safari and physical devices remain unverified.
+Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citations stay intact. The public v2.7.1 build has no online DOI lookup; v2.9.0 development Quick add is described above. Source accuracy and GB/T entry formatting remain outside scope. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). Four fresh public-site DOCX downloads passed ZIP/XML checks in v2.7.1: MLA/APA papers and separate bibliographies. Word page rendering, Safari and physical devices remain unverified.
 
 ### v2.7.1 网页版更新：界面与小屏 / Website update: interface and small screens
 
@@ -210,7 +222,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前仓库源码与公网静态网页版为 v2.7.1，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码为开发中的 v2.9.0，最近一次公网发布为 v2.7.1，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 
@@ -250,7 +262,7 @@ py -3.12 -m venv .venv-build
 `requirements-build.txt` 锁定打包依赖。脚本收集拖放所需的 tkDnD 原生库，将两个下载文件输出至 `dist/release/`：
 
 - `MLAFMT.exe`：独立 Windows 应用。
-- `MLAFMT-v2.7.1-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
+- `MLAFMT-v2.9.0-windows-x64.zip`：当前源码构建时的输出名称，包含应用、双语说明、更新记录、许可证与构建信息；不表示已发布此安装包。
 
 ZIP 内的 `build-info.json` 记录源码提交、源码哈希、Python 与依赖版本。不同 Windows / Python 补丁版本构建的二进制不保证逐字节一致。
 
@@ -338,7 +350,7 @@ When references contain preserved paragraphs or objects, only consecutive safe o
 
 ### Run from source
 
-The source and public static website are v2.7.1; offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
+The source is v2.9.0 in development; the last public static release is v2.7.1 and offline downloads remain v2.5.0. This round does not provide newly verified desktop or Android packages. Run from source as follows.
 
 Requires Python 3.10+. Create a virtual environment and install the application dependencies:
 

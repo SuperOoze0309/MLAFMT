@@ -187,13 +187,13 @@ APA 官方说明（供理解版式）：[Paper format](https://apastyle.apa.org/
 | 路径 | 输入 | 输出与边界 |
 | --- | --- | --- |
 | 草稿页面排版 | DOCX、TXT、Markdown 中已有的参考文献文字 | 调整参考文献页标题、新页、缩进、行距及普通条目的排序；保留引用文字 |
-| 独立参考文献助手 | 用户手动录入的书籍、期刊文章或网页字段 | 通过本地 CSL 渲染 MLA 9／APA 7，预览并导出独立文献列表；不改写原稿或文中引用编号 |
+| 独立参考文献助手 | 手动字段；v2.9.0 源码另支持批量 DOI 查询及离线 BibTeX / RIS / CSL-JSON | 通过本地 CSL 渲染 MLA 9／APA 7，预览并导出独立文献列表；不改写原稿或文中引用编号 |
 
 展开 **参考文献助手**，添加条目并填写标题、作者、出版日期及适用的出版社、期刊／网站、卷期页、DOI／URL。支持多作者顺序及机构作者；允许资料缺少作者或出版日期，提示用户核对，不编造字段。选择 **MLA 9 / APA 7 → 预览文献表** 后，可复制纯文本／带格式文本、导出 HTML，或通过静态网页版的 Word 入口导出独立文献表。修改数据或样式后需重新预览，CSL 决定条目顺序与格式。
 
 文献库默认只在当前会话内保留；**保存到本设备**、**载入已保存的库**、**删除已保存的库**只操作独立的 `formcapy.citations.v1` 保存副本。导入库 JSON 先核对条目数和题名，再明确确认替换，并保留撤销快照。删除保存副本不会清空正在使用的库。库 JSON 上限 1 MiB，最多 200 条；与模板 JSON 分开，不含论文信息、草稿或生成结果。`FC1.`、ShareV1 和兼容排版 JSON 的协议保持不变，也不带文献库。
 
-MLA／APA 使用自托管固定字节的 citeproc-js、官方 CSL 样式和 en-US locale；中文／西班牙语界面不翻译作者或题名。GB/T 条目渲染、自动解析既有条目、文内引用同步和联网 DOI 查询尚未实现。操作见[文献助手指南](CITATIONS.md)，源码、完整许可及可见归属见[引用组件分发说明](CITATION-LICENSES.md)。本版 Safari、物理设备与浏览器新下载 DOCX 的文件检查仍未验收；线上核对范围见[部署记录](DEPLOYMENT.md)。
+v2.9.0 源码新增“快速添加”：明确点击才向 Crossref 顺序查询最多 50 个 DOI，或离线导入 BibTeX / RIS / CSL-JSON。核对并勾选后追加、跳过可确认重复，并可整批撤销；取消保留已完成候选，限流停止而不自动重试。文稿和整个库不发送。部署状态见[上线记录](DEPLOYMENT.md)，范围见[隐私与导入限制](CITATIONS.md)。MLA／APA 继续使用自托管固定字节的 citeproc-js、官方 CSL 样式和 en-US locale；中文／西班牙语界面不翻译作者或题名。GB/T 条目渲染、任意参考文献散文解析和文内引用同步仍不支持。源码、完整许可及可见归属见[引用组件分发说明](CITATION-LICENSES.md)。
 
 ### 网站更新提示（v2.7.0 静态网页版）
 
@@ -387,13 +387,13 @@ Codes are limited to 8,192 ASCII characters and decoded JSON to 4,096 bytes; sha
 | Workflow | Input | Output and scope |
 | --- | --- | --- |
 | Draft page layout | Existing reference text inside a DOCX, TXT or Markdown draft | Reference-page heading, page break, indentation, spacing and ordinary-entry sorting; citation wording stays as written |
-| Independent reference assistant | Manually entered book, journal-article or webpage fields | Local CSL renders MLA 9 / APA 7 for review and a separate bibliography; the draft and in-text citation numbers stay intact |
+| Independent reference assistant | Manual fields; source v2.9.0 also accepts DOI batches and offline BibTeX / RIS / CSL-JSON | Local CSL renders MLA 9 / APA 7 for review and a separate bibliography; the draft and in-text citation numbers stay intact |
 
 Expand **Reference assistant**, add records and enter the title, ordered personal/organization authors, publication date and applicable publisher, journal/site, volume, issue, pages, DOI or URL. Missing author/date information is flagged for review rather than invented. Choose **MLA 9 / APA 7 → Preview bibliography**, then copy plain/formatted text or export HTML; the static browser build also exports a separate Word bibliography. Editing entries or the style requires a fresh preview. CSL determines entry order and formatting.
 
 The library is session-only by default. **Save on this device**, **Load saved library** and **Remove saved library** explicitly operate on the separate `formcapy.citations.v1` key. JSON import reviews the count and titles before explicit replacement and keeps an undo snapshot. Removing the saved copy leaves the active library intact. Library JSON is limited to 1 MiB and 200 records and excludes paper details, draft bytes and generated results. It is separate from templates: `FC1.`, ShareV1 and compatible layout JSON keep their existing protocols and never carry this library.
 
-The renderer self-hosts pinned citeproc-js, official CSL styles and en-US locale data. Chinese/Spanish interface choices do not translate authors or titles. GB/T entry rendering, arbitrary-text parsing, in-text synchronization and online DOI lookup are not implemented. See the [assistant guide](CITATIONS.md) and [component/source distribution record](CITATION-LICENSES.md). Safari, physical-device and fresh browser-downloaded DOCX inspection remain unverified; see the [deployment record](DEPLOYMENT.md) for public checks.
+Source v2.9.0 adds Quick add: explicitly query up to 50 DOIs sequentially with Crossref, or import BibTeX / RIS / CSL-JSON offline. Review and select before appending, skip confirmed duplicates and undo a batch. Cancellation keeps completed candidates; rate limiting stops without automatic retry. Drafts and full libraries are not sent. See [deployment status](DEPLOYMENT.md). The renderer still self-hosts pinned citeproc-js, official CSL styles and en-US locale data. Chinese/Spanish UI choices do not translate authors or titles. GB/T entry rendering, arbitrary-reference-prose parsing and in-text synchronization remain outside scope. See the [assistant guide](CITATIONS.md) and [component/source record](CITATION-LICENSES.md).
 
 ### Website update notice (v2.7.0 static website)
 

@@ -10,6 +10,7 @@
 
   const STORAGE_KEY = "formcapy.citations.v1";
   const MAX_VISIBLE_ISSUES = 20;
+  let instanceCount = 0;
   const TEXT = {
     zh: {
       assistant: "参考文献助手",
@@ -69,7 +70,7 @@
       warn_author: "未填写作者；部分资料可以没有作者。", warn_year: "未填写出版年份。",
       warn_publisher: "书籍缺少出版社。", warn_container: "缺少期刊或网站名称。",
       warn_url: "网页缺少网址。", warn_accessed: "网页缺少访问日期。",
-      warn_doi: "这个 DOI 格式可能无效。请预览前检查或清空；不会联网查询。",
+      warn_doi: "这个 DOI 格式可能无效。请预览前检查或清空；不会自动联网查询。",
       more_issues: "…另有 {count} 条未显示",
       error_title: "标题为必填项。", error_date: "日期无效；允许只填部分日期。",
       error_url: "请输入有效的 http(s) 网址。", error_control: "请移除控制字符。",
@@ -158,7 +159,7 @@
       warn_author: "No author entered; some sources legitimately have none.", warn_year: "No publication year entered.",
       warn_publisher: "This book is missing a publisher.", warn_container: "Add the journal or site name.",
       warn_url: "This webpage is missing a URL.", warn_accessed: "This webpage is missing an access date.",
-      warn_doi: "This DOI does not match the expected format. Check or clear it before previewing; no online lookup is performed.",
+      warn_doi: "This DOI does not match the expected format. Check or clear it before previewing; it is never looked up automatically.",
       more_issues: "… and {count} more",
       error_title: "A title is required.", error_date: "Enter a valid date. Partial dates are allowed.",
       error_url: "Enter a valid http(s) URL.", error_control: "Remove control characters.",
@@ -247,7 +248,7 @@
       warn_author: "No hay autor; algunas fuentes pueden no tenerlo.", warn_year: "No hay año de publicación.",
       warn_publisher: "Falta la editorial de este libro.", warn_container: "Añade el nombre de la revista o del sitio.",
       warn_url: "Falta la URL de esta página web.", warn_accessed: "Falta la fecha de acceso de esta página web.",
-      warn_doi: "Este DOI no tiene el formato esperado. Revísalo o bórralo antes de previsualizar; no se consulta en línea.",
+      warn_doi: "Este DOI no tiene el formato esperado. Revísalo o bórralo antes de previsualizar; nunca se consulta automáticamente.",
       more_issues: "… y {count} más",
       error_title: "El título es obligatorio.", error_date: "Introduce una fecha válida. Se permiten fechas parciales.",
       error_url: "Introduce una URL http(s) válida.", error_control: "Elimina los caracteres de control.",
@@ -318,6 +319,138 @@
     url_missing: "warn_url", accessed_missing: "warn_accessed", doi_format: "warn_doi",
   };
 
+  // Intake copy lives together so every new workflow has the same three locales.
+  const INTAKE_TEXT = {
+    zh: {
+      quick_add: "快速添加参考文献", quick_hint: "用 DOI 自动填写，或导入 Zotero、数据库导出的 BibTeX / RIS / CSL JSON。核对后再加入文献库。",
+      manual_add: "手动添加", quick_doi: "DOI 自动填写", quick_import: "导入文献", quick_doi_label: "DOI 或 doi.org 链接",
+      quick_doi_placeholder: "例如 10.1234/example 或 https://doi.org/…", quick_query: "查询 DOI（联网）", quick_cancel: "取消查询",
+      quick_privacy: "只有点击查询才联网：Crossref 会收到这个 DOI 和常规网络请求信息，不会收到文稿、文献库或论文信息。",
+      quick_lookup_hint: "自动填写仅使用 Crossref 的公开记录；查不到时可导入数据库记录或手动添加。请核对来源信息。",
+      quick_import_hint: "粘贴 BibTeX、RIS 或 CSL JSON，也可选择文件。识别与导入完全在此设备上进行，限 1 MiB、UTF-8。FormCapy 库备份请使用下方“导入文献库 JSON”。",
+      quick_text: "粘贴文献记录", quick_format: "文件格式", quick_auto: "自动识别", quick_choose_file: "选择 .bib / .ris / .json / .txt 文件",
+      quick_review: "识别并核对", quick_review_title: "核对识别结果", quick_review_hint: "自动记录可能不完整。加入后仍可编辑作者、日期等字段；不会替换已有文献。",
+      quick_count: "识别 {count} 条 · 可追加 {added} 条 · 重复 {skipped} 条", quick_append: "追加到文献库（{count} 条）", quick_dismiss: "取消本次添加",
+      quick_added: "已追加 {added} 条，跳过 {skipped} 条重复记录；可撤销本次追加。", quick_no_new: "这些记录已在文献库中，没有新增条目。", undo_append: "撤销本次追加",
+      quick_busy: "正在向 Crossref 查询这个 DOI…", quick_reading: "正在读取本地文件…", quick_cancelled: "查询已取消。", quick_ready: "已识别，核对后再追加。",
+      quick_invalid: "无法识别这些记录；当前文献库未改变。", quick_unavailable: "自动添加模块尚未加载，可继续手动添加。", quick_file_error: "无法读取文件，请重新选择 UTF-8 文本文件。",
+      quick_missing_author: "作者待补充", quick_missing_year: "年份待补充", quick_source: "来源", quick_record: "第 {count} 条", quick_problem: "记录中有不能导入的内容，请检查原始记录。",
+      quick_warn: "部分信息需要核对。", quick_field_lost: "这个字段未导入，请对照原始记录补充。", quick_macro: "未展开的 BibTeX 宏需要改为实际文本。", quick_type_unsupported: "暂不支持这种文献类型，请选择书籍、期刊文章或网页记录。",
+      quick_format_invalid: "记录格式不受支持或与所选格式不符。", quick_csl_expected: "这个入口需要 CSL JSON 记录；FormCapy 库备份请使用下方“导入文献库 JSON”。", quick_empty: "请先输入 DOI 或粘贴文献记录。", quick_doi_invalid: "请输入一个有效 DOI 或 doi.org 链接。",
+      quick_not_found: "Crossref 未找到这个 DOI。可检查 DOI，或改用离线导入、手动添加。", quick_network: "无法连接 Crossref。请稍后重试，或使用离线导入。", quick_timeout: "Crossref 查询超时，请稍后重试。", quick_rate: "查询太频繁，请稍等再试。", quick_response: "Crossref 的记录无法安全导入，可改用离线导入或手动添加。",
+      quick_detected_format: "识别格式：{format}", quick_original_truncated: "原始内容过长，只保存了前半部分；请保留原文件。", quick_field_conflict: "同一字段有多个不同值，已采用其中一个，请核对。", quick_date_lost: "无法识别日期，请在加入后补充。", quick_date_range: "日期为一个范围，已采用起始日期，请核对。", quick_formatting_lost: "原记录的文字格式未保留，请核对标题文字。", quick_latex: "部分 LaTeX 写法未转换，请核对并修正文字。", quick_directive: "BibTeX 指令未导入，请核对依赖该指令的记录。", quick_authors_incomplete: "作者列表可能不完整，请核对。", quick_type_review: "记录已映射到支持的文献类型，请核对类型。", quick_duplicate_author: "原记录中有重复作者，请核对。", quick_duplicate_skipped: "这条重复记录将跳过。", quick_author_name: "作者姓名的拆分需要核对。",
+    },
+    en: {
+      quick_add: "Quickly add references", quick_hint: "Fill fields from a DOI, or import BibTeX, RIS or CSL JSON from Zotero and research databases. Review before adding to your library.",
+      manual_add: "Add manually", quick_doi: "Fill from DOI", quick_import: "Import references", quick_doi_label: "DOI or doi.org link",
+      quick_doi_placeholder: "e.g. 10.1234/example or https://doi.org/…", quick_query: "Look up DOI (online)", quick_cancel: "Cancel lookup",
+      quick_privacy: "Only Look up connects online: Crossref receives this DOI and normal network request information. Your draft, library and paper details are not sent.",
+      quick_lookup_hint: "Automatic filling uses public Crossref records only. If none is found, import a database record or add it manually. Check the source details.",
+      quick_import_hint: "Paste BibTeX, RIS or CSL JSON, or choose a file. Detection and import stay on this device. Limit: 1 MiB, UTF-8. For a FormCapy library backup, use Import library JSON below.",
+      quick_text: "Paste reference records", quick_format: "Record format", quick_auto: "Detect automatically", quick_choose_file: "Choose a .bib / .ris / .json / .txt file",
+      quick_review: "Detect and review", quick_review_title: "Review detected references", quick_review_hint: "Automatic records may be incomplete. You can edit authors, dates and other fields after adding. Existing references are kept.",
+      quick_count: "{count} detected · {added} to add · {skipped} duplicates", quick_append: "Add to library ({count})", quick_dismiss: "Dismiss this batch",
+      quick_added: "Added {added} and skipped {skipped} duplicates. You can undo this batch.", quick_no_new: "These references are already in your library. Nothing was added.", undo_append: "Undo this batch",
+      quick_busy: "Looking up this DOI with Crossref…", quick_reading: "Reading the local file…", quick_cancelled: "Lookup cancelled.", quick_ready: "References detected. Review before adding.",
+      quick_invalid: "These records could not be read. Your library is unchanged.", quick_unavailable: "Automatic adding is not loaded. You can still add manually.", quick_file_error: "Could not read the file. Choose a UTF-8 text file again.",
+      quick_missing_author: "Author needs review", quick_missing_year: "Year needs review", quick_source: "Source", quick_record: "Record {count}", quick_problem: "This record contains content that could not be imported. Check the original record.",
+      quick_warn: "Some details need review.", quick_field_lost: "This field was not imported. Check and add it from the original record.", quick_macro: "Replace this unresolved BibTeX macro with its actual text.", quick_type_unsupported: "This source type is not supported. Use a book, journal article or webpage record.",
+      quick_format_invalid: "The record format is unsupported or does not match the selected format.", quick_csl_expected: "This entry point needs CSL JSON records. For a FormCapy library backup, use Import library JSON below.", quick_empty: "Enter a DOI or paste reference records first.", quick_doi_invalid: "Enter one valid DOI or doi.org link.",
+      quick_not_found: "Crossref has no record for this DOI. Check it, import an offline record or add manually.", quick_network: "Could not connect to Crossref. Try again later or use offline import.", quick_timeout: "The Crossref lookup timed out. Try again later.", quick_rate: "Too many requests. Wait before trying again.", quick_response: "This Crossref record could not be safely imported. Use offline import or add manually.",
+      quick_detected_format: "Detected format: {format}", quick_original_truncated: "The original record was too long, so only its beginning is stored. Keep the source file.", quick_field_conflict: "This field had different values. One was chosen; please check it.", quick_date_lost: "The date could not be read. Add it after importing.", quick_date_range: "This date is a range. The starting date was used; please check it.", quick_formatting_lost: "Text formatting in the source record was not preserved. Check the title text.", quick_latex: "Some LaTeX notation was not converted. Check and correct the text.", quick_directive: "A BibTeX directive was not imported. Check any records that depend on it.", quick_authors_incomplete: "The author list may be incomplete. Check it.", quick_type_review: "This record was mapped to a supported source type. Check the type.", quick_duplicate_author: "The source record has duplicate authors. Check them.", quick_duplicate_skipped: "This duplicate record will be skipped.", quick_author_name: "Check how this author's name was split.",
+    },
+    es: {
+      quick_add: "Añadir referencias rápidamente", quick_hint: "Rellena los campos con un DOI o importa BibTeX, RIS o CSL JSON de Zotero y bases bibliográficas. Revisa antes de añadir a la biblioteca.",
+      manual_add: "Añadir manualmente", quick_doi: "Rellenar con DOI", quick_import: "Importar referencias", quick_doi_label: "DOI o enlace doi.org",
+      quick_doi_placeholder: "p. ej., 10.1234/example o https://doi.org/…", quick_query: "Consultar DOI (en línea)", quick_cancel: "Cancelar consulta",
+      quick_privacy: "Solo Consultar se conecta a internet: Crossref recibe este DOI y la información habitual de la solicitud de red. No se envían el borrador, la biblioteca ni los datos del trabajo.",
+      quick_lookup_hint: "El rellenado utiliza solo registros públicos de Crossref. Si no hay resultados, importa un registro o añádelo manualmente. Comprueba los datos de la fuente.",
+      quick_import_hint: "Pega BibTeX, RIS o CSL JSON, o elige un archivo. La detección y la importación se realizan en este dispositivo. Límite: 1 MiB, UTF-8. Para una copia de FormCapy, usa Importar biblioteca JSON más abajo.",
+      quick_text: "Pegar registros bibliográficos", quick_format: "Formato de los registros", quick_auto: "Detectar automáticamente", quick_choose_file: "Elegir archivo .bib / .ris / .json / .txt",
+      quick_review: "Detectar y revisar", quick_review_title: "Revisar referencias detectadas", quick_review_hint: "Los registros automáticos pueden estar incompletos. Puedes editar autores, fechas y otros campos después de añadirlos. Se conservan las referencias existentes.",
+      quick_count: "{count} detectadas · {added} para añadir · {skipped} duplicadas", quick_append: "Añadir a la biblioteca ({count})", quick_dismiss: "Descartar este lote",
+      quick_added: "Se añadieron {added} y se omitieron {skipped} duplicadas. Puedes deshacer este lote.", quick_no_new: "Estas referencias ya están en la biblioteca. No se añadió ninguna.", undo_append: "Deshacer este lote",
+      quick_busy: "Consultando este DOI en Crossref…", quick_reading: "Leyendo el archivo local…", quick_cancelled: "Consulta cancelada.", quick_ready: "Referencias detectadas. Revísalas antes de añadirlas.",
+      quick_invalid: "No se pudieron leer los registros. La biblioteca no cambió.", quick_unavailable: "El módulo automático no está cargado. Puedes añadir manualmente.", quick_file_error: "No se pudo leer el archivo. Elige de nuevo un archivo de texto UTF-8.",
+      quick_missing_author: "Revisar autor", quick_missing_year: "Revisar año", quick_source: "Fuente", quick_record: "Registro {count}", quick_problem: "El registro contiene datos que no se pudieron importar. Comprueba el registro original.",
+      quick_warn: "Hay datos que requieren revisión.", quick_field_lost: "Este campo no se importó. Compruébalo y añádelo desde el registro original.", quick_macro: "Sustituye esta macro BibTeX sin resolver por su texto real.", quick_type_unsupported: "Este tipo de fuente no es compatible. Usa un libro, un artículo de revista o una página web.",
+      quick_format_invalid: "El formato no es compatible o no coincide con el seleccionado.", quick_csl_expected: "Este apartado necesita registros CSL JSON. Para una copia de biblioteca FormCapy, usa Importar biblioteca JSON más abajo.", quick_empty: "Introduce un DOI o pega registros bibliográficos primero.", quick_doi_invalid: "Introduce un DOI válido o un enlace doi.org.",
+      quick_not_found: "Crossref no encontró este DOI. Revísalo, importa un registro sin conexión o añádelo manualmente.", quick_network: "No se pudo conectar con Crossref. Inténtalo más tarde o importa sin conexión.", quick_timeout: "La consulta de Crossref agotó el tiempo. Inténtalo más tarde.", quick_rate: "Demasiadas consultas. Espera antes de intentarlo de nuevo.", quick_response: "No se pudo importar este registro de Crossref de forma segura. Importa sin conexión o añade manualmente.",
+      quick_detected_format: "Formato detectado: {format}", quick_original_truncated: "El registro original era demasiado largo; solo se guarda el principio. Conserva el archivo original.", quick_field_conflict: "Este campo tenía valores diferentes. Se eligió uno; compruébalo.", quick_date_lost: "No se pudo leer la fecha. Añádela después de importar.", quick_date_range: "La fecha es un intervalo. Se usó la fecha inicial; compruébala.", quick_formatting_lost: "No se conservó el formato de texto del registro. Comprueba el título.", quick_latex: "Parte de la notación LaTeX no se convirtió. Comprueba y corrige el texto.", quick_directive: "No se importó una directiva BibTeX. Comprueba los registros que dependen de ella.", quick_authors_incomplete: "La lista de autores puede estar incompleta. Compruébala.", quick_type_review: "El registro se asignó a un tipo de fuente compatible. Comprueba el tipo.", quick_duplicate_author: "El registro contiene autores duplicados. Compruébalos.", quick_duplicate_skipped: "Se omitirá este registro duplicado.", quick_author_name: "Comprueba cómo se dividió el nombre de este autor.",
+    },
+  };
+  for (const language of Object.keys(INTAKE_TEXT)) Object.assign(TEXT[language], INTAKE_TEXT[language]);
+  const BATCH_TEXT = {
+    zh: {
+      batch_doi_label: "DOI 或 doi.org 链接（一行一个，最多 50 条）", batch_placeholder: "10.1234/example-one\nhttps://doi.org/10.1234/example-two",
+      batch_hint: "一行一条，按顺序查询，最多 50 条、32 KiB。无效和重复行不会联网；失败不会丢掉已查到的记录。",
+      batch_privacy: "只有点击查询才联网：逐个向 Crossref 发送本次列表中的有效 DOI 及常规网络请求信息，不发送文稿、文献库或论文信息。不会自动重试。",
+      batch_rows: "逐行查询状态", batch_line: "第 {line} 行", batch_ready: "等待查询", batch_unqueried: "未查询", batch_running: "查询中", batch_success: "已找到", batch_failed: "查询失败", batch_invalid: "无效 DOI", batch_duplicate: "重复行（同第 {line} 行）", batch_cancelled_row: "未查询 / 已取消",
+      batch_progress: "顺序查询：完成 {completed}/{total} · 成功 {succeeded} · 失败 {failed}", batch_current: "当前队列：第 {line} 行", batch_cancel: "取消批量查询",
+      batch_done: "本次查询完成：找到 {succeeded} 条，失败 {failed} 条。核对并选择要追加的记录。", batch_cancelled: "已取消；保留 {succeeded} 条已完成结果，未完成的不会再加入。",
+      batch_rate_limited: "Crossref 要求稍后再查，本批已停止。已找到 {succeeded} 条可继续核对；请稍后手动重新查询，不会自动重试。",
+      batch_invalid_input: "没有开始查询，请检查逐行状态和输入限制。", batch_limit: "最多输入 50 条非空 DOI，文本不超过 32 KiB。", batch_no_valid: "没有可查询的有效 DOI。请检查逐行状态。",
+      select_record: "选择：{title}", select_all: "全选", select_none: "全不选", quick_count: "识别 {count} 条 · 已选 {selected} 条 · 可追加 {added} 条 · 重复 {skipped} 条",
+      select_hint: "仅追加勾选的条目；按 DOI 或保守的书目信息去重。", batch_lookup_invalid: "查询模块返回的数据无效。已完成的成功记录仍可核对。",
+    },
+    en: {
+      batch_doi_label: "DOIs or doi.org links (one per line, up to 50)", batch_placeholder: "10.1234/example-one\nhttps://doi.org/10.1234/example-two",
+      batch_hint: "One per line, queried in order. Up to 50 entries and 32 KiB. Invalid and duplicate lines are not queried; failures keep earlier successful records.",
+      batch_privacy: "Only Look up connects online: valid DOIs in this list and normal request information are sent individually to Crossref. Drafts, your library and paper details are not sent. No automatic retries.",
+      batch_rows: "Lookup status by line", batch_line: "Line {line}", batch_ready: "Waiting", batch_unqueried: "Not queried", batch_running: "Looking up", batch_success: "Found", batch_failed: "Lookup failed", batch_invalid: "Invalid DOI", batch_duplicate: "Duplicate of line {line}", batch_cancelled_row: "Not queried / cancelled",
+      batch_progress: "Sequential lookup: {completed}/{total} completed · {succeeded} found · {failed} failed", batch_current: "Current queue item: line {line}", batch_cancel: "Cancel batch",
+      batch_done: "Lookup finished: {succeeded} found and {failed} failed. Review and select the records to add.", batch_cancelled: "Cancelled. Kept {succeeded} completed results; unfinished results will not be added.",
+      batch_rate_limited: "Crossref requested a pause, so this batch stopped. You can review {succeeded} completed results. Try again manually later; there are no automatic retries.",
+      batch_invalid_input: "No lookup started. Check the line statuses and input limits.", batch_limit: "Enter no more than 50 nonempty DOI lines and 32 KiB of text.", batch_no_valid: "There are no valid DOIs to look up. Check the line statuses.",
+      select_record: "Select: {title}", select_all: "Select all", select_none: "Select none", quick_count: "{count} detected · {selected} selected · {added} to add · {skipped} duplicates",
+      select_hint: "Only checked records are added. Duplicates are detected using DOI or a conservative match of source details.", batch_lookup_invalid: "The lookup module returned invalid data. Completed successful records are still available to review.",
+    },
+    es: {
+      batch_doi_label: "DOI o enlaces doi.org (uno por línea, hasta 50)", batch_placeholder: "10.1234/example-one\nhttps://doi.org/10.1234/example-two",
+      batch_hint: "Uno por línea, consultados en orden. Máximo 50 entradas y 32 KiB. No se consultan las líneas no válidas ni duplicadas; los fallos conservan los registros encontrados.",
+      batch_privacy: "Solo Consultar se conecta a internet: los DOI válidos de esta lista y la información habitual de la solicitud se envían individualmente a Crossref. No se envían borradores, biblioteca ni datos del trabajo. No hay reintentos automáticos.",
+      batch_rows: "Estado de consulta por línea", batch_line: "Línea {line}", batch_ready: "En espera", batch_unqueried: "Sin consultar", batch_running: "Consultando", batch_success: "Encontrado", batch_failed: "Consulta fallida", batch_invalid: "DOI no válido", batch_duplicate: "Duplicado de la línea {line}", batch_cancelled_row: "Sin consultar / cancelado",
+      batch_progress: "Consulta en orden: {completed}/{total} completadas · {succeeded} encontradas · {failed} fallidas", batch_current: "Registro actual en cola: línea {line}", batch_cancel: "Cancelar lote",
+      batch_done: "Consulta terminada: {succeeded} encontradas y {failed} fallidas. Revisa y selecciona los registros que añadir.", batch_cancelled: "Cancelado. Se conservan {succeeded} resultados completados; no se añadirán resultados pendientes.",
+      batch_rate_limited: "Crossref pidió esperar; el lote se detuvo. Puedes revisar {succeeded} resultados completados. Vuelve a consultar manualmente más tarde; no hay reintentos automáticos.",
+      batch_invalid_input: "No se inició la consulta. Revisa los estados de las líneas y los límites.", batch_limit: "Introduce como máximo 50 líneas DOI no vacías y 32 KiB de texto.", batch_no_valid: "No hay DOI válidos que consultar. Revisa los estados de las líneas.",
+      select_record: "Seleccionar: {title}", select_all: "Seleccionar todas", select_none: "No seleccionar ninguna", quick_count: "{count} detectadas · {selected} seleccionadas · {added} para añadir · {skipped} duplicadas",
+      select_hint: "Solo se añaden los registros marcados. Los duplicados se detectan por DOI o una coincidencia conservadora de los datos bibliográficos.", batch_lookup_invalid: "El módulo de consulta devolvió datos no válidos. Los registros ya encontrados se pueden revisar.",
+    },
+  };
+  for (const language of Object.keys(BATCH_TEXT)) Object.assign(TEXT[language], BATCH_TEXT[language]);
+
+  const intakeIssueKeys = {
+    doi_invalid: "quick_doi_invalid", lookup_busy: "quick_rate", lookup_rate_limited: "quick_rate",
+    lookup_not_found: "quick_not_found", lookup_network: "quick_network", lookup_timeout: "quick_timeout",
+    lookup_response_large: "quick_response", lookup_response_invalid: "quick_response",
+    lookup_type_unsupported: "quick_type_unsupported", lookup_metadata_invalid: "quick_response",
+    lookup_cancelled: "quick_cancelled", metadata_incomplete: "quick_warn",
+    metadata_markup_removed: "quick_warn", metadata_fields_omitted: "quick_field_lost",
+    field_not_imported: "quick_field_lost", type_unsupported: "quick_type_unsupported",
+    bibtex_macro_unsupported: "quick_macro", format_unsupported: "quick_format_invalid",
+    format_invalid: "quick_format_invalid", input_empty: "quick_empty",
+    input_too_large: "error_file_too_large", file_too_large: "error_file_too_large",
+    original_text_truncated: "quick_original_truncated", field_conflict: "quick_field_conflict",
+    date_not_imported: "quick_date_lost", date_range_first_only: "quick_date_range",
+    formatting_not_imported: "quick_formatting_lost", bibtex_latex_unconverted: "quick_latex",
+    bibtex_directive_not_imported: "quick_directive", authors_incomplete: "quick_authors_incomplete",
+    type_review: "quick_type_review", duplicate_author: "quick_duplicate_author",
+    duplicate_skipped: "quick_duplicate_skipped", author_name_review: "quick_author_name",
+    model_unavailable: "model_missing", input_too_complex: "error_json_complex",
+    input_too_deep: "error_json_complex", no_items: "quick_empty",
+    csl_json_expected: "quick_csl_expected", format_unrecognized: "quick_format_invalid",
+    bibtex_invalid: "quick_format_invalid", ris_invalid: "quick_format_invalid",
+    ris_record_unterminated: "quick_format_invalid", import_invalid: "quick_invalid",
+    batch_too_many: "batch_limit", too_many_dois: "batch_limit", batch_input_large: "batch_limit",
+    no_valid_dois: "batch_no_valid", batch_input_invalid: "batch_invalid_input",
+    batch_lookup_invalid: "batch_lookup_invalid",
+    input_invalid: "batch_invalid_input", normalizer_unavailable: "quick_unavailable",
+    too_many_lines: "batch_limit", rows_invalid: "batch_invalid_input", lookup_unavailable: "quick_unavailable",
+    lookup_items_invalid: "quick_response", lookup_item_invalid: "quick_response",
+    lookup_doi_mismatch: "quick_response", lookup_failed: "quick_network",
+  };
+
   function create(options = {}) {
     const mount = options.mount;
     if (!mount || typeof mount.replaceChildren !== "function") {
@@ -325,6 +458,12 @@
     }
     const model = options.model || root.FormCapyCitations;
     const engine = options.engine || root.FormCapyCitationEngine;
+    const importer = options.importer === undefined ? root.FormCapyCitationImport : options.importer;
+    const lookup = options.lookup === undefined ? root.FormCapyCitationLookup : options.lookup;
+    const batch = options.batch === undefined ? root.FormCapyDoiBatch : options.batch;
+    const canImport = Boolean(model && importer && typeof importer.parse === "function" && typeof importer.planAppend === "function");
+    const canLookup = Boolean(canImport && lookup && typeof lookup.lookup === "function");
+    const canBatch = Boolean(canLookup && batch && typeof batch.parse === "function" && typeof batch.run === "function");
     let storage = null;
     try {
       storage = options.storage === undefined ? root.localStorage : options.storage;
@@ -334,6 +473,7 @@
     const allowDownloads = options.allowDownloads !== false;
     const onExportWord = typeof options.onExportWord === "function" ? options.onExportWord : null;
     const getLocale = typeof options.getLocale === "function" ? options.getLocale : () => "en";
+    const instanceId = `fc-citations-${++instanceCount}`;
     let locale = readLocale();
     let lastLocale = locale;
     let disposed = false;
@@ -360,11 +500,28 @@
       fallbackVisible: false,
       wordLink: false,
       wordUrl: null,
+      quickMode: canLookup ? "doi" : "import",
+      quickRevision: 0,
+      quickBusy: false,
+      quickPending: null,
+      quickErrors: [],
+      quickWarnings: [],
+      quickStatusKey: "",
+      quickStatusVars: {},
+      quickStatusTone: "",
+      quickSelected: new Set(),
+      batchRows: [],
+      batchRunning: false,
+      batchCancelled: false,
+      batchRateLimited: false,
     };
     const nodes = {};
     const labelNodes = {};
     const downloadTimers = new Set();
     let wordController = null;
+    let lookupController = null;
+    let quickRenderKey = "";
+    let batchRenderKey = "";
     const DOWNLOAD_URL_TTL = 1000;
 
     function readLocale() {
@@ -562,8 +719,19 @@
     function undo() {
       const entry = state.undo.shift();
       if (!entry) return;
-      state.items = entry.items;
-      state.selectedId = entry.selectedId;
+      if (entry.kind === "append" && Array.isArray(entry.addedIds)) {
+        // Undo only the batch's new IDs, preserving subsequent edits to older
+        // records and any entries the user added manually afterward.
+        const added = new Set(entry.addedIds);
+        state.items = state.items.filter((item) => !added.has(item.id));
+        if (!state.items.some((item) => item.id === state.selectedId)) {
+          state.selectedId = state.items.some((item) => item.id === entry.selectedId)
+            ? entry.selectedId : state.items[0]?.id || null;
+        }
+      } else {
+        state.items = entry.items;
+        state.selectedId = entry.selectedId;
+      }
       invalidatePreview();
       rebuildEditor();
       render();
@@ -769,7 +937,7 @@
       renderIssueBox(nodes.editorIssues, result.errors, result.warnings);
     }
 
-    function renderIssueBox(container, errors, warnings) {
+    function renderIssueBox(container, errors, warnings, describe = issueText) {
       if (!container) return;
       container.replaceChildren();
       const renderList = (titleKey, list, tone) => {
@@ -779,7 +947,7 @@
         const ul = make("ul", "fc-citations-issues-list");
         const visible = list.slice(0, MAX_VISIBLE_ISSUES);
         for (const issue of visible) {
-          const li = make("li", "", issueText(issue));
+          const li = make("li", "", describe(issue));
           ul.append(li);
         }
         if (list.length > visible.length) {
@@ -871,12 +1039,389 @@
       }
     }
 
+    function intakeIssueText(issue) {
+      const value = issue || {};
+      const key = intakeIssueKeys[value.code] || warningKeys[value.code] || errorKeys[value.code] || "quick_problem";
+      const labelKey = fieldLabelKeys[value.field];
+      const rawField = typeof value.field === "string" ? value.field.slice(0, 120) : "";
+      const label = labelKey ? t(labelKey) : fieldLabel(value.path) || rawField;
+      const detail = label ? `${t(key)} (${label})` : t(key);
+      const pathIndex = /^(?:\$\[|\$\.items\[|library\.items\[)(\d+)\]/.exec(value.path || "");
+      const index = Number.isSafeInteger(value.index) ? value.index : pathIndex ? Number(pathIndex[1]) : null;
+      return index !== null ? `${t("quick_record", { count: index + 1 })}: ${detail}` : detail;
+    }
+
+    function setQuickStatus(key = "", tone = "", vars = {}) {
+      state.quickStatusKey = key;
+      state.quickStatusTone = tone;
+      state.quickStatusVars = vars;
+    }
+
+    // Intake has its own cancellation token. It never takes the paper/Word
+    // export lock and never writes into a selected entry while awaiting a DOI.
+    function resetIntake(status = "") {
+      state.quickRevision += 1;
+      lookupController?.abort();
+      lookupController = null;
+      state.quickBusy = false;
+      state.quickPending = null;
+      state.quickSelected = new Set();
+      state.batchRows = [];
+      state.batchRunning = false;
+      state.batchCancelled = false;
+      state.batchRateLimited = false;
+      state.quickErrors = [];
+      state.quickWarnings = [];
+      setQuickStatus(status);
+    }
+
+    function plannedAppend(items) {
+      if (!canImport) return { ok: false, items: [], added: 0, skipped: 0, errors: [], warnings: [] };
+      try {
+        const result = importer.planAppend(state.items, items);
+        if (!result || !Array.isArray(result.items) || !Array.isArray(result.errors || [])) throw new TypeError();
+        return result;
+      } catch (_) {
+        return { ok: false, items: [], added: 0, skipped: 0, errors: [{ code: "item_invalid" }], warnings: [] };
+      }
+    }
+
+    function authorSummary(item) {
+      const names = (Array.isArray(item.authors) ? item.authors : []).map((author) =>
+        author.literal || [author.given, author.family].filter(Boolean).join(" ")).filter(Boolean);
+      return names.length ? names.slice(0, 3).join("; ") + (names.length > 3 ? " …" : "") : t("quick_missing_author");
+    }
+
+    function selectedIntakeItems() {
+      return state.quickPending ? state.quickPending.items.filter((_, index) => state.quickSelected.has(index)) : [];
+    }
+
+    function batchCounts() {
+      const rows = state.batchRows;
+      const succeeded = rows.filter((row) => row.status === "success").length;
+      const failed = rows.filter((row) => row.status === "failed").length;
+      return { total: rows.filter((row) => !["invalid", "duplicate"].includes(row.status)).length,
+        completed: succeeded + failed, succeeded, failed };
+    }
+
+    function renderBatchRows() {
+      nodes.batchPanel.hidden = !state.batchRows.length;
+      setText(nodes.batchHeading, t("batch_rows"));
+      const counts = batchCounts();
+      setText(nodes.batchProgress, t("batch_progress", counts));
+      const current = state.batchRunning ? state.batchRows.find((row) => !["success", "failed", "invalid", "duplicate", "cancelled"].includes(row.status)) : null;
+      nodes.batchCurrent.hidden = !current;
+      if (current) setText(nodes.batchCurrent, t("batch_current", { line: current.line }));
+      const key = JSON.stringify([locale, state.batchRunning, state.batchRows]);
+      if (key === batchRenderKey) return;
+      batchRenderKey = key;
+      nodes.batchRows.replaceChildren();
+      for (const row of state.batchRows) {
+        const entry = make("li", "fc-citations-batch-row");
+        entry.setAttribute("data-batch-line", String(row.line));
+        let label = { success: "batch_success", failed: "batch_failed", invalid: "batch_invalid",
+          duplicate: "batch_duplicate", cancelled: "batch_cancelled_row", ready: "batch_ready" }[row.status] || "batch_running";
+        if (!state.batchRunning && !["success", "failed", "invalid", "duplicate", "cancelled"].includes(row.status)) label = "batch_unqueried";
+        append(entry, make("strong", "fc-citations-batch-line", t("batch_line", { line: row.line })),
+          make("span", "fc-citations-batch-input", row.doi || row.input || ""),
+          make("span", `fc-citations-batch-state is-${row.status}`, t(label, { line: row.duplicateOf || "?" })));
+        const issues = make("div", "fc-citations-issues");
+        renderIssueBox(issues, row.status === "duplicate" ? [] : row.errors || [], [], intakeIssueText);
+        entry.append(issues);
+        nodes.batchRows.append(entry);
+      }
+    }
+
+    function updateBatchSnapshot(snapshot, revision) {
+      if (disposed || revision !== state.quickRevision) return;
+      if (!snapshot || !Array.isArray(snapshot.rows) || snapshot.rows.length > 50) {
+        throw new TypeError("batch_lookup_invalid");
+      }
+      state.batchRows = snapshot.rows;
+      state.quickErrors = Array.isArray(snapshot.errors) ? snapshot.errors.map((issue) => issue.code === "input_too_large"
+        ? { ...issue, code: "batch_input_large" } : issue) : [];
+      state.batchCancelled = Boolean(snapshot.cancelled);
+      state.batchRateLimited = Boolean(snapshot.rateLimited);
+      const items = [], warnings = [];
+      for (const row of snapshot.rows) {
+        if (row.status !== "success" || !Array.isArray(row.items)) continue;
+        const offset = items.length;
+        items.push(...row.items);
+        for (const warning of row.warnings || []) {
+          warnings.push({ ...warning, index: offset + (Number.isSafeInteger(warning.index) ? warning.index : 0) });
+        }
+      }
+      state.quickWarnings = warnings;
+      state.quickPending = items.length ? { items, revision, source: "doi", format: "doi" } : null;
+      state.quickSelected = new Set(items.map((_, index) => index));
+      const counts = batchCounts();
+      if (state.quickErrors.length) setQuickStatus("batch_lookup_invalid", "err", counts);
+      else if (state.batchRateLimited) setQuickStatus("batch_rate_limited", "warn", counts);
+      else if (state.batchCancelled) setQuickStatus("batch_cancelled", "", counts);
+      else setQuickStatus(state.batchRunning ? "batch_progress" : "batch_done", state.batchRunning ? "working" : "ok", counts);
+    }
+
+    function cancelIntakeLookup() {
+      if (!state.batchRunning) { resetIntake("quick_cancelled"); renderIntake(); return; }
+      // Capture only the last completed progress snapshot. Abort invalidates the
+      // run immediately; a provider that ignores abort cannot add late records.
+      state.quickRevision += 1;
+      lookupController?.abort();
+      lookupController = null;
+      state.quickBusy = false;
+      state.batchRunning = false;
+      state.batchCancelled = true;
+      state.batchRows = state.batchRows.map((row) => ["success", "failed", "invalid", "duplicate"].includes(row.status)
+        ? row : { ...row, status: "cancelled", errors: [], items: [] });
+      if (state.quickPending) state.quickPending.revision = state.quickRevision;
+      setQuickStatus("batch_cancelled", "", batchCounts());
+      renderIntake();
+    }
+
+    function renderIntake() {
+      if (!nodes.quickSection) return;
+      nodes.quickSection.hidden = !canImport;
+      nodes.quickDoiTab.hidden = !canLookup;
+      nodes.quickDoiPanel.hidden = state.quickMode !== "doi" || !canLookup;
+      nodes.quickImportPanel.hidden = state.quickMode !== "import";
+      for (const [node, key] of nodes.quickLabels) setText(node, t(key));
+      setText(nodes.quickDoiLabel, t(canBatch ? "batch_doi_label" : "quick_doi_label"));
+      setText(nodes.quickPrivacy, t(canBatch ? "batch_privacy" : "quick_privacy"));
+      nodes.batchHint.hidden = !canBatch;
+      nodes.quickDoiInput.placeholder = t(canBatch ? "batch_placeholder" : "quick_doi_placeholder");
+      setText(nodes.quickCancel, t(canBatch ? "batch_cancel" : "quick_cancel"));
+      nodes.quickDoiTab.setAttribute("aria-pressed", String(state.quickMode === "doi"));
+      nodes.quickImportTab.setAttribute("aria-pressed", String(state.quickMode === "import"));
+      nodes.quickQuery.disabled = state.quickBusy || !canLookup || !nodes.quickDoiInput.value.trim();
+      nodes.quickQuery.setAttribute("aria-busy", String(state.quickBusy && state.quickMode === "doi"));
+      nodes.quickCancel.hidden = !(state.quickBusy && state.quickMode === "doi");
+      nodes.quickReviewButton.disabled = state.quickBusy || !canImport || !nodes.quickText.value.trim();
+      nodes.quickStatus.textContent = state.quickStatusKey ? t(state.quickStatusKey, state.quickStatusVars) : "";
+      nodes.quickStatus.className = "fc-citations-intake-status" + (state.quickStatusTone ? " is-" + state.quickStatusTone : "");
+      nodes.quickReview.hidden = !state.quickPending;
+      const pending = state.quickPending;
+      const selected = selectedIntakeItems();
+      const plan = pending ? selected.length ? plannedAppend(selected) : { ok: true, items: state.items, added: 0, skipped: 0, errors: [], warnings: [] } : null;
+      const key = JSON.stringify([locale, state.quickRevision, state.quickErrors, state.quickWarnings, pending?.items || []]);
+      if (key !== quickRenderKey) {
+        quickRenderKey = key;
+        renderIssueBox(nodes.quickIssues, state.quickErrors,
+          state.quickWarnings.filter((warning) => !pending || !Number.isSafeInteger(warning.index)), intakeIssueText);
+        nodes.quickReviewList.replaceChildren();
+        nodes.quickCheckboxes = [];
+        if (pending) {
+          for (const [index, item] of pending.items.entries()) {
+            const card = make("li", "fc-citations-intake-record");
+            const check = input("checkbox", "", `intake-select-${index}`);
+            check.className = "fc-citations-intake-checkbox";
+            check.checked = state.quickSelected.has(index);
+            check.setAttribute("aria-label", t("select_record", { title: item.title || t("untitled") }));
+            check.addEventListener("change", () => {
+              if (state.quickBusy) return;
+              if (check.checked) state.quickSelected.add(index); else state.quickSelected.delete(index);
+              renderIntake();
+            });
+            nodes.quickCheckboxes.push(check);
+            card.append(append(make("label", "fc-citations-intake-record-heading"), check,
+              make("span", "", item.title || t("untitled"))));
+            const year = item.issued?.year || t("quick_missing_year");
+            card.append(make("p", "fc-citations-intake-meta", `${authorSummary(item)} · ${year}`));
+            const source = item.containerTitle || item.publisher || "";
+            card.append(make("p", "fc-citations-intake-meta", `${t("quick_source")}: ${source ? source + " · " : ""}${typeLabel(item.type)}`));
+            if (item.DOI || item.URL) card.append(make("p", "fc-citations-intake-meta", item.DOI || item.URL));
+            const validation = model.validateItem(item);
+            const issues = make("div", "fc-citations-issues");
+            const knownWarnings = new Set((validation.warnings || []).map((warning) => warning.code));
+            const warnings = [...(validation.warnings || []), ...state.quickWarnings.filter((warning) => warning.index === index && !knownWarnings.has(warning.code))];
+            renderIssueBox(issues, validation.errors || [], warnings, intakeIssueText);
+            card.append(issues);
+            nodes.quickReviewList.append(card);
+          }
+        }
+      }
+      if (pending) {
+        for (const [index, check] of nodes.quickCheckboxes.entries()) {
+          check.checked = state.quickSelected.has(index);
+          check.disabled = state.quickBusy;
+        }
+        nodes.quickSelectAll.disabled = state.quickBusy;
+        nodes.quickSelectNone.disabled = state.quickBusy;
+        renderIssueBox(nodes.quickPlanIssues, plan.errors || [], plan.warnings || [], intakeIssueText);
+        const format = { bibtex: "BibTeX", ris: "RIS", json: "CSL JSON", doi: "Crossref DOI" }[pending.format] || "JSON";
+        setText(nodes.quickDetectedFormat, t("quick_detected_format", { format }));
+        setText(nodes.quickCount, t("quick_count", { count: pending.items.length, selected: selected.length, added: plan.added || 0, skipped: plan.skipped || 0 }));
+        setText(nodes.quickAppend, t("quick_append", { count: plan.added || 0 }));
+        nodes.quickAppend.disabled = !plan.ok || !plan.added || state.quickBusy;
+      }
+      renderBatchRows();
+    }
+
+    function acceptIntake(result, revision, source) {
+      if (disposed || revision !== state.quickRevision) return;
+      const valid = Boolean(result && result.ok && Array.isArray(result.items) && result.items.length);
+      state.quickErrors = Array.isArray(result?.errors) ? result.errors : [];
+      state.quickWarnings = Array.isArray(result?.warnings) ? result.warnings : [];
+      state.quickPending = valid ? { items: result.items, revision, source, format: result.format || source } : null;
+      state.quickSelected = new Set(valid ? result.items.map((_, index) => index) : []);
+      setQuickStatus(valid ? "quick_ready" : "quick_invalid", valid ? "ok" : "err");
+    }
+
+    async function queryDoi() {
+      if (!canLookup || disposed || state.quickBusy) return;
+      // Keep blank lines in batches so displayed line numbers match the input.
+      const raw = canBatch ? nodes.quickDoiInput.value : nodes.quickDoiInput.value.trim();
+      resetIntake();
+      const revision = state.quickRevision;
+      if (!raw.trim()) { setQuickStatus("quick_empty", "err"); renderIntake(); return; }
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      lookupController = controller;
+      if (canBatch) {
+        let parsed;
+        try { parsed = batch.parse(raw); } catch (_) { parsed = { ok: false, rows: [], errors: [{ code: "batch_input_invalid" }] }; }
+        state.batchRows = Array.isArray(parsed?.rows) ? parsed.rows : [];
+        state.quickErrors = Array.isArray(parsed?.errors) ? parsed.errors.map((issue) => issue.code === "input_too_large"
+          ? { ...issue, code: "batch_input_large" } : issue) : [];
+        if (!parsed?.ok || state.batchRows.length > 50 || !state.batchRows.some((row) => row.status === "ready")) {
+          lookupController = null;
+          setQuickStatus("batch_invalid_input", "err");
+          renderIntake();
+          return;
+        }
+        state.quickBusy = true;
+        state.batchRunning = true;
+        setQuickStatus("batch_progress", "working", batchCounts());
+        renderIntake();
+        let invalidProgress = false;
+        try {
+          const result = await batch.run(state.batchRows, { lookup, signal: controller?.signal,
+            onProgress: (snapshot) => {
+              if (disposed || revision !== state.quickRevision || !state.batchRunning || invalidProgress) return;
+              try { updateBatchSnapshot(snapshot, revision); }
+              catch (_) {
+                invalidProgress = true;
+                controller?.abort();
+                state.quickErrors = [{ code: "batch_lookup_invalid" }];
+                setQuickStatus("batch_lookup_invalid", "err");
+              }
+              renderIntake();
+            },
+          });
+          if (disposed || revision !== state.quickRevision || raw !== nodes.quickDoiInput.value) return;
+          state.batchRunning = false;
+          if (!invalidProgress) updateBatchSnapshot(result, revision);
+        } catch (_) {
+          if (!disposed && revision === state.quickRevision) {
+            state.quickErrors = [{ code: "batch_lookup_invalid" }];
+            setQuickStatus("batch_lookup_invalid", "err");
+          }
+        } finally {
+          if (lookupController === controller) lookupController = null;
+          if (!disposed && revision === state.quickRevision) {
+            state.quickBusy = false;
+            state.batchRunning = false;
+            renderIntake();
+          }
+        }
+        return;
+      }
+      state.quickBusy = true;
+      setQuickStatus("quick_busy", "working");
+      renderIntake();
+      try {
+        const result = await lookup.lookup(raw, { signal: controller?.signal });
+        if (disposed || revision !== state.quickRevision || raw !== nodes.quickDoiInput.value.trim()) return;
+        acceptIntake(result, revision, "doi");
+      } catch (error) {
+        if (!disposed && revision === state.quickRevision) {
+          state.quickErrors = [{ code: controller?.signal.aborted || error?.name === "AbortError" ? "lookup_cancelled" : "lookup_network" }];
+          setQuickStatus(controller?.signal.aborted ? "quick_cancelled" : "quick_network", controller?.signal.aborted ? "" : "err");
+        }
+      } finally {
+        if (lookupController === controller) lookupController = null;
+        if (!disposed && revision === state.quickRevision) {
+          state.quickBusy = false;
+          renderIntake();
+        }
+      }
+    }
+
+    function reviewIntake() {
+      if (!canImport || disposed || state.quickBusy) return;
+      resetIntake();
+      const revision = state.quickRevision;
+      try {
+        acceptIntake(importer.parse(nodes.quickText.value, { format: nodes.quickFormat.value }), revision, "import");
+      } catch (_) {
+        state.quickErrors = [{ code: "item_invalid" }];
+        setQuickStatus("quick_invalid", "err");
+      }
+      renderIntake();
+    }
+
+    async function readIntakeFile() {
+      resetIntake();
+      const revision = state.quickRevision;
+      const file = nodes.quickFile.files?.[0];
+      if (!file) { renderIntake(); return; }
+      // Clear a previous pasted record so a failed file cannot leave a valid
+      // looking stale batch available for confirmation.
+      nodes.quickText.value = "";
+      if (file.size > 1048576) { setQuickStatus("file_too_large", "err"); renderIntake(); return; }
+      state.quickBusy = true;
+      setQuickStatus("quick_reading", "working");
+      renderIntake();
+      let failureKey = "quick_file_error";
+      try {
+        const buffer = await file.arrayBuffer();
+        if (disposed || revision !== state.quickRevision) return;
+        if (buffer.byteLength > 1048576) throw new RangeError("size");
+        failureKey = "invalid_encoding";
+        let text = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+        if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+        nodes.quickText.value = text;
+        failureKey = "quick_invalid";
+        acceptIntake(importer.parse(text, { format: nodes.quickFormat.value }), revision, "import");
+      } catch (error) {
+        if (disposed || revision !== state.quickRevision) return;
+        setQuickStatus(error?.name === "RangeError" ? "file_too_large" : failureKey, "err");
+      } finally {
+        if (!disposed && revision === state.quickRevision) { state.quickBusy = false; renderIntake(); }
+      }
+    }
+
+    function appendIntake() {
+      const pending = state.quickPending;
+      if (disposed || !pending || pending.revision !== state.quickRevision || state.quickBusy) return;
+      // Recalculate against the latest library: users may have edited, loaded
+      // or replaced entries while inspecting an independent pending batch.
+      const selected = selectedIntakeItems();
+      if (!selected.length) return;
+      const plan = plannedAppend(selected);
+      if (!plan.ok || !plan.added) {
+        setQuickStatus(plan.ok ? "quick_no_new" : "quick_invalid", plan.ok ? "" : "err");
+        renderIntake();
+        return;
+      }
+      const existingIds = new Set(state.items.map((item) => item.id));
+      snapshot("append");
+      state.undo[0].addedIds = plan.items.filter((item) => !existingIds.has(item.id)).map((item) => item.id);
+      state.items = plan.items;
+      state.selectedId = state.items.some((item) => item.id === state.selectedId)
+        ? state.selectedId : state.items[0]?.id || null;
+      invalidatePreview();
+      rebuildEditor();
+      resetIntake();
+      setQuickStatus("quick_added", "ok", { added: plan.added, skipped: plan.skipped || 0 });
+      render();
+      setStatus("quick_added", { added: plan.added, skipped: plan.skipped || 0 }, "ok");
+    }
+
     function renderUndo() {
       if (!nodes.undoBar) return;
       const entry = state.undo[0];
       nodes.undoBar.hidden = !entry;
       if (entry) {
-        setText(nodes.undoButton, t(entry.kind === "remove" ? "undo_remove" : "undo_library"));
+        setText(nodes.undoButton, t(entry.kind === "append" ? "undo_append" : entry.kind === "remove" ? "undo_remove" : "undo_library"));
       }
     }
 
@@ -895,7 +1440,7 @@
       setText(nodes.summaryTitle, t("assistant"));
       setText(nodes.summaryHint, t("summary_hint"));
       setText(nodes.scope, t("scope"));
-      setText(nodes.add, t("add"));
+      setText(nodes.add, t(canImport ? "manual_add" : "add"));
       setText(nodes.entriesHeading, t("entries"));
       setText(nodes.styleLabel, t("style"));
       setText(nodes.styleMla, t("style_mla"));
@@ -954,7 +1499,7 @@
       setText(nodes.warningNote, t("warning_note"));
       setText(nodes.errorNote, t("error_note"));
       setText(nodes.libraryJsonLabel, t("library_json"));
-      setText(nodes.undoButton, state.undo[0] ? t(state.undo[0].kind === "remove" ? "undo_remove" : "undo_library") : t("undo"));
+      setText(nodes.undoButton, state.undo[0] ? t(state.undo[0].kind === "append" ? "undo_append" : state.undo[0].kind === "remove" ? "undo_remove" : "undo_library") : t("undo"));
       nodes.styleSelect.value = state.style;
       nodes.styleSelect.setAttribute("aria-label", t("style"));
       nodes.editorSection.hidden = false;
@@ -973,6 +1518,7 @@
       renderPreviewIssues();
       renderPersistence();
       renderImport();
+      renderIntake();
       renderUndo();
       if (nodes.fallback) nodes.fallback.hidden = !state.fallbackVisible;
     }
@@ -1044,8 +1590,139 @@
     nodes.scope = make("p", "fc-citations-scope", t("scope"));
     body.append(nodes.scope);
 
+    nodes.quickLabels = [];
+    const quickNode = (tag, className, key) => {
+      const node = make(tag, className, t(key));
+      nodes.quickLabels.push([node, key]);
+      return node;
+    };
+    const quickButton = (key, action, primary = false) => {
+      const node = button(t(key), action, "fc-citations-button" + (primary ? " is-primary" : ""));
+      nodes.quickLabels.push([node, key]);
+      return node;
+    };
+    const quickField = (key, control) => append(make("label", "fc-citations-field"),
+      quickNode("span", "fc-citations-label", key), control);
+    nodes.quickSection = make("section", "fc-citations-intake");
+    nodes.quickHeading = quickNode("h3", "", "quick_add");
+    nodes.quickHeading.id = `${instanceId}-intake-title`;
+    nodes.quickSection.setAttribute("aria-labelledby", nodes.quickHeading.id);
+    nodes.quickHint = quickNode("p", "fc-citations-hint", "quick_hint");
+    const modes = make("div", "fc-citations-intake-modes");
+    nodes.quickDoiTab = quickButton("quick_doi", "intake-doi");
+    nodes.quickImportTab = quickButton("quick_import", "intake-import");
+    append(modes, nodes.quickDoiTab, nodes.quickImportTab);
+    const setMode = (mode) => {
+      if (state.quickMode === mode) return;
+      resetIntake();
+      state.quickMode = mode;
+      renderIntake();
+    };
+    nodes.quickDoiTab.addEventListener("click", () => setMode("doi"));
+    nodes.quickImportTab.addEventListener("click", () => setMode("import"));
+
+    nodes.quickDoiPanel = make("div", "fc-citations-intake-panel");
+    nodes.quickDoiInput = make("textarea", "fc-citations-textarea fc-citations-doi-input");
+    nodes.quickDoiInput.setAttribute("data-field", "intake-doi");
+    nodes.quickDoiInput.rows = canBatch ? 3 : 1;
+    nodes.quickDoiInput.maxLength = canBatch ? 32768 : 2048;
+    nodes.quickDoiInput.spellcheck = false;
+    nodes.quickDoiInput.autocomplete = "off";
+    nodes.quickDoiInput.setAttribute("autocapitalize", "none");
+    nodes.quickDoiInput.addEventListener("input", () => { resetIntake(); renderIntake(); });
+    nodes.quickDoiInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (!canBatch || event.ctrlKey || event.metaKey)) { event.preventDefault(); queryDoi(); }
+    });
+    nodes.quickQuery = quickButton("quick_query", "intake-query", true);
+    nodes.quickCancel = quickButton("quick_cancel", "intake-cancel");
+    nodes.quickQuery.addEventListener("click", queryDoi);
+    nodes.quickCancel.addEventListener("click", cancelIntakeLookup);
+    const doiRow = make("div", "fc-citations-intake-doi-row");
+    const doiActions = append(make("div", "fc-citations-intake-actions"), nodes.quickQuery, nodes.quickCancel);
+    nodes.quickDoiLabel = quickNode("span", "fc-citations-label", "quick_doi_label");
+    append(doiRow, append(make("label", "fc-citations-field"), nodes.quickDoiLabel, nodes.quickDoiInput), doiActions);
+    nodes.quickPrivacy = quickNode("p", "fc-citations-note fc-citations-intake-privacy", "quick_privacy");
+    nodes.quickPrivacy.id = `${instanceId}-intake-privacy`;
+    nodes.quickDoiInput.setAttribute("aria-describedby", nodes.quickPrivacy.id);
+    nodes.batchHint = quickNode("p", "fc-citations-hint", "batch_hint");
+    append(nodes.quickDoiPanel, doiRow, nodes.quickPrivacy,
+      nodes.batchHint, quickNode("p", "fc-citations-hint", "quick_lookup_hint"));
+    nodes.batchPanel = make("section", "fc-citations-batch");
+    nodes.batchHeading = quickNode("h4", "", "batch_rows");
+    nodes.batchHeading.id = `${instanceId}-batch-title`;
+    nodes.batchPanel.setAttribute("aria-labelledby", nodes.batchHeading.id);
+    nodes.batchProgress = make("p", "fc-citations-hint");
+    nodes.batchCurrent = make("p", "fc-citations-hint");
+    nodes.batchRows = make("ol", "fc-citations-batch-rows");
+    append(nodes.batchPanel, nodes.batchHeading, nodes.batchProgress, nodes.batchCurrent, nodes.batchRows);
+
+    nodes.quickImportPanel = make("div", "fc-citations-intake-panel");
+    nodes.quickText = make("textarea", "fc-citations-textarea fc-citations-intake-text");
+    nodes.quickText.setAttribute("data-field", "intake-text");
+    nodes.quickText.spellcheck = false;
+    nodes.quickText.addEventListener("input", () => { resetIntake(); renderIntake(); });
+    nodes.quickFormat = make("select", "fc-citations-select");
+    nodes.quickFormat.setAttribute("data-field", "intake-format");
+    const autoFormat = quickNode("option", "", "quick_auto");
+    autoFormat.value = "auto";
+    nodes.quickFormat.append(autoFormat);
+    for (const [value, label] of [["bibtex", "BibTeX"], ["ris", "RIS"], ["json", "CSL JSON"]]) {
+      const option = make("option", "", label); option.value = value; nodes.quickFormat.append(option);
+    }
+    nodes.quickFormat.addEventListener("change", () => { resetIntake(); renderIntake(); });
+    nodes.quickFile = make("input", "fc-citations-file");
+    nodes.quickFile.type = "file";
+    nodes.quickFile.accept = ".bib,.ris,.json,.txt,application/json,text/plain,application/x-bibtex,application/x-research-info-systems";
+    nodes.quickFile.setAttribute("data-field", "intake-file");
+    nodes.quickFile.addEventListener("change", readIntakeFile);
+    nodes.quickReviewButton = quickButton("quick_review", "intake-review", true);
+    nodes.quickReviewButton.addEventListener("click", reviewIntake);
+    const importControls = append(make("div", "fc-citations-intake-import-controls"),
+      quickField("quick_format", nodes.quickFormat),
+      quickField("quick_choose_file", nodes.quickFile), nodes.quickReviewButton);
+    append(nodes.quickImportPanel, quickNode("p", "fc-citations-hint", "quick_import_hint"),
+      quickField("quick_text", nodes.quickText), importControls);
+
+    nodes.quickStatus = make("p", "fc-citations-intake-status");
+    nodes.quickStatus.setAttribute("role", "status");
+    nodes.quickStatus.setAttribute("aria-live", "polite");
+    nodes.quickStatus.setAttribute("aria-atomic", "true");
+    nodes.quickIssues = make("div", "fc-citations-issues");
+    nodes.quickReview = make("section", "fc-citations-intake-review");
+    nodes.quickReview.hidden = true;
+    nodes.quickReviewHeading = quickNode("h4", "", "quick_review_title");
+    nodes.quickReviewHeading.id = `${instanceId}-intake-review-title`;
+    nodes.quickReview.setAttribute("aria-labelledby", nodes.quickReviewHeading.id);
+    nodes.quickCount = make("p", "fc-citations-hint");
+    nodes.quickDetectedFormat = make("p", "fc-citations-hint");
+    nodes.quickReviewList = make("ol", "fc-citations-intake-results");
+    nodes.quickCheckboxes = [];
+    nodes.quickSelectAll = quickButton("select_all", "intake-select-all");
+    nodes.quickSelectNone = quickButton("select_none", "intake-select-none");
+    const selectBatch = (all) => {
+      if (!state.quickPending || state.quickBusy) return;
+      state.quickSelected = new Set(all ? state.quickPending.items.map((_, index) => index) : []);
+      renderIntake();
+    };
+    nodes.quickSelectAll.addEventListener("click", () => selectBatch(true));
+    nodes.quickSelectNone.addEventListener("click", () => selectBatch(false));
+    nodes.quickPlanIssues = make("div", "fc-citations-issues");
+    nodes.quickAppend = button(t("quick_append", { count: 0 }), "intake-append", "fc-citations-button is-primary");
+    nodes.quickAppend.addEventListener("click", appendIntake);
+    nodes.quickDismiss = quickButton("quick_dismiss", "intake-dismiss");
+    nodes.quickDismiss.addEventListener("click", () => { resetIntake(); renderIntake(); });
+    append(nodes.quickReview, nodes.quickReviewHeading, nodes.quickDetectedFormat, nodes.quickCount,
+      quickNode("p", "fc-citations-hint", "quick_review_hint"),
+      quickNode("p", "fc-citations-hint", "select_hint"),
+      append(make("div", "fc-citations-intake-actions"), nodes.quickSelectAll, nodes.quickSelectNone), nodes.quickReviewList,
+      nodes.quickPlanIssues, append(make("div", "fc-citations-intake-actions"), nodes.quickAppend, nodes.quickDismiss));
+    append(nodes.quickSection, nodes.quickHeading, nodes.quickHint, modes,
+      nodes.quickDoiPanel, nodes.quickImportPanel, nodes.quickStatus, nodes.quickIssues,
+      nodes.batchPanel, nodes.quickReview);
+    body.append(nodes.quickSection);
+
     const toolbar = make("div", "fc-citations-toolbar");
-    nodes.add = button(t("add"), "add", "fc-citations-button is-primary");
+    nodes.add = button(t(canImport ? "manual_add" : "add"), "add", "fc-citations-button" + (canImport ? "" : " is-primary"));
     nodes.add.addEventListener("click", addEntry);
     const styleWrap = make("label", "fc-citations-field fc-citations-style");
     nodes.styleLabel = make("span", "fc-citations-label", t("style"));
@@ -1224,6 +1901,7 @@
     nodes.importText.setAttribute("data-field", "import-json");
     nodes.importFile = make("input", "fc-citations-file");
     nodes.importFile.type = "file";
+    nodes.importFile.setAttribute("data-field", "library-file");
     nodes.importFile.accept = ".json,application/json";
     nodes.chooseFileLabel = make("span", "fc-citations-label", t("choose_file"));
     nodes.reviewButton = button(t("review"), "review-import");
@@ -1297,7 +1975,6 @@
     nodes.exportJsonButton.addEventListener("click", downloadJson);
     nodes.htmlButton.addEventListener("click", downloadHtml);
     nodes.wordButton.addEventListener("click", exportWord);
-    nodes.undoButton.addEventListener("click", undo);
 
     mount.replaceChildren(rootElement);
 
@@ -1785,6 +2462,10 @@
         previewBusy: state.previewBusy,
         saved: state.savedFingerprint !== null && state.savedFingerprint === fingerprint(),
         pendingImport: Boolean(state.pendingImport),
+        pendingIntake: Boolean(state.quickPending),
+        intakeBusy: state.quickBusy,
+        batchActive: state.batchRunning,
+        batchRows: JSON.parse(JSON.stringify(state.batchRows)),
         undo: state.undo.length,
       };
     }
@@ -1792,6 +2473,14 @@
     function dispose() {
       wordController?.abort();
       disposed = true;
+      lookupController?.abort();
+      lookupController = null;
+      state.quickRevision += 1;
+      state.quickBusy = false;
+      state.batchRunning = false;
+      state.batchRows = [];
+      state.quickPending = null;
+      state.quickSelected = new Set();
       state.previewToken += 1;
       state.importRevision += 1;
       const clear = root.clearTimeout || (typeof clearTimeout === "function" ? clearTimeout : null);

@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const modelSource = fs.readFileSync(path.join(root, "static/citation-library.js"), "utf8");
+const importSource = fs.readFileSync(path.join(root, "static/citation-import.js"), "utf8");
 const assistantSource = fs.readFileSync(path.join(root, "static/citation-assistant.js"), "utf8");
 const assistantCss = fs.readFileSync(path.join(root, "static/citation-assistant.css"), "utf8");
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -86,6 +87,11 @@ class Element {
       const child = typeof node === "string" ? new TextNode(node) : node;
       child.parent = this;
       this.children.push(child);
+      // A real single-select chooses its first option when it is inserted.
+      if (this.tagName === "SELECT" && child.tagName === "OPTION" &&
+          this.children.filter((entry) => entry.tagName === "OPTION").length === 1 && this.value === "") {
+        this.value = child.value;
+      }
     }
   }
   appendChild(node) { this.append(node); return node; }
@@ -206,7 +212,8 @@ URLStub.revoked = [];
 URLStub.created = [];
 URLStub.urls = [];
 
-function setup({ locale = "en", manual = false, onExportWord = null, allowDownloads = true } = {}) {
+function setup({ locale = "en", manual = false, onExportWord = null, allowDownloads = true,
+  importer = null, lookup = null, batch = null } = {}) {
   const document = makeDocument();
   const mount = document.createElement("div");
   const storage = makeStorage();
@@ -218,16 +225,19 @@ function setup({ locale = "en", manual = false, onExportWord = null, allowDownlo
     setTimeout, clearTimeout, console, queueMicrotask,
   });
   vm.runInContext(modelSource, context);
+  if (importer === true) vm.runInContext(importSource, context);
   vm.runInContext(assistantSource, context);
   const M = context.FormCapyCitations;
+  const intake = importer === true ? context.FormCapyCitationImport : importer;
   const A = context.FormCapyCitationAssistant;
   const localeBox = { value: locale };
   const assistant = A.create({
     mount, model: M, engine, storage,
     getLocale: () => localeBox.value,
-    onExportWord, allowDownloads,
+    onExportWord, allowDownloads, importer: intake, lookup, batch,
   });
-  return { document, mount, storage, engine, model: M, assistant, locale: localeBox, navigator };
+  return { document, mount, storage, engine, model: M, assistant, locale: localeBox, navigator,
+    importer: intake, lookup, batch };
 }
 
 function walk(node, callback) {
@@ -254,6 +264,15 @@ function field(h, name) {
     if (!found && node.getAttribute && node.getAttribute("data-field") === name) found = node;
   });
   return found;
+}
+function libraryFile(h) {
+  // Acquisition and saved-library import own separate file inputs. Keep the
+  // legacy import regressions attached to their intended control as UI grows.
+  const input = field(h, "library-file");
+  assert.ok(input, "saved-library JSON file input exists");
+  assert.equal(input.tagName, "INPUT");
+  assert.equal(input.type, "file");
+  return input;
 }
 function tag(h, name, predicate = () => true) {
   let found = null;
@@ -285,6 +304,78 @@ function addAndFill(h, title = "Fictional source") {
   })();
 }
 function status(h) { return h.mount.textContent; }
+
+// Controlled coordinator snapshots exercise UI ownership independently of the
+// batch module's timer/network tests. No test below contacts a public API.
+const copyIntake = (value) => JSON.parse(JSON.stringify(value));
+const readyDoi = (doi, line = 1) => ({ line, input: doi, doi, status: "ready", errors: [] });
+const succeededDoi = (row, item) => ({ ...row, status: "success", items: [item], warnings: [], errors: [] });
+const failedDoi = (row, code = "lookup_not_found") => ({ ...row, status: "failed", items: [], warnings: [], errors: [{ code }] });
+function intakeItem(h, title = "Fictional retrieved article", doi = "10.5555/first") {
+  return h.model.createItem({ type: "article-journal", title, DOI: doi,
+    authors: [{ family: "Example", given: "Ana" }], issued: { year: 2024 },
+    containerTitle: "Fictional Journal", volume: "3", issue: "1", page: "10-20" });
+}
+function batchSnapshot(rows, flags = {}) {
+  const snapshot = copyIntake(rows);
+  return { rows: snapshot, items: snapshot.filter((row) => row.status === "success").flatMap((row) => row.items || []),
+    completed: snapshot.filter((row) => row.status === "success").length,
+    failed: snapshot.filter((row) => row.status === "failed").length,
+    cancelled: false, rateLimited: false, ...flags };
+}
+function controlledBatch(parseResult = null) {
+  const parses = [], jobs = [];
+  const api = {
+    parse(text) {
+      parses.push(text);
+      return copyIntake(parseResult || { ok: true,
+        rows: text.split(/\r?\n/).map((doi, index) => readyDoi(doi, index + 1)), errors: [] });
+    },
+    run(rows, options) {
+      return new Promise((resolve, reject) => jobs.push({ rows: copyIntake(rows), options, resolve, reject }));
+    },
+  };
+  const publish = (index, rows, flags) => {
+    const result = batchSnapshot(rows, flags);
+    jobs[index].options.onProgress?.(copyIntake(result));
+    return result;
+  };
+  return { api, parses, jobs, publish,
+    finish(index, rows, flags) { const result = publish(index, rows, flags); jobs[index].resolve(result); return result; } };
+}
+function controlledLookup() {
+  const calls = [];
+  return { calls, lookup(input, options) {
+    return new Promise((resolve, reject) => calls.push({ input, options, resolve, reject }));
+  } };
+}
+async function beginDoi(h, text = "10.5555/first") {
+  const input = field(h, "intake-doi");
+  input.value = text;
+  await input.dispatch("input");
+  const pending = action(h, "intake-query").click();
+  await flush();
+  return { pending };
+}
+function candidateInputs(h) {
+  const found = [];
+  walk(h.mount, (node) => {
+    if (node.getAttribute?.("data-field")?.startsWith("intake-select-")) found.push(node);
+  });
+  return found;
+}
+async function selectCandidate(h, index, selected) {
+  const node = field(h, `intake-select-${index}`);
+  assert.ok(node, `candidate ${index} checkbox exists`);
+  assert.equal(node.type, "checkbox");
+  node.checked = selected;
+  await node.dispatch("change");
+}
+function cslImportText(titles) {
+  return JSON.stringify(titles.map((title) => ({ type: "book", title,
+    author: [{ family: "Example", given: "Ana" }],
+    issued: { "date-parts": [[2024]] }, publisher: "Fictional Press" })));
+}
 
 test("mounts collapsed, starts session-only, and never touches storage at init", () => {
   const h = setup();
@@ -473,7 +564,7 @@ test("fatal UTF-8 and size-limited file reads do not replace the library", async
   const h = setup();
   await addAndFill(h);
   const before = JSON.stringify(h.assistant.state().items);
-  const fileInput = tag(h, "INPUT", (node) => node.type === "file");
+  const fileInput = libraryFile(h);
   assert.ok(fileInput, "file input exists");
   fileInput.files = [{ size: 3, arrayBuffer: async () => new Uint8Array([0xff, 0xfe, 0xfd]).buffer }];
   await fileInput.dispatch("change");
@@ -482,6 +573,32 @@ test("fatal UTF-8 and size-limited file reads do not replace the library", async
   fileInput.files = [{ size: h.model.MAX_JSON_BYTES + 1, arrayBuffer: async () => { throw new Error("must not read"); } }];
   await fileInput.dispatch("change");
   assert.equal(JSON.stringify(h.assistant.state().items), before);
+});
+
+test("saved-library file import stays separate from quick acquisition controls", async () => {
+  const h = setup();
+  await action(h, "import-toggle").click();
+  const fileInput = libraryFile(h);
+  const intakeFile = field(h, "intake-file");
+  assert.ok(intakeFile, "quick acquisition file input exists");
+  assert.notEqual(fileInput, intakeFile);
+  assert.equal(fileInput.accept, ".json,application/json");
+  assert.match(intakeFile.accept, /\.bib/);
+  const intakeText = field(h, "intake-text");
+  intakeText.value = "Unrelated pending bibliography text";
+  const json = h.model.stringifyLibrary(h.model.createLibrary([
+    h.model.createItem({ title: "Saved library record" }),
+  ]));
+  fileInput.files = [{ size: json.length, arrayBuffer: async () => new TextEncoder().encode(json).buffer }];
+  await fileInput.dispatch("change");
+  assert.equal(field(h, "import-json").value, json);
+  assert.equal(intakeText.value, "Unrelated pending bibliography text");
+  assert.equal(h.assistant.state().items.length, 0, "reading a file does not apply it");
+  await action(h, "review-import").click();
+  assert.equal(h.assistant.state().pendingImport, true);
+  await action(h, "apply-import").click();
+  assert.equal(h.assistant.state().items[0].title, "Saved library record");
+  assert.equal(intakeText.value, "Unrelated pending bibliography text");
 });
 
 test("save, load and remove are explicit and use only the owned key", async () => {
@@ -742,7 +859,7 @@ test("a stale file read cannot overwrite newer import text", async () => {
     h.model.createItem({ title: "From the old file" }),
   ]));
   let resolveRead;
-  const fileInput = tag(h, "INPUT", (node) => node.type === "file");
+  const fileInput = libraryFile(h);
   fileInput.files = [{ size: validJson.length, arrayBuffer: () => new Promise((resolve) => { resolveRead = resolve; }) }];
   const read = fileInput.dispatch("change");
   await flush();
@@ -870,7 +987,7 @@ test("a second file selection supersedes an older deferred file read", async () 
     h.model.createItem({ title: "Second file" }),
   ]));
   let resolveFirst;
-  const fileInput = tag(h, "INPUT", (node) => node.type === "file");
+  const fileInput = libraryFile(h);
   fileInput.files = [{ size: firstJson.length, arrayBuffer: () => new Promise((resolve) => { resolveFirst = resolve; }) }];
   const firstRead = fileInput.dispatch("change");
   await flush();
@@ -887,7 +1004,7 @@ test("closing the import panel invalidates an in-flight file read", async () => 
   await action(h, "import-toggle").click();
   const textarea = field(h, "import-json");
   let resolveRead;
-  const fileInput = tag(h, "INPUT", (node) => node.type === "file");
+  const fileInput = libraryFile(h);
   fileInput.files = [{ size: 100, arrayBuffer: () => new Promise((resolve) => { resolveRead = resolve; }) }];
   const read = fileInput.dispatch("change");
   await flush();
@@ -934,7 +1051,7 @@ test("selecting a file immediately invalidates a reviewed import", async () => {
   });
   assert.ok(review);
   let resolveRead;
-  const fileInput = tag(h, "INPUT", (node) => node.type === "file");
+  const fileInput = libraryFile(h);
   fileInput.files = [{ size: 10, arrayBuffer: () => new Promise((resolve) => { resolveRead = resolve; }) }];
   const read = fileInput.dispatch("change");
   await flush();
@@ -1027,4 +1144,469 @@ test("editing after a successful Word export clears the old success status", asy
   assert.doesNotMatch(notice.textContent, /ready/i);
   assert.equal(tag(h, "A").hidden, true);
   assert.equal(h.assistant.state().previewStale, true);
+});
+
+test("batch DOI lookup requires an explicit query and never applies candidates automatically", async () => {
+  const batch = controlledBatch(), lookup = controlledLookup();
+  const h = setup({ importer: true, lookup, batch: batch.api });
+  const input = field(h, "intake-doi");
+  assert.equal(input.tagName, "TEXTAREA");
+  assert.equal(batch.parses.length, 0);
+  assert.equal(batch.jobs.length, 0);
+  assert.equal(lookup.calls.length, 0);
+  input.value = "10.5555/first\n10.5555/second";
+  await input.dispatch("input");
+  h.locale.value = "es"; h.assistant.render();
+  h.locale.value = "en"; h.assistant.render();
+  assert.equal(batch.parses.length, 0, "typing and locale rendering do not query");
+  assert.equal(batch.jobs.length, 0);
+  assert.equal(lookup.calls.length, 0);
+  const pending = action(h, "intake-query").click(); await flush();
+  assert.equal(batch.jobs.length, 1);
+  assert.equal(batch.jobs[0].options.lookup, lookup);
+  assert.equal(batch.jobs[0].options.signal.aborted, false);
+  assert.equal(h.assistant.state().intakeBusy, true);
+  assert.equal(h.assistant.state().batchActive, true);
+  assert.equal(action(h, "intake-query").disabled, true);
+  const rows = batch.jobs[0].rows.map((row, index) => succeededDoi(row,
+    intakeItem(h, `Retrieved ${index + 1}`, row.doi)));
+  batch.finish(0, rows); await pending;
+  assert.equal(h.assistant.state().intakeBusy, false);
+  assert.equal(h.assistant.state().batchActive, false);
+  assert.equal(h.assistant.state().pendingIntake, true);
+  assert.equal(h.assistant.state().items.length, 0);
+  assert.equal(candidateInputs(h).length, 2);
+  assert.ok(candidateInputs(h).every((node) => node.checked && !node.disabled));
+  assert.equal(h.storage.gets.length + h.storage.sets.length + h.storage.removes.length, 0);
+});
+
+test("import review supports none, all and an individual subset before append", async () => {
+  const lookup = controlledLookup();
+  const h = setup({ importer: true, lookup });
+  await action(h, "intake-import").click();
+  const input = field(h, "intake-text");
+  input.value = cslImportText(["First candidate", "Second candidate", "Third candidate"]);
+  await input.dispatch("input");
+  await action(h, "intake-review").click();
+  assert.equal(candidateInputs(h).length, 3);
+  assert.ok(candidateInputs(h).every((node) => node.checked));
+  await action(h, "intake-select-none").click();
+  assert.ok(candidateInputs(h).every((node) => !node.checked));
+  assert.equal(action(h, "intake-append").disabled, true);
+  await action(h, "intake-select-all").click();
+  assert.ok(candidateInputs(h).every((node) => node.checked));
+  await selectCandidate(h, 0, false);
+  await selectCandidate(h, 2, false);
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["Second candidate"]);
+  assert.equal(lookup.calls.length, 0, "local bibliography import never triggers DOI lookup");
+  await action(h, "undo").click();
+  assert.equal(h.assistant.state().items.length, 0);
+});
+
+test("plain Enter adds a DOI line without starting a query", async () => {
+  const batch = controlledBatch(), lookup = controlledLookup();
+  const h = setup({ importer: true, lookup, batch: batch.api });
+  const input = field(h, "intake-doi");
+  input.value = "10.5555/first";
+  await input.dispatch("input");
+  let prevented = false;
+  await input.dispatch("keydown", { key: "Enter", preventDefault() { prevented = true; } });
+  assert.equal(prevented, false, "multiline DOI entry keeps native newline behavior");
+  assert.equal(batch.jobs.length, 0);
+  assert.equal(batch.parses.length, 0);
+  assert.equal(lookup.calls.length, 0);
+});
+
+test("DOI selection appends only checked successful candidates", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/second");
+  batch.finish(0, batch.jobs[0].rows.map((row, index) =>
+    succeededDoi(row, intakeItem(h, `DOI candidate ${index + 1}`, row.doi))));
+  await pending;
+  await action(h, "intake-select-none").click();
+  assert.equal(action(h, "intake-append").disabled, true);
+  await selectCandidate(h, 1, true);
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["DOI candidate 2"]);
+});
+
+test("ordinary lookup failures retain successful candidates for review", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/missing\n10.5555/third");
+  const rows = batch.jobs[0].rows;
+  batch.finish(0, [succeededDoi(rows[0], intakeItem(h, "First found", rows[0].doi)),
+    failedDoi(rows[1]), succeededDoi(rows[2], intakeItem(h, "Third found", rows[2].doi))]);
+  await pending;
+  assert.equal(h.assistant.state().pendingIntake, true);
+  assert.equal(candidateInputs(h).length, 2);
+  assert.equal(h.assistant.state().batchRows.filter((row) => row.status === "failed").length, 1);
+  assert.equal(h.assistant.state().items.length, 0);
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["First found", "Third found"]);
+});
+
+test("invalid and duplicate DOI rows remain visible without becoming candidates", async () => {
+  const rows = [
+    { line: 1, input: "not a DOI", doi: null, status: "invalid", errors: [{ code: "doi_invalid" }] },
+    readyDoi("10.5555/first", 2),
+    { ...readyDoi("10.5555/first", 3), status: "duplicate", duplicateOf: 2, errors: [{ code: "duplicate_doi" }] },
+  ];
+  const batch = controlledBatch({ ok: true, rows, errors: [] });
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "not a DOI\n10.5555/first\n10.5555/first");
+  assert.equal(batch.jobs.length, 1);
+  batch.finish(0, [rows[0], succeededDoi(rows[1], intakeItem(h)), rows[2]]);
+  await pending;
+  assert.equal(h.assistant.state().batchRows.length, 3);
+  assert.equal(candidateInputs(h).length, 1);
+  assert.match(status(h), /not a DOI/);
+  assert.equal(h.assistant.state().items.length, 0);
+});
+
+test("an oversized DOI list reports the parse error without starting a batch", async () => {
+  const batch = controlledBatch({ ok: false, rows: [], errors: [{ code: "too_many_lines", limitLines: 50 }] });
+  const lookup = controlledLookup();
+  const h = setup({ importer: true, lookup, batch: batch.api });
+  const { pending } = await beginDoi(h, Array.from({ length: 51 }, (_, index) => `10.5555/${index}`).join("\n"));
+  await pending;
+  assert.equal(batch.jobs.length, 0);
+  assert.equal(lookup.calls.length, 0);
+  assert.equal(h.assistant.state().intakeBusy, false);
+  assert.equal(h.assistant.state().pendingIntake, false);
+  assert.equal(candidateInputs(h).length, 0);
+  assert.match(status(h), /50/);
+});
+
+test("rate limiting stops the UI batch without retry and preserves completed references", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/limited\n10.5555/unstarted");
+  const rows = batch.jobs[0].rows;
+  batch.finish(0, [succeededDoi(rows[0], intakeItem(h)), failedDoi(rows[1], "lookup_rate_limited"), rows[2]], { rateLimited: true });
+  await pending; await flush(); await flush();
+  assert.equal(batch.jobs.length, 1, "rate limiting never starts an automatic retry");
+  assert.equal(h.assistant.state().intakeBusy, false);
+  assert.equal(h.assistant.state().pendingIntake, true);
+  assert.equal(candidateInputs(h).length, 1);
+  assert.match(status(h), /rate|limit|later/i);
+  await action(h, "intake-append").click();
+  assert.equal(h.assistant.state().items.length, 1);
+});
+
+test("cancelling a running batch immediately preserves completed candidates and rejects late work", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/late");
+  const rows = batch.jobs[0].rows;
+  const first = succeededDoi(rows[0], intakeItem(h, "Completed before cancel"));
+  batch.publish(0, [first, rows[1]]);
+  assert.equal(action(h, "intake-append").disabled, true, "cannot append while querying");
+  assert.ok(candidateInputs(h).every((node) => node.disabled));
+  await action(h, "intake-cancel").click();
+  assert.equal(batch.jobs[0].options.signal.aborted, true);
+  assert.equal(h.assistant.state().intakeBusy, false, "cancel does not await an uncooperative request");
+  assert.equal(h.assistant.state().pendingIntake, true);
+  assert.equal(candidateInputs(h).length, 1);
+  assert.equal(candidateInputs(h)[0].disabled, false);
+  await action(h, "intake-append").click();
+  batch.finish(0, [first, succeededDoi(rows[1], intakeItem(h, "Late result", rows[1].doi))]);
+  await pending; await flush();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["Completed before cancel"]);
+  assert.equal(h.assistant.state().pendingIntake, false);
+  assert.equal(candidateInputs(h).length, 0);
+});
+
+test("cancelling before any successful DOI leaves no appendable candidates", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h);
+  await action(h, "intake-cancel").click();
+  assert.equal(h.assistant.state().intakeBusy, false);
+  assert.equal(h.assistant.state().pendingIntake, false);
+  batch.finish(0, batch.jobs[0].rows, { cancelled: true }); await pending;
+  assert.equal(candidateInputs(h).length, 0);
+  assert.equal(h.assistant.state().items.length, 0);
+});
+
+for (const transition of ["edit", "mode", "dispose"]) {
+  test(`${transition} invalidates a running DOI batch and rejects progress and resolution arriving later`, async () => {
+    const batch = controlledBatch();
+    const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+    const { pending } = await beginDoi(h, "10.5555/first\n10.5555/late");
+    const rows = batch.jobs[0].rows;
+    const before = succeededDoi(rows[0], intakeItem(h));
+    batch.publish(0, [before, rows[1]]);
+    if (transition === "edit") {
+      field(h, "intake-doi").value = "10.5555/changed";
+      await field(h, "intake-doi").dispatch("input");
+    } else if (transition === "mode") await action(h, "intake-import").click();
+    else h.assistant.dispose();
+    assert.equal(batch.jobs[0].options.signal.aborted, true);
+    assert.equal(h.assistant.state().intakeBusy, false);
+    assert.equal(h.assistant.state().pendingIntake, false);
+    const completed = [before, succeededDoi(rows[1], intakeItem(h, "Stale late result", rows[1].doi))];
+    batch.publish(0, completed);
+    batch.finish(0, completed);
+    await pending; await flush();
+    assert.equal(h.assistant.state().pendingIntake, false);
+    assert.equal(h.assistant.state().items.length, 0);
+    if (transition === "dispose") assert.equal(h.mount.children.length, 0);
+    else assert.equal(candidateInputs(h).length, 0);
+  });
+}
+
+test("a stale batch cannot clear the busy state or replace candidates of a fresh query", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const first = await beginDoi(h, "10.5555/first");
+  const second = await beginDoi(h, "10.5555/second");
+  assert.equal(batch.jobs.length, 2);
+  assert.equal(batch.jobs[0].options.signal.aborted, true);
+  batch.finish(0, [succeededDoi(batch.jobs[0].rows[0], intakeItem(h, "Stale first"))]);
+  await first.pending;
+  assert.equal(h.assistant.state().intakeBusy, true);
+  assert.equal(h.assistant.state().pendingIntake, false);
+  batch.finish(1, [succeededDoi(batch.jobs[1].rows[0], intakeItem(h, "Fresh second", "10.5555/second"))]);
+  await second.pending;
+  assert.equal(h.assistant.state().intakeBusy, false);
+  assert.equal(candidateInputs(h).length, 1);
+  assert.match(status(h), /Fresh second/);
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["Fresh second"]);
+});
+
+test("without the batch module a single DOI still uses explicit lookup and review", async () => {
+  const lookup = controlledLookup();
+  const h = setup({ importer: true, lookup });
+  field(h, "intake-doi").value = "10.5555/first";
+  await field(h, "intake-doi").dispatch("input");
+  assert.equal(lookup.calls.length, 0);
+  const pending = action(h, "intake-query").click(); await flush();
+  assert.equal(lookup.calls.length, 1);
+  assert.equal(lookup.calls[0].input, "10.5555/first");
+  lookup.calls[0].resolve({ ok: true, items: [intakeItem(h)], warnings: [], errors: [] });
+  await pending;
+  assert.equal(h.assistant.state().pendingIntake, true);
+  assert.equal(h.assistant.state().items.length, 0);
+  await action(h, "intake-append").click();
+  assert.equal(h.assistant.state().items.length, 1);
+});
+
+test("local bibliography file acquisition stays separate from saved-library JSON import", async () => {
+  const lookup = controlledLookup();
+  const h = setup({ importer: true, lookup });
+  await action(h, "intake-import").click();
+  await action(h, "import-toggle").click();
+  field(h, "import-json").value = "Unrelated saved-library draft";
+  const text = cslImportText(["Local file candidate"]);
+  const file = field(h, "intake-file");
+  file.files = [{ size: text.length, arrayBuffer: async () => new TextEncoder().encode(text).buffer }];
+  await file.dispatch("change");
+  assert.equal(h.assistant.state().pendingIntake, true);
+  assert.equal(h.assistant.state().pendingImport, false);
+  assert.equal(field(h, "import-json").value, "Unrelated saved-library draft");
+  assert.equal(h.assistant.state().items.length, 0);
+  assert.equal(lookup.calls.length, 0);
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["Local file candidate"]);
+  assert.equal(field(h, "import-json").value, "Unrelated saved-library draft");
+});
+
+test("undoing a selected imported batch preserves later edits and manually added references", async () => {
+  const h = setup({ importer: true, lookup: controlledLookup() });
+  await addAndFill(h, "Existing reference");
+  await action(h, "intake-import").click();
+  field(h, "intake-text").value = cslImportText(["Batch reference", "Unchecked reference"]);
+  await field(h, "intake-text").dispatch("input");
+  await action(h, "intake-review").click();
+  await selectCandidate(h, 1, false);
+  await action(h, "intake-append").click();
+  await fill(h, "Edited original after append");
+  await addAndFill(h, "Later manual reference");
+  assert.equal(h.assistant.state().items.length, 3);
+  await action(h, "undo").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title),
+    ["Edited original after append", "Later manual reference"]);
+});
+
+test("editing a reviewed local bibliography clears its candidates and prevents stale append", async () => {
+  const h = setup({ importer: true, lookup: controlledLookup() });
+  await action(h, "intake-import").click();
+  field(h, "intake-text").value = cslImportText(["Reviewed candidate"]);
+  await field(h, "intake-text").dispatch("input");
+  await action(h, "intake-review").click();
+  assert.equal(candidateInputs(h).length, 1);
+  field(h, "intake-text").value = cslImportText(["Unreviewed replacement"]);
+  await field(h, "intake-text").dispatch("input");
+  assert.equal(h.assistant.state().pendingIntake, false);
+  assert.equal(candidateInputs(h).length, 0);
+  await action(h, "intake-append").click();
+  assert.equal(h.assistant.state().items.length, 0);
+});
+
+test("batch selection is deduplicated against the library at confirmation time", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  await addAndFill(h, "Existing local reference");
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/second");
+  batch.finish(0, batch.jobs[0].rows.map((row, index) =>
+    succeededDoi(row, intakeItem(h, `Retrieved candidate ${index + 1}`, row.doi))));
+  await pending;
+  const doi = field(h, "DOI");
+  doi.value = "10.5555/first";
+  await doi.dispatch("input");
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title),
+    ["Existing local reference", "Retrieved candidate 2"]);
+  assert.equal(h.assistant.state().items[0].DOI, "10.5555/first");
+});
+
+test("all-failed DOI batches leave the existing library and preview unchanged", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  await addAndFill(h, "Existing reference");
+  await action(h, "preview").click();
+  const before = h.assistant.state();
+  const { pending } = await beginDoi(h, "10.5555/missing");
+  batch.finish(0, [failedDoi(batch.jobs[0].rows[0])]); await pending;
+  assert.equal(h.assistant.state().pendingIntake, false);
+  assert.equal(candidateInputs(h).length, 0);
+  assert.deepEqual(h.assistant.state().items, before.items);
+  assert.deepEqual(h.assistant.state().preview, before.preview);
+  assert.equal(h.assistant.state().previewStale, false);
+});
+
+test("batch parsing preserves leading blank lines so displayed source line numbers stay accurate", async () => {
+  const row = readyDoi("10.5555/first", 3);
+  const batch = controlledBatch({ ok: true, rows: [row], errors: [] });
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const raw = "\n\n10.5555/first\n";
+  const { pending } = await beginDoi(h, raw);
+  assert.equal(batch.parses[0], raw, "batch.parse receives the untrimmed source text");
+  assert.equal(batch.jobs[0].rows[0].line, 3);
+  batch.finish(0, [succeededDoi(row, intakeItem(h))]); await pending;
+  assert.equal(h.assistant.state().batchRows[0].line, 3);
+  let renderedRow;
+  walk(h.mount, (node) => { if (node.getAttribute?.("data-batch-line") === "3") renderedRow = node; });
+  assert.ok(renderedRow);
+  assert.match(renderedRow.textContent, /Line 3/);
+});
+
+test("a batch byte-limit error names the 32 KiB DOI limit and sends no requests", async () => {
+  const batch = controlledBatch({ ok: false, rows: [], errors: [{ code: "input_too_large", limitBytes: 32768 }] });
+  const lookup = controlledLookup();
+  const h = setup({ importer: true, lookup, batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/" + "x".repeat(32768)); await pending;
+  assert.equal(batch.jobs.length, 0);
+  assert.equal(lookup.calls.length, 0);
+  let intake;
+  walk(h.mount, (node) => { if (node.classList?.contains("fc-citations-intake")) intake = node; });
+  assert.ok(intake);
+  const messages = [];
+  walk(intake, (node) => {
+    if (node.classList?.contains("fc-citations-issues-error")) messages.push(node.textContent);
+  });
+  assert.ok(messages.length, "batch size failure has an actionable error message");
+  assert.match(messages.join(" "), /32 KiB/);
+  assert.doesNotMatch(messages.join(" "), /1\s*MiB|1\s*MB|input_too_large|batch_input_large/);
+  assert.equal(h.assistant.state().pendingIntake, false);
+});
+
+test("after a rate-limit stop unstarted DOI rows say Not queried instead of Waiting", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/limited\n10.5555/unstarted");
+  const rows = batch.jobs[0].rows;
+  const finalRows = [succeededDoi(rows[0], intakeItem(h)), failedDoi(rows[1], "lookup_rate_limited"), rows[2]];
+  batch.publish(0, finalRows, { rateLimited: true });
+  let before;
+  walk(h.mount, (node) => { if (node.getAttribute?.("data-batch-line") === "3") before = node; });
+  assert.match(before.textContent, /Waiting/);
+  // The final snapshot has identical row bytes: changing running->stopped
+  // alone must invalidate the row rendering cache.
+  batch.finish(0, finalRows, { rateLimited: true }); await pending;
+  let after;
+  walk(h.mount, (node) => { if (node.getAttribute?.("data-batch-line") === "3") after = node; });
+  assert.match(after.textContent, /Not queried/);
+  assert.doesNotMatch(after.textContent, /Waiting|Looking up/);
+  assert.equal(h.assistant.state().intakeBusy, false);
+});
+
+for (const [locale, words] of Object.entries({
+  zh: { hint: /一行一条/, selected: /识别 1 条 · 已选 1 条/, none: /已选 0 条/,
+    cancelled: /已取消；保留 1 条/, limited: /稍后手动重新查询/ },
+  en: { hint: /One per line/, selected: /1 detected · 1 selected/, none: /0 selected/,
+    cancelled: /Cancelled\. Kept 1/, limited: /Try again manually later/ },
+  es: { hint: /Uno por línea/, selected: /1 detectadas · 1 seleccionadas/, none: /0 seleccionadas/,
+    cancelled: /Cancelado\. Se conservan 1/, limited: /Vuelve a consultar manualmente más tarde/ },
+})) {
+  test(`${locale} translates batch guidance, selection counts, cancellation and rate limiting`, async () => {
+    const batch = controlledBatch();
+    const h = setup({ locale, importer: true, lookup: controlledLookup(), batch: batch.api });
+    assert.match(status(h), words.hint);
+    const first = await beginDoi(h, "10.5555/first\n10.5555/unfinished");
+    const firstRows = batch.jobs[0].rows;
+    batch.publish(0, [succeededDoi(firstRows[0], intakeItem(h)), firstRows[1]]);
+    await action(h, "intake-cancel").click();
+    assert.match(status(h), words.cancelled);
+    assert.match(status(h), words.selected);
+    await action(h, "intake-select-none").click();
+    assert.match(status(h), words.none);
+    batch.finish(0, firstRows, { cancelled: true }); await first.pending;
+    const second = await beginDoi(h, "10.5555/first\n10.5555/limited");
+    const secondRows = batch.jobs[1].rows;
+    batch.finish(1, [succeededDoi(secondRows[0], intakeItem(h)), failedDoi(secondRows[1], "lookup_rate_limited")], { rateLimited: true });
+    await second.pending;
+    assert.match(status(h), words.limited);
+    assert.doesNotMatch(status(h), /batch_(?:hint|privacy|progress|cancelled|rate_limited)|select_(?:all|none)|quick_count|\{(?:count|selected|succeeded|failed|total|line)\}/);
+    assert.notEqual(action(h, "intake-select-all").textContent, "select_all");
+    assert.notEqual(action(h, "intake-select-none").textContent, "select_none");
+  });
+}
+
+test("changing candidate selection retains the same checkbox nodes and disables append for none", async () => {
+  const h = setup({ importer: true, lookup: controlledLookup() });
+  await action(h, "intake-import").click();
+  field(h, "intake-text").value = cslImportText(["First keyboard candidate", "Second keyboard candidate"]);
+  await field(h, "intake-text").dispatch("input");
+  await action(h, "intake-review").click();
+  const first = field(h, "intake-select-0"), second = field(h, "intake-select-1");
+  first.focus();
+  first.checked = false;
+  await first.dispatch("change");
+  assert.equal(field(h, "intake-select-0"), first, "focused checkbox is not replaced on change");
+  assert.equal(field(h, "intake-select-1"), second, "other candidates are not rebuilt");
+  assert.equal(first.focused, true);
+  assert.match(status(h), /1 selected/);
+  await action(h, "intake-select-none").click();
+  assert.equal(field(h, "intake-select-0"), first);
+  assert.equal(field(h, "intake-select-1"), second);
+  assert.equal(first.checked, false);
+  assert.equal(second.checked, false);
+  assert.equal(action(h, "intake-append").disabled, true);
+  assert.match(status(h), /0 selected/);
+});
+
+test("progress arriving after successful completion cannot replace final candidates or their selection", async () => {
+  const batch = controlledBatch();
+  const h = setup({ importer: true, lookup: controlledLookup(), batch: batch.api });
+  const { pending } = await beginDoi(h, "10.5555/first\n10.5555/second");
+  const rows = batch.jobs[0].rows.map((row, index) =>
+    succeededDoi(row, intakeItem(h, `Final candidate ${index + 1}`, row.doi)));
+  batch.finish(0, rows); await pending;
+  const first = field(h, "intake-select-0"), second = field(h, "intake-select-1");
+  await selectCandidate(h, 0, false);
+  batch.publish(0, [rows[0], batch.jobs[0].rows[1]]);
+  await flush();
+  assert.equal(candidateInputs(h).length, 2);
+  assert.equal(field(h, "intake-select-0"), first);
+  assert.equal(field(h, "intake-select-1"), second);
+  assert.equal(first.checked, false);
+  assert.equal(second.checked, true);
+  assert.equal(h.assistant.state().batchRows.filter((row) => row.status === "success").length, 2);
+  await action(h, "intake-append").click();
+  assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["Final candidate 2"]);
 });
