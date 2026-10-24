@@ -1,9 +1,9 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Release status:** source v2.9.0 is in development, with DOI batches,
-selective append and offline citation import. It is not deployed. The last public release is
-v2.7.1; offline installers remain v2.5.0. Earlier debug/production records below
-do not verify the new features. See [deployment notes](DEPLOYMENT.md).
+**Release status:** the static website runs v2.9.0, with DOI batches,
+selective append and offline citation import. Offline installers remain v2.5.0.
+Current verification is recorded in [deployment notes](DEPLOYMENT.md) and
+[v2.9 testing](TESTING-v2.9.md); earlier version records below remain historical.
 
 FormCapy runs as a native Tk desktop app, an Android app with an offline Python
 bridge, or a Flask local web app. This document describes the additional
@@ -138,7 +138,7 @@ download result are separate from this export.
 - **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
 
-### Local citation path (v2.9.0 development; public release remains v2.7.1)
+### Local citation path (v2.9.0 static website)
 
 The reference assistant accepts **books, journal articles and webpages** by
 manual entry or offline BibTeX/RIS/CSL-JSON import. Optional, explicit DOI

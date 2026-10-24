@@ -1,14 +1,14 @@
 # 版式与自定义课程模板 / Formats and Custom Templates
 
-**适用版本 / Applies to：已上线 v2.7.0 静态网页版与源码，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码、分享 JSON 或参考文献助手。
+**适用版本 / Applies to：已上线 v2.9.0 静态网页版与源码，以及 v2.5.0 下载版本的现有排版。** [v2.5.0 下载](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)保持开放，不含模板码、分享 JSON 或参考文献助手。
 
-中文预设与四项新增排版字段自 v2.5.0 起具备，**[公网网站](https://formcapy.com/)现为 v2.7.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
+中文预设与四项新增排版字段自 v2.5.0 起具备，**[公网网站](https://formcapy.com/)现为 v2.9.0**。旧版 v2.4.0 不接受这四项新增字段。详见[部署记录](DEPLOYMENT.md)。
 
-The public website now runs v2.7.0. Chinese presets and the four additional typography fields below remain available in both the website and v2.5.0 packages. Older v2.4.0 builds do not accept those four additional fields.
+The public website now runs v2.9.0. Chinese presets and the four additional typography fields below remain available in both the website and v2.5.0 packages. Older v2.4.0 builds do not accept those four additional fields.
 
-**上线状态 / Deployment status：**下方“课程模板分享”自 v2.6.0 起上线，当前 v2.7.0 继续提供，不属于现有 v2.5.0 安装包。本轮没有新发布、已验证的桌面或 Android 包。Introduced in v2.6.0, course-template sharing remains live on the v2.7.0 static website; offline downloads remain v2.5.0 without this feature. This update does not release a new desktop or Android package.
+**上线状态 / Deployment status：**下方“课程模板分享”自 v2.6.0 起上线，当前 v2.9.0 继续提供，不属于现有 v2.5.0 安装包。本轮没有新发布、已验证的桌面或 Android 包。Introduced in v2.6.0, course-template sharing remains live on the v2.9.0 static website; offline downloads remain v2.5.0 without this feature. This update does not release a new desktop or Android package.
 
-**v2.7.0 状态 / Status：静态网页版已上线。** 下方参考文献助手与安全更新提示可在正式网站使用；线上核对范围见[部署记录](DEPLOYMENT.md)。The reference assistant and safe update notice below are live on the v2.7.0 static website; see the deployment record for verification scope.
+**v2.9.0 状态 / Status：静态网页版已上线。** 下方参考文献助手与安全更新提示可在正式网站使用；线上核对范围见[部署记录](DEPLOYMENT.md)。The reference assistant and safe update notice below are live on the v2.9.0 static website; see the deployment record for verification scope.
 
 ## 中文
 

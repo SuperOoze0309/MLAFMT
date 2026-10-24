@@ -1,6 +1,42 @@
 # FormCapy web deployment
 
-## Current public website — v2.7.1
+## Current public website — v2.9.0
+
+The static website is live at [formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/). On 23 October 2026 (America/Los_Angeles),
+Windows MCP selected the checked H-drive directory, confirmed its 149 files,
+and completed Deploy in Edge. Cloudflare active version `b212e11a` was observed
+as Ready with the 100% traffic control.
+
+This version adds optional DOI batches, selective append, and offline
+BibTeX/RIS/CSL-JSON import. The website remains static and anonymous. Drafts
+and libraries stay in the browser; only an explicit query sends each DOI to
+Crossref. Offline installers remain [v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0).
+
+| Item | Recorded result |
+| --- | --- |
+| Application source | `1b6580bff3fe7701c85958f5aa331c769da6ea63` |
+| CI | [40070497658](https://github.com/SuperOoze0309/MLAFMT/actions/runs/40070497658): test job passed; remaining native jobs are separate from this web-only release |
+| Local regression | 451 Node cases, 228 Python tests and 159 subtests passed; real local Pyodide/Worker smoke and citation pin verification passed |
+| Local browser | 31 real Chrome checks, including explicit live Crossref batches, file imports, selection/undo, three languages and four viewport sizes; controlled failure/cancellation/429 cases recorded separately |
+| Download inspection | Actual local-browser MLA/APA Word downloads passed ZIP/XML/relationship checks and exact preview text, order, italics, links and layout-property comparison |
+| Uploaded snapshot | `dist/formcapy-v2.9.0/`; 148 manifest entries plus `manifest.json`, copied byte for byte from the accepted preview |
+| Manifest SHA-256 | `d79ba46575e860d2bde89e1ff6060790918e56fd639f6d9d0d0cb7d2b7f2b490` |
+| Public cache | `formcapy-2.9.0-pyodide-314.0.7-0b411fbea9f6` |
+| Worker sweep | 147/147 downloadable resources match size, SHA-256 and required security headers; 118,978,497 bytes verified in one sweep, all 17 MIME checks passed |
+| Root / www | 44/44 key-file comparisons pass, including all three new citation scripts; both versions and manifests match, zero analytics beacons |
+| HTTPS | 21/21 checks passed; trusted TLS 1.3 for both domains, HTTP upgrades preserve encoded paths and query strings |
+| Source and notices | Provenance pages retain license/source links; source-archive prefixes match on both domains and the full archive hash matches in the Worker sweep |
+| Public browser | 19 real Chrome checks passed on the root domain: v2.9.0, main-paper generation, real DOI batch/selection, MLA/APA previews, three languages and narrow layout; no console errors or page exceptions |
+| Public downloads | Both actual MLA/APA bibliography downloads also passed independent ZIP/XML/relationship and six-entry preview/content/layout comparison; the main-paper fields and original result link stayed intact |
+
+Full local and public evidence remains under `build/v2.9.0/acceptance/` and
+`build/v2.9.0/production/` in the owner's H-drive workspace. No security,
+DNS or TLS setting was changed. No automatic audit retry was performed.
+See [local verification scope](TESTING-v2.9.md). Word page rendering,
+Safari and physical-device behavior remain unverified.
+
+## Public v2.7.1 deployment record
 
 The static website is live at [formcapy.com](https://formcapy.com/)
 and [www.formcapy.com](https://www.formcapy.com/). The frozen H-drive folder was

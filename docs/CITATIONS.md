@@ -1,8 +1,8 @@
 # 独立参考文献助手 / Citation assistant
 
-状态：**v2.9.0 支持批量 DOI、勾选追加与离线书目导入，最终本地构建已通过验收。** 451 项 Node、228 项 Python 及 159 项子检查、31 项真实浏览器检查通过；实际 MLA／APA Word 下载已独立核对，见[测试范围](TESTING-v2.9.md)。[正式网站](https://formcapy.com/)的版本以[部署记录](DEPLOYMENT.md)为准；离线下载仍为 v2.5.0。
+状态：**v2.9.0 静态网页版已上线，支持批量 DOI、勾选追加与离线书目导入。** 451 项 Node、228 项 Python 及 159 项子检查、31 项本地真实浏览器检查通过；正式网站另有 19 项浏览器检查及实际 MLA／APA Word 下载核对。见[测试范围](TESTING-v2.9.md)与[部署记录](DEPLOYMENT.md)；离线下载仍为 v2.5.0。
 
-Status: **v2.9.0 adds DOI batches and selective append to offline import; its final local build passed acceptance.** The actual MLA/APA Word downloads were independently checked. See [test scope](TESTING-v2.9.md) and [public deployment status](DEPLOYMENT.md). Offline downloads remain v2.5.0.
+Status: **v2.9.0 is live on the static website, with DOI batches, selective append and offline import.** Local acceptance and 19 public-browser checks passed; actual local and public MLA/APA Word downloads were independently checked. See [test scope](TESTING-v2.9.md) and [deployment record](DEPLOYMENT.md). Offline downloads remain v2.5.0.
 
 ---
 
