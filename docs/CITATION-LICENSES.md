@@ -8,6 +8,16 @@ The new import and lookup adapters are project code, with no new bundled
 third-party parser. Arbitrary reference prose and in-text synchronization
 remain outside its scope. See [privacy and import limits](CITATIONS.md#7-隐私--privacy).
 
+Source v2.10.0 adds an original portable-export adapter for CSL-JSON, RIS and
+a modern UTF-8 `.bib` profile. It uses the existing model and no new bundled
+third-party implementation. Format references are the [official CSL input
+schema](https://github.com/citation-style-language/schema/blob/master/schemas/input/csl-data.json),
+[BibTeX documentation](https://mirrors.ctan.org/biblio/bibtex/base/btxdoc.pdf)
+and the field mappings in Zotero's [RIS](https://github.com/zotero/translators/blob/master/RIS.js)
+and [BibTeX](https://github.com/zotero/translators/blob/master/BibTeX.js) translators.
+Zotero's implementation is not copied or distributed. The adapter explicitly
+reports format limitations; FormCapy JSON remains the complete library backup.
+
 ## Selected component and license
 
 - Unmodified `citeproc.js` from Juris-M/citeproc-js commit

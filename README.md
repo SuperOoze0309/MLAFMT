@@ -10,6 +10,23 @@
 
 **v2.9.0 静态网页版已上线：批量 DOI 补全、勾选追加与离线书目导入。** **The static website now runs v2.9.0**, with DOI batches, selective append and offline bibliography import. 更新提示、课程模板分享与三语小屏界面继续提供；离线安装包仍为 v2.5.0。The update notice, template sharing and three-language responsive interface remain available; offline installers remain v2.5.0. [部署与验证范围 / Deployment and verification scope](docs/DEPLOYMENT.md)
 
+### v2.10.0：整理并带走文献 / Organize and export references
+
+源码新增文献库搜索、来源类型筛选，以及通用 CSL-JSON／RIS／`.bib` 导出。
+默认导出全部文献，也可明确只导出筛选结果；先核对提醒，再复制或下载。
+原 FormCapy 库 JSON 继续作为完整备份。525 项 Node 检查、228 项 Python 测试及 159 项子检查、42 项真实浏览器检查通过；公开部署状态见上方记录。
+Search titles, authors, source, DOI, URL or year, filter by source type, then explicitly preview and export all or filtered references. CSL-JSON is the default; RIS and modern UTF-8 BibLaTeX-compatible `.bib` include format-specific warnings. Full FormCapy library JSON remains the complete backup.
+See [workflow and format limits](docs/CITATIONS.md#5b-导出到其他工具--portable-export-v210-source) and [verification scope](docs/TESTING-v2.10.md).
+
+<details>
+<summary>搜索、筛选与导出图示 / Search, filter and export screenshot</summary>
+
+![v2.10 文献库搜索、全宽导出区及 CSL-JSON 预览 / v2.10 library search and full-width portable export review](docs/images/formcapy-v2.10-portable-exports.png)
+
+*本地冻结构建的真实 Chrome 截图，包含虚构测试资料和明确查询的公开 DOI 结果；导出预览包含原文对照遗漏提醒。Local frozen build in Chrome, with fictional test records and explicitly queried public DOI metadata.*
+
+</details>
+
 ### v2.9.0：减少引用手填 / Quicker references
 
 源码新增 **最多 50 条 DOI 顺序补全**、**逐条勾选追加**与 **BibTeX / RIS / CSL-JSON 批量导入**。在“参考文献助手 → 快速添加”中先核对题名、作者、日期和提醒，再追加到现有文献库；可跳过重复条目、整批撤销。手动编辑与原 FormCapy 库 JSON 替换功能继续提供。只有明确点击“查询 DOI”才向 Crossref 发送该 DOI 和常规网络请求信息；文稿、论文信息与整个文献库不发送。离线导入和文献渲染仍在本地完成。

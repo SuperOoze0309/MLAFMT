@@ -29,7 +29,7 @@ from docx.text.run import Run
 
 from format_profiles import FORMAT_IDS, resolve_profile
 
-__version__ = "2.9.0"
+__version__ = "2.10.0"
 
 FONT_NAME = "Times New Roman"
 FONT_SIZE = 12

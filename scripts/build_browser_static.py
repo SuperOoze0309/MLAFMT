@@ -47,7 +47,7 @@ PYTHON_MODULES = (
 STATIC_ASSETS = (
     "transport.js", "template-share.js", "template-sharing-ui.js", "capybara-64.png",
     "update-notice.js", "citation-library.js", "citation-import.js", "citation-lookup.js",
-    "citation-doi-batch.js", "citation-engine.js",
+    "citation-doi-batch.js", "citation-export.js", "citation-engine.js",
     "citation-assistant.js", "citation-assistant.css",
 )
 MAX_FILE_SIZE = 20 * 1024 * 1024

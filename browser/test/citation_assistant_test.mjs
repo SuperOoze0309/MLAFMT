@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const modelSource = fs.readFileSync(path.join(root, "static/citation-library.js"), "utf8");
 const importSource = fs.readFileSync(path.join(root, "static/citation-import.js"), "utf8");
+const exportSource = fs.readFileSync(path.join(root, "static/citation-export.js"), "utf8");
 const assistantSource = fs.readFileSync(path.join(root, "static/citation-assistant.js"), "utf8");
 const assistantCss = fs.readFileSync(path.join(root, "static/citation-assistant.css"), "utf8");
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -114,7 +115,12 @@ class Element {
       await handler({ target: this, type: name, ...event });
     }
   }
-  click() { return this.dispatch("click"); }
+  click() {
+    if (this.tagName === "A" && this.download && this.ownerDocument?.downloads) {
+      this.ownerDocument.downloads.push({ href: this.href, filename: this.download, rel: this.rel });
+    }
+    return this.dispatch("click");
+  }
   focus() { this.focused = true; }
   select() { this.selected = true; }
   setSelectionRange() {}
@@ -129,7 +135,12 @@ class Element {
 function makeDocument() {
   const document = {
     body: new Element("body"),
-    createElement: (tag) => new Element(tag),
+    downloads: [],
+    createElement(tag) {
+      const node = new Element(tag);
+      node.ownerDocument = document;
+      return node;
+    },
     createTextNode: (text) => new TextNode(text),
     createDocumentFragment: () => new Element("fragment"),
   };
@@ -202,7 +213,7 @@ function makeBlob(parts, options = {}) {
 class URLStub extends URL {
   static createObjectURL(blob) {
     URLStub.created.push(blob);
-    const url = "blob:test-" + URLStub.urls.length;
+    const url = "blob:test-" + URLStub.serial++;
     URLStub.urls.push(url);
     return url;
   }
@@ -211,33 +222,38 @@ class URLStub extends URL {
 URLStub.revoked = [];
 URLStub.created = [];
 URLStub.urls = [];
+URLStub.serial = 0;
 
 function setup({ locale = "en", manual = false, onExportWord = null, allowDownloads = true,
-  importer = null, lookup = null, batch = null } = {}) {
+  importer = null, lookup = null, batch = null, exporter = null } = {}) {
   const document = makeDocument();
   const mount = document.createElement("div");
   const storage = makeStorage();
   const engine = makeEngine({ manual });
   const navigator = { clipboard: undefined };
+  const networkCalls = [];
   const context = vm.createContext({
     document, navigator, localStorage: storage,
     Blob: makeBlob, URL: URLStub, TextDecoder, TextEncoder, AbortController,
     setTimeout, clearTimeout, console, queueMicrotask,
+    fetch(...args) { networkCalls.push(args); throw new Error("Network is forbidden in citation DOM tests"); },
   });
   vm.runInContext(modelSource, context);
   if (importer === true) vm.runInContext(importSource, context);
+  if (exporter === true) vm.runInContext(exportSource, context);
   vm.runInContext(assistantSource, context);
   const M = context.FormCapyCitations;
   const intake = importer === true ? context.FormCapyCitationImport : importer;
+  const portable = exporter === true ? context.FormCapyCitationExport : exporter;
   const A = context.FormCapyCitationAssistant;
   const localeBox = { value: locale };
   const assistant = A.create({
     mount, model: M, engine, storage,
     getLocale: () => localeBox.value,
-    onExportWord, allowDownloads, importer: intake, lookup, batch,
+    onExportWord, allowDownloads, importer: intake, lookup, batch, exporter: portable,
   });
   return { document, mount, storage, engine, model: M, assistant, locale: localeBox, navigator,
-    importer: intake, lookup, batch };
+    importer: intake, lookup, batch, exporter: portable, networkCalls };
 }
 
 function walk(node, callback) {
@@ -376,6 +392,49 @@ function cslImportText(titles) {
     author: [{ family: "Example", given: "Ana" }],
     issued: { "date-parts": [[2024]] }, publisher: "Fictional Press" })));
 }
+
+// Portable-export UI tests inject a pure formatter. Serializer correctness and
+// actual third-party interoperability are covered by the export module suite.
+function portableExporter(overrides = {}) {
+  const calls = [];
+  return {
+    calls,
+    exportLibrary(library, options) {
+      calls.push({ library: copyIntake(library), options: copyIntake(options) });
+      const format = options.format;
+      const data = {
+        "csl-json": { filename: "formcapy-references.csl.json", mime: "application/vnd.citationstyles.csl+json" },
+        ris: { filename: "formcapy-references.ris", mime: "application/x-research-info-systems" },
+        bibtex: { filename: "formcapy-references.bib", mime: "application/x-bibtex" },
+      }[format];
+      const text = format === "csl-json" ? JSON.stringify(library.items.map((item) => ({ id: item.id, title: item.title })))
+        : library.items.map((item) => `${format}: ${item.title}`).join("\n");
+      return { ok: true, format, text, ...data, warnings: [], errors: [], ...overrides };
+    },
+  };
+}
+
+async function loadLibraryItems(h, records) {
+  const items = records.map((record) => h.model.createItem(record));
+  await action(h, "import-toggle").click();
+  field(h, "import-json").value = h.model.stringifyLibrary(h.model.createLibrary(items));
+  await action(h, "review-import").click();
+  await action(h, "apply-import").click();
+  return h.assistant.state().items;
+}
+
+const managementRecords = () => [
+  { id: "book_alpha", type: "book", title: "Écologie of capybaras",
+    authors: [{ family: "García", given: "María" }, { literal: "Capybara Research Group" }],
+    issued: { year: 2021 }, publisher: "Lakewood Press", DOI: "10.5555/book-one" },
+  { id: "journal_beta", type: "article-journal", title: "水豚与湿地 🦫",
+    authors: [{ family: "王", given: "明" }], issued: { year: 2024, month: 2, day: 29 },
+    containerTitle: "Wetland Journal", volume: "12", issue: "3", page: "11-20", DOI: "10.5555/wetland" },
+  { id: "web_gamma", type: "webpage", title: "A field guide",
+    authors: [{ literal: "Habitat Institute" }], issued: { year: 2025 },
+    containerTitle: "Capybara Field Notes", URL: "https://example.com/field-guide",
+    accessed: { year: 2026, month: 10, day: 25 } },
+];
 
 test("mounts collapsed, starts session-only, and never touches storage at init", () => {
   const h = setup();
@@ -625,7 +684,8 @@ test("clipboard fallback is visible and XSS text stays text", async () => {
   await addAndFill(h, '<img src=x onerror="globalThis.pwned=1">');
   await action(h, "preview").click();
   await action(h, "copy").click();
-  const fallback = tag(h, "TEXTAREA", (node) => node.readOnly);
+  const fallback = tag(h, "TEXTAREA", (node) => node.readOnly &&
+    node.className.split(/\s+/).includes("fc-citations-fallback"));
   assert.ok(fallback);
   assert.equal(fallback.hidden, false);
   assert.match(fallback.value, /mla bibliography/);
@@ -1609,4 +1669,692 @@ test("progress arriving after successful completion cannot replace final candida
   assert.equal(h.assistant.state().batchRows.filter((row) => row.status === "success").length, 2);
   await action(h, "intake-append").click();
   assert.deepEqual(Array.from(h.assistant.state().items, (item) => item.title), ["Final candidate 2"]);
+});
+
+async function filterLibrary(h, query, type = null) {
+  const queryNode = field(h, "library-query");
+  assert.ok(queryNode, "library query exists");
+  queryNode.value = query;
+  await queryNode.dispatch("input");
+  if (type !== null) {
+    const typeNode = field(h, "library-type");
+    typeNode.value = type;
+    await typeNode.dispatch("change");
+  }
+}
+
+function visibleIds(h) { return Array.from(h.assistant.state().visibleIds); }
+function portableText(h) { return field(h, "portable-text"); }
+function portableStatus(h) {
+  let result = "";
+  walk(h.mount, (node) => {
+    if (node.className?.split(/\s+/).includes("fc-citations-portable-status")) result = node.textContent;
+  });
+  return result;
+}
+
+test("library management starts with all records and portable export remains an explicit action", async () => {
+  const exporter = portableExporter();
+  const h = setup({ exporter });
+  assert.equal(field(h, "library-query").type, "search");
+  assert.equal(field(h, "library-type").value, "all");
+  assert.equal(field(h, "portable-format").value, "csl-json");
+  assert.equal(field(h, "portable-scope").value, "all");
+  assert.equal(h.assistant.state().query, "");
+  assert.equal(h.assistant.state().typeFilter, "all");
+  assert.deepEqual(visibleIds(h), []);
+  assert.equal(action(h, "portable-preview").disabled, true);
+  assert.equal(action(h, "portable-copy").disabled, true);
+  assert.equal(action(h, "portable-download").disabled, true);
+  assert.equal(exporter.calls.length, 0);
+  await loadLibraryItems(h, managementRecords());
+  assert.deepEqual(visibleIds(h), ["book_alpha", "journal_beta", "web_gamma"]);
+  assert.equal(exporter.calls.length, 0);
+  assert.deepEqual(h.storage.sets, []);
+});
+
+test("library query matches all metadata fields with AND tokens, Unicode and accent folding", async () => {
+  const h = setup();
+  await loadLibraryItems(h, managementRecords());
+  const original = JSON.stringify(h.assistant.state().items);
+  for (const [query, expected] of [
+    ["ECOLOGIE garcia", ["book_alpha"]],
+    ["Research lakewood", ["book_alpha"]],
+    ["2021 10.5555/book-one", ["book_alpha"]],
+    ["水豚 wetland 王", ["journal_beta"]],
+    ["2024 wetland", ["journal_beta"]],
+    ["HABITAT field-guide", ["web_gamma"]],
+    ["https://example.com/field-guide", ["web_gamma"]],
+    ["garcia habitat", []],
+    ["  \t  ", ["book_alpha", "journal_beta", "web_gamma"]],
+  ]) {
+    await filterLibrary(h, query);
+    assert.deepEqual(visibleIds(h), expected, query);
+  }
+  assert.equal(JSON.stringify(h.assistant.state().items), original);
+  assert.deepEqual(h.storage.sets, []);
+});
+
+test("type filtering combines with search and clear resets both filters", async () => {
+  const h = setup();
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "capybara", "webpage");
+  assert.deepEqual(visibleIds(h), ["web_gamma"]);
+  await filterLibrary(h, "capybara", "book");
+  assert.deepEqual(visibleIds(h), ["book_alpha"]);
+  await filterLibrary(h, "capybara", "article-journal");
+  assert.deepEqual(visibleIds(h), []);
+  assert.equal(h.assistant.state().items.length, 3);
+  await action(h, "library-clear").click();
+  assert.equal(field(h, "library-query").value, "");
+  assert.equal(field(h, "library-type").value, "all");
+  assert.deepEqual(visibleIds(h), ["book_alpha", "journal_beta", "web_gamma"]);
+});
+
+test("filtering preserves selected editor nodes, fresh preview, Word result and saved state", async () => {
+  const h = setup({ onExportWord: async () => ({ downloadUrl: "blob:filtered-word", name: "keep.docx" }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "save").click();
+  await action(h, "preview").click();
+  await action(h, "word").click();
+  const before = h.assistant.state();
+  const title = field(h, "title"), query = field(h, "library-query");
+  const word = tag(h, "A", (node) => node.href === "blob:filtered-word");
+  assert.ok(word);
+  query.focus();
+  const calls = h.engine.calls.length, writes = h.storage.sets.length;
+  await filterLibrary(h, "Wetland", "article-journal");
+  const after = h.assistant.state();
+  assert.equal(after.selectedId, before.selectedId);
+  assert.equal(field(h, "title"), title, "filters do not rebuild the active editor");
+  assert.equal(field(h, "library-query"), query);
+  assert.equal(query.focused, true);
+  assert.equal(field(h, "library-hidden-selection").hidden, false);
+  assert.deepEqual(after.preview, before.preview);
+  assert.equal(after.previewStale, false);
+  assert.equal(after.saved, true);
+  assert.equal(word.href, "blob:filtered-word");
+  assert.equal(word.hidden, false);
+  assert.equal(h.engine.calls.length, calls);
+  assert.equal(h.storage.sets.length, writes);
+  await action(h, "library-clear").click();
+  assert.equal(field(h, "library-hidden-selection").hidden, true);
+});
+
+test("adding a blank entry clears filters so its editor and list row are reachable", async () => {
+  const h = setup();
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "does not match", "webpage");
+  await action(h, "add").click();
+  const state = h.assistant.state();
+  assert.equal(state.query, "");
+  assert.equal(state.typeFilter, "all");
+  assert.equal(state.items.length, 4);
+  assert.equal(visibleIds(h).includes(state.selectedId), true);
+  assert.equal(field(h, "title").value, "");
+});
+
+test("filters never narrow the existing full FormCapy JSON backup", async () => {
+  const h = setup();
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "Wetland", "article-journal");
+  URLStub.created.length = 0;
+  await action(h, "json-download").click();
+  const backup = JSON.parse(URLStub.created.at(-1).parts.join(""));
+  assert.equal(backup.schema, "formcapy-citations");
+  assert.deepEqual(backup.items.map((item) => item.id), ["book_alpha", "journal_beta", "web_gamma"]);
+  assert.equal(Object.hasOwn(backup, "query"), false);
+  assert.equal(Object.hasOwn(backup, "typeFilter"), false);
+});
+
+test("portable all-library preview ignores presentation filters and does not auto-download", async () => {
+  const exporter = portableExporter();
+  const h = setup({ exporter });
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "Wetland", "article-journal");
+  const before = JSON.stringify(h.assistant.state().items);
+  URLStub.created.length = 0;
+  await action(h, "portable-preview").click();
+  assert.equal(exporter.calls.length, 1);
+  assert.deepEqual(exporter.calls[0].library.items.map((item) => item.id), ["book_alpha", "journal_beta", "web_gamma"]);
+  assert.equal(exporter.calls[0].options.format, "csl-json");
+  assert.equal(h.assistant.state().portablePending, true);
+  assert.equal(portableText(h).readOnly, true);
+  assert.equal(JSON.parse(portableText(h).value).length, 3);
+  assert.equal(URLStub.created.length, 0, "review does not download automatically");
+  assert.equal(h.storage.sets.length, 0);
+  assert.equal(JSON.stringify(h.assistant.state().items), before);
+});
+
+test("portable filtered scope passes only matching records and empty matches disable preview", async () => {
+  const exporter = portableExporter();
+  const h = setup({ exporter });
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "Wetland", "article-journal");
+  field(h, "portable-scope").value = "filtered";
+  await field(h, "portable-scope").dispatch("change");
+  await action(h, "portable-preview").click();
+  assert.deepEqual(exporter.calls[0].library.items.map((item) => item.id), ["journal_beta"]);
+  await filterLibrary(h, "no matching source");
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(action(h, "portable-preview").disabled, true);
+  await action(h, "portable-preview").click();
+  assert.equal(exporter.calls.length, 1);
+});
+
+test("all-scope reviewed export survives filter changes while filtered-scope export becomes stale", async () => {
+  const exporter = portableExporter();
+  const h = setup({ exporter });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  const text = portableText(h).value;
+  await filterLibrary(h, "Wetland");
+  assert.equal(h.assistant.state().portablePending, true);
+  assert.equal(portableText(h).value, text);
+  field(h, "portable-scope").value = "filtered";
+  await field(h, "portable-scope").dispatch("change");
+  await action(h, "portable-preview").click();
+  await filterLibrary(h, "Wetland ");
+  assert.equal(h.assistant.state().portablePending, false, "even an equivalent filter edit invalidates its reviewed scope");
+  assert.equal(portableText(h).value, "");
+});
+
+test("editing bibliography data invalidates reviewed portable text and copy/download actions", async () => {
+  const h = setup({ exporter: portableExporter() });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  await fill(h, "Edited source after export review");
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(action(h, "portable-copy").disabled, true);
+  assert.equal(action(h, "portable-download").disabled, true);
+});
+
+test("changing portable format or scope discards the old reviewed artifact", async () => {
+  const h = setup({ exporter: portableExporter() });
+  await loadLibraryItems(h, managementRecords());
+  for (const [name, value] of [["portable-format", "ris"], ["portable-scope", "filtered"], ["portable-format", "bibtex"]]) {
+    await action(h, "portable-preview").click();
+    assert.equal(h.assistant.state().portablePending, true);
+    field(h, name).value = value;
+    await field(h, name).dispatch("change");
+    assert.equal(h.assistant.state().portablePending, false, `${name} invalidates review`);
+    assert.equal(portableText(h).value, "");
+  }
+});
+
+test("language-only changes keep filter state, candidate data and portable review", async () => {
+  const exporter = portableExporter();
+  const h = setup({ exporter });
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "García", "book");
+  await action(h, "portable-preview").click();
+  const before = JSON.stringify(h.assistant.state().items), text = portableText(h).value;
+  for (const locale of ["zh", "es", "en"]) {
+    h.locale.value = locale;
+    h.assistant.render();
+    assert.equal(h.assistant.state().query, "García");
+    assert.equal(h.assistant.state().typeFilter, "book");
+    assert.deepEqual(visibleIds(h), ["book_alpha"]);
+    assert.equal(h.assistant.state().portablePending, true);
+    assert.equal(portableText(h).value, text);
+    assert.equal(JSON.stringify(h.assistant.state().items), before);
+    assert.doesNotMatch(action(h, "portable-preview").textContent, /^portable_/);
+    assert.doesNotMatch(action(h, "library-clear").textContent, /^library_/);
+  }
+  assert.equal(exporter.calls.length, 1);
+});
+
+test("portable omission warnings and untrusted content remain text during review", async () => {
+  const text = '<script>alert("not executable")</script>';
+  const h = setup({ exporter: portableExporter({ text, warnings: [
+    { code: "original_text_omitted", index: 0, field: "originalText" },
+    { code: "unknown_export_warning", field: "<img src=x onerror=alert(1)>" },
+  ] }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, true);
+  assert.equal(portableText(h).value, text);
+  assert.equal(portableText(h).readOnly, true);
+  assert.equal(tag(h, "SCRIPT"), null);
+  assert.equal(tag(h, "IMG"), null);
+  assert.doesNotMatch(h.mount.textContent, /unknown_export_warning|<img src=x onerror/,
+    "unknown warning codes and untrusted field names use a generic localized description");
+});
+
+test("inherited object property names in portable warning codes and fields use the safe fallback", async () => {
+  const h = setup({ exporter: portableExporter({ warnings: [
+    { code: "constructor", index: 0, field: "__proto__", path: "library.items[0].constructor" },
+    { code: "__proto__", field: "constructor", path: "library.items[0].__proto__" },
+    { code: "toString", field: "toString", path: "library.items[0].toString" },
+  ] }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, true);
+  let issues = null;
+  walk(h.mount, (node) => {
+    if (node.className?.split(/\s+/).includes("fc-citations-portable-issues")) issues = node;
+  });
+  assert.ok(issues);
+  assert.match(issues.textContent, /review/i);
+  assert.doesNotMatch(issues.textContent, /\[native code\]|\[object Object\]|function\s|constructor|__proto__|toString/);
+});
+
+test("structured portable failures never expose partial text or create a download", async () => {
+  const exporter = portableExporter({ ok: false, text: "PARTIAL MUST NOT LEAK", errors: [{ code: "output_too_large" }] });
+  const h = setup({ exporter });
+  await loadLibraryItems(h, managementRecords());
+  const before = JSON.stringify(h.assistant.state().items);
+  URLStub.created.length = 0;
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(action(h, "portable-copy").disabled, true);
+  assert.equal(action(h, "portable-download").disabled, true);
+  assert.equal(URLStub.created.length, 0);
+  assert.equal(JSON.stringify(h.assistant.state().items), before);
+  assert.doesNotMatch(h.mount.textContent, /PARTIAL MUST NOT LEAK/);
+});
+
+test("an unavailable or throwing portable formatter leaves the library usable", async () => {
+  const missing = setup();
+  await loadLibraryItems(missing, managementRecords());
+  assert.equal(action(missing, "portable-preview").disabled, true);
+  const h = setup({ exporter: { exportLibrary() { throw new Error("failed to serialize"); } } });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(h.assistant.state().items.length, 3);
+  assert.equal(portableText(h).value, "");
+});
+
+for (const [name, overrides] of [
+  ["empty text", { text: "" }],
+  ["wrong format", { format: "ris" }],
+  ["over one MiB UTF-8", { text: "é".repeat(524289) }],
+  ["null errors", { errors: null }],
+  ["missing errors", { errors: undefined }],
+  ["string errors", { errors: "" }],
+  ["null warnings", { warnings: null }],
+  ["missing warnings", { warnings: undefined }],
+  ["string warnings", { warnings: "" }],
+]) {
+  test(`portable UI rejects a malformed formatter result: ${name}`, async () => {
+    const h = setup({ exporter: portableExporter(overrides) });
+    await loadLibraryItems(h, managementRecords());
+    await action(h, "portable-preview").click();
+    assert.equal(h.assistant.state().portablePending, false);
+    assert.equal(portableText(h).value, "");
+    assert.equal(action(h, "portable-download").disabled, true);
+  });
+}
+
+test("portable download uses a fixed safe name and MIME rather than formatter-supplied values", async () => {
+  const h = setup({ exporter: portableExporter({ filename: "../../paper.html", mime: "text/html" }) });
+  await loadLibraryItems(h, managementRecords());
+  URLStub.created.length = 0;
+  await action(h, "portable-preview").click();
+  await action(h, "portable-download").click();
+  const blob = URLStub.created.at(-1);
+  assert.ok(blob);
+  assert.equal(blob.type, "application/vnd.citationstyles.csl+json");
+  assert.equal(blob.parts.join(""), portableText(h).value);
+  assert.equal(h.document.downloads.at(-1).filename, "formcapy-references.csl.json");
+  assert.equal(h.document.downloads.at(-1).rel, "noopener");
+});
+
+test("portable copy is explicit and copies only the reviewed text", async () => {
+  const copied = [];
+  const h = setup({ exporter: portableExporter() });
+  h.navigator.clipboard = { async writeText(text) { copied.push(text); } };
+  await loadLibraryItems(h, managementRecords());
+  assert.deepEqual(copied, []);
+  await action(h, "portable-preview").click();
+  assert.deepEqual(copied, []);
+  await action(h, "portable-copy").click();
+  assert.deepEqual(copied, [portableText(h).value]);
+  assert.equal(h.storage.sets.length, 0);
+});
+
+test("portable copy fallback selects its own readonly text without replacing the library", async () => {
+  const h = setup({ exporter: portableExporter() });
+  await loadLibraryItems(h, managementRecords());
+  const before = JSON.stringify(h.assistant.state().items);
+  await action(h, "portable-preview").click();
+  await action(h, "portable-copy").click();
+  assert.equal(portableText(h).focused, true);
+  assert.equal(portableText(h).selected, true);
+  assert.equal(h.assistant.state().portablePending, true);
+  assert.equal(JSON.stringify(h.assistant.state().items), before);
+});
+
+test("a late portable clipboard failure cannot resurrect text after an edit", async () => {
+  let rejectCopy;
+  const h = setup({ exporter: portableExporter() });
+  h.navigator.clipboard = { writeText() { return new Promise((resolve, reject) => { rejectCopy = reject; }); } };
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  const pending = action(h, "portable-copy").click();
+  await flush();
+  await fill(h, "Changed while clipboard pending");
+  rejectCopy(new Error("Clipboard unavailable"));
+  await pending;
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(portableText(h).focused, false);
+  assert.equal(portableText(h).selected, false);
+  assert.doesNotMatch(portableStatus(h), /copied/i);
+});
+
+test("disposing during portable copy handles its late result without new UI", async () => {
+  let resolveCopy;
+  const h = setup({ exporter: portableExporter() });
+  h.navigator.clipboard = { writeText() { return new Promise((resolve) => { resolveCopy = resolve; }); } };
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  const pending = action(h, "portable-copy").click();
+  await flush();
+  h.assistant.dispose();
+  const removed = h.mount.textContent;
+  resolveCopy();
+  await pending;
+  assert.equal(h.mount.textContent, removed);
+  assert.equal(h.mount.children.length, 0);
+});
+
+test("portable downloads honor host download restrictions while copy remains available", async () => {
+  const h = setup({ exporter: portableExporter(), allowDownloads: false });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(action(h, "portable-copy").disabled, false);
+  const download = action(h, "portable-download");
+  assert.ok(download.disabled || download.hidden);
+  URLStub.created.length = 0;
+  await download.click();
+  assert.equal(URLStub.created.length, 0);
+});
+
+test("portable download URLs are reclaimed after the shared TTL and immediately on dispose", async () => {
+  const h = setup({ exporter: portableExporter() });
+  await loadLibraryItems(h, managementRecords());
+  URLStub.urls.length = 0;
+  URLStub.revoked.length = 0;
+  await action(h, "portable-preview").click();
+  await action(h, "portable-download").click();
+  const first = URLStub.urls.at(-1);
+  assert.ok(first);
+  await new Promise((resolve) => setTimeout(resolve, 1150));
+  assert.equal(URLStub.revoked.includes(first), true);
+  await action(h, "portable-download").click();
+  const second = URLStub.urls.at(-1);
+  h.assistant.dispose();
+  assert.equal(URLStub.revoked.includes(second), true);
+});
+
+for (const [format, filename, mime] of [
+  ["ris", "formcapy-references.ris", "application/x-research-info-systems"],
+  ["bibtex", "formcapy-references.bib", "application/x-bibtex"],
+]) {
+  test(`portable ${format} download uses its reviewed format, fixed filename and MIME`, async () => {
+    const exporter = portableExporter();
+    const h = setup({ exporter });
+    await loadLibraryItems(h, managementRecords());
+    field(h, "portable-format").value = format;
+    await field(h, "portable-format").dispatch("change");
+    await action(h, "portable-preview").click();
+    URLStub.created.length = 0;
+    await action(h, "portable-download").click();
+    assert.equal(exporter.calls.at(-1).options.format, format);
+    assert.equal(h.assistant.state().portableFormat, format);
+    assert.equal(URLStub.created.at(-1).type, mime);
+    assert.equal(h.document.downloads.at(-1).filename, filename);
+    assert.equal(URLStub.created.at(-1).parts.join(""), portableText(h).value);
+  });
+}
+
+test("portable UI accepts exactly one MiB of UTF-8 while guarding the next byte", async () => {
+  const text = "é".repeat(524288);
+  assert.equal(new TextEncoder().encode(text).length, 1048576);
+  const h = setup({ exporter: portableExporter({ text }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, true);
+  assert.equal(portableText(h).value, text);
+  assert.equal(action(h, "portable-copy").disabled, false);
+});
+
+test("library deletion, undo and replacement each invalidate portable review", async () => {
+  const h = setup({ exporter: portableExporter() });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  await action(h, "delete-entry").click();
+  assert.equal(h.assistant.state().portablePending, false);
+  await action(h, "portable-preview").click();
+  await action(h, "undo").click();
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(h.assistant.state().items.length, 3);
+  await action(h, "portable-preview").click();
+  await loadLibraryItems(h, [managementRecords()[2]]);
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(h.assistant.state().items.length, 1);
+});
+
+test("a successful result that also contains errors is not a valid portable artifact", async () => {
+  const h = setup({ exporter: portableExporter({ ok: true, text: "PARTIAL", errors: [{ code: "item_invalid" }] }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(action(h, "portable-download").disabled, true);
+});
+
+test("a late successful clipboard response cannot claim a stale portable copy", async () => {
+  let finishCopy;
+  const h = setup({ exporter: portableExporter() });
+  h.navigator.clipboard = { writeText() { return new Promise((resolve) => { finishCopy = resolve; }); } };
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  const pending = action(h, "portable-copy").click();
+  await flush();
+  await fill(h, "Changed while successful copy is pending");
+  finishCopy();
+  await pending;
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.doesNotMatch(portableStatus(h), /copied/i);
+});
+
+test("management state snapshots cannot mutate visible IDs or current bibliography", async () => {
+  const h = setup({ exporter: portableExporter() });
+  await loadLibraryItems(h, managementRecords());
+  await filterLibrary(h, "Wetland");
+  const snapshot = h.assistant.state();
+  snapshot.visibleIds.push("forged");
+  snapshot.items[0].title = "forged title";
+  assert.deepEqual(visibleIds(h), ["journal_beta"]);
+  assert.equal(h.assistant.state().items[0].title, "Écologie of capybaras");
+});
+
+test("portable formatting receives a detached snapshot instead of active library objects", async () => {
+  const exporter = { exportLibrary(library, options) {
+    library.items[0].title = "Changed inside the injected serializer";
+    return { ok: true, format: options.format, text: "[]", warnings: [], errors: [] };
+  } };
+  const h = setup({ exporter });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().items[0].title, "Écologie of capybaras");
+  assert.equal(field(h, "title").value, "Écologie of capybaras");
+});
+
+test("large legitimate portable warning collections still prepare and only render the first twenty", async () => {
+  const warnings = Array.from({ length: 2050 }, (_, index) => ({
+    code: "ris_author_literal", index: index % 200, field: "authors",
+  }));
+  const h = setup({ exporter: portableExporter({ warnings }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, true);
+  assert.notEqual(portableText(h).value, "");
+  let container = null;
+  walk(h.mount, (node) => {
+    if (node.className?.split(/\s+/).includes("fc-citations-portable-issues")) container = node;
+  });
+  assert.ok(container);
+  const rows = [];
+  walk(container, (node) => { if (node.tagName === "LI") rows.push(node); });
+  assert.equal(rows.length, 21, "twenty warning rows plus one remaining-count row");
+  assert.equal(rows.filter((row) => row.className.split(/\s+/).includes("fc-citations-more-issues")).length, 1);
+  assert.match(rows.at(-1).textContent, /2030/);
+  assert.match(rows.at(-1).textContent, /more/i);
+  assert.equal(action(h, "portable-copy").disabled, false);
+});
+
+test("a portable issue collection beyond the bounded maximum is rejected without partial output", async () => {
+  const warnings = Array.from({ length: 10001 }, () => ({ code: "original_text_omitted" }));
+  const h = setup({ exporter: portableExporter({ warnings }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  assert.equal(h.assistant.state().portablePending, false);
+  assert.equal(portableText(h).value, "");
+  assert.equal(action(h, "portable-download").disabled, true);
+});
+
+for (const [format, mime, filename] of [
+  ["csl-json", "application/vnd.citationstyles.csl+json", "formcapy-references.csl.json"],
+  ["ris", "application/x-research-info-systems", "formcapy-references.ris"],
+  ["bibtex", "application/x-bibtex", "formcapy-references.bib"],
+]) {
+  test(`real ${format} serializer integrates with portable UI review, warnings and download metadata`, async () => {
+    const h = setup({ exporter: true });
+    const originalText = "Private original comparison stays outside portable metadata";
+    await loadLibraryItems(h, [{
+      id: "portable_real", type: "book", title: "Capybara research handbook",
+      authors: [{ literal: "Wetland Research Group" }], issued: { year: 2024 },
+      publisher: "Fictional Lake Press", DOI: "10.5555/portable-book", originalText,
+    }]);
+    const before = JSON.stringify(h.assistant.state().items);
+    assert.equal(typeof h.exporter.exportLibrary, "function");
+    assert.equal(h.assistant.state().portablePending, false);
+    field(h, "portable-format").value = format;
+    await field(h, "portable-format").dispatch("change");
+    URLStub.created.length = 0;
+    await action(h, "portable-preview").click();
+    assert.equal(h.assistant.state().portablePending, true);
+    const text = portableText(h).value;
+    assert.equal(portableText(h).readOnly, true);
+    assert.match(text, /Capybara research handbook/);
+    assert.match(text, /Wetland Research Group/);
+    assert.doesNotMatch(text, /Private original comparison|formcapy-citations|originalText/);
+    assert.equal(URLStub.created.length, 0, "real serialization still requires explicit download");
+    let issues = null;
+    walk(h.mount, (node) => {
+      if (node.className?.split(/\s+/).includes("fc-citations-portable-issues")) issues = node;
+    });
+    assert.ok(issues);
+    assert.match(issues.textContent, /comparison|original/i);
+    assert.doesNotMatch(issues.textContent, /original_text_omitted|ris_author_literal|bibtex_[a-z_]+/);
+    if (format === "csl-json") {
+      const csl = JSON.parse(text);
+      assert.equal(csl.length, 1);
+      assert.deepEqual(csl[0].author, [{ literal: "Wetland Research Group" }]);
+      assert.equal(csl[0].DOI, "10.5555/portable-book");
+    } else if (format === "ris") {
+      assert.match(text, /^TY  - BOOK/m);
+      assert.match(issues.textContent, /author|organization/i);
+    } else {
+      assert.match(text, /^@book\{/m);
+    }
+    await action(h, "portable-download").click();
+    assert.equal(URLStub.created.at(-1).type, mime);
+    assert.equal(URLStub.created.at(-1).parts.join(""), text);
+    assert.equal(h.document.downloads.at(-1).filename, filename);
+    assert.equal(JSON.stringify(h.assistant.state().items), before);
+    assert.equal(h.storage.sets.length, 0);
+    assert.deepEqual(h.networkCalls, []);
+    h.assistant.dispose();
+  });
+}
+
+test("portable export occupies its own full-width section after the unchanged three-column grid", () => {
+  const h = setup({ exporter: portableExporter() });
+  let grid = null;
+  walk(h.mount, (node) => {
+    if (node.className?.split(/\s+/).includes("fc-citations-grid")) grid = node;
+  });
+  assert.ok(grid);
+  const panel = action(h, "portable-toggle").parent;
+  assert.equal(panel.tagName, "DETAILS");
+  assert.equal(panel.parent, grid.parent, "portable controls share the grid's full-width parent");
+  const siblings = grid.parent.children;
+  assert.equal(siblings[siblings.indexOf(grid) + 1], panel, "portable export immediately follows the workspace");
+  assert.equal(grid.children.length, 3);
+  assert.equal(grid.children[0].className, "fc-citations-library");
+  assert.equal(grid.children[1].className, "fc-citations-editor");
+  assert.equal(grid.children[2].className, "fc-citations-preview");
+  assert.equal(field(h, "portable-format").parent.parent, field(h, "portable-scope").parent.parent,
+    "format and scope are grouped in shared responsive controls");
+});
+
+test("nine exact comparison omissions collapse to one count summary while another warning remains across locales", async () => {
+  const warnings = Array.from({ length: 9 }, (_, index) => ({ code: "original_text_omitted", index, field: "originalText" }));
+  warnings.splice(1, 0, { code: "ris_author_literal", index: 0, field: "authors" });
+  const beforeWarnings = JSON.stringify(warnings);
+  const h = setup({ exporter: portableExporter({ warnings }) });
+  await loadLibraryItems(h, Array.from({ length: 9 }, (_, index) => ({
+    id: `summary_${index}`, type: "book", title: `Fictional summary record ${index + 1}`,
+    authors: [{ literal: "Fictional Institute" }], issued: { year: 2024 }, publisher: "Fictional Press",
+  })));
+  await action(h, "portable-preview").click();
+  const reviewed = portableText(h).value;
+  for (const [locale, comparison, author] of [
+    ["en", /comparison/i, /author|organization/i],
+    ["zh", /原文对照/, /作者/],
+    ["es", /comparaci[oó]n/i, /autor|organiza/i],
+  ]) {
+    h.locale.value = locale;
+    h.assistant.render();
+    let container = null;
+    walk(h.mount, (node) => {
+      if (node.className?.split(/\s+/).includes("fc-citations-portable-issues")) container = node;
+    });
+    const rows = [];
+    walk(container, (node) => { if (node.tagName === "LI") rows.push(node); });
+    assert.equal(rows.length, 2, locale);
+    assert.match(rows[0].textContent, comparison);
+    assert.match(rows[0].textContent, /\b9\b/);
+    assert.match(rows[1].textContent, author);
+    assert.doesNotMatch(container.textContent, /portable_original_omitted_summary|original_text_omitted|ris_author_literal/);
+    assert.equal(h.assistant.state().portablePending, true);
+    assert.equal(portableText(h).value, reviewed);
+  }
+  assert.equal(JSON.stringify(warnings), beforeWarnings, "display aggregation never mutates serializer warnings");
+});
+
+test("comparison omission counts deduplicate valid record indexes and count unindexed diagnostics separately", async () => {
+  const warnings = [
+    { code: "original_text_omitted", index: 0 },
+    { code: "original_text_omitted", index: 0 },
+    { code: "original_text_omitted", index: 1 },
+    { code: "original_text_omitted" },
+    { code: "original_text_omitted", index: -1 },
+    { code: "ris_author_literal", index: 0, field: "authors" },
+    { code: "ris_author_literal", index: 1, field: "authors" },
+  ];
+  const h = setup({ exporter: portableExporter({ warnings }) });
+  await loadLibraryItems(h, managementRecords());
+  await action(h, "portable-preview").click();
+  let container = null;
+  walk(h.mount, (node) => {
+    if (node.className?.split(/\s+/).includes("fc-citations-portable-issues")) container = node;
+  });
+  const rows = [];
+  walk(container, (node) => { if (node.tagName === "LI") rows.push(node); });
+  assert.equal(rows.length, 3, "other warning instances are not deduplicated");
+  assert.match(rows[0].textContent, /comparison/i);
+  assert.match(rows[0].textContent, /\b4\b/);
+  assert.match(rows[1].textContent, /1/);
+  assert.match(rows[2].textContent, /2/);
 });

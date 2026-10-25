@@ -6,6 +6,12 @@ Status: **v2.9.0 is live on the static website, with DOI batches, selective appe
 
 ---
 
+源码 v2.10.0 新增本地搜索／筛选和通用书目导出，本地验收已完成；[验收范围](TESTING-v2.10.md)与[公开部署状态](DEPLOYMENT.md)分开记录。
+
+Source v2.10.0 adds local search/filtering and portable bibliography export.
+Local acceptance has passed; see [verification scope](TESTING-v2.10.md) and
+the separately recorded [public deployment status](DEPLOYMENT.md).
+
 ## 1. 用途与边界 / Purpose and scope
 
 中文：
@@ -123,6 +129,44 @@ English:
 - Pasting a URL is treated as invalid JSON; it **never triggers a network request**.
 - **Standalone HTML**: serializes only the engine's safe fragment into a script-free, remote-resource-free HTML file, using the CSL hanging indent/line spacing/entry spacing and a local-source note. CSL boolean `hangingindent:true` is exported as a half-inch (48px) hanging indent, `false` as no indent; numeric pixel adapters are preserved.
 - **Word**: generates a separate `.docx` bibliography locally and shows its download link inside the assistant, leaving paper results unchanged. It uses Letter paper, 1-inch margins, Times New Roman 12 pt, and the selected MLA/APA heading and bibliography layout. It does not apply the main page's custom course template. A separate cancel button releases the paper form while keeping entries and a still-current preview; late result links are not displayed.
+
+## 5a. 文献库搜索与筛选 / Search and filters (v2.10 source)
+
+文献库可按题名、作者、来源、年份、DOI 或网址搜索，并按书籍、期刊文章或网页筛选。
+搜索只改变列表显示，不改写条目、不自动保存、不联网，也不使已生成的文献表过期。
+筛选外的当前编辑条目仍保留；可清除筛选重新显示。显示数量是匹配数／全库总数。
+
+Search title, authors, source, year, DOI or URL, and filter by book, journal
+article or webpage. Filters change the visible list only: no data mutation,
+automatic save, request or stale bibliography preview. The current editor is
+kept if its record is outside the filter; clear the filter to reveal it.
+
+## 5b. 导出到其他工具 / Portable export (v2.10 source)
+
+展开“导出到其他工具”，明确选择全部文献或当前筛选结果，再选择格式并预览导出。
+先核对数量、字段及损失提醒，再明确复制或下载。格式、范围或相关条目修改后旧导出失效，
+需重新预览；不会自动下载、保存或上传。
+
+| 格式 / Format | 用途与范围 / Purpose and limits |
+| --- | --- |
+| CSL-JSON（推荐 / recommended） | 标准 CSL 数组；保留当前模型的作者结构、部分日期和书目字段。/ Standard CSL array preserving current model name structures, partial dates and bibliography fields. |
+| RIS | 常用书目交换格式；机构作者等存在姓名结构歧义时显示提醒。/ Bibliographic interchange with explicit warnings for ambiguous corporate/name structure. |
+| `.bib` | 现代 UTF-8、BibLaTeX 兼容的 book/article/online；网页条目需要相应工具支持，不保证所有经典 BibTeX 样式兼容。/ Modern UTF-8 BibLaTeX-compatible book/article/online profile; webpage support depends on the receiving tool. |
+| FormCapy 库 JSON / library JSON | 原有完整备份入口，保留应用字段及原文对照。/ Existing complete backup, retaining application fields and original comparison text. |
+
+通用格式只导出书目元数据，不含原文对照、草稿、论文信息、模板或生成结果。
+保留这些应用数据时请用原有“下载库 JSON”。通用文件导回时会重建本地 ID；
+不同软件对姓名、扩展字段和转义的解释可能不同，迁移后仍应核对。
+每次最多 200 条，导出文本最多 1 MiB（UTF-8）；超限明确失败，不截断或导出半份结果。
+
+Expand **Export to other tools**, choose the whole library or the current
+filtered records, then choose a format and preview. Review counts and loss
+warnings before explicitly copying/downloading. Relevant edits invalidate the
+prepared export. Portable formats exclude original comparison text, drafts,
+paper details, templates and generated output. Use the existing FormCapy
+library JSON for a complete library backup. Reimport assigns new local IDs;
+receiving tools may interpret names, extensions and escaping differently.
+The limit is 200 records and 1 MiB UTF-8 output; overflow fails explicitly.
 
 ## 6. 本地保存 / Local persistence
 

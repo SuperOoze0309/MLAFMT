@@ -45,6 +45,8 @@ jobs:
           node browser/test/citation_import_test.mjs
           node browser/test/citation_lookup_test.mjs
           node browser/test/citation_doi_batch_test.mjs
+          node browser/test/citation_export_test.mjs
+          node browser/test/citation_export_edge_test.mjs
           node browser/test/citation_engine_test.mjs
           node browser/test/citation_assistant_test.mjs
           node browser/test/citation_host_state_test.mjs

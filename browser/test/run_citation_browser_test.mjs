@@ -15,8 +15,8 @@ function option(name, fallback) {
   assert.ok(process.argv[index + 1] && !process.argv[index + 1].startsWith('--'), `${name} requires a path`);
   return process.argv[index + 1];
 }
-const dist = path.resolve(root, option('--dist', process.env.FORMCAPY_TEST_DIST || 'dist/formcapy-v2.8.0-preview'));
-const output = path.resolve(root, option('--out', process.env.FORMCAPY_TEST_OUT || 'build/v2.8.0/acceptance/browser'));
+const dist = path.resolve(root, option('--dist', process.env.FORMCAPY_TEST_DIST || 'dist/formcapy-v2.10.0-preview'));
+const output = path.resolve(root, option('--out', process.env.FORMCAPY_TEST_OUT || 'build/v2.10.0/acceptance/browser'));
 assert.equal(path.parse(output).root.toLowerCase(), path.parse(root).root.toLowerCase(), 'Test artifacts remain on the workspace drive');
 assert.equal((await fs.stat(path.join(dist, 'index.html'))).isFile(), true, 'Build the static preview first');
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
@@ -28,8 +28,13 @@ const temp = path.join(output, 'temp');
 const fixtures = path.join(output, 'fixtures');
 await Promise.all([downloads, temp, fixtures].map(p => fs.mkdir(p, { recursive: true })));
 const report = { started: new Date().toISOString(), dist, output, browserFlags: [], checks: [], realProvider: null, responses: [], simulated: [], consoleErrors: [], pageExceptions: [], requests: [], failedRequests: [], fetchCalls: [], layouts: [], downloads: [] };
+const previousSnapshot=path.join(output,'attempt-before-portable-layout','report.json');
+try{
+  const bytes=await fs.readFile(previousSnapshot);const previous=JSON.parse(bytes.toString('utf8'));
+  report.previousSnapshots=[{path:path.relative(output,previousSnapshot).replaceAll('\\','/'),ok:previous.ok,checks:previous.checks.length,sha256:createHash('sha256').update(bytes).digest('hex'),completed:previous.completed,manifestSha256:previous.artifactHashes['manifest.json'],realMetadataRequests:Object.values(previous.realRequestCounts||{}).reduce((a,b)=>a+b,0)}];
+}catch(error){if(error.code!=='ENOENT')throw error;}
 report.artifactHashes = {};
-for (const relative of ['manifest.json','index.html','static/citation-assistant.js','static/citation-doi-batch.js','static/citation-lookup.js','static/citation-import.js']) {
+for (const relative of ['manifest.json','index.html','static/citation-assistant.js','static/citation-doi-batch.js','static/citation-lookup.js','static/citation-import.js','static/citation-export.js']) {
   try { report.artifactHashes[relative] = createHash('sha256').update(await fs.readFile(path.join(dist,relative))).digest('hex'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
 }
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -109,18 +114,25 @@ async function selectFile(selector, filename) {
   assert.ok(nodeId, `File input ${selector}`);
   await cdp.send('DOM.setFileInputFiles', { nodeId, files: [filename] });
 }
-async function actualDownload(selector, name) {
+async function actualDownload(selector, name, {minimumBytes = 1000, expectedFilename, expectedMime} = {}) {
   const before = new Set(await fs.readdir(downloads));
+  const blobBefore = await evaluate('window.__citationAcceptance.blobDownloads.length');
   await click(selector);
   for (let i = 0; i < 300; i++) {
     const names = (await fs.readdir(downloads)).filter(n => !before.has(n) && !n.endsWith('.crdownload'));
     if (names.length) {
       const source = path.join(downloads, names[0]);
       const dest = path.join(downloads, name);
+      await fs.mkdir(path.dirname(dest),{recursive:true});
       if (source !== dest) await fs.rename(source, dest);
-      const stat = await fs.stat(dest);
-      report.downloads.push({ name, bytes: stat.size, path: dest, actualBrowserDownload: true });
-      assert.ok(stat.size > 1000);
+      const data = await fs.readFile(dest);
+      const blob = await evaluate(`(async() => { const record = window.__citationAcceptance.blobDownloads.slice(${blobBefore}).at(-1); if(!record) return null; const source = window.__citationAcceptance.blobSources.get(record.href); if(!source) return {...record}; const digest = await crypto.subtle.digest('SHA-256', await source.arrayBuffer()); return {...record, sha256:[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('')};})()`);
+      const sha256 = createHash('sha256').update(data).digest('hex');
+      report.downloads.push({ name, suggestedFilename: names[0], bytes: data.length, sha256, blob, path: dest, actualBrowserDownload: true });
+      assert.ok(data.length > minimumBytes);
+      if (expectedFilename) { assert.equal(names[0], expectedFilename); assert.equal(blob?.filename, expectedFilename); }
+      if (expectedMime) assert.equal(blob?.mime, expectedMime);
+      if (blob) { assert.equal(blob.size, data.length); assert.equal(blob.sha256, sha256); }
       return dest;
     }
     await sleep(100);
@@ -152,13 +164,20 @@ try {
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   // Read-only observability around the real factories; no successful metadata is injected here.
   await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
-    window.__citationAcceptance = {renders:[], fetchCalls:[]};
+    window.__citationAcceptance = {renders:[], exports:[], fetchCalls:[], blobDownloads:[], blobSources:new Map(), revokedUrls:[]};
+    const originalCreateObjectURL=URL.createObjectURL.bind(URL);
+    URL.createObjectURL=(blob)=>{const url=originalCreateObjectURL(blob);window.__citationAcceptance.blobSources.set(url,blob);return url};
+    const originalRevokeObjectURL=URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL=(url)=>{window.__citationAcceptance.revokedUrls.push(String(url));return originalRevokeObjectURL(url)};
+    const originalAnchorClick=HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click=function(){if(this.href.startsWith('blob:')){const blob=window.__citationAcceptance.blobSources.get(this.href);window.__citationAcceptance.blobDownloads.push({href:this.href,filename:this.download,mime:blob?.type,size:blob?.size})};return originalAnchorClick.call(this)};
     localStorage.setItem('mlafmt.lang', 'en');
-    for (const name of ['FormCapyCitationAssistant', 'FormCapyCitationEngine']) {
+    for (const name of ['FormCapyCitationAssistant', 'FormCapyCitationEngine', 'FormCapyCitationExport']) {
       let exposed;
       Object.defineProperty(window, name, {configurable:true, get(){return exposed}, set(api){
         if(name==='FormCapyCitationAssistant') exposed=Object.freeze({...api,create(options){const result=api.create(options);window.__citationAcceptance.assistant=result;return result}});
-        else exposed=Object.freeze({...api,render:async(...args)=>{const result=await api.render(...args);window.__citationAcceptance.renders.push({args,result});return result}});
+        else if(name==='FormCapyCitationEngine') exposed=Object.freeze({...api,render:async(...args)=>{const result=await api.render(...args);window.__citationAcceptance.renders.push({args,result});return result}});
+        else exposed=Object.freeze({...api,exportLibrary(...args){const result=api.exportLibrary(...args);window.__citationAcceptance.exports.push({args:JSON.parse(JSON.stringify(args)),result:JSON.parse(JSON.stringify(result))});return result}});
       }});
     }
     const nativeFetch=window.fetch.bind(window);
@@ -468,6 +487,217 @@ try {
     record('simulated 429 retains completed result and leaves later DOI unqueried with no auto retry');
   }
   await evaluate('window.fetch=window.__realAcceptanceFetch');
+
+  // v2.10 management paths use only fictional local bibliography data. The
+  // existing live-provider, import, Word and simulated-error assertions above
+  // remain intact and are not substituted by these local portability checks.
+  const hasManagement = await evaluate("Boolean(document.querySelector('[data-field=library-query]') && window.FormCapyCitationExport)");
+  report.hasManagement = hasManagement;
+  const manifest = JSON.parse(await fs.readFile(path.join(dist,'manifest.json'),'utf8'));
+  if (manifest.application.version === '2.10.0') assert.equal(hasManagement,true,'v2.10 must expose its real search/export integration');
+  if (hasManagement) {
+    const marker='PRIVATE-ORIGINAL-TEXT-OMIT-FROM-PORTABLE';
+    const fixtureRecords=[
+      {id:'portable_book',type:'book',title:'水豚手册：García 与科学 🦫',author:[{family:'García',given:'Ana'},{literal:'水豚研究所'}],issued:{'date-parts':[[2021,6,3]]},publisher:'Editora Local',edition:'2',language:'es',note:marker},
+      {id:'portable_article',type:'article-journal',title:'Portability García membrane study',author:[{family:'Example',given:'Bruno'}],issued:{'date-parts':[[2022,5]]},'container-title':'Revista de pruebas',volume:'4',issue:'2',page:'12-20',DOI:'10.5555/portable-membrane',language:'en'},
+      {id:'portable_webpage',type:'webpage',title:'课程资源与引用指南',author:[{literal:'校园写作中心'}],issued:{'date-parts':[[2023]]},URL:'https://example.com/portable-guide?lang=zh&x=1',accessed:{'date-parts':[[2026,10,25]]},language:'zh'}
+    ];
+    const beforeFixture=(await state()).items;
+    const requestCountBefore=metadataRequests().length;
+    await click(action('intake-import'));
+    await set(field('intake-text'),JSON.stringify(fixtureRecords));
+    await set(field('intake-format'),'json','change');
+    await click(action('intake-review'));
+    assert.equal((await state()).pendingIntake,true);
+    await click(action('intake-append'));
+    const fixtureLibrary=(await state()).items;
+    assert.equal(fixtureLibrary.length,beforeFixture.length+3);
+    assert.equal(metadataRequests().length,requestCountBefore);
+    assert.ok(fixtureLibrary.some(item=>item.originalText?.includes(marker)),'fictional original-only comparison marker retained locally');
+    await set(field('style'),'apa','change');
+    await click(action('preview'));
+    await wait("!window.__citationAcceptance.assistant.state().previewStale && !window.__citationAcceptance.assistant.state().previewBusy",'management baseline bibliography preview');
+    await click(action('word'));
+    await wait("Boolean(document.querySelector('.fc-citations-word-link a')?.href.startsWith('blob:')) && !document.querySelector('.fc-citations-word-link a').hidden",'management baseline Word link');
+    await click(action('save'));
+    assert.equal((await state()).saved,true);
+    const managerSnapshot=()=>evaluate(`(() => {const s=window.__citationAcceptance.assistant.state();return {items:s.items,selectedId:s.selectedId,preview:s.preview,previewStale:s.previewStale,previewBusy:s.previewBusy,saved:s.saved,undo:s.undo,editor:[...document.querySelectorAll('.fc-citations-editor [data-field]')].map(n=>({field:n.dataset.field,value:n.value,checked:n.checked})),previewHtml:document.querySelector('.fc-citations-preview-body').innerHTML,word:document.querySelector('.fc-citations-word-link a')?.href,storage:localStorage.getItem('formcapy.citations.v1')}})()`);
+    const stableManager=await managerSnapshot();
+    const libraryIds=fixtureLibrary.map(item=>item.id);
+    const idsWithTitles=(titles)=>fixtureLibrary.filter(item=>titles.includes(item.title)).map(item=>item.id);
+    const searchCases=[
+      ['','article-journal',fixtureLibrary.filter(item=>item.type==='article-journal').map(item=>item.id),'type only'],
+      ['水豚手册','all',idsWithTitles([fixtureRecords[0].title]),'Chinese title'],
+      ['Garcia','all',idsWithTitles([fixtureRecords[0].title,fixtureRecords[1].title]),'accent-insensitive title/author'],
+      ['Bruno','all',idsWithTitles([fixtureRecords[1].title]),'personal author'],
+      ['校园写作中心','all',idsWithTitles([fixtureRecords[2].title]),'corporate author'],
+      ['2023','all',fixtureLibrary.filter(item=>item.issued?.year===2023).map(item=>item.id),'year'],
+      ['portable-membrane','all',idsWithTitles([fixtureRecords[1].title]),'DOI'],
+      ['garcia 2022','all',idsWithTitles([fixtureRecords[1].title]),'AND terms'],
+      ['garcia','book',idsWithTitles([fixtureRecords[0].title]),'AND type'],
+      ['garcia','webpage',[],'no match with type']
+    ];
+    for(const [query,type,expected,label] of searchCases){
+      await set(field('library-query'),query);
+      await set(field('library-type'),type,'change');
+      const filtered=await state();
+      assert.deepEqual(filtered.visibleIds,expected,label);
+      assert.equal(await evaluate("document.querySelectorAll('.fc-citations-list [data-entry-id]').length"),expected.length);
+      assert.deepEqual(await managerSnapshot(),stableManager,`filtering ${label} must preserve library/editor/preview/save/Word`);
+      assert.deepEqual(await hostSnapshot(),hostBefore);
+      report.managementSearch ||= [];
+      report.managementSearch.push({query,type,label,visibleIds:filtered.visibleIds});
+    }
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(field('library-hidden-selection'))}).hidden`),false,'filtered-out editor selection remains explicit');
+    assert.equal(await evaluate("[...document.querySelectorAll('.fc-citations-library > p')].some(n=>n.textContent.startsWith('No matching references.') && !n.hidden)"),true,'no-match feedback is actually visible');
+    await click(action('library-clear'));
+    assert.deepEqual((await state()).visibleIds,libraryIds);
+    assert.equal((await state()).query,'');
+    assert.equal((await state()).typeFilter,'all');
+    assert.deepEqual(await managerSnapshot(),stableManager);
+    record('library search supports Unicode author year DOI AND/type filters without changing editor preview saved state or paper');
+
+    await click(action('portable-toggle'));
+    const desktopPortable=await evaluate(`(() => {const panel=document.querySelector('.fc-citations-portable');const grid=document.querySelector('.fc-citations-grid');const p=panel.getBoundingClientRect(),g=grid.getBoundingClientRect();return {panelWidth:p.width,gridWidth:g.width,panelLeft:p.left,gridLeft:g.left,outsideLibrary:!panel.closest('.fc-citations-library'),sameParent:panel.parentElement===grid.parentElement}})()`);
+    assert.equal(desktopPortable.outsideLibrary,true,'portable review is outside the narrow library column');
+    assert.equal(desktopPortable.sameParent,true);
+    assert.ok(desktopPortable.panelWidth>=desktopPortable.gridWidth*.95,JSON.stringify(desktopPortable));
+    assert.ok(Math.abs(desktopPortable.panelLeft-desktopPortable.gridLeft)<=1,JSON.stringify(desktopPortable));
+    report.desktopPortableLayout=desktopPortable;
+    const formats={
+      'csl-json':{filename:'formcapy-references.csl.json',mime:'application/vnd.citationstyles.csl+json',extension:'csl.json',intake:'json'},
+      ris:{filename:'formcapy-references.ris',mime:'application/x-research-info-systems',extension:'ris',intake:'ris'},
+      bibtex:{filename:'formcapy-references.bib',mime:'application/x-bibtex',extension:'bib',intake:'bibtex'}
+    };
+    const canonical=(items)=>items.map(item=>{const copy=JSON.parse(JSON.stringify(item));delete copy.id;return copy;});
+    report.portableExports=[];
+    for(const scope of ['all','filtered']){
+      if(scope==='filtered'){
+        await set(field('library-query'),'水豚');
+        await set(field('library-type'),'book','change');
+      }
+      await set(field('portable-scope'),scope,'change');
+      const current=await state();
+      const expectedItems=scope==='all'?fixtureLibrary:fixtureLibrary.filter(item=>current.visibleIds.includes(item.id));
+      assert.ok(expectedItems.length);
+      for(const [format,config] of Object.entries(formats)){
+        await set(field('portable-format'),format,'change');
+        assert.equal((await state()).portablePending,false,'format changes invalidate prepared output');
+        assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-copy'))}).disabled`),true);
+        assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-download'))}).disabled`),true);
+        await click(action('portable-preview'));
+        assert.equal((await state()).portablePending,true,`${scope} ${format} prepared`);
+        const text=await evaluate(`document.querySelector(${JSON.stringify(field('portable-text'))}).value`);
+        const result=await evaluate('window.__citationAcceptance.exports.at(-1).result');
+        assert.equal(result.ok,true,JSON.stringify(result.errors));
+        assert.equal(text,result.text,'visible review equals real module output');
+        const originalWarnings=result.warnings.filter(issue=>issue.code==='original_text_omitted');
+        assert.equal(originalWarnings.length,expectedItems.filter(item=>item.originalText).length,'module retains each original omission warning');
+        assert.ok(originalWarnings.length,'omitted local original text warning is explicit');
+        const feedback=await evaluate("({status:document.querySelector('.fc-citations-portable-status').textContent,issues:document.querySelector('.fc-citations-portable-issues').textContent,issuesHidden:document.querySelector('.fc-citations-portable-issues').hidden,issueRows:[...document.querySelectorAll('.fc-citations-portable-issues .fc-citations-issues-list > li')].map(n=>n.textContent)})");
+        assert.equal(feedback.issuesHidden,false);
+        assert.match(feedback.issues,/original|comparison|source/i);
+        const omissionRows=feedback.issueRows.filter(text=>text.includes('Comparison text'));
+        assert.equal(omissionRows.length,1,'repeated original-text omission warnings use one visible summary');
+        if(originalWarnings.length>=2)assert.equal(omissionRows[0],`Comparison text was omitted for ${originalWarnings.length} references. Use Download library JSON for a full backup.`);
+        assert.ok(!text.includes(marker),'portable file excludes private comparison-only source text');
+        const downloadPath=await actualDownload(action('portable-download'),path.join('portable',scope,config.filename),{minimumBytes:1,expectedFilename:config.filename,expectedMime:config.mime});
+        const downloaded=await fs.readFile(downloadPath,'utf8');
+        assert.equal(downloaded,text);
+        const parsed=await evaluate(`window.FormCapyCitationImport.parse(${JSON.stringify(downloaded)},{format:${JSON.stringify(config.intake)}})`);
+        assert.equal(parsed.ok,true,JSON.stringify(parsed.errors));
+        assert.equal(parsed.items.length,expectedItems.length);
+        const parsedCsl=await evaluate(`window.FormCapyCitations.toCslItems({schema:'formcapy-citations',v:1,items:${JSON.stringify(parsed.items)}})`);
+        const expectedCsl=await evaluate(`window.FormCapyCitations.toCslItems({schema:'formcapy-citations',v:1,items:${JSON.stringify(expectedItems)}})`);
+        if(format==='csl-json'){
+          assert.deepEqual(JSON.parse(downloaded),expectedCsl,'CSL file uses standard model mapping with exact names and partial dates');
+          assert.deepEqual(canonical(parsedCsl),canonical(expectedCsl),'CSL portable import retains all bibliographic fields');
+        }else{
+          const differences=[];
+          for(let index=0;index<expectedCsl.length;index++){
+            for(const key of new Set([...Object.keys(expectedCsl[index]),...Object.keys(parsedCsl[index])])){
+              if(key==='id')continue;
+              if(JSON.stringify(expectedCsl[index][key])!==JSON.stringify(parsedCsl[index][key]))differences.push({index,field:key,expected:expectedCsl[index][key]??null,actual:parsedCsl[index][key]??null});
+            }
+          }
+          if(format==='ris'){
+            assert.ok(result.warnings.some(issue=>/author|name|corporate/.test(issue.code)),'RIS institution-name ambiguity is disclosed');
+            for(const difference of differences)assert.equal(difference.field,'author',`unwarned non-author RIS loss: ${JSON.stringify(difference)}`);
+          }else assert.deepEqual(differences,[],'supported safe BibLaTeX profile round-trips the fixture metadata');
+          parsed.observedDifferences=differences;
+        }
+        report.portableExports.push({scope,format,count:expectedItems.length,filename:config.filename,mime:config.mime,warnings:result.warnings,feedback,downloadPath,roundTrip:{ok:parsed.ok,count:parsed.items.length,warnings:parsed.warnings,differences:parsed.observedDifferences||[]}});
+        assert.deepEqual(await managerSnapshot(),stableManager,'portable preview/download leaves active library and bibliography untouched');
+        assert.deepEqual(await hostSnapshot(),hostBefore);
+        assert.equal(metadataRequests().length,requestCountBefore,'portable operations stay local');
+        record(`actual ${scope} ${format} preview warnings download and independent round-trip preserve active state`);
+      }
+    }
+
+    // A filtered preview is invalid as soon as its query or type changes.
+    await set(field('library-query'),'课程');
+    assert.equal((await state()).portablePending,false);
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-copy'))}).disabled`),true);
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-download'))}).disabled`),true);
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(field('portable-text'))}).value`),'');
+    await click(action('library-clear'));
+    await set(field('portable-scope'),'all','change');
+    await set(field('portable-format'),'csl-json','change');
+    await click(action('portable-preview'));
+    const allPreview=await evaluate(`document.querySelector(${JSON.stringify(field('portable-text'))}).value`);
+    await set(field('library-query'),'no matching reference anywhere');
+    assert.equal((await state()).portablePending,true,'all-library export remains current when only the view filter changes');
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(field('portable-text'))}).value`),allPreview);
+    await set(field('portable-scope'),'filtered','change');
+    assert.equal((await state()).portablePending,false);
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-preview'))}).disabled`),true,'empty filtered scope has no partial artifact');
+    await click(action('library-clear'));
+    await set(field('portable-scope'),'all','change');
+    await click(action('portable-preview'));
+    record('prepared exports invalidate on filtered view or format/scope changes and refuse an empty scope');
+
+    const backupPath=await actualDownload(action('json-download'),'acceptance-formcapy-library-backup.json',{minimumBytes:1,expectedFilename:'formcapy-citations.v1.json',expectedMime:'application/json'});
+    const backup=JSON.parse(await fs.readFile(backupPath,'utf8'));
+    assert.equal(backup.schema,'formcapy-citations');assert.equal(backup.v,1);
+    assert.deepEqual(backup.items,fixtureLibrary);
+    assert.ok(backup.items.some(item=>item.originalText.includes(marker)));
+    assert.deepEqual(await managerSnapshot(),stableManager);
+    record('original FormCapy JSON remains an exact complete backup distinct from portable files');
+
+    for(const language of ['zh','es','en']){
+      await click(`#lang-${language}`);
+      assert.equal((await state()).portablePending,true,'locale changes preserve prepared export');
+      assert.equal(await evaluate(`document.querySelector(${JSON.stringify(field('portable-text'))}).value`),allPreview);
+      assert.deepEqual((await state()).items,fixtureLibrary);
+      const labels=await evaluate("({search:document.querySelector('[data-field=library-query]').placeholder,export:document.querySelector('[data-action=portable-toggle]').textContent,scope:document.querySelector('[data-field=portable-scope]').selectedOptions[0].textContent})");
+      assert.ok(labels.search&&labels.export&&labels.scope);
+      report.managementLanguages ||= [];report.managementLanguages.push({language,...labels});
+      for(const [width,height]of [[320,568],[390,844]]){
+        await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
+        const layout=await evaluate('({width:innerWidth,documentWidth:document.documentElement.scrollWidth,bodyWidth:document.body.scrollWidth})');
+        assert.ok(layout.documentWidth<=width+1&&layout.bodyWidth<=width+1,JSON.stringify(layout));
+        report.layouts.push({context:'portable review',language,...layout});
+        await screenshot(`06-portable-${language}-${width}x${height}`,'.fc-citations-portable');
+      }
+    }
+    await cdp.send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+    await sectionScreenshot('formcapy-v2.10-portable-exports-with-credits','#citation-assistant-mount','#citation-credits');
+    await sectionScreenshot('formcapy-v2.10-portable-panel-with-credits','.fc-citations-portable','#citation-credits');
+    assert.deepEqual(await managerSnapshot(),stableManager);
+    assert.deepEqual(await hostSnapshot(),hostBefore);
+    record('portable management remains usable in three languages at 320 and 390 pixels with unchanged paper and library');
+    const selectedForEdit=(await state()).selectedId;
+    const selectedTitle=fixtureLibrary.find(item=>item.id===selectedForEdit).title;
+    await set(field('title'),selectedTitle+' — deliberate stale-export check');
+    assert.equal((await state()).portablePending,false,'editing an item invalidates prepared output');
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-copy'))}).disabled`),true);
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(action('portable-download'))}).disabled`),true);
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(field('portable-text'))}).value`),'');
+    await set(field('title'),selectedTitle);
+    assert.deepEqual((await state()).items,fixtureLibrary,'restoring the explicit test edit restores the original bibliographic data');
+    assert.deepEqual(await hostSnapshot(),hostBefore);
+    record('editing the library disables stale portable copy/download without modifying the paper');
+  }
 
   report.fetchCalls = await evaluate('window.__citationAcceptance.fetchCalls');
   const realCalls = report.fetchCalls.filter(x => x.url.startsWith('https://api.crossref.org/') && !x.simulated);

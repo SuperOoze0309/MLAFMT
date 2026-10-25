@@ -420,6 +420,69 @@
   };
   for (const language of Object.keys(BATCH_TEXT)) Object.assign(TEXT[language], BATCH_TEXT[language]);
 
+  const MANAGEMENT_TEXT = {
+    zh: {
+      library_search: "搜索文献", library_search_hint: "标题、作者、来源、DOI、网址或年份；多个词需同时匹配。",
+      library_type: "筛选类型", library_all_types: "全部类型", library_matches: "显示 {visible} / {total} 条",
+      library_no_matches: "没有匹配的条目。可以调整搜索词或清除筛选。", library_clear: "清除筛选",
+      library_hidden_selection: "当前编辑的条目不在筛选结果中；编辑内容和文献表预览保持不变。",
+      portable_title: "导出到其他工具", portable_hint: "导出书目元数据，完全在本设备完成。原文对照不包含在通用格式中；完整备份请使用“下载库 JSON”。",
+      portable_format: "通用格式", portable_scope: "导出范围", portable_all: "全部文献（{count} 条）", portable_filtered: "当前筛选（{count} 条）",
+      portable_bibtex: "BibLaTeX / BibTeX（.bib）", portable_format_hint: "CSL-JSON 最完整地保留当前书目字段。.bib 中的网页条目需要支持 BibLaTeX 的工具；RIS 的机构作者等字段需要核对。",
+      portable_preview: "预览导出", portable_copy: "复制导出内容", portable_download: "下载导出文件", portable_text: "通用格式导出内容（只读）",
+      portable_ready: "已准备 {count} 条 {format} 记录。核对提醒后再复制或下载。", portable_empty: "这个范围内没有条目。",
+      portable_stale: "文献或导出范围已改变，请重新预览导出。", portable_unavailable: "通用导出模块尚未加载；仍可下载 FormCapy 库 JSON。",
+      portable_invalid: "无法导出这些记录，请检查字段和提醒；当前文献库未改变。", portable_large: "导出内容超过 1 MiB；减少条目或缩短字段后重试。",
+      portable_original_omitted: "原文对照未放入通用格式；请另存 FormCapy 库 JSON 以完整备份。", portable_loss: "这种格式无法完整表示部分字段，请核对，或选用 CSL-JSON。",
+      portable_original_summary: "已省略 {count} 条文献的原文对照；完整备份请使用“下载库 JSON”。",
+      portable_author_review: "这种格式中的作者姓名或机构作者可能存在歧义，请在目标工具中核对。", portable_issue: "这个字段在所选格式中需要核对。",
+      portable_whitespace: "所选格式会规范化这个字段中的空白，请核对。", portable_special_text: "特殊字符在不同工具中可能显示不同；请核对或选用 CSL-JSON。",
+      portable_copied: "已复制当前导出内容。", portable_downloaded: "已下载当前导出文件。", portable_manual: "自动复制不可用，已选中下方内容，请手动复制。",
+    },
+    en: {
+      library_search: "Search references", library_search_hint: "Title, authors, source, DOI, URL or year; all search words must match.",
+      library_type: "Filter by type", library_all_types: "All types", library_matches: "Showing {visible} / {total} references",
+      library_no_matches: "No matching references. Change the search or clear the filters.", library_clear: "Clear filters",
+      library_hidden_selection: "The entry being edited is outside these filters. Its contents and bibliography preview are kept.",
+      portable_title: "Export to other tools", portable_hint: "Export bibliography metadata on this device. Comparison text is omitted from portable formats; use Download library JSON for a full backup.",
+      portable_format: "Portable format", portable_scope: "Export scope", portable_all: "All references ({count})", portable_filtered: "Current filters ({count})",
+      portable_bibtex: "BibLaTeX / BibTeX (.bib)", portable_format_hint: "CSL-JSON preserves the current bibliography fields most faithfully. Webpage records in .bib need a BibLaTeX-compatible tool; check organization authors and other ambiguous fields in RIS.",
+      portable_preview: "Preview export", portable_copy: "Copy export", portable_download: "Download export", portable_text: "Portable export contents (read-only)",
+      portable_ready: "Prepared {count} {format} records. Review the notices before copying or downloading.", portable_empty: "There are no references in this scope.",
+      portable_stale: "References or export scope changed. Preview the export again.", portable_unavailable: "Portable export is not loaded. You can still download FormCapy library JSON.",
+      portable_invalid: "These records could not be exported. Check their fields and notices; the library is unchanged.", portable_large: "The export exceeds 1 MiB. Use fewer references or shorter fields and try again.",
+      portable_original_omitted: "Comparison text is omitted from this format. Keep a FormCapy library JSON for a full backup.", portable_loss: "This format cannot represent every field faithfully. Check it or choose CSL-JSON.",
+      portable_original_summary: "Comparison text was omitted for {count} references. Use Download library JSON for a full backup.",
+      portable_author_review: "Author parts or organization authors may be ambiguous in this format. Check them in the destination tool.", portable_issue: "Review this field in the selected format.",
+      portable_whitespace: "Whitespace in this field will be normalized. Check it in the exported record.", portable_special_text: "Special characters may display differently between tools. Check them or choose CSL-JSON.",
+      portable_copied: "Current export copied.", portable_downloaded: "Current export downloaded.", portable_manual: "Automatic copying is unavailable. The contents below are selected for manual copying.",
+    },
+    es: {
+      library_search: "Buscar referencias", library_search_hint: "Título, autores, fuente, DOI, URL o año; deben coincidir todas las palabras.",
+      library_type: "Filtrar por tipo", library_all_types: "Todos los tipos", library_matches: "Mostrando {visible} / {total} referencias",
+      library_no_matches: "No hay referencias coincidentes. Cambia la búsqueda o borra los filtros.", library_clear: "Borrar filtros",
+      library_hidden_selection: "La entrada que editas queda fuera de estos filtros. Se conservan su contenido y la vista previa de la bibliografía.",
+      portable_title: "Exportar a otras herramientas", portable_hint: "Exporta metadatos bibliográficos en este dispositivo. El texto de comparación se omite; usa Descargar JSON de la biblioteca para una copia completa.",
+      portable_format: "Formato de intercambio", portable_scope: "Alcance de exportación", portable_all: "Todas las referencias ({count})", portable_filtered: "Filtros actuales ({count})",
+      portable_bibtex: "BibLaTeX / BibTeX (.bib)", portable_format_hint: "CSL-JSON conserva los campos bibliográficos con mayor fidelidad. Las páginas web en .bib necesitan una herramienta compatible con BibLaTeX; revisa los autores de organización y otros campos ambiguos de RIS.",
+      portable_preview: "Previsualizar exportación", portable_copy: "Copiar exportación", portable_download: "Descargar exportación", portable_text: "Contenido exportado (solo lectura)",
+      portable_ready: "Preparadas {count} referencias {format}. Revisa los avisos antes de copiar o descargar.", portable_empty: "No hay referencias en este alcance.",
+      portable_stale: "Las referencias o el alcance cambiaron. Previsualiza la exportación otra vez.", portable_unavailable: "La exportación de intercambio no está cargada. Puedes descargar el JSON de FormCapy.",
+      portable_invalid: "No se pudieron exportar estos registros. Revisa campos y avisos; la biblioteca no cambia.", portable_large: "La exportación supera 1 MiB. Reduce las referencias o acorta los campos y vuelve a intentarlo.",
+      portable_original_omitted: "El texto de comparación se omite. Guarda el JSON de FormCapy para una copia completa.", portable_loss: "Este formato no conserva todos los campos con fidelidad. Revísalo o elige CSL-JSON.",
+      portable_original_summary: "Se omitió el texto de comparación de {count} referencias. Descarga el JSON de la biblioteca para una copia completa.",
+      portable_author_review: "Los nombres personales o de organización pueden ser ambiguos en este formato. Revísalos en la herramienta de destino.", portable_issue: "Revisa este campo en el formato seleccionado.",
+      portable_whitespace: "Se normalizarán los espacios de este campo. Revisa el registro exportado.", portable_special_text: "Los caracteres especiales pueden mostrarse de forma distinta entre herramientas. Revísalos o elige CSL-JSON.",
+      portable_copied: "Exportación actual copiada.", portable_downloaded: "Exportación actual descargada.", portable_manual: "No se puede copiar automáticamente. El contenido de abajo está seleccionado para copiarlo manualmente.",
+    },
+  };
+  for (const language of Object.keys(MANAGEMENT_TEXT)) Object.assign(TEXT[language], MANAGEMENT_TEXT[language]);
+  const PORTABLE_FORMATS = Object.freeze({
+    "csl-json": { label: "CSL-JSON", filename: "formcapy-references.csl.json", mime: "application/vnd.citationstyles.csl+json" },
+    ris: { label: "RIS", filename: "formcapy-references.ris", mime: "application/x-research-info-systems" },
+    bibtex: { label: "BibLaTeX / BibTeX", filename: "formcapy-references.bib", mime: "application/x-bibtex" },
+  });
+
   const intakeIssueKeys = {
     doi_invalid: "quick_doi_invalid", lookup_busy: "quick_rate", lookup_rate_limited: "quick_rate",
     lookup_not_found: "quick_not_found", lookup_network: "quick_network", lookup_timeout: "quick_timeout",
@@ -461,6 +524,8 @@
     const importer = options.importer === undefined ? root.FormCapyCitationImport : options.importer;
     const lookup = options.lookup === undefined ? root.FormCapyCitationLookup : options.lookup;
     const batch = options.batch === undefined ? root.FormCapyDoiBatch : options.batch;
+    const exporter = options.exporter === undefined ? root.FormCapyCitationExport : options.exporter;
+    const canPortableExport = Boolean(model && exporter && typeof exporter.exportLibrary === "function");
     const canImport = Boolean(model && importer && typeof importer.parse === "function" && typeof importer.planAppend === "function");
     const canLookup = Boolean(canImport && lookup && typeof lookup.lookup === "function");
     const canBatch = Boolean(canLookup && batch && typeof batch.parse === "function" && typeof batch.run === "function");
@@ -500,6 +565,16 @@
       fallbackVisible: false,
       wordLink: false,
       wordUrl: null,
+      query: "",
+      typeFilter: "all",
+      portableFormat: "csl-json",
+      portableScope: "all",
+      portablePending: null,
+      portableIssues: { errors: [], warnings: [] },
+      portableRevision: 0,
+      portableStatus: "",
+      portableStatusTone: "",
+      portableStatusVars: {},
       quickMode: canLookup ? "doi" : "import",
       quickRevision: 0,
       quickBusy: false,
@@ -649,6 +724,220 @@
       try { return JSON.stringify(state.items); } catch (_) { return ""; }
     }
 
+    function searchText(value) {
+      return String(value === undefined || value === null ? "" : value)
+        .normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
+    }
+
+    function visibleItems() {
+      const words = searchText(state.query).trim().split(/\s+/).filter(Boolean);
+      return state.items.filter((item) => {
+        if (state.typeFilter !== "all" && item.type !== state.typeFilter) return false;
+        if (!words.length) return true;
+        const authors = (Array.isArray(item.authors) ? item.authors : []).flatMap((author) =>
+          [author.family, author.given, author.literal]);
+        const haystack = searchText([item.title, ...authors, item.containerTitle, item.publisher,
+          item.DOI, item.URL, item.issued?.year].filter((value) => value !== undefined && value !== null).join(" "));
+        return words.every((word) => haystack.includes(word));
+      });
+    }
+
+    function portableSource() {
+      return JSON.stringify([fingerprint(), state.portableFormat, state.portableScope,
+        state.portableScope === "filtered" ? [state.query, state.typeFilter] : null]);
+    }
+
+    function setPortableStatus(key = "", tone = "", vars = {}) {
+      state.portableStatus = key;
+      state.portableStatusTone = tone;
+      state.portableStatusVars = vars;
+    }
+
+    function invalidatePortable(key = "portable_stale") {
+      state.portableRevision += 1;
+      state.portablePending = null;
+      state.portableIssues = { errors: [], warnings: [] };
+      setPortableStatus(key, key ? "warn" : "");
+    }
+
+    function changeFilters(query, type) {
+      if (disposed) return;
+      const nextQuery = String(query || "").slice(0, 500);
+      const nextType = ["all", "book", "article-journal", "webpage"].includes(type) ? type : "all";
+      if (state.query === nextQuery && state.typeFilter === nextType) return;
+      state.query = nextQuery;
+      state.typeFilter = nextType;
+      if (state.portableScope === "filtered") invalidatePortable(state.portablePending ? "portable_stale" : "");
+      render();
+    }
+
+    function portableIssueText(issue) {
+      const code = typeof issue?.code === "string" ? issue.code : "";
+      if (code === "portable_original_omitted_summary" && Number.isSafeInteger(issue.count) && issue.count > 0) {
+        return t("portable_original_summary", { count: issue.count });
+      }
+      const keys = {
+        original_text_omitted: "portable_original_omitted", original_omitted: "portable_original_omitted",
+        comparison_omitted: "portable_original_omitted", source_text_omitted: "portable_original_omitted",
+        lossy_fields: "portable_loss", field_omitted: "portable_loss", field_not_exported: "portable_loss",
+        fields_omitted: "portable_loss", field_not_representable: "portable_loss", type_mapped: "portable_loss",
+        author_ambiguous: "portable_author_review", author_name_review: "portable_author_review",
+        corporate_author_ambiguous: "portable_author_review", author_lossy: "portable_author_review",
+        ris_author_literal: "portable_author_review", ris_author_given_only: "portable_author_review",
+        ris_author_comma: "portable_author_review", ris_author_whitespace: "portable_author_review",
+        bibtex_author_given_only: "portable_author_review", bibtex_author_whitespace: "portable_author_review",
+        ris_field_whitespace: "portable_whitespace", bibtex_field_whitespace: "portable_whitespace",
+        bibtex_tex_escape_lossy: "portable_special_text", bibtex_page_dash_lossy: "portable_loss",
+        ris_page_semantics: "portable_loss", ris_container_semantics: "portable_loss", bibtex_container_semantics: "portable_loss",
+        output_too_large: "portable_large", export_too_large: "portable_large",
+        no_items: "portable_empty", empty_library: "portable_empty", library_empty: "portable_empty", model_unavailable: "model_missing",
+      };
+      const own = (map, name) => Object.prototype.hasOwnProperty.call(map, name) ? map[name] : "";
+      const key = own(keys, code) || own(errorKeys, code) || own(warningKeys, code) || "portable_issue";
+      const rawField = typeof issue?.field === "string" ? issue.field : "";
+      const pathField = /\.([A-Za-z]+)(?:\[\d+\])?(?:\.[A-Za-z]+)?$/.exec(issue?.path || "")?.[1] || "";
+      const labelKey = own(fieldLabelKeys, rawField) || own(fieldLabelKeys, pathField);
+      const label = labelKey ? t(labelKey) : "";
+      const text = t(key) + (label ? ` (${label})` : "");
+      const index = Number.isSafeInteger(issue?.index) && issue.index >= 0 && issue.index < 200 ? issue.index : null;
+      return index === null ? text : `${t("quick_record", { count: index + 1 })}: ${text}`;
+    }
+
+    function safePortableIssues(value) {
+      // A full 200-record export can carry one notice for many fields per
+      // record. Render only MAX_VISIBLE_ISSUES, while retaining the full count.
+      if (!Array.isArray(value) || value.length > 10000) throw new TypeError("portable_result_invalid");
+      return value.map((issue) => {
+        if (!issue || typeof issue !== "object" || typeof issue.code !== "string" || issue.code.length > 100) {
+          throw new TypeError("portable_result_invalid");
+        }
+        const clean = { code: issue.code };
+        if (Number.isSafeInteger(issue.index) && issue.index >= 0 && issue.index < 200) clean.index = issue.index;
+        if (typeof issue.field === "string" && issue.field.length <= 80) clean.field = issue.field;
+        if (typeof issue.path === "string" && issue.path.length <= 500) clean.path = issue.path;
+        return clean;
+      });
+    }
+
+    function freshPortable() {
+      if (disposed || !state.portablePending) return null;
+      if (state.portablePending.source !== portableSource()) {
+        invalidatePortable();
+        return null;
+      }
+      return state.portablePending;
+    }
+
+    function portableDisplayWarnings() {
+      const warnings = state.portableIssues.warnings;
+      const originals = warnings.filter((issue) => issue.code === "original_text_omitted");
+      if (originals.length < 2) return warnings;
+      const indices = new Set(originals.filter((issue) => Number.isSafeInteger(issue.index)).map((issue) => issue.index));
+      const count = indices.size + originals.filter((issue) => !Number.isSafeInteger(issue.index)).length;
+      let summarized = false;
+      // Summarize only this repetitive presentation notice. The module's
+      // diagnostics and every other field notice stay intact and ordered.
+      return warnings.flatMap((issue) => {
+        if (issue.code !== "original_text_omitted") return [issue];
+        if (summarized) return [];
+        summarized = true;
+        return [{ code: "portable_original_omitted_summary", count }];
+      });
+    }
+
+    function renderPortable() {
+      if (!nodes.portablePanel) return;
+      const pending = freshPortable();
+      const count = state.portableScope === "filtered" ? visibleItems().length : state.items.length;
+      for (const [node, key] of nodes.portableLabels) setText(node, t(key));
+      setText(nodes.portableAll, t("portable_all", { count: state.items.length }));
+      setText(nodes.portableFiltered, t("portable_filtered", { count: visibleItems().length }));
+      setText(nodes.portableBibtex, t("portable_bibtex"));
+      nodes.portableFormat.value = state.portableFormat;
+      nodes.portableScope.value = state.portableScope;
+      nodes.portablePrepare.disabled = !canPortableExport || !count;
+      nodes.portableResult.hidden = !pending;
+      nodes.portableCopy.disabled = !pending;
+      nodes.portableDownload.disabled = !pending || !canDownload();
+      nodes.portableDownload.hidden = !allowDownloads;
+      nodes.portableText.setAttribute("aria-label", t("portable_text"));
+      const text = pending ? pending.text : "";
+      if (nodes.portableText.value !== text) nodes.portableText.value = text;
+      const key = !canPortableExport ? "portable_unavailable" : state.portableStatus;
+      nodes.portableStatus.textContent = key ? t(key, state.portableStatusVars) : "";
+      nodes.portableStatus.className = "fc-citations-portable-status" +
+        (state.portableStatusTone ? " is-" + state.portableStatusTone : "");
+      renderIssueBox(nodes.portableIssues, state.portableIssues.errors, portableDisplayWarnings(), portableIssueText);
+    }
+
+    function preparePortable() {
+      if (disposed) return;
+      invalidatePortable("");
+      if (!canPortableExport) { setPortableStatus("portable_unavailable", "err"); renderPortable(); return; }
+      const items = state.portableScope === "filtered" ? visibleItems() : state.items;
+      if (!items.length) { setPortableStatus("portable_empty", "warn"); renderPortable(); return; }
+      const source = portableSource();
+      try {
+        // Pass a detached snapshot: exporting may never edit the active library.
+        const payload = JSON.parse(JSON.stringify({ ...library(), items }));
+        const result = exporter.exportLibrary(payload, { format: state.portableFormat });
+        if (!result || typeof result !== "object" || result.format !== state.portableFormat ||
+            typeof result.ok !== "boolean") throw new TypeError("portable_result_invalid");
+        const errors = safePortableIssues(result.errors);
+        const warnings = safePortableIssues(result.warnings);
+        state.portableIssues = { errors, warnings };
+        if (!result.ok || errors.length) {
+          setPortableStatus("portable_invalid", "err");
+        } else {
+          if (typeof result.text !== "string" || !result.text.trim()) throw new TypeError("portable_result_invalid");
+          const bytes = typeof model.utf8Length === "function" ? model.utf8Length(result.text) : new TextEncoder().encode(result.text).length;
+          if (bytes > 1048576) {
+            state.portableIssues = { errors: [{ code: "output_too_large" }], warnings: [] };
+            setPortableStatus("portable_large", "err");
+          } else if (!disposed && source === portableSource()) {
+            const config = PORTABLE_FORMATS[state.portableFormat];
+            state.portablePending = { text: result.text, filename: config.filename, mime: config.mime, source };
+            setPortableStatus("portable_ready", warnings.length ? "warn" : "ok", { count: items.length, format: config.label });
+          }
+        }
+      } catch (_) {
+        state.portablePending = null;
+        state.portableIssues = { errors: [], warnings: [] };
+        setPortableStatus("portable_invalid", "err");
+      }
+      renderPortable();
+    }
+
+    async function copyPortable() {
+      const pending = freshPortable();
+      if (!pending) { renderPortable(); return; }
+      const revision = state.portableRevision;
+      const stillCurrent = () => !disposed && revision === state.portableRevision &&
+        state.portablePending === pending && pending.source === portableSource();
+      try {
+        const clipboard = root.navigator && root.navigator.clipboard;
+        if (clipboard && typeof clipboard.writeText === "function") {
+          await clipboard.writeText(pending.text);
+          if (!stillCurrent()) return;
+          setPortableStatus("portable_copied", "ok");
+          renderPortable();
+          return;
+        }
+      } catch (_) {}
+      if (!stillCurrent()) return;
+      nodes.portableText.focus?.();
+      nodes.portableText.select?.();
+      setPortableStatus("portable_manual", "warn");
+      renderPortable();
+    }
+
+    function downloadPortable() {
+      const pending = freshPortable();
+      if (!pending) { renderPortable(); return; }
+      if (downloadBlob(pending.filename, pending.mime, pending.text)) setPortableStatus("portable_downloaded", "ok");
+      renderPortable();
+    }
+
     function clearWordUrl() {
       if (state.wordUrl) {
         revokeUrl(state.wordUrl);
@@ -696,6 +985,8 @@
       if (!model) { setStatus("model_missing", null, "err"); return; }
       const item = model.createItem({ type: "book" });
       state.items.push(item);
+      state.query = "";
+      state.typeFilter = "all";
       state.selectedId = item.id;
       invalidatePreview();
       rebuildEditor();
@@ -914,10 +1205,12 @@
     function renderItemList() {
       if (!nodes.itemList) return;
       nodes.itemList.replaceChildren();
-      for (const item of state.items) {
+      const visible = visibleItems();
+      for (const item of visible) {
         const li = make("li", "fc-citations-list-item");
         const buttonNode = button("", "select", "fc-citations-item");
         buttonNode.setAttribute("aria-pressed", String(item.id === state.selectedId));
+        buttonNode.setAttribute("data-entry-id", item.id);
         const title = make("span", "fc-citations-item-title", item.title.trim() ? item.title : t("untitled"));
         const meta = make("span", "fc-citations-item-meta", typeLabel(item.type));
         append(buttonNode, title, meta);
@@ -926,8 +1219,16 @@
         li.append(buttonNode);
         nodes.itemList.append(li);
       }
-      setText(nodes.entryCount, t("entries_count", { count: state.items.length }));
+      setText(nodes.entryCount, t("library_matches", { visible: visible.length, total: state.items.length }));
       if (nodes.empty) nodes.empty.hidden = state.items.length > 0;
+      setText(nodes.noMatches, t("library_no_matches"));
+      nodes.noMatches.hidden = !state.items.length || Boolean(visible.length);
+      for (const [node, key] of nodes.filterLabels) setText(node, t(key));
+      nodes.libraryQuery.placeholder = t("library_search_hint");
+      if (nodes.libraryQuery.value !== state.query) nodes.libraryQuery.value = state.query;
+      nodes.libraryType.value = state.typeFilter;
+      nodes.clearFilters.disabled = !state.query && state.typeFilter === "all";
+      nodes.hiddenSelection.hidden = !currentItem() || visible.some((item) => item.id === state.selectedId);
     }
 
     function renderIssues() {
@@ -1519,6 +1820,7 @@
       renderPersistence();
       renderImport();
       renderIntake();
+      renderPortable();
       renderUndo();
       if (nodes.fallback) nodes.fallback.hidden = !state.fallbackVisible;
     }
@@ -1747,8 +2049,39 @@
     const librarySection = make("section", "fc-citations-library");
     nodes.entriesHeading = make("h3", "", t("entries"));
     nodes.entryCount = make("p", "fc-citations-count", t("entries_count", { count: 0 }));
+    nodes.entryCount.setAttribute("aria-live", "polite");
     nodes.empty = make("p", "fc-citations-hint", t("empty_library"));
     nodes.itemList = make("ul", "fc-citations-list");
+    nodes.filterLabels = [];
+    const filterNode = (tag, className, key) => {
+      const node = make(tag, className, t(key));
+      nodes.filterLabels.push([node, key]);
+      return node;
+    };
+    const filters = make("div", "fc-citations-filters");
+    nodes.libraryQuery = input("search", "", "library-query");
+    nodes.libraryQuery.maxLength = 500;
+    nodes.libraryQuery.setAttribute("autocomplete", "off");
+    nodes.libraryQueryHint = filterNode("p", "fc-citations-hint", "library_search_hint");
+    nodes.libraryQueryHint.id = `${instanceId}-library-search-hint`;
+    nodes.libraryQuery.setAttribute("aria-describedby", nodes.libraryQueryHint.id);
+    nodes.libraryType = make("select", "fc-citations-select");
+    nodes.libraryType.setAttribute("data-field", "library-type");
+    for (const [value, key] of [["all", "library_all_types"], ["book", "type_book"],
+      ["article-journal", "type_article"], ["webpage", "type_webpage"]]) {
+      const option = filterNode("option", "", key); option.value = value; nodes.libraryType.append(option);
+    }
+    nodes.clearFilters = button(t("library_clear"), "library-clear");
+    nodes.filterLabels.push([nodes.clearFilters, "library_clear"]);
+    nodes.noMatches = filterNode("p", "fc-citations-hint", "library_no_matches");
+    nodes.hiddenSelection = filterNode("p", "fc-citations-hidden-selection", "library_hidden_selection");
+    nodes.hiddenSelection.setAttribute("data-field", "library-hidden-selection");
+    append(filters, append(make("label", "fc-citations-field"), filterNode("span", "fc-citations-label", "library_search"), nodes.libraryQuery),
+      nodes.libraryQueryHint,
+      append(make("label", "fc-citations-field"), filterNode("span", "fc-citations-label", "library_type"), nodes.libraryType), nodes.clearFilters);
+    nodes.libraryQuery.addEventListener("input", () => changeFilters(nodes.libraryQuery.value, state.typeFilter));
+    nodes.libraryType.addEventListener("change", () => changeFilters(state.query, nodes.libraryType.value));
+    nodes.clearFilters.addEventListener("click", () => changeFilters("", "all"));
     const persistence = make("div", "fc-citations-persistence");
     nodes.savedState = make("p", "fc-citations-saved-state");
     nodes.savedState.setAttribute("aria-live", "polite");
@@ -1770,8 +2103,68 @@
     nodes.exportNote = make("p", "fc-citations-note", t("export_note"));
     append(ie, nodes.importExportHeading, nodes.importToggle, nodes.copyJsonButton,
       nodes.exportJsonButton, nodes.exportNote);
-    append(librarySection, nodes.entriesHeading, nodes.entryCount, nodes.empty, nodes.itemList,
+    append(librarySection, nodes.entriesHeading, filters, nodes.entryCount, nodes.empty, nodes.noMatches,
+      nodes.hiddenSelection, nodes.itemList,
       persistence, ie);
+
+    nodes.portableLabels = [];
+    const portableNode = (tag, className, key) => {
+      const node = make(tag, className, t(key));
+      nodes.portableLabels.push([node, key]);
+      return node;
+    };
+    nodes.portablePanel = make("details", "fc-citations-portable");
+    nodes.portableSummary = portableNode("summary", "", "portable_title");
+    nodes.portableSummary.setAttribute("data-action", "portable-toggle");
+    const portableBody = make("div", "fc-citations-portable-body");
+    nodes.portableFormat = make("select", "fc-citations-select");
+    nodes.portableFormat.setAttribute("data-field", "portable-format");
+    for (const [value, label] of [["csl-json", "CSL-JSON"], ["ris", "RIS"]]) {
+      const option = make("option", "", label); option.value = value; nodes.portableFormat.append(option);
+    }
+    nodes.portableBibtex = portableNode("option", "", "portable_bibtex");
+    nodes.portableBibtex.value = "bibtex"; nodes.portableFormat.append(nodes.portableBibtex);
+    nodes.portableScope = make("select", "fc-citations-select");
+    nodes.portableScope.setAttribute("data-field", "portable-scope");
+    nodes.portableAll = make("option", ""); nodes.portableAll.value = "all";
+    nodes.portableFiltered = make("option", ""); nodes.portableFiltered.value = "filtered";
+    nodes.portableScope.append(nodes.portableAll, nodes.portableFiltered);
+    nodes.portablePrepare = button(t("portable_preview"), "portable-preview", "fc-citations-button is-primary");
+    nodes.portableLabels.push([nodes.portablePrepare, "portable_preview"]);
+    nodes.portableStatus = make("p", "fc-citations-portable-status");
+    nodes.portableStatus.setAttribute("role", "status");
+    nodes.portableStatus.setAttribute("aria-live", "polite");
+    nodes.portableIssues = make("div", "fc-citations-issues fc-citations-portable-issues");
+    nodes.portableResult = make("div", "fc-citations-portable-result");
+    nodes.portableText = make("textarea", "fc-citations-textarea fc-citations-portable-text");
+    nodes.portableText.setAttribute("data-field", "portable-text");
+    nodes.portableText.readOnly = true;
+    nodes.portableText.spellcheck = false;
+    nodes.portableText.rows = 10;
+    nodes.portableCopy = button(t("portable_copy"), "portable-copy");
+    nodes.portableDownload = button(t("portable_download"), "portable-download");
+    nodes.portableLabels.push([nodes.portableCopy, "portable_copy"], [nodes.portableDownload, "portable_download"]);
+    const portableActions = append(make("div", "fc-citations-portable-actions"), nodes.portableCopy, nodes.portableDownload);
+    append(nodes.portableResult, nodes.portableText, portableActions);
+    const portableControls = append(make("div", "fc-citations-portable-controls"),
+      append(make("label", "fc-citations-field"), portableNode("span", "fc-citations-label", "portable_format"), nodes.portableFormat),
+      append(make("label", "fc-citations-field"), portableNode("span", "fc-citations-label", "portable_scope"), nodes.portableScope));
+    append(portableBody, portableNode("p", "fc-citations-note", "portable_hint"), portableControls,
+      portableNode("p", "fc-citations-hint", "portable_format_hint"), nodes.portablePrepare,
+      nodes.portableStatus, nodes.portableIssues, nodes.portableResult);
+    append(nodes.portablePanel, nodes.portableSummary, portableBody);
+    nodes.portableFormat.addEventListener("change", () => {
+      state.portableFormat = Object.prototype.hasOwnProperty.call(PORTABLE_FORMATS, nodes.portableFormat.value)
+        ? nodes.portableFormat.value : "csl-json";
+      invalidatePortable(state.portablePending ? "portable_stale" : ""); renderPortable();
+    });
+    nodes.portableScope.addEventListener("change", () => {
+      state.portableScope = nodes.portableScope.value === "filtered" ? "filtered" : "all";
+      invalidatePortable(state.portablePending ? "portable_stale" : ""); renderPortable();
+    });
+    nodes.portablePrepare.addEventListener("click", preparePortable);
+    nodes.portableCopy.addEventListener("click", copyPortable);
+    nodes.portableDownload.addEventListener("click", downloadPortable);
     grid.append(librarySection);
 
     const editorSection = make("section", "fc-citations-editor");
@@ -1890,7 +2283,7 @@
       nodes.styleScope, nodes.previewNote, nodes.previewHeadingText, nodes.previewBody,
       nodes.previewIssues, nodes.previewActions, nodes.wordLinkWrap, nodes.wordNote, nodes.fallback);
     grid.append(previewSection);
-    body.append(grid);
+    body.append(grid, nodes.portablePanel);
 
     const importPanel = make("section", "fc-citations-import");
     importPanel.hidden = true;
@@ -2466,6 +2859,12 @@
         intakeBusy: state.quickBusy,
         batchActive: state.batchRunning,
         batchRows: JSON.parse(JSON.stringify(state.batchRows)),
+        query: state.query,
+        typeFilter: state.typeFilter,
+        visibleIds: visibleItems().map((item) => item.id),
+        portableFormat: state.portableFormat,
+        portableScope: state.portableScope,
+        portablePending: Boolean(!disposed && state.portablePending && state.portablePending.source === portableSource()),
         undo: state.undo.length,
       };
     }
@@ -2481,6 +2880,8 @@
       state.batchRows = [];
       state.quickPending = null;
       state.quickSelected = new Set();
+      state.portableRevision += 1;
+      state.portablePending = null;
       state.previewToken += 1;
       state.importRevision += 1;
       const clear = root.clearTimeout || (typeof clearTimeout === "function" ? clearTimeout : null);

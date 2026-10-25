@@ -43,6 +43,7 @@ browser
     static/citation-import.js   offline BibTeX / RIS / CSL-JSON parser
     static/citation-lookup.js   explicit, bounded single-DOI Crossref request
     static/citation-doi-batch.js sequential DOI batches and partial results
+    static/citation-export.js  local CSL-JSON / RIS / modern .bib serialization
     static/citation-assistant.js / .css  local editor and reviewed preview
     static/citation-engine.js   same-origin CSL adapter, lazy renderer loading
       static/vendor/citations/ original processor, styles, locale, source/licenses
