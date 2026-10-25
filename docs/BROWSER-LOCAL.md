@@ -1,9 +1,10 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Release status:** the static website runs v2.9.0, with DOI batches,
-selective append and offline citation import. Offline installers remain v2.5.0.
+**Release status:** the static website runs v2.10.0, with local library search,
+type filters and portable exports, alongside DOI batches and offline import.
+Offline installers remain v2.5.0.
 Current verification is recorded in [deployment notes](DEPLOYMENT.md) and
-[v2.9 testing](TESTING-v2.9.md); earlier version records below remain historical.
+[v2.10 testing](TESTING-v2.10.md); earlier version records below remain historical.
 
 FormCapy runs as a native Tk desktop app, an Android app with an offline Python
 bridge, or a Flask local web app. This document describes the additional
@@ -139,7 +140,7 @@ download result are separate from this export.
 - **server** — Flask local web mode (`content="server"` and no Android bridge), using
   the existing `/api/blank`, `/api/convert` and `/api/paragraphs` endpoints.
 
-### Local citation path (v2.9.0 static website)
+### Local citation path (v2.10.0 static website)
 
 The reference assistant accepts **books, journal articles and webpages** by
 manual entry or offline BibTeX/RIS/CSL-JSON import. Optional, explicit DOI
@@ -158,6 +159,15 @@ library JSON, and a standalone Word list through the browser bridge. Changing
 inputs or style makes the old preview stale until the user previews again.
 Library JSON imports are reviewed before explicit replacement. Citation data
 does not enter FC1 codes, ShareV1 settings/labels or layout-only template JSON.
+
+Local title/author/source/DOI/URL/year search and type filters change only the
+library view. An explicit portable-export preview serializes all entries or
+the selected filtered scope into CSL-JSON, RIS or a modern UTF-8
+BibLaTeX-compatible `.bib` file. Format losses are disclosed before copying or
+downloading. Portable output excludes comparison text and application state;
+the existing complete library JSON remains the backup. No export adds network
+requests, storage writes or a production dependency. Changing relevant data,
+format or scope invalidates the prepared export.
 
 Word generation has its own cancel button outside the locked paper form.
 Cancellation releases that form and keeps the entries and a still-current

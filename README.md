@@ -8,7 +8,7 @@
 
 **Free, no account required. Formatting runs on your device; the current draft is not uploaded automatically.** Format DOCX, TXT or Markdown as MLA 9, APA 7 student papers or a custom course template.
 
-**v2.9.0 静态网页版已上线：批量 DOI 补全、勾选追加与离线书目导入。** **The static website now runs v2.9.0**, with DOI batches, selective append and offline bibliography import. 更新提示、课程模板分享与三语小屏界面继续提供；离线安装包仍为 v2.5.0。The update notice, template sharing and three-language responsive interface remain available; offline installers remain v2.5.0. [部署与验证范围 / Deployment and verification scope](docs/DEPLOYMENT.md)
+**v2.10.0 静态网页版已上线：文献库搜索、类型筛选与通用书目导出。** **The static website now runs v2.10.0**, with library search, type filters and portable bibliography exports. 批量 DOI、离线导入、更新提示、课程模板分享与三语小屏界面继续提供；离线安装包仍为 v2.5.0。DOI batches, offline import, update notices, template sharing and the three-language responsive interface remain available; offline installers remain v2.5.0. [部署与验证范围 / Deployment and verification scope](docs/DEPLOYMENT.md)
 
 ### v2.10.0：整理并带走文献 / Organize and export references
 
@@ -137,7 +137,7 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 
 ### v2.6.0 网页版新增：课程模板分享 / New on the website: course-template sharing
 
-**以下功能自 v2.6.0 起上线，当前 v2.7.1 静态网页版继续提供；离线安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
+**以下功能自 v2.6.0 起上线，当前 v2.10.0 静态网页版继续提供；离线安装包仍为 v2.5.0。** 展开 **分享课程模板**，复制以 `FC1.` 开头的模板码发给同学；接收者在 **导入模板** 中粘贴，点击 **预览模板**，核对后再点 **应用此模板**。也可导出带版本的 **分享 JSON**；现有仅含排版设置的兼容 JSON 导入/导出继续保留。
 
 ![FormCapy v2.6.0 正式网站：课程模板码包含完整排版设置和用户填写的课程标签](docs/images/formcapy-live-v2.6-template-code.png)
 
@@ -147,24 +147,24 @@ v2.5.0 also includes Spanish in the static web build, desktop and Android interf
 - 分享内容包含模板名称、排版设置及主动填写的课程标签；不会自动带入文稿、姓名、论文标题、教师、段落保留选择或生成结果。可选 **本次分享使用通用名称**，不修改当前模板名；持有码或文件的人可以读取其中的名称和标签。
 - 模板码完整自带设置，不使用链接、服务器、账号或后台查码。设置修改后需重新复制；旧码不会更新或撤销。保存到 **我的模板** 仅保存排版设置，课程标签需用模板码或分享 JSON 留存。
 
-**Introduced in v2.6.0, these features remain live on the v2.9.0 static website; offline packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
+**Introduced in v2.6.0, these features remain live on the v2.10.0 static website; offline packages remain v2.5.0.** Expand **Share a course template** and copy an `FC1.` template code. Recipients paste it into **Import template**, preview and explicitly apply it. Codes and sharing JSON carry all settings and optional school/course labels; layout-only JSON remains compatible with existing apps. Drafts and paper details are not added automatically. Anyone with a copy can read the template name and labels. No link, server, account or code-lookup service is involved. Saved templates retain layout only; keep a code or sharing JSON to retain labels.
 
-操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。v2.9.0 继续使用相同的 `FC1.` 协议；文献库与模板分享数据分开。
+操作及两种 JSON 的区别见[格式指南](docs/FORMATS.md#课程模板分享)。完整协议见[分享设计](docs/SHARING-DESIGN.md)。v2.10.0 继续使用相同的 `FC1.` 协议；文献库与模板分享数据分开。
 
 ### v2.7.0 网页版新增：更新提示与参考文献助手 / New on the website: updates and reference assistant
 
-**以下功能自 v2.7.0 起上线，当前 v2.9.0 继续提供。** 线上文件、HTTPS 与 Edge 主要流程的版本及核对范围见[部署记录](docs/DEPLOYMENT.md)。
+**以下功能自 v2.7.0 起上线，当前 v2.10.0 继续提供。** 线上文件、HTTPS 与 Edge 主要流程的版本及核对范围见[部署记录](docs/DEPLOYMENT.md)。
 
 - **主动更新**：新版准备完成后显示提示。先保存或下载文稿及文献库，点 **更新 → 已保存，更新** 才重新加载。处理过程中或还有其他同作用域 FormCapy 标签页时，更新会被阻止并提示处理步骤。旧 v2.6.0 页面须先正常升级一次，才会具备此提示。
 - **参考文献助手**：展开页面下方的入口，添加书籍、期刊文章或网页，填写作者、标题、出版日期等资料；支持多作者及机构作者。选择 **MLA 9 / APA 7 → 预览文献表**，再复制纯文本／带格式文本，或导出独立的 Word 文献表和 HTML。修改条目或样式后需重新预览。
 - **单独保存文献**：默认只保留在当前页面会话；**保存到本设备**、**载入已保存的库**和**删除已保存的库**均为明确操作。文献库 JSON 可独立导入／导出，导入先核对再确认替换，并提供撤销。文献资料不会进入课程模板码、分享 JSON 或兼容排版 JSON。
-- 正式网站 v2.9.0 的助手可通过快速添加导入或查询来源，也支持手动补全；只生成独立列表，不改原稿或文中引用。资料准确性仍需核对，GB/T 条目格式化仍不支持。
+- 正式网站 v2.10.0 的助手可通过快速添加导入或查询来源，也支持手动补全；只生成独立列表，不改原稿或文中引用。资料准确性仍需核对，GB/T 条目格式化仍不支持。
 
 步骤与字段见[参考文献助手指南](docs/CITATIONS.md)，渲染器、样式和源码分发说明见[引用组件许可](docs/CITATION-LICENSES.md)。界面支持中文、English、Español；切换界面语言不翻译作者、题名或文献内容。v2.7.1 已检查正式网站实际下载的 MLA/APA 文稿与独立文献表的 ZIP/XML 结构；Word 页面渲染、Safari 和实机尚未验收。
 
-**Introduced in v2.7.0, these features remain live on the v2.9.0 static website.** See the [deployment record](docs/DEPLOYMENT.md) for versioned public-asset, HTTPS and Edge checks. Once installed, the update notice lets you save first and explicitly reload; processing or another FormCapy tab in the same scope blocks activation. Existing v2.6.0 pages need one normal upgrade before they can display this new notice.
+**Introduced in v2.7.0, these features remain live on the v2.10.0 static website.** See the [deployment record](docs/DEPLOYMENT.md) for versioned public-asset, HTTPS and Edge checks. Once installed, the update notice lets you save first and explicitly reload; processing or another FormCapy tab in the same scope blocks activation. Existing v2.6.0 pages need one normal upgrade before they can display this new notice.
 
-Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citations stay intact. The public v2.9.0 Quick add workflow is described above. Source accuracy and GB/T entry formatting remain outside scope. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). Four fresh public-site DOCX downloads passed ZIP/XML checks in v2.7.1: MLA/APA papers and separate bibliographies. Word page rendering, Safari and physical devices remain unverified.
+Open **Reference assistant**, add books, journal articles or webpages, enter the source fields, and select **MLA 9 / APA 7 → Preview bibliography**. Review the result before copying plain/formatted text or exporting a separate Word/HTML bibliography. Changes require a fresh preview. The library is session-only unless you explicitly save it on this device; load and remove actions are separate. Library JSON imports require review and explicit replacement, with undo. Neither the library nor its sources enter template codes or template JSON. Existing drafts and in-text citations stay intact. The public Quick add workflow is described above. Source accuracy and GB/T entry formatting remain outside scope. See the [assistant guide](docs/CITATIONS.md) and [component/source notices](docs/CITATION-LICENSES.md). Four fresh public-site DOCX downloads passed ZIP/XML checks in v2.7.1: MLA/APA papers and separate bibliographies. Word page rendering, Safari and physical devices remain unverified.
 
 ### v2.7.1 网页版更新：界面与小屏 / Website update: interface and small screens
 

@@ -1,6 +1,45 @@
 # FormCapy web deployment
 
-## Current public website — v2.9.0
+## Current public website — v2.10.0
+
+The static website is live at [formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/). On 25 October 2026
+(America/Los_Angeles), Windows MCP selected the accepted H-drive folder,
+confirmed all 150 files and completed Deploy in Edge. Cloudflare active
+version `ef4332f7` was observed as Ready with the same-row 100% traffic control.
+
+This update adds local library search/type filters and reviewed CSL-JSON,
+RIS and modern UTF-8 `.bib` exports for all or filtered entries. Comparison
+text stays in the complete FormCapy library backup; portable exports contain
+bibliographic metadata only. The website remains anonymous and browser-local.
+Only an explicit DOI query contacts Crossref; no account, database, draft
+upload or server conversion service was added. Offline installers remain
+[v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0).
+
+| Item | Recorded result |
+| --- | --- |
+| Application source | `06fa5d27620fc24bfbc66bb89514ef5872cf369e`, pushed and remote main verified through Windows MCP |
+| CI | [40206817471](https://github.com/SuperOoze0309/MLAFMT/actions/runs/40206817471): test job passed; native build jobs were still running when checked and are separate from this web-only release |
+| Local regression | 525 Node cases, 228 Python tests plus 159 subtests; citation pin verification and real local Pyodide/Worker smoke passed |
+| Local browser | 42 real Chrome checks passed against the final layout, including three explicit live DOI requests, local imports, search/filtering, six portable downloads, full backup, MLA/APA Word, three languages and narrow layouts; controlled failure scenarios recorded separately |
+| Independent local files | Six actual portable downloads passed pinned official CSL schema / external RIS and BibTeX parsers; two actual Word downloads passed ZIP/XML/relationship and preview/content/layout-property checks |
+| Frozen upload | `dist/formcapy-v2.10.0/`; 149 manifest entries plus the manifest itself, copied byte for byte from the accepted preview |
+| Manifest SHA-256 | `d59262177144ccc24a72b65ca45cab242caa4eb667d5cd4f3b82a2444520f764` |
+| Public cache | `formcapy-2.10.0-pyodide-314.0.7-daf1a0e15016` |
+| Worker sweep | 148/148 resources match size, SHA-256 and required security headers; 119,031,242 bytes verified once, all 18 MIME checks passed |
+| Root / www | 46/46 key files match; both versions/manifests agree, zero analytics beacons, new export script has correct JavaScript MIME |
+| HTTPS | 22/22 checks passed; trusted TLS 1.3 on both domains, HTTP upgrades preserve encoded paths and queries |
+| Source and notices | Both provenance pages retain source/license links; both source archive route prefixes match and the full archive hash passed in the Worker sweep |
+| Public browser | A separate complete 42-check Chrome run passed at the root HTTPS domain, with version 2.10.0, secure HTTP 200 navigation, three live DOI GETs, local imports, search/filtering, all/filtered exports and three-language narrow layouts; zero console errors or page exceptions |
+| Public downloads | Nine actual clicked downloads passed byte/name/MIME checks. Root independently checked all six portable files with the pinned official CSL schema and external RIS/BibTeX parsers, and both Word files against captured previews and ZIP/XML/relationship/layout properties; complete library backup retains comparison text |
+
+Full local and production evidence remains under `build/v2.10.0/acceptance/`
+and `build/v2.10.0/production/` in the owner's H-drive workspace. No audit retry,
+security/DNS/TLS setting change or post-acceptance artifact rebuild was made.
+See [local verification scope](TESTING-v2.10.md). Word visual pagination,
+Safari, physical devices and real Zotero application import remain unverified.
+
+## Public v2.9.0 deployment record
 
 The static website is live at [formcapy.com](https://formcapy.com/) and
 [www.formcapy.com](https://www.formcapy.com/). On 23 October 2026 (America/Los_Angeles),
@@ -16,7 +55,7 @@ Crossref. Offline installers remain [v2.5.0](https://github.com/SuperOoze0309/ML
 | Item | Recorded result |
 | --- | --- |
 | Application source | `1b6580bff3fe7701c85958f5aa331c769da6ea63` |
-| CI | [40070497658](https://github.com/SuperOoze0309/MLAFMT/actions/runs/40070497658): test job passed; remaining native jobs are separate from this web-only release |
+| CI | [40070497658](https://github.com/SuperOoze0309/MLAFMT/actions/runs/40070497658): all 7 jobs passed, confirmed on 25 October; native artifacts were not published in this web-only release |
 | Local regression | 451 Node cases, 228 Python tests and 159 subtests passed; real local Pyodide/Worker smoke and citation pin verification passed |
 | Local browser | 31 real Chrome checks, including explicit live Crossref batches, file imports, selection/undo, three languages and four viewport sizes; controlled failure/cancellation/429 cases recorded separately |
 | Download inspection | Actual local-browser MLA/APA Word downloads passed ZIP/XML/relationship checks and exact preview text, order, italics, links and layout-property comparison |

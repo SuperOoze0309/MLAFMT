@@ -1,16 +1,10 @@
 # 独立参考文献助手 / Citation assistant
 
-状态：**v2.9.0 静态网页版已上线，支持批量 DOI、勾选追加与离线书目导入。** 451 项 Node、228 项 Python 及 159 项子检查、31 项本地真实浏览器检查通过；正式网站另有 19 项浏览器检查及实际 MLA／APA Word 下载核对。见[测试范围](TESTING-v2.9.md)与[部署记录](DEPLOYMENT.md)；离线下载仍为 v2.5.0。
+状态：**v2.10.0 静态网页版已上线，新增文献库搜索、类型筛选和通用书目导出。** 525 项 Node、228 项 Python 及 159 项子检查、42 项本地真实浏览器检查通过。见[测试范围](TESTING-v2.10.md)与[独立公开验收记录](DEPLOYMENT.md)；离线下载仍为 v2.5.0。
 
-Status: **v2.9.0 is live on the static website, with DOI batches, selective append and offline import.** Local acceptance and 19 public-browser checks passed; actual local and public MLA/APA Word downloads were independently checked. See [test scope](TESTING-v2.9.md) and [deployment record](DEPLOYMENT.md). Offline downloads remain v2.5.0.
+Status: **v2.10.0 is live on the static website, adding library search, type filters and portable exports.** See [local test scope](TESTING-v2.10.md) and the separately recorded [public acceptance](DEPLOYMENT.md). Offline downloads remain v2.5.0.
 
 ---
-
-源码 v2.10.0 新增本地搜索／筛选和通用书目导出，本地验收已完成；[验收范围](TESTING-v2.10.md)与[公开部署状态](DEPLOYMENT.md)分开记录。
-
-Source v2.10.0 adds local search/filtering and portable bibliography export.
-Local acceptance has passed; see [verification scope](TESTING-v2.10.md) and
-the separately recorded [public deployment status](DEPLOYMENT.md).
 
 ## 1. 用途与边界 / Purpose and scope
 
