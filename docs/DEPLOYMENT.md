@@ -1,5 +1,17 @@
 # FormCapy web deployment
 
+## v2.11.0 release published; website deployment pending — 2026-10-28
+
+The [GitHub v2.11.0 release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)
+publishes the static browser ZIP, SHA-256 checksum file and source tag at
+`c58f3ef1a2a169f946d04e545a50b86ab6eccc5c`. This release includes the standalone
+local PDF/DOCX/DOC converter. The public website remains v2.10.0; v2.11.0
+production deployment and public verification are pending. The v2.10.0
+production evidence below does not establish a v2.11.0 deployment.
+Desktop and Android installers remain
+[v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0); this release
+does not publish new native installers.
+
 ## Current public website — v2.10.0
 
 The static website is live at [formcapy.com](https://formcapy.com/) and

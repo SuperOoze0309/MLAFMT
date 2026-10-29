@@ -1,6 +1,6 @@
 # FormCapy · 论文与报告排版
 
-**v2.11.0 源码迭代：新增 PDF / DOCX / DOC 本地互转。** 静态网页版在浏览器内转换；桌面源码使用本机引擎。PDF 转 Word 为可编辑文字重建，不含 OCR、图片或原版式还原。首次 Word 转换需下载较大的本地程序，建议桌面浏览器。**本次源码尚未部署，现有安装包不包含此功能。** [使用条件与范围 / Conversion scope](docs/CONVERSION.md)
+**[v2.11.0 静态包与源码已发布 / Static package and source released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)：新增 PDF / DOCX / DOC 本地互转。** 静态网页版在浏览器内转换；桌面源码使用本机引擎。PDF 转 Word 为可编辑文字重建，不含 OCR、图片或原版式还原。首次 Word 转换需下载较大的本地程序，建议桌面浏览器。**正式网站仍为 v2.10.0，v2.11.0 部署与公网验证待完成；离线安装包仍为 v2.5.0，不包含此功能。The public website remains v2.10.0 pending deployment and verification; offline installers remain v2.5.0.** [使用条件与范围 / Conversion scope](docs/CONVERSION.md)
 
 <img src="static/capybara-64.png" alt="FormCapy 水豚吉祥物 / capybara mascot" width="64" height="64" />
 
@@ -241,7 +241,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前仓库源码为开发中的 v2.9.0，最近一次公网发布为 v2.7.1，离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码及静态包已通过 [v2.11.0 Release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0) 发布；正式网站仍为 v2.10.0，v2.11.0 部署与公网验证待完成。离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 

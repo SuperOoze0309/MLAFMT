@@ -1,12 +1,14 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Source iteration v2.11.0:** local PDF/DOCX/DOC conversion is implemented and
+**Published static package and source v2.11.0:** local PDF/DOCX/DOC conversion is implemented and
 verified in a frozen preview, including a lazy same-origin office WASM engine.
-It has not been deployed. See [conversion scope](CONVERSION.md) and
+The [GitHub release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)
+is published; production website deployment and public verification remain pending.
+See [conversion scope](CONVERSION.md) and
 [v2.11 verification](TESTING-v2.11.md). Use `scripts/preview_local.py` for
 COOP/COEP headers when previewing the converter.
 
-**Release status:** the static website runs v2.10.0, with local library search,
+**Public website status:** the static website remains v2.10.0, with local library search,
 type filters and portable exports, alongside DOI batches and offline import.
 Offline installers remain v2.5.0.
 Current verification is recorded in [deployment notes](DEPLOYMENT.md) and

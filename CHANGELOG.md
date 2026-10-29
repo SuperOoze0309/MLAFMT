@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.11.0 — 2026-10-28 (source iteration; not deployed)
+## v2.11.0 — 2026-10-28 (static/source release; website rollout pending)
 
 - 增加独立的 PDF / DOCX / DOC 文件互转页面 `converter.html`；首页顶部提供入口，直接显示文件和目标格式，不要求填写论文信息。
 - 静态网页版按需加载同源、校验哈希的 LibreOffice WebAssembly 引擎，生成真正的 Word 97–2003 `.doc`、DOCX 和 PDF；文件内容只在当前设备处理。
@@ -8,7 +8,7 @@
 - 桌面源码增加本地互转窗口及转换接口；Word 转换使用设备上安装的 LibreOffice，PDF 文字重建使用 pypdf。
 - 浏览器转换引擎增加本地中文字体，并随包提供原字体许可与来源。
 - 三语转换状态、取消、独立下载及旧结果失效处理；大型转换引擎不进入应用首次打开的离线预缓存。
-- 安装包和正式网站尚未发布本次迭代。验证结果与运行条件见 `docs/CONVERSION.md`、`docs/TESTING-v2.11.md`。
+- [GitHub v2.11.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0) 已发布静态浏览器包与源码；正式网站仍为 v2.10.0，v2.11.0 部署与公网验证待完成。离线安装包仍为 v2.5.0，本次未发布新的桌面或 Android 安装包。验证结果与运行条件见 `docs/CONVERSION.md`、`docs/TESTING-v2.11.md`。
 
 ## v2.10.0 — 2026-10-25
 
