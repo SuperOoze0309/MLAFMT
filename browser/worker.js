@@ -12,12 +12,15 @@
  */
 
 const PYTHON_DOCX_WHEEL = "python_docx-1.2.0-py3-none-any.whl";
+const PYPDF_WHEEL = "pypdf-6.21.4-py3-none-any.whl";
+let pdfParserReady = false;
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const PYTHON_MODULES = [
   "mla_formatter.py",
   "format_profiles.py",
   "docx_preserve.py",
   "bibliography_export.py",
+  "document_conversion.py",
   "browser_bridge.py",
 ];
 
@@ -162,6 +165,20 @@ function postFailure(id, code, detail) {
   post({ type: "error", id, code, detail: String(detail || "").slice(0, 300) });
 }
 
+async function ensurePdfParser() {
+  if (pdfParserReady) return;
+  const response = await fetch(new URL(`wheels/${PYPDF_WHEEL}`, config.baseURL));
+  if (!response.ok) throw new Error("The local PDF parser could not load.");
+  pyodide.FS.writeFile("/tmp/formcapy-pypdf.whl", new Uint8Array(await response.arrayBuffer()));
+  pyodide.runPython(`
+import zipfile, os
+with zipfile.ZipFile("/tmp/formcapy-pypdf.whl") as archive:
+    archive.extractall("/app/pylib")
+os.unlink("/tmp/formcapy-pypdf.whl")
+`);
+  pdfParserReady = true;
+}
+
 async function handleRequest(message) {
   const id = message.id;
   let workdir = null;
@@ -182,7 +199,7 @@ async function handleRequest(message) {
       return;
     }
     const action = message.action === "paragraphs" ? "paragraphs" : "generate";
-    if (action === "generate" && !["blank", "convert", "bibliography"].includes(request.kind)) {
+    if (action === "generate" && !["blank", "convert", "bibliography", "file_convert", "file_check"].includes(request.kind)) {
       postFailure(id, "invalid_options");
       return;
     }
@@ -199,7 +216,7 @@ async function handleRequest(message) {
 
     const started = JSON.parse(bridgeApi.begin(file?.name ?? ""));
     workdir = started.workdir;
-    if (action === "paragraphs" || request.kind === "convert") {
+    if (action === "paragraphs" || ["convert", "file_convert", "file_check"].includes(request.kind)) {
       if (!file || !(file.buffer instanceof ArrayBuffer)) {
         postFailure(id, "no_file");
         return;
@@ -208,6 +225,7 @@ async function handleRequest(message) {
     }
 
     if (action === "generate") stage("formatting", id);
+    if (request.kind === "file_convert") await ensurePdfParser();
     const result = bridgeApi.finish(requestJson, workdir);
     workdir = null; // finish() cleaned it in a finally block
     let meta;

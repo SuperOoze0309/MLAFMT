@@ -1301,6 +1301,10 @@ class MLAGui:
         file = tk.Menu(mb, tearoff=0)
         file.add_command(label=self.t("menu_open"), accelerator="Cmd+O" if sys.platform == "darwin" else "Ctrl+O", command=self._on_browse)
         file.add_command(label=self.t("menu_blank"), command=self._on_blank)
+        file.add_command(
+            label={"zh": "PDF / DOCX / DOC 文件互转…", "es": "Convertir PDF / DOCX / DOC…"}.get(self.lang, "Convert PDF / DOCX / DOC…"),
+            command=self._open_document_converter,
+        )
         file.add_separator()
         file.add_command(label=self.t("menu_quit"), command=self._on_close)
         mb.add_cascade(label=self.t("menu_file"), menu=file)
@@ -1319,6 +1323,11 @@ class MLAGui:
         help_menu.add_command(label=self.t("menu_about"), command=lambda: messagebox.showinfo(self.t("menu_about"), self.t("about", v=__version__), parent=self.root))
         mb.add_cascade(label=self.t("menu_help"), menu=help_menu)
         self.root.config(menu=mb)
+
+    def _open_document_converter(self):
+        from desktop_conversion import launch
+        if not self._busy:
+            launch(self.root, locale=self.lang)
 
     def _set_status(self, key, kind="muted", **kw):
         self._status_state = (key, kind, kw)

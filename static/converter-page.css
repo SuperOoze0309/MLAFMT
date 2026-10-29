@@ -1,0 +1,72 @@
+/* The independent conversion tool shares FormCapy's lake-blue/paper palette. */
+.converter-page {
+  --ink: #233c48;
+  --muted: #566b73;
+  --accent: #246a83;
+  --accent-dark: #1c5268;
+  --bg: #f5f4ef;
+  --line: #dce5e3;
+  --error: #af3c49;
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.converter-page * { box-sizing: border-box; }
+.converter-page [hidden] { display: none !important; }
+.converter-page button,
+.converter-page input,
+.converter-page select { font: inherit; -webkit-tap-highlight-color: transparent; }
+.converter-page a { color: var(--accent-dark); text-underline-offset: 3px; }
+.converter-page :focus-visible { outline: 3px solid #448da8; outline-offset: 3px; }
+.converter-shell { width: min(1000px, calc(100% - 64px)); margin: 0 auto; }
+.converter-skip { position: absolute; left: 16px; top: -100px; z-index: 10; padding: 9px 16px; background: white; border: 1px solid var(--line); border-radius: 8px; }
+.converter-skip:focus { top: 12px; }
+.converter-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 24px 0 18px; }
+.converter-brand { display: inline-flex; gap: 10px; align-items: center; color: var(--ink) !important; font-size: 23px; font-weight: 760; letter-spacing: -.6px; text-decoration: none; }
+.converter-version { padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .1px; }
+.converter-languages { display: flex; padding: 3px; background: #e6ebe8; border: 1px solid #dce3df; border-radius: 10px; }
+.converter-languages button { min-height: 32px; padding: 4px 12px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; }
+.converter-languages button[aria-pressed="true"] { color: var(--ink); background: white; box-shadow: 0 1px 4px #25274412; }
+.converter-languages button:disabled { cursor: default; opacity: .55; }
+.converter-nav { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 0 0 13px; border-bottom: 1px solid var(--line); }
+.converter-nav a { padding: 5px 0; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; }
+.converter-nav a:hover { color: var(--accent-dark); }
+.converter-nav a[aria-current="page"] { color: var(--accent-dark); box-shadow: 0 3px 0 var(--accent); }
+.converter-main { padding-bottom: 34px; }
+.converter-hero { padding: 33px 0 5px; }
+.converter-eyebrow { margin: 0 0 7px; color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .13em; }
+.converter-hero h1 { max-width: 850px; margin: 0; font-size: clamp(29px, 4vw, 41px); font-weight: 720; line-height: 1.23; letter-spacing: -1px; }
+.converter-intro { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
+.converter-page .fc-converter { margin: 24px 0 17px; background: #fff; box-shadow: 0 8px 28px #233c4805; }
+.converter-page .fc-converter > summary { display: none; }
+.converter-page .fc-converter-body { padding: 7px 26px 25px; border-top: 0; }
+.converter-page .fc-converter-privacy { max-width: 800px; margin-bottom: 24px; }
+.converter-page .fc-converter-grid { grid-template-columns: minmax(0, 1.2fr) minmax(180px, 1fr); }
+.converter-page .fc-converter-note { font-size: 12px; }
+.converter-offline-note { max-width: 800px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+.converter-page-error { margin: 18px 0; color: var(--error); overflow-wrap: anywhere; }
+.converter-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px 24px; padding: 21px 0 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.converter-license-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.converter-page #formcapy-update-notice { margin: 16px 0 0 !important; }
+@media (max-width: 560px) {
+  .converter-shell { width: calc(100% - 32px); }
+  .converter-topbar { padding: 19px 0 14px; gap: 10px; }
+  .converter-brand { gap: 6px; font-size: 19px; }
+  .converter-version { font-size: 9px; padding: 2px 4px; }
+  .converter-languages { padding: 2px; }
+  .converter-languages button { font-size: 11px; padding: 4px 7px; }
+  .converter-nav { gap: 8px 22px; padding-bottom: 10px; }
+  .converter-nav a { font-size: 12px; }
+  .converter-hero { padding-top: 25px; }
+  .converter-hero h1 { font-size: 29px; letter-spacing: -.7px; }
+  .converter-intro { font-size: 13px; }
+  .converter-page .fc-converter { margin-top: 21px; }
+  .converter-page .fc-converter-body { padding: 3px 17px 22px; }
+  .converter-page .fc-converter-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .converter-page .fc-converter-privacy { font-size: 12px; margin-bottom: 20px; }
+  .converter-footer { padding-top: 18px; }
+}

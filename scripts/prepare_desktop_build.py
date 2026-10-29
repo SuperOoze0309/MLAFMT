@@ -212,6 +212,7 @@ def main():
     packages = write_notices(root, output, target=args.platform, release_check=args.release_check)
     status = git_output(root, "status", "--porcelain", "--untracked-files=normal")
     sources = [root / "mla_gui.py", root / "mla_formatter.py", root / "format_profiles.py", root / "docx_preserve.py", root / "requirements-build.txt",
+               root / "document_conversion.py", root / "desktop_conversion.py", root / "requirements-conversion.txt",
                root / "scripts/prepare_desktop_build.py", root / "scripts/prepare_windows_build.py",
                root / "scripts/prepare_brand_assets.ps1",
                root / "scripts/license_notices.py", root / "scripts/build_lxml_no_iconv.py",

@@ -1,5 +1,7 @@
 # FormCapy · 论文与报告排版
 
+**v2.11.0 源码迭代：新增 PDF / DOCX / DOC 本地互转。** 静态网页版在浏览器内转换；桌面源码使用本机引擎。PDF 转 Word 为可编辑文字重建，不含 OCR、图片或原版式还原。首次 Word 转换需下载较大的本地程序，建议桌面浏览器。**本次源码尚未部署，现有安装包不包含此功能。** [使用条件与范围 / Conversion scope](docs/CONVERSION.md)
+
 <img src="static/capybara-64.png" alt="FormCapy 水豚吉祥物 / capybara mascot" width="64" height="64" />
 
 [立即使用网页版 / Use in browser](https://formcapy.com/) · [中文](#中文) · [English](#english) · [版式 / Formats](docs/FORMATS.md) · [下载 / Downloads](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0)

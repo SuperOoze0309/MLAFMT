@@ -256,6 +256,12 @@ and zlib 1.3.1; lxml 6.1.3 links with -liconv. Their original meta.yaml files ar
 under materials/recipes/packages/. They declare no source.patches. This is a
 different build from the project's Windows wheel and its Windows source kit.
 
+pypdf {expected['packages']['pypdf']['version']} is supplied as an unmodified
+pure-Python PyPI wheel for local PDF text extraction. Its matching source
+distribution, original BSD-3-Clause LICENSE and pyproject.toml are included.
+It needs no native/WASM rebuild. Optional cryptography, image and font packages
+are not part of this runtime; encrypted PDFs and OCR are not supported.
+
 ## Get the original sources
 
 Each source is listed separately in SOURCE-MANIFEST.json and index.html. Files
@@ -287,6 +293,17 @@ The two pyodide-build submodule revisions are intentionally supplied separately.
 The C/C++ compiler binaries, SDK activation, host Python and host build tools are
 external prerequisites; no downloaded compiler binary is represented as included.
 Use the requirements and build instructions in these exact source revisions.
+
+## Pure-Python pypdf source
+
+The source archive is listed as `pypdf`, and its original wheel as
+`pypdf-published-wheel`. Reassemble either through the same helper if needed.
+The supplied pyproject.toml identifies the flit build backend. A modified wheel
+can be built in an isolated host Python environment using those declared build
+requirements; that rebuild has not been performed here. To ship a replacement,
+update the wheel filename and hashes in browser/runtime.json and the matching
+source pins, then rebuild the static application. Text extraction does not
+recover a PDF's semantic structure, images or original Word layout.
 
 ## Modify libiconv and rebuild the lxml wheel
 

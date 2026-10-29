@@ -17,6 +17,25 @@
   const MAX_FILE_SIZE = 20 * 1024 * 1024;
   const KNOWN_ERRORS = new Set([
     "bad_doc",
+    "bad_document",
+    "needs_ocr",
+    "encrypted_pdf",
+    "pdf_dependency_missing",
+    "engine_unavailable",
+    "invalid_output",
+    "conversion_failed",
+    "page_limit",
+    "bad_pdf",
+    "pdf_needs_ocr",
+    "encrypted_document",
+    "pdf_page_limit",
+    "pdf_content_limit",
+    "pdf_engine_missing",
+    "office_engine_missing",
+    "conversion_timeout",
+    "conversion_io",
+    "external_content",
+    "same_format",
     "browser_init_failed",
     "cancelled",
     "draft_changed",
@@ -537,6 +556,7 @@
           Number(stats.retained_tables || 0),
         ],
         source: "browser",
+        conversionWarnings: Array.isArray(meta.conversion_warnings) ? meta.conversion_warnings : [],
       });
     }
 
@@ -544,6 +564,10 @@
       const message = await enqueue("generate", request, file, signal);
       if (!message.buffer) throw new TransportError("failed");
       return browserResult(message);
+    }
+
+    async function checkFile({file, signal}) {
+      await enqueue("generate", {kind: "file_check"}, file, signal);
     }
 
     async function paragraphs({ file, requestId, signal }) {
@@ -567,6 +591,7 @@
       onStage(callback) { stageHandler = callback; },
       init,
       generate,
+      checkFile,
       paragraphs,
       cancel() {
         terminate(new TransportError("cancelled"));

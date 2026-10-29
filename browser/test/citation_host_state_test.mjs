@@ -106,7 +106,7 @@ function setup({ honorAbort = true } = {}) {
   };
   const host = vm.createContext({
     $, transport, inProgress: false, sharing: false, paragraphLoading: false,
-    citationWordBusy: false, updateInProgress: false, webResult: paper, URL: LocalURL,
+    citationWordBusy: false, updateInProgress: false, fileConversionBusy: false, webResult: paper, URL: LocalURL,
   });
   const locks = section("      function syncWorkLocks()", "      const BUILTIN_PRESETS");
   const callback = section("onExportWord: transport?.kind", " : undefined,")
@@ -154,6 +154,13 @@ async function prepare(h) {
   await h.action("preview").click();
   assert.equal(h.assistant.state().previewStale, false);
 }
+
+test("file conversion has its own page instead of sharing the paper and citation host", () => {
+  assert.match(pageSource, /href="converter\.html"/);
+  assert.equal(pageSource.includes('id="document-converter-mount"'), false);
+  assert.equal(pageSource.includes('src="static/local-office.js"'), false);
+  assert.equal(pageSource.includes('src="static/document-converter.js"'), false);
+});
 
 test("Word cancel remains reachable outside the locked paper form and supports immediate retry", async () => {
   const h = setup();

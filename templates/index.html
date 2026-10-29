@@ -123,6 +123,12 @@
         color: var(--ink);
         box-shadow: 0 1px 4px #25274412;
       }
+      .tool-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; font-size: 13px; font-weight: 650; }
+      .tool-nav[hidden] { display: none; }
+      .tool-nav span, .tool-nav a { padding: 9px 14px; border: 1px solid var(--line); border-radius: 9px; }
+      .tool-nav span { background: var(--soft); color: var(--accent-dark); }
+      .tool-nav a { background: white; color: var(--accent-dark); text-decoration: none; }
+      .tool-nav a:hover { border-color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
       .hero {
         position: relative;
         padding: 34px 232px 30px 0;
@@ -1123,6 +1129,10 @@
           </button>
         </div>
       </header>
+      <nav class="tool-nav" id="file-converter-nav" hidden>
+        <span aria-current="page" data-t="paper_tool">Paper formatter</span>
+        <a href="converter.html" data-t="file_converter">PDF / Word file converter →</a>
+      </nav>
       <main>
         <section class="hero" aria-labelledby="hero-title">
           <p class="eyebrow" data-t="eyebrow">
@@ -2142,6 +2152,7 @@
       });
       Object.assign(T.zh, {
         page_title: "FormCapy · 论文与报告排版",
+        paper_tool: "论文排版", file_converter: "PDF / Word 文件互转 →",
         unit_pt: "磅", unit_cm: "厘米",
         spec_header_template: "按课程模板设置",
         spec_cited_sorted_chinese: "按条目排序 · 无悬挂缩进",
@@ -2156,6 +2167,7 @@
       });
       Object.assign(T.en, {
         page_title: "FormCapy · Paper Formatter",
+        paper_tool: "Paper formatter", file_converter: "PDF / Word file converter →",
         unit_pt: "pt", unit_cm: "cm",
         spec_header_template: "As set in your course template",
         spec_cited_sorted_chinese: "Sorted entries · no hanging indent",
@@ -2370,6 +2382,7 @@
         indent_summary: (p) => p.first_line_chars > 0 ? `Sangría de primera línea de ${p.first_line_chars} caracteres` : `Sangría de primera línea de ${p.first_line_cm} cm`,
         reference_original: "Orden original de las entradas · sin sangría francesa", builtin_copy: "Copia",
         page_title: "FormCapy · Formato de trabajos",
+        paper_tool: "Formato de trabajos", file_converter: "Conversor de PDF / Word →",
         unit_pt: "pt", unit_cm: "cm",
         spec_header_template: "Según la plantilla de tu curso",
         spec_cited_sorted_chinese: "Entradas ordenadas · sin sangría francesa",
@@ -3104,6 +3117,7 @@
       function render() {
         document.documentElement.lang = LANGUAGE_LOCALES[lang] || "en";
         document.title = t("page_title");
+        $("file-converter-nav").hidden = transport?.kind !== "browser";
         $("brand-mascot").alt = t("mascot_alt");
         document.querySelectorAll("[data-t]").forEach((el) => {
           el.textContent = t(el.dataset.t);

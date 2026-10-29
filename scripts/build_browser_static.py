@@ -34,6 +34,8 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+from prepare_office_runtime import prepare as prepare_office_runtime
+
 ROOT = Path(__file__).resolve().parents[1]
 BROWSER = ROOT / "browser"
 CACHE = BROWSER / ".cache"
@@ -43,12 +45,15 @@ PYTHON_MODULES = (
     "docx_preserve.py",
     "browser_bridge.py",
     "bibliography_export.py",
+    "document_conversion.py",
 )
 STATIC_ASSETS = (
     "transport.js", "template-share.js", "template-sharing-ui.js", "capybara-64.png",
     "update-notice.js", "citation-library.js", "citation-import.js", "citation-lookup.js",
     "citation-doi-batch.js", "citation-export.js", "citation-engine.js",
     "citation-assistant.js", "citation-assistant.css",
+    "local-office.js", "document-converter.js", "document-converter.css",
+    "converter-page.js", "converter-page.css",
 )
 MAX_FILE_SIZE = 20 * 1024 * 1024
 MAX_DOCX_EXPANDED = 80 * 1024 * 1024
@@ -157,8 +162,10 @@ def ensure_materials(choice: str, version: str, refresh: bool) -> Path | None:
         for manifest in sorted(cache_root.glob("*/SOURCE-MANIFEST.json")):
             if materials_compatible(manifest.parent):
                 return manifest.parent
-    source_hash, _runtime_hash = materials_fingerprint()
-    output = cache_root / f"{version}-{source_hash[:12]}"
+    source_hash, runtime_hash = materials_fingerprint()
+    # New pure-Python wheels change the runtime inventory without changing
+    # upstream source pins. Keep earlier release materials intact.
+    output = cache_root / f"{version}-{source_hash[:12]}-{runtime_hash[:12]}"
     if output.exists():
         if materials_compatible(output) and not refresh:
             return output
@@ -382,6 +389,8 @@ def write_headers(out: Path) -> None:
         """/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
 /
   Cache-Control: public, max-age=0, must-revalidate
 /index.html
@@ -421,12 +430,38 @@ def file_entries(root: Path) -> list[dict]:
 
 
 def precache_paths(entries: list[dict]) -> list[str]:
-    prefixes = ("index.html", "static/", "browser/", "python/", "runtime/", "wheels/")
+    prefixes = ("index.html", "converter.html", "static/", "browser/", "python/", "runtime/", "wheels/")
     return sorted(
         "./" if entry["path"] == "index.html" else "./" + entry["path"]
         for entry in entries
         if entry["path"].startswith(prefixes)
+        and not entry["path"].startswith("runtime/office/")
     )
+
+
+def browser_page(name: str, version: str, runtime_version: str, offline: bool, materials: bool) -> str:
+    """Render either standalone tool at the same static application root."""
+    html = (ROOT / "templates" / name).read_text(encoding="utf-8")
+    if "{{ version }}" not in html or (name == "index.html" and "{{ today }}" not in html):
+        raise BuildError(f"{name} is missing its required build placeholders")
+    html = (html.replace("{{ version }}", version).replace("{{ today }}", "")
+            .replace("{{ public_server }}", "false"))
+    mode_tags = re.findall(r'<meta name="mlafmt-mode" content="(?:server|browser)" />', html)
+    if len(mode_tags) != 1:
+        raise BuildError(f"{name} must contain exactly one transport mode meta tag")
+    html = html.replace(mode_tags[0], '<meta name="mlafmt-mode" content="browser" />')
+    replacements = {
+        '<meta name="formcapy-offline" content="false" />': f'<meta name="formcapy-offline" content="{str(offline).lower()}" />',
+        '<meta name="mlafmt-runtime" content="" />': f'<meta name="mlafmt-runtime" content="{runtime_version}" />',
+        '<meta name="mlafmt-materials" content="none" />': f'<meta name="mlafmt-materials" content="{"included" if materials else "none"}" />',
+    }
+    for original, rendered in replacements.items():
+        if html.count(original) != 1:
+            raise BuildError(f"{name} must contain exactly one {original}")
+        html = html.replace(original, rendered)
+    if "{{" in html or "{%" in html:
+        raise BuildError(f"Jinja placeholder remained in {name}")
+    return html
 
 
 def build(
@@ -457,39 +492,9 @@ def build(
     (out / "runtime" / "pyodide" / pyodide_version).mkdir(parents=True)
     (out / "wheels").mkdir()
 
-    # HTML: replace the only Jinja placeholders and switch the transport mode.
-    html = (ROOT / "templates" / "index.html").read_text(encoding="utf-8")
-    if "{{ version }}" not in html or "{{ today }}" not in html:
-        raise BuildError("index.html no longer contains the expected version/today placeholders")
-    html = (html.replace("{{ version }}", version)
-            .replace("{{ today }}", "")
-            .replace("{{ public_server }}", "false"))
-    mode_source = '<meta name="mlafmt-mode" content="server" />'
-    mode_target = '<meta name="mlafmt-mode" content="browser" />'
-    if html.count(mode_source) != 1:
-        raise BuildError("index.html must contain exactly one mlafmt-mode meta tag")
-    html = html.replace(mode_source, mode_target)
-    offline_tag = '<meta name="formcapy-offline" content="false" />'
-    if html.count(offline_tag) != 1:
-        raise BuildError("index.html must contain exactly one formcapy-offline meta tag")
-    html = html.replace(offline_tag, f'<meta name="formcapy-offline" content="{str(offline).lower()}" />')
-    runtime_source = '<meta name="mlafmt-runtime" content="" />'
-    runtime_target = f'<meta name="mlafmt-runtime" content="{pyodide_version}" />'
-    if html.count(runtime_source) != 1:
-        raise BuildError("index.html must contain exactly one empty mlafmt-runtime meta tag")
-    html = html.replace(runtime_source, runtime_target)
-    materials_source_tag = '<meta name="mlafmt-materials" content="none" />'
-    materials_target_tag = (
-        '<meta name="mlafmt-materials" content="included" />'
-        if materials_source
-        else materials_source_tag
-    )
-    if html.count(materials_source_tag) != 1:
-        raise BuildError("index.html must contain exactly one mlafmt-materials meta tag")
-    html = html.replace(materials_source_tag, materials_target_tag)
-    if "{{" in html or "{%" in html:
-        raise BuildError("Jinja placeholder remained in the static HTML")
-    (out / "index.html").write_text(html, encoding="utf-8")
+    for name in ("index.html", "converter.html"):
+        html = browser_page(name, version, pyodide_version, offline, bool(materials_source))
+        (out / name).write_text(html, encoding="utf-8")
 
     for name in STATIC_ASSETS:
         shutil.copyfile(ROOT / "static" / name, out / "static" / name)
@@ -497,6 +502,8 @@ def build(
     # are served locally with the application, including its offline cache.
     shutil.copytree(ROOT / "static" / "vendor" / "citations", out / "static" / "vendor" / "citations")
     shutil.copyfile(BROWSER / "worker.js", out / "browser" / "worker.js")
+    for name in ("office-frame.html", "office-frame.js", "office-thread.js"):
+        shutil.copyfile(BROWSER / name, out / "browser" / name)
     for name in PYTHON_MODULES:
         shutil.copyfile(ROOT / name, out / "python" / name)
 
@@ -520,6 +527,13 @@ def build(
         wheels.append((wheel["file"], wheel_path))
 
     collect_licenses(out, catalog, wheels, version)
+    # The large office engine is integrity-pinned and hosted alongside the app.
+    # It is loaded only after an explicit conversion, never in the app precache.
+    office_runtime = prepare_office_runtime(out, refresh=refresh)
+    with (out / "THIRD-PARTY-NOTICES.txt").open("a", encoding="utf-8") as notice:
+        notice.write("\n" + "=" * 78 + "\nLocal LibreOffice WebAssembly conversion engine\n" + "=" * 78 + "\n\n")
+        notice.write((out / "licenses" / "office" / "README.txt").read_text(encoding="utf-8"))
+        notice.write("\nOriginal license texts and source inventory: licenses/office/\n")
     with (out / "THIRD-PARTY-NOTICES.txt").open("a", encoding="utf-8") as notice:
         notice.write("\n" + "=" * 78 + "\nCitation processor, styles and locale\n" + "=" * 78 + "\n\n")
         citation_dir = ROOT / "static" / "vendor" / "citations"
@@ -591,6 +605,16 @@ def build(
             "max_input_bytes": MAX_FILE_SIZE,
             "max_docx_expanded_bytes": MAX_DOCX_EXPANDED,
             "max_docx_entries": MAX_DOCX_ENTRIES,
+            "max_conversion_output_bytes": 80 * 1024 * 1024,
+            "max_pdf_pages": 200,
+        },
+        "office_runtime": {
+            "id": office_runtime["id"],
+            "manifest": "runtime/office/runtime.json",
+            "initial_memory_mib": office_runtime["initialMemoryMiB"],
+            "loaded_on_explicit_conversion_only": True,
+            "precache": False,
+            "license_and_source_inventory": "licenses/office/SOURCE-INVENTORY.json",
         },
         "offline": {
             "service_worker": bool(offline),
@@ -695,7 +719,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  total size:    {total:.1f} MiB")
     print(f"  cache version: {manifest['cache_version']}")
     print(f"  elapsed:       {time.time() - started:.1f}s")
-    print(f"  preview:       python -m http.server 8080 --directory \"{args.out}\"")
+    print(f"  preview:       python scripts/preview_local.py --port 8080 --directory \"{args.out}\"")
     return 0
 
 

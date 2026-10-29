@@ -1,0 +1,55 @@
+/* Scoped styles for the independent, browser-local file converter. */
+.fc-converter {
+  margin: 24px 0;
+  color: var(--ink, #233c48);
+  background: #fafbf8;
+  border: 1px solid var(--line, #dce5e3);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.fc-converter [hidden] { display: none !important; }
+.fc-converter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 16px;
+  padding: 20px 24px;
+  background: #edf4f2;
+  cursor: pointer;
+}
+.fc-converter-summary:focus-visible { outline: 3px solid var(--accent, #246a83); outline-offset: -4px; }
+.fc-converter-title { font-size: 16px; font-weight: 750; }
+.fc-converter-subtitle { color: var(--muted, #566b73); font-size: 12px; }
+.fc-converter-body { padding: 4px 24px 24px; border-top: 1px solid var(--line, #dce5e3); }
+.fc-converter-privacy { margin: 17px 0 20px; font-size: 13px; color: var(--muted, #566b73); }
+.fc-converter-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(140px, 1fr); gap: 20px; }
+.fc-converter-field { min-width: 0; }
+.fc-converter-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 650; }
+.fc-converter-filename { margin: 8px 0 0; font-size: 12px; color: var(--muted, #566b73); overflow-wrap: anywhere; }
+.fc-converter .fc-converter-target {
+  width: 100%; max-width: 100%; min-height: 42px; padding: 8px 12px;
+  color: inherit; background: #fff; border: 1px solid #bfd0ce; border-radius: 9px;
+}
+.fc-converter .fc-converter-button {
+  min-height: 42px; padding: 8px 16px; border: 1px solid #bfd0ce;
+  border-radius: 9px; background: #fff; color: var(--accent-dark, #1c5268);
+  font-size: 13px; font-weight: 650; line-height: 1.5; cursor: pointer;
+}
+.fc-converter .fc-converter-button:hover:enabled { background: #edf4f2; }
+.fc-converter .fc-converter-primary { color: #fff; background: var(--accent, #246a83); border-color: var(--accent, #246a83); }
+.fc-converter .fc-converter-primary:hover:enabled { background: var(--accent-dark, #1c5268); }
+.fc-converter .fc-converter-button:disabled { opacity: .55; cursor: default; }
+.fc-converter .fc-converter-clear { font-weight: 500; }
+.fc-converter-note { margin: 14px 0; font-size: 12px; color: var(--muted, #566b73); overflow-wrap: anywhere; }
+.fc-converter-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+.fc-converter-status { margin: 16px 0 0; font-size: 13px; color: var(--accent-dark, #1c5268); overflow-wrap: anywhere; }
+.fc-converter .fc-converter-error { color: var(--error, #af3c49); }
+.fc-converter-warnings { margin: 12px 0 0; padding-left: 22px; font-size: 12px; color: #815b20; overflow-wrap: anywhere; }
+.fc-converter-warnings li + li { margin-top: 7px; }
+.fc-converter-download { display: inline-block; margin-top: 18px; color: var(--accent-dark, #1c5268); font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .fc-converter-summary { padding: 17px 16px; }
+  .fc-converter-body { padding: 3px 16px 20px; }
+  .fc-converter-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .fc-converter-actions .fc-converter-button { flex: 1 1 auto; }
+}

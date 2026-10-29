@@ -1,0 +1,3 @@
+# Local desktop PDF text reconstruction; Word conversion additionally uses
+# an installed LibreOffice executable. No server or cloud package is required.
+pypdf==6.21.4

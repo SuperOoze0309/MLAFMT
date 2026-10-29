@@ -56,7 +56,7 @@ MAX_FINGERPRINT = 64
 DOCX_MIME = (
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
-KINDS = ("blank", "convert", "paragraphs", "bibliography")
+KINDS = ("blank", "convert", "paragraphs", "bibliography", "file_convert", "file_check")
 TEXT_FIELDS = (
     "name",
     "title",
@@ -116,7 +116,7 @@ def begin(file_name=""):
     """
     workdir = tempfile.mkdtemp(prefix=_TEMP_PREFIX)
     extension = os.path.splitext(_basename(file_name))[1].lower()
-    if extension not in SUPPORTED_EXTS:
+    if extension not in (*SUPPORTED_EXTS, ".pdf", ".doc"):
         extension = ".bin"
     input_path = os.path.join(workdir, "input" + extension)
     return _metadata({"workdir": workdir, "input_path": input_path})
@@ -141,6 +141,10 @@ def finish(request_json, workdir):
             return _paragraphs(request, workdir), b""
         if kind == "bibliography":
             return _bibliography(request)
+        if kind == "file_convert":
+            return _file_convert(request, workdir)
+        if kind == "file_check":
+            return _file_check(request, workdir), b""
         return _generate(request, workdir)
     except RequestError as error:
         return _metadata(_error_payload(error.code, error.detail)), b""
@@ -375,6 +379,47 @@ def _bibliography(request):
         "format_id": style,
         "format_label": f"{style.upper()} independent bibliography",
     }), document
+
+
+def _file_convert(request, workdir):
+    """Reconstruct an editable Word file from PDF entirely inside MEMFS.
+
+    The browser's separate local office engine handles Word format conversions;
+    keeping this adapter PDF-only makes a native subprocess impossible here.
+    """
+    from document_conversion import ConversionError, convert_document
+
+    path, extension = _input_path(request, workdir)
+    if extension != ".pdf" or request.get("target_format") != "docx":
+        raise RequestError("unsupported")
+    _check_limits(path)
+    try:
+        result = convert_document(_read(path), request["file_name"], "docx")
+    except ConversionError as error:
+        raise RequestError(error.code, error.detail) from error
+    return _metadata({
+        "ok": True,
+        "kind": "file_convert",
+        "name": result.filename,
+        "mime": result.mime_type,
+        "bytes": len(result.data),
+        "conversion_warnings": list(result.warnings),
+    }), result.data
+
+
+def _file_check(request, workdir):
+    """Check containers and external-resource links before starting Office."""
+    from document_conversion import ConversionError, validate_document
+
+    path, extension = _input_path(request, workdir)
+    if extension not in (".docx", ".doc"):
+        raise RequestError("unsupported")
+    _check_limits(path)
+    try:
+        validate_document(_read(path), extension[1:])
+    except ConversionError as error:
+        raise RequestError(error.code, error.detail) from error
+    return _metadata({"ok": True, "kind": "file_check"})
 
 
 def _paragraphs(request, workdir):

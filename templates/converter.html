@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <meta name="mlafmt-mode" content="browser" />
+    <meta name="mlafmt-runtime" content="" />
+    <meta name="mlafmt-materials" content="none" />
+    <meta name="formcapy-version" content="{{ version }}" />
+    <meta name="formcapy-offline" content="false" />
+    <meta name="description" content="Convert PDF, DOCX and DOC files locally in your browser with FormCapy. No document upload." />
+    <title>PDF / Word file converter · FormCapy</title>
+    <link rel="icon" type="image/png" href="static/capybara-64.png" />
+    <link rel="stylesheet" href="static/document-converter.css" />
+    <link rel="stylesheet" href="static/converter-page.css" />
+    <script defer src="static/transport.js"></script>
+    <script defer src="static/local-office.js"></script>
+    <script defer src="static/document-converter.js"></script>
+    <script defer src="static/update-notice.js"></script>
+    <script defer src="static/converter-page.js"></script>
+  </head>
+  <body class="converter-page">
+    <a class="converter-skip" href="#conversion-heading" data-page-t="skip">Skip to file conversion</a>
+    <header class="converter-header converter-shell">
+      <div class="converter-topbar">
+        <a id="converter-brand" class="converter-brand" href="index.html" aria-label="FormCapy home">
+          FormCapy <span class="converter-version">v{{ version }}</span>
+        </a>
+        <div class="converter-languages" role="group" aria-label="Interface language" id="converter-languages">
+          <button type="button" id="lang-zh" lang="zh" aria-pressed="false">中文</button>
+          <button type="button" id="lang-en" lang="en" aria-pressed="true">English</button>
+          <button type="button" id="lang-es" lang="es" aria-pressed="false">Español</button>
+        </div>
+      </div>
+      <nav class="converter-nav" aria-label="FormCapy tools" id="converter-tools">
+        <a id="tool-paper" href="index.html" data-page-t="paper">Paper formatter</a>
+        <a id="tool-converter" href="converter.html" aria-current="page" data-page-t="converter">File converter</a>
+      </nav>
+    </header>
+    <main class="converter-shell converter-main">
+      <div id="converter-update-mount"></div>
+      <div class="converter-hero">
+        <p class="converter-eyebrow" data-page-t="eyebrow">LOCAL FILE TOOLS</p>
+        <h1 id="conversion-heading" data-page-t="heading" tabindex="-1">Convert PDF and Word files.</h1>
+        <p class="converter-intro" data-page-t="intro">Choose a file, choose its new format, then download the result.</p>
+      </div>
+      <p id="converter-page-error" class="converter-page-error" role="alert" hidden></p>
+      <section id="document-converter-mount" aria-labelledby="conversion-heading"></section>
+      <p class="converter-offline-note" data-page-t="offline">Offline use is available after the conversion components are fully cached. Clearing the browser cache requires another download.</p>
+      <noscript><p class="converter-page-error">Enable JavaScript to convert files locally in your browser.</p></noscript>
+    </main>
+    <footer class="converter-footer converter-shell">
+      <span>FormCapy v{{ version }}</span>
+      <nav class="converter-license-links" aria-label="Licenses and source" id="converter-license-nav">
+        <a href="THIRD-PARTY-NOTICES.txt" data-page-t="licenses">Third-party licenses</a>
+        <a href="licenses/office/SOURCE-INVENTORY.json" data-page-t="sources">Office runtime sources</a>
+      </nav>
+    </footer>
+  </body>
+</html>

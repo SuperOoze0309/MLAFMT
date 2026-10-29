@@ -57,6 +57,14 @@
   },
   "wheels": [
     {
+      "name": "pypdf",
+      "version": "6.21.4",
+      "file": "pypdf-6.21.4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/3f/4b/77e8ad4ac42c9d93600f40541a50e9feb3a61d2bbee2d76f659346072051/pypdf-6.21.4-py3-none-any.whl",
+      "size": 410430,
+      "sha256": "33e4fb41ca352810eb4e9838aa0d82d6888a5f8bf682f43e99cce5faa666255c"
+    },
+    {
       "name": "python-docx",
       "version": "1.2.0",
       "file": "python_docx-1.2.0-py3-none-any.whl",

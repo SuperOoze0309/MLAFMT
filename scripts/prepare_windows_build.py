@@ -100,6 +100,7 @@ def main():
     (output / "release-notes.md").write_text(release.group(0).strip() + "\n", encoding="utf-8")
     packages = write_notices(root, output, target="windows", release_check=args.release_check)
     source_files = ["mla_gui.py", "mla_formatter.py", "format_profiles.py", "docx_preserve.py", "requirements-build.txt",
+                    "document_conversion.py", "desktop_conversion.py", "requirements-conversion.txt",
                     "scripts/build_windows.ps1", "scripts/prepare_windows_build.py", "scripts/prepare_brand_assets.ps1",
                     "scripts/license_notices.py", "scripts/build_lxml_no_iconv.py", "scripts/lxml-no-iconv-sources.json",
                     "scripts/windows_source_kit.py", "scripts/rebuild_windows_source_kit.py", "scripts/lxml-windows-source-kit.json",
