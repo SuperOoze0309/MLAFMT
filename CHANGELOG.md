@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.11.0 — 2026-10-28 (static/source release; website rollout pending)
+## v2.11.0 — 2026-10-28 (static website and source released)
 
 - 增加独立的 PDF / DOCX / DOC 文件互转页面 `converter.html`；首页顶部提供入口，直接显示文件和目标格式，不要求填写论文信息。
 - 静态网页版按需加载同源、校验哈希的 LibreOffice WebAssembly 引擎，生成真正的 Word 97–2003 `.doc`、DOCX 和 PDF；文件内容只在当前设备处理。
@@ -8,7 +8,8 @@
 - 桌面源码增加本地互转窗口及转换接口；Word 转换使用设备上安装的 LibreOffice，PDF 文字重建使用 pypdf。
 - 浏览器转换引擎增加本地中文字体，并随包提供原字体许可与来源。
 - 三语转换状态、取消、独立下载及旧结果失效处理；大型转换引擎不进入应用首次打开的离线预缓存。
-- [GitHub v2.11.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0) 已发布静态浏览器包与源码；正式网站仍为 v2.10.0，v2.11.0 部署与公网验证待完成。离线安装包仍为 v2.5.0，本次未发布新的桌面或 Android 安装包。验证结果与运行条件见 `docs/CONVERSION.md`、`docs/TESTING-v2.11.md`。
+- [GitHub v2.11.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0) 已发布静态浏览器包与源码；[正式网站](https://formcapy.com/converter.html)已更新至 v2.11.0。Cloudflare 版本 `b0c26902-ddb7-4f8a-bc68-9558a1d4bc09` 为 Ready、100% 流量；两域 390 个资源的大小、SHA-256、安全响应头、MIME 与 HTTPS 检查通过。
+- 生产 Edge 完成 18 项检查及六个真实转换下载，包含中文字体、独立文件结构核验、取消、OCR 提示及离线双向导航；记录到 115 次 GET、零外部请求或浏览器异常。取消测试产生一次预期中止，无非预期失败。范围及测试工具修正记录见 `docs/TESTING-v2.11.md`。离线安装包仍为 v2.5.0，本次未发布新的桌面或 Android 安装包。运行条件见 `docs/CONVERSION.md`。
 
 ## v2.10.0 — 2026-10-25
 

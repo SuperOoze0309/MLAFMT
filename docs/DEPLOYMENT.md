@@ -1,18 +1,56 @@
 # FormCapy web deployment
 
-## v2.11.0 release published; website deployment pending — 2026-10-28
+## Current public website — v2.11.0
 
-The [GitHub v2.11.0 release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)
-publishes the static browser ZIP, SHA-256 checksum file and source tag at
-`c58f3ef1a2a169f946d04e545a50b86ab6eccc5c`. This release includes the standalone
-local PDF/DOCX/DOC converter. The public website remains v2.10.0; v2.11.0
-production deployment and public verification are pending. The v2.10.0
-production evidence below does not establish a v2.11.0 deployment.
-Desktop and Android installers remain
-[v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0); this release
-does not publish new native installers.
+The [independent file converter](https://formcapy.com/converter.html) and
+[paper formatter](https://formcapy.com/) are live as v2.11.0. On **28 October
+2026 (America/Los_Angeles)**, the accepted H-drive static artifact was deployed
+to Cloudflare Worker `formcapy` using the authorized Wrangler debugging
+fallback. Two earlier dashboard asset uploads had failed with HTTP 401.
+Wrangler uploaded 180 assets and reused 15 already present. Version
+`b0c26902-ddb7-4f8a-bc68-9558a1d4bc09` was reported at **100% traffic** and
+observed as **Ready** in the existing Edge dashboard. The screenshot is
+`build/v2.11.0/production/deployment/ready-b0c26902.png`.
 
-## Current public website — v2.10.0
+This release adds browser-local PDF/DOCX/DOC conversion in a separate page.
+The office WASM engine and Chinese font load on demand. PDF to Word rebuilds
+editable text without images, table structure, original layout or OCR.
+Desktop source conversion requires installed LibreOffice; Android does not
+include this converter. Published native installers remain
+[v2.5.0](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.5.0).
+
+| Item | Recorded result |
+| --- | --- |
+| Application source | `c58f3ef1a2a169f946d04e545a50b86ab6eccc5c` |
+| Release | [v2.11.0 static package and source](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0); ZIP and checksum asset sizes and server digests verified |
+| CI | [40793176013](https://github.com/SuperOoze0309/MLAFMT/actions/runs/40793176013): all seven jobs succeeded; no new native installers were published |
+| Local regression | 268 Python tests and 159 subtests passed, one native LibreOffice test skipped; 545 Node cases passed |
+| Local browser | The final standalone frozen preview passed 18 checks, including all six actual conversions/downloads and offline navigation; this is separate from production browser acceptance |
+| Frozen upload | `dist/formcapy-v2.11.0-standalone-preview/`; 195 manifest entries plus the manifest, 196 physical files; all bytes remained unchanged after acceptance |
+| Manifest SHA-256 | `322ed026f62f89e32532bf0b3875677aeefd3ad7c997d510d5193f21d69f1507` |
+| Release ZIP SHA-256 | `e54d52c826647b0ed6544691a3c44d73e1b857e0fe4049eadbc9343f8e227aa5` |
+| Public cache | `formcapy-2.11.0-pyodide-314.0.7-a13935a88c02` |
+| Full root / www sweep | 390/390 downloadable resources matched frozen size/SHA-256, security headers and MIME; 813,172,914 decoded bytes verified with 410 GET requests, zero errors and zero retries |
+| HTTPS and pages | Both domains report v2.11.0 and the accepted manifest; homepage converter navigation and frozen page bytes match; HTTP upgrades preserve tested encoded paths and queries |
+| Production browser | Edge 156.0.4314.50 passed all 18 checks and six actual conversion downloads, including Chinese content/fonts, cancellation, image-only PDF rejection and offline navigation in both directions |
+| Independent production files | Both PDFs contain the exact Chinese text and embedded CJK fonts with ToUnicode maps; DOCX XML and genuine DOC WordDocument/table streams passed independent checks |
+| Production browser trace | 115 GET requests, zero external requests, console/page/worker-audit errors, or unexpected request failures; one expected canceled Fetch from the cancellation check |
+
+The browser run used normal Service Worker registration, activation and
+navigation control without forcing activation or client claims. Its request
+trace covers the page/iframe and conversion workers; initial Service Worker
+install fetches are outside this CDP trace. A test-harness pause that affected
+the first run was corrected without changing the deployed artifact; see the
+provenance in [test scope](TESTING-v2.11.md).
+
+HTTP evidence is `build/v2.11.0/production/deployment-verification.json`;
+the successful browser report, actual downloads and screenshots are under
+`build/v2.11.0/production/browser-fixed/`. The initial report remains in
+`build/v2.11.0/production/browser/`. See [test scope](TESTING-v2.11.md) and
+[conversion limits](CONVERSION.md). Safari, physical devices and installed
+native LibreOffice conversion remain outside this acceptance.
+
+## Prior public website — v2.10.0
 
 The static website is live at [formcapy.com](https://formcapy.com/) and
 [www.formcapy.com](https://www.formcapy.com/). On 25 October 2026

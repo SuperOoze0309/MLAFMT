@@ -269,11 +269,17 @@ writer.write(sys.argv[1])
   socket = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); });
   cdp = new CDP(socket);
+  // Edge can leave a service worker paused while Network.enable waits for its
+  // startup. Keep the conversion workers/frames instrumented without pausing
+  // the app's normal service-worker installation and activation lifecycle.
+  const autoAttach = {autoAttach:true,waitForDebuggerOnStart:true,flatten:true,
+    filter:[{type:"service_worker",exclude:true},{type:"browser",exclude:true},
+      {type:"tab",exclude:true},{}]};
   cdp.on("Target.attachedToTarget", async event => {
     const session=event.sessionId;
     try {
       await cdp.send("Network.enable",{},session);
-      await cdp.send("Target.setAutoAttach",{autoAttach:true,waitForDebuggerOnStart:true,flatten:true},session).catch(()=>{});
+      await cdp.send("Target.setAutoAttach",autoAttach,session).catch(()=>{});
     } catch(error) {
       if(!/session.*(not found|closed)|target.*closed|No session/i.test(String(error.message||error)))report.workerAuditErrors.push(String(error.message||error));
     } finally {
@@ -289,7 +295,7 @@ writer.write(sys.argv[1])
   });
   cdp.on("Network.loadingFailed", event => report.failedRequests.push(event));
   await Promise.all(["Page.enable", "Runtime.enable", "Network.enable", "DOM.enable"].map(method => cdp.send(method)));
-  await cdp.send("Target.setAutoAttach",{autoAttach:true,waitForDebuggerOnStart:true,flatten:true});
+  await cdp.send("Target.setAutoAttach",autoAttach);
   report.browserVersion = await cdp.send("Browser.getVersion");
   await cdp.send("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: downloads, eventsEnabled: true });
   await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -488,7 +494,7 @@ print(json.dumps({'passed':True,'files':results}))
   } finally {
     await cdp.send("Network.emulateNetworkConditions",{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
   }
-  report.requestTraceScope = "Installed Chrome page/iframe and auto-attached worker CDP requests; local mode also records every static-server request. The --base production run starts no local content server. Local Blob reads are not document uploads.";
+  report.requestTraceScope = "Installed Chromium page/iframe and auto-attached conversion worker CDP requests; service workers are excluded from pause-on-start instrumentation so registration/activation run normally. Initial service-worker install fetches are outside this CDP request trace. Local mode also records every static-server request. The --base production run starts no local content server. Local Blob reads are not document uploads.";
   report.ok = true;
   console.log("OK: six real browser-local conversions and downloads passed");
 } catch (error) {

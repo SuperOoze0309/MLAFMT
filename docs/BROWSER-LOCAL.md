@@ -1,18 +1,23 @@
 # Browser-local FormCapy (MLAFMT)
 
-**Published static package and source v2.11.0:** local PDF/DOCX/DOC conversion is implemented and
-verified in a frozen preview, including a lazy same-origin office WASM engine.
-The [GitHub release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)
-is published; production website deployment and public verification remain pending.
+**Published static website and source v2.11.0:** the independent
+[PDF/DOCX/DOC converter](https://formcapy.com/converter.html) is live, including
+a lazy same-origin office WASM engine. The
+[GitHub release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)
+includes the complete static package. Both public domains passed the full
+390-resource HTTP audit. Production Edge passed all 18 real-browser checks,
+including six actual conversion downloads and normal Service Worker activation
+with offline navigation in both directions. The report is
+`build/v2.11.0/production/browser-fixed/report.json`.
 See [conversion scope](CONVERSION.md) and
 [v2.11 verification](TESTING-v2.11.md). Use `scripts/preview_local.py` for
 COOP/COEP headers when previewing the converter.
 
-**Public website status:** the static website remains v2.10.0, with local library search,
+**Public website status:** the static website runs v2.11.0, with local library search,
 type filters and portable exports, alongside DOI batches and offline import.
 Offline installers remain v2.5.0.
 Current verification is recorded in [deployment notes](DEPLOYMENT.md) and
-[v2.10 testing](TESTING-v2.10.md); earlier version records below remain historical.
+[v2.11 testing](TESTING-v2.11.md); earlier version records below remain historical.
 
 FormCapy runs as a native Tk desktop app, an Android app with an offline Python
 bridge, or a Flask local web app. This document describes the additional

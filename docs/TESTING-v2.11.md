@@ -1,7 +1,9 @@
-# v2.11.0 local conversion verification
+# v2.11.0 conversion verification
 
-Verified on 28 October 2026 (America/Los_Angeles). This record covers source
-and a frozen local static preview, not a public deployment or new installer.
+Verified on 28 October 2026 (America/Los_Angeles). The local sections cover
+source and frozen static previews. The separate production section records
+the public deployment and its current verification limits. No new native
+installer is included.
 
 ## Automated regression
 
@@ -126,3 +128,62 @@ is under `build/v2.11.0/acceptance/standalone-browser/` and
 ```powershell
 .venv\Scripts\python.exe scripts/preview_local.py --directory dist/formcapy-v2.11.0-standalone-preview --port 8612
 ```
+
+## Production deployment and verification — 2026-10-28
+
+The accepted standalone artifact was deployed unchanged to Cloudflare Worker
+`formcapy` as version `b0c26902-ddb7-4f8a-bc68-9558a1d4bc09`.
+Wrangler reported 100% traffic, and the existing Edge dashboard showed Ready;
+the screenshot is
+`build/v2.11.0/production/deployment/ready-b0c26902.png`.
+Application source `c58f3ef1a2a169f946d04e545a50b86ab6eccc5c` passed all
+seven jobs in [CI run 40793176013](https://github.com/SuperOoze0309/MLAFMT/actions/runs/40793176013).
+The [GitHub release](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)
+contains the static ZIP and checksum file; both assets' sizes and server
+digests were verified. Existing native installers remain v2.5.0.
+
+The GET-only public audit ran once, with no automatic retries, against both
+`formcapy.com` and `www.formcapy.com` using the full asset scope. It passed:
+
+- 390/390 downloadable resources matched the frozen sizes and SHA-256 values;
+  813,172,914 decoded bytes were checked across 410 GET requests, with zero
+  errors. `_headers` is deployment configuration, excluded as a downloadable
+  file; applied security headers were checked on the actual responses.
+- Required COOP/COEP, nosniff and MIME checks passed. Both domains reported
+  v2.11.0, the accepted manifest and cache
+  `formcapy-2.11.0-pyodide-314.0.7-a13935a88c02`.
+- Homepage converter navigation and frozen page bytes matched. Both domains
+  upgraded HTTP to trusted HTTPS while preserving tested encoded paths and
+  queries.
+
+Evidence: `build/v2.11.0/production/deployment-verification.json`, completed
+28 October 2026 at 17:50:00 -07:00. The audit sent no document and does not
+replace browser conversion acceptance.
+
+Production **Edge 156.0.4314.50 passed all 18 checks**, with six actual
+conversion downloads. The successful report is
+`build/v2.11.0/production/browser-fixed/report.json`, completed at
+17:55:05 -07:00 on 28 October 2026. Checks include all conversion directions,
+startup cancellation/retry, exact Chinese text, embedded PDF CJK fonts with
+ToUnicode maps, valid DOCX XML, genuine DOC WordDocument/table streams,
+image-only PDF OCR-required rejection, three-language narrow layouts, and
+offline navigation in both directions. Independent file validation passed.
+
+The page/iframe and conversion-worker CDP trace recorded 115 requests, all
+GET, with zero external requests, console errors, page exceptions or worker
+audit errors. One Fetch was intentionally canceled by the cancellation check;
+there were zero uncanceled request failures. Initial Service Worker install
+fetches are outside this trace. Registration, activation and navigation
+control ran normally; the offline test did not force activation or client
+claims.
+
+For provenance, the initial production run passed 17 checks and all six
+downloads, then timed out on offline navigation. CDP auto-attachment had
+paused the Service Worker while `Network.enable` never returned. An
+independent check activated within five seconds and obtained the correct
+navigation controller; unpausing restored the worker. Excluding Service
+Workers from that test-only pause-on-start instrumentation resolved the
+harness issue. The deployed application artifact was unchanged. The initial
+report remains under `build/v2.11.0/production/browser/`; the complete passing
+rerun, downloads and screenshots are in
+`build/v2.11.0/production/browser-fixed/`.

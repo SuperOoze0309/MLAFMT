@@ -12,6 +12,7 @@ platforms/*/bin/
 platforms/*/mla_*.py
 platforms/*/templates/
 .secrets/
+.wrangler/
 .gradle/
 local.properties
 *.jks
