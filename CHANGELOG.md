@@ -1,10 +1,10 @@
 # Changelog
 
-## v2.11.1 — 2026-11-04 (in development)
+## v2.11.1 — 2026-11-04 (static website deployed)
 
 - 本地 Office 引擎按需使用逐片 gzip 和有界并发，保留每片原始资源和旧清单以兼容现有客户端与缓存。压缩与解压后的内容均验证大小及 SHA-256；取消和错误会终止未完成的加载。
-- 13 个 WASM/数据分片由 261,188,103 字节压至 83,865,122 字节；不含字体及其他组件。仅在一台物理机 Edge 的 localhost 模拟网络下，Office adapter 单次冷启动 DOCX→DOC 对照为 33,673 ms → 12,785 ms；这不是完整页面的用户操作耗时，结果不保证推广到其他网络或设备。[测试范围](docs/TESTING-v2.11.1.md)
-- 本地 Edge 18 项页面验收、真实缓存迁移及无 `DecompressionStream` 回退通过；Cloudflare `74e5d598` 预览完成 gzip 响应、MIME、哈希和缓存头抽查，公网预览 Edge 18 项页面验收通过。v2.11.1 尚未部署到正式站或正式发布，正式网站仍为 v2.11.0，离线安装包仍为 v2.5.0。
+- 13 个 WASM/数据分片由 261,188,103 字节压至 83,865,122 字节；不含字体及其他组件。物理机 Edge 的 localhost 模拟 100 ms / 80 Mbps 网络下，两组各两次的 Office adapter 冷启动 DOCX→DOC 平均为 33,670 ms → 12,800 ms，Office 响应体为 278,745,860 → 101,427,235 字节；这不是完整页面的用户操作耗时，结果不保证推广到其他网络或设备。[测试范围](docs/TESTING-v2.11.1.md)
+- Cloudflare 版本 `74e5d598-b4a5-4df8-b2e5-2a8db96ae65d` 已部署到正式站并接收 100% 流量。本地、Cloudflare 预览和正式站的 Edge 页面验收分别通过 18 项检查与六个真实转换下载，均含离线双向导航；真实缓存迁移及无 `DecompressionStream` 回退也通过。离线安装包仍为 v2.5.0。
 
 ## v2.11.0 — 2026-10-28 (static website and source released)
 

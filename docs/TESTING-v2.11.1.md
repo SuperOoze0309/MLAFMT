@@ -1,10 +1,9 @@
 # v2.11.1 local Office startup verification
 
-Status: the source and candidate static build at
-`dist/formcapy-v2.11.1-preview` passed local full-page acceptance. Cloudflare
-version `74e5d598` has been uploaded as a preview; its public-preview 18-case
-Edge acceptance passed. The production website remains v2.11.0 and
-v2.11.1 is not yet released. Existing native installers remain v2.5.0.
+Status: the static build at `dist/formcapy-v2.11.1-preview` is deployed to
+production as Cloudflare version `74e5d598-b4a5-4df8-b2e5-2a8db96ae65d`
+with 100% traffic. Local, Cloudflare preview and production Edge full-page
+acceptance each passed all 18 cases. Existing native installers remain v2.5.0.
 
 ## Design and integrity
 
@@ -54,8 +53,21 @@ loader and fallback without `DecompressionStream` passed.
   cancellation, no unexpected failures and normal service-worker offline
   operation in both directions. Initial service-worker installation requests
   are outside the CDP trace. Evidence:
-  `build/v2.11.1/acceptance/cloudflare-preview/report.json`. This does not
-  establish production deployment.
+  `build/v2.11.1/acceptance/cloudflare-preview/report.json`.
+- Production Edge 156.0.4314.58 passed all 18 cases and six actual clicked
+  downloads at `https://formcapy.com/`, including Chinese text and embedded
+  PDF CJK fonts, genuine DOC structures, cancellation, image-only PDF guidance
+  and normal offline navigation in both directions. The trace recorded 117
+  GETs, 13 unique gzip chunks, zero external requests or browser exceptions,
+  and three expected cancellations; no uncanceled request failed. Initial
+  Service Worker installation requests remain outside the CDP trace. Evidence:
+  `build/v2.11.1/production/browser/report.json`.
+
+- Full production asset audit passed on both `formcapy.com` and
+  `www.formcapy.com`: 209 assets per domain, 418/418 size and SHA-256 checks,
+  with security headers, MIME types and gzip and old/new manifest cache headers
+  verified. The audit recorded 438 GET requests and no errors. Evidence:
+  `build/v2.11.1/production/deployment-verification.json`.
 
 ## Local network simulation
 
@@ -65,7 +77,7 @@ were served by localhost, with CDP network conditions set to 100 ms latency and
 80 Mbps download speed. These limited observations are not a production
 benchmark.
 
-| Office adapter measurement | v2.11.0 baseline | gzip + concurrency candidate |
+| Office adapter measurement | v2.11.0 baseline | gzip + concurrency v2.11.1 |
 | --- | ---: | ---: |
 | First DOCX→DOC, cold cache (two runs) | 33,673 / 33,667 ms | 12,785 / 12,815 ms |
 | First DOCX→DOC, cold cache (mean of two) | 33,670 ms | 12,800 ms |
