@@ -10,10 +10,13 @@ adding a Python package solely for the CDN's compressed files.
 from __future__ import annotations
 
 import argparse
+import copy
+import gzip
 import hashlib
 import json
 import shutil
 import subprocess
+import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -28,6 +31,7 @@ NOTO_CJK_COMMIT = "f8d157532fbfaeda587e826d4cd5b21a49186f7c"
 NOTO_CJK_NAME = "NotoSansCJKsc-Regular.otf"
 NOTO_CJK_URL = f"https://raw.githubusercontent.com/notofonts/noto-cjk/{NOTO_CJK_COMMIT}/Sans/OTF/SimplifiedChinese/{NOTO_CJK_NAME}"
 CHUNK_BYTES = 20 * 1024 * 1024
+HOST_ASSET_LIMIT = 25 * 1024 * 1024
 RUNTIME_NAMES = ("soffice.js", "soffice.wasm", "soffice.data", "soffice.data.js.metadata")
 
 
@@ -162,6 +166,46 @@ def chunks(source: Path, directory: Path) -> dict:
     return result
 
 
+def gzip_chunks(assembly: dict, directory: Path) -> dict:
+    """Add deterministic, content-addressed gzip variants to an assembly copy.
+
+    The original files and their metadata stay intact so an older client, or a
+    client without gzip streaming support, can still use the uncompressed path.
+    Each chunk is compressed independently and streamed to disk to bound build
+    memory; its compressed bytes have their own digest and immutable URL.
+    """
+    result = copy.deepcopy(assembly)
+    for item in result["chunks"]:
+        original = directory.parent / item["path"]
+        if not valid(original, item):
+            raise RuntimeError(f"Office chunk hash/size mismatch: {original.name}")
+        temp_name = None
+        try:
+            with tempfile.NamedTemporaryFile(prefix=".office-gzip-", suffix=".tmp", dir=directory, delete=False) as target:
+                temp_name = target.name
+                with original.open("rb") as source, gzip.GzipFile(
+                    filename="", mode="wb", compresslevel=6, fileobj=target, mtime=0
+                ) as compressed:
+                    shutil.copyfileobj(source, compressed, 1024 * 1024)
+            temporary = Path(temp_name)
+            size = temporary.stat().st_size
+            if not 0 < size < HOST_ASSET_LIMIT:
+                raise RuntimeError(f"Compressed Office chunk exceeds the host asset limit: {original.name}")
+            compressed_digest = digest(temporary)
+            destination = directory / f"{original.name}.{compressed_digest}.gz"
+            temporary.replace(destination)
+            item["compressed"] = {
+                "path": f"{directory.name}/{destination.name}",
+                "size": size,
+                "sha256": compressed_digest,
+                "encoding": "gzip",
+            }
+        finally:
+            if temp_name:
+                Path(temp_name).unlink(missing_ok=True)
+    return result
+
+
 def prepare(out: Path, refresh: bool = False) -> dict:
     """Copy verified runtime/chunks/notices into a static site's output root."""
     out = Path(out).resolve()
@@ -179,6 +223,10 @@ def prepare(out: Path, refresh: bool = False) -> dict:
     assets["driver"] = {"path": "../../browser/office-thread.js", "size": driver.stat().st_size, "sha256": digest(driver)}
     runtime = {"schemaVersion": 1, "id": pin["id"], "initialMemoryMiB": pin["initialMemoryMiB"], "assets": assets}
     (directory.parent / "runtime.json").write_text(json.dumps(runtime, indent=2) + "\n", encoding="utf-8")
+    gzip_runtime = copy.deepcopy(runtime)
+    for key in ("wasm", "data"):
+        gzip_runtime["assets"][key] = gzip_chunks(assets[key], directory)
+    (directory.parent / "runtime-gzip-v1.json").write_text(json.dumps(gzip_runtime, indent=2) + "\n", encoding="utf-8")
     notices = out / "licenses" / "office"
     notices.mkdir(parents=True, exist_ok=True)
     for name, record in pin["licenses"].items():

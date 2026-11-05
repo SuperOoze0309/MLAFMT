@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.11.1 — 2026-11-04 (in development)
+
+- 本地 Office 引擎按需使用逐片 gzip 和有界并发，保留每片原始资源和旧清单以兼容现有客户端与缓存。压缩与解压后的内容均验证大小及 SHA-256；取消和错误会终止未完成的加载。
+- 13 个 WASM/数据分片由 261,188,103 字节压至 83,865,122 字节；不含字体及其他组件。仅在一台物理机 Edge 的 localhost 模拟网络下，Office adapter 单次冷启动 DOCX→DOC 对照为 33,673 ms → 12,785 ms；这不是完整页面的用户操作耗时，结果不保证推广到其他网络或设备。[测试范围](docs/TESTING-v2.11.1.md)
+- 本地 Edge 18 项页面验收、真实缓存迁移及无 `DecompressionStream` 回退通过；Cloudflare `74e5d598` 预览完成 gzip 响应、MIME、哈希和缓存头抽查，公网预览 Edge 18 项页面验收通过。v2.11.1 尚未部署到正式站或正式发布，正式网站仍为 v2.11.0，离线安装包仍为 v2.5.0。
+
 ## v2.11.0 — 2026-10-28 (static website and source released)
 
 - 增加独立的 PDF / DOCX / DOC 文件互转页面 `converter.html`；首页顶部提供入口，直接显示文件和目标格式，不要求填写论文信息。

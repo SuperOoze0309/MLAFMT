@@ -1,5 +1,7 @@
 # FormCapy · 论文与报告排版
 
+**v2.11.1 候选：优化本地 Office 转换启动。** 采用有界并发与按需压缩分片；本地及 Cloudflare 公网预览各 18 项页面验收已通过。性能与验证范围见 [v2.11.1 验证记录](docs/TESTING-v2.11.1.md)。尚未部署到正式站或正式发布，正式网站仍为下述 v2.11.0。 **The v2.11.1 candidate passed 18 local and 18 Cloudflare public-preview page checks. Production remains v2.11.0.**
+
 **[v2.11.0 静态包与源码已发布 / Static package and source released](https://github.com/SuperOoze0309/MLAFMT/releases/tag/v2.11.0)，[独立文件互转已上线 / File converter is live](https://formcapy.com/converter.html)。** 静态网页版在浏览器内完成 PDF / DOCX / DOC 互转；桌面源码使用本机引擎。PDF 转 Word 为可编辑文字重建，不含 OCR、图片或原版式还原。首次 Word 转换需下载较大的本地程序，建议桌面浏览器。**正式网站已更新至 v2.11.0；离线安装包仍为 v2.5.0，不包含此功能。The public website now runs v2.11.0; offline installers remain v2.5.0.** [使用条件与范围 / Conversion scope](docs/CONVERSION.md)
 
 上线验证：两域 390 个资源核对通过；生产 Edge 完成 18 项检查、六个实际转换下载及离线双向导航。Both domains passed the complete asset audit; production Edge passed 18 checks, six real conversion downloads and offline navigation. [验证范围 / Verification scope](docs/TESTING-v2.11.md)

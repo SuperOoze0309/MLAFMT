@@ -405,8 +405,14 @@ def write_headers(out: Path) -> None:
   Cache-Control: public, max-age=0, must-revalidate
 /manifest.json
   Cache-Control: public, max-age=0, must-revalidate
-/runtime/*
+/runtime/pyodide/*
   Cache-Control: public, max-age=31536000, immutable
+/runtime/office/zeta-*
+  Cache-Control: public, max-age=31536000, immutable
+/runtime/office/runtime.json
+  Cache-Control: public, max-age=31536000, immutable
+/runtime/office/runtime-gzip-v1.json
+  Cache-Control: public, max-age=0, must-revalidate
 /wheels/*
   Cache-Control: public, max-age=31536000, immutable
 """,
@@ -611,6 +617,7 @@ def build(
         "office_runtime": {
             "id": office_runtime["id"],
             "manifest": "runtime/office/runtime.json",
+            "compressed_manifest": "runtime/office/runtime-gzip-v1.json",
             "initial_memory_mib": office_runtime["initialMemoryMiB"],
             "loaded_on_explicit_conversion_only": True,
             "precache": False,

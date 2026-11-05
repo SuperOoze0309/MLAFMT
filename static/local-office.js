@@ -13,7 +13,7 @@
   const MAX_BYTES = 20 * 1024 * 1024;
   let settings = {
     frameURL: new URL("../browser/office-frame.html", scriptURL).href,
-    runtimeManifestURL: new URL("../runtime/office/runtime.json", scriptURL).href,
+    runtimeManifestURL: new URL("../runtime/office/runtime-gzip-v1.json", scriptURL).href,
     timeoutMs: 240000,
   };
   let current = null;

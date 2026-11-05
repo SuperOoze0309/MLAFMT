@@ -1,10 +1,12 @@
 # 本地文件互转 / Local file conversion
 
-v2.11.0 source iteration adds a separate PDF / DOCX / DOC conversion page,
+The deployed v2.11.0 release provides a separate PDF / DOCX / DOC conversion page,
 `converter.html`, linked from the paper formatter's top navigation.
 It does not apply an MLA/APA template, edit your original file, or replace the
-paper formatter's current result. This source iteration has not been deployed
-to the public website or packaged as a new installer.
+paper formatter's current result. The v2.11.1 source candidate optimizes the
+local Office engine startup; it has been uploaded as a Cloudflare preview but is
+not yet in production or packaged as a new installer.
+The public site remains v2.11.0; the existing installers remain v2.5.0.
 
 ## 中文
 
@@ -19,6 +21,10 @@ Word 格式转换使用真正的 LibreOffice WebAssembly 引擎，不是修改�
 转换组件附带开放许可的中文字体；没有原文字体时仍可能发生替换。
 第一次 Word 格式转换需要下载较大的程序文件、分配较多内存，建议使用
 内存充足的桌面浏览器。PDF → DOCX 只加载较小的本地 Python/PDF 引擎。
+v2.11.1 源码候选按需并发加载 gzip 分片，支持先前已缓存的原始分片；
+没有 `DecompressionStream` 的浏览器使用原始分片。压缩字节和还原字节
+分别验证大小与 SHA-256，取消仍会中止加载。性能样本与验收状态见
+[v2.11.1 验证记录](TESTING-v2.11.1.md)；线上当前仍为 v2.11.0。
 页面与 Worker 必须通过 HTTPS 或 localhost 提供，并开启 COOP/COEP；
 不支持的浏览器会显示提示。取消会销毁正在运行的引擎实例。
 
@@ -49,6 +55,12 @@ ample memory. An open CJK font is included for Chinese text; missing source
 fonts can still be substituted. PDF-to-DOCX uses the existing Pyodide worker and pypdf instead.
 The page needs HTTPS/localhost and cross-origin isolation (COOP/COEP headers).
 The office runtime is excluded from the initial app-shell precache.
+The v2.11.1 source candidate fetches gzip chunks with bounded concurrency;
+previously cached uncompressed chunks remain usable. Browsers without
+`DecompressionStream` use the original chunks. Both compressed and decoded
+bytes are checked against pinned size and SHA-256. See [v2.11.1 verification](TESTING-v2.11.1.md)
+for measured scope and passed local and public preview acceptance;
+production remains on v2.11.0.
 
 PDF-to-Word is editable text reconstruction, with page breaks. It omits images
 and does not reconstruct columns, tables, fonts or the original layout. There
