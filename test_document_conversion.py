@@ -1,10 +1,12 @@
 """Conversion tests use real generated PDF/DOCX bytes, never disguised DOC files."""
 
 from io import BytesIO
+import base64
 import os
 from pathlib import Path
 import subprocess
 import threading
+import zlib
 from unittest.mock import patch
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -105,6 +107,188 @@ def test_pdf_text_and_stream_limits_are_enforced():
 
 def test_pdf_parser_errors_are_stable_and_do_not_include_draft_content():
     assert_error("bad_pdf", conversion.pdf_to_docx, b"%PDF-1.7\nPRIVATE broken fixture\n%%EOF")
+
+
+def pdf_with_drawn_images(*, transparent=False, huge=False, unsupported=False,
+                          include_unused=False, repeats=1, text=True, jpeg=False,
+                          bomb=False, operators=None, width=2, height=1,
+                          cropped=False, rotated=False, truncated=False,
+                          image_optional_content=False, alternate=False):
+    """Build actual direct image XObjects, not mock pypdf image access."""
+    from pypdf import PdfWriter
+    from pypdf.generic import (ArrayObject, DecodedStreamObject, DictionaryObject,
+                               EncodedStreamObject, NameObject, NumberObject)
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    image = EncodedStreamObject()
+    image.update({NameObject('/Type'): NameObject('/XObject'),
+                  NameObject('/Subtype'): NameObject('/Image'),
+                  NameObject('/Width'): NumberObject(100000 if huge else width),
+                  NameObject('/Height'): NumberObject(100000 if huge else height),
+                  NameObject('/BitsPerComponent'): NumberObject(8),
+                  NameObject('/ColorSpace'): NameObject('/DeviceRGB'),
+                  NameObject('/Filter'): ArrayObject([NameObject('/ASCII85Decode'),
+                                                       NameObject('/FlateDecode')])})
+    if jpeg:
+        image[NameObject('/Filter')] = NameObject('/DCTDecode')
+        image._data = base64.b64decode(
+            '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABsSFBcUERsXFhceHBsgKEIrKCUlKFE6PTBCYFVlZF9VXVtqeJmBanGQc1tdhbWGkJ6jq62rZ4C8ybqmx5moq6T/2wBDARweHigjKE4rK06kbl1upKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKT/wAARCAABAAIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAT/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABAb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCAANSP/9k=')
+        if truncated:
+            image._data = image._data[:-2]
+    else:
+        raw = b'\xff\x00\x00\x00\x00\xff' if not bomb else b'X' * 1000000
+        image._data = base64.a85encode(zlib.compress(raw)) + b'~>'
+    if transparent:
+        image[NameObject('/SMask')] = DictionaryObject()
+    if unsupported:
+        image[NameObject('/ColorSpace')] = NameObject('/DeviceCMYK')
+    if image_optional_content:
+        image[NameObject('/OC')] = DictionaryObject()
+    if alternate:
+        image[NameObject('/Alternates')] = ArrayObject()
+    objects = DictionaryObject({NameObject('/Im1'): writer._add_object(image)})
+    if include_unused:
+        objects[NameObject('/Unused')] = DictionaryObject({NameObject('/Subtype'): NameObject('/Form')})
+    fonts = DictionaryObject({NameObject('/F1'): DictionaryObject({
+        NameObject('/Type'): NameObject('/Font'), NameObject('/Subtype'): NameObject('/Type1'),
+        NameObject('/BaseFont'): NameObject('/Helvetica')})})
+    page[NameObject('/Resources')] = DictionaryObject({NameObject('/XObject'): objects, NameObject('/Font'): fonts})
+    if cropped:
+        page.cropbox.lower_left = (100, 100)
+    if rotated:
+        page[NameObject('/Rotate')] = NumberObject(90)
+    content = DecodedStreamObject()
+    content.set_data((b'BT /F1 12 Tf 72 720 Td (Editable text) Tj ET\n' if text else b'') +
+                     (operators if operators is not None else b'q 100 0 0 50 50 50 cm /Im1 Do Q\n' * repeats))
+    page[NameObject('/Contents')] = writer._add_object(content)
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def test_pdf_reconstructs_drawn_rgb_image_without_pillow():
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(include_unused=True))
+    assert warnings == ('pdf_text_reconstruction',)
+    result = Document(BytesIO(data))
+    assert 'Editable text' in '\n'.join(p.text for p in result.paragraphs)
+    assert len(result.inline_shapes) == 1
+    with ZipFile(BytesIO(data)) as archive:
+        names = [x for x in archive.namelist() if x.startswith('word/media/')]
+        assert len(names) == 1  # identical images can be reused by DOCX
+        png = archive.read(names[0])
+        assert png.startswith(b'\x89PNG\r\n\x1a\n')
+        pos = png.index(b'IDAT')
+        size = int.from_bytes(png[pos-4:pos], 'big')
+        assert zlib.decompress(png[pos+4:pos+4+size]) == b'\x00\xff\x00\x00\x00\x00\xff'
+
+
+def test_pdf_reconstructs_jpeg_bytes_without_reencoding():
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(jpeg=True))
+    assert 'pdf_images_omitted' not in warnings
+    with ZipFile(BytesIO(data)) as archive:
+        media = [n for n in archive.namelist() if n.startswith('word/media/')]
+        assert len(media) == 1 and media[0].endswith('.jpg')
+        assert archive.read(media[0]).startswith(b'\xff\xd8')
+
+
+def test_pdf_image_decompression_bomb_is_skipped():
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(bomb=True))
+    assert 'pdf_images_omitted' in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 0
+
+
+@pytest.mark.parametrize('kwargs', [
+    {'operators': b'q 0 0 50 50 re W n 100 0 0 50 50 50 cm /Im1 Do Q'},
+    {'operators': b'q /GS1 gs 100 0 0 50 50 50 cm /Im1 Do Q'},
+    {'operators': b'/OC /Hidden BDC q 100 0 0 50 50 50 cm /Im1 Do Q EMC'},
+    {'operators': b'q 100 0 0 50 50 50 cm /Im1 Do Q 0 0 100 100 re f'},
+    {'operators': b'q -100 0 0 50 150 50 cm /Im1 Do Q'},
+    {'operators': b'q 0 100 -50 0 150 50 cm /Im1 Do Q'},
+    {'cropped': True}, {'rotated': True},
+    {'jpeg': True, 'truncated': True}, {'width': 1, 'height': 4000000},
+    {'image_optional_content': True}, {'alternate': True},
+])
+def test_pdf_hidden_clipped_rotated_or_invalid_images_are_not_exported(kwargs):
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(**kwargs))
+    assert 'pdf_images_omitted' in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 0
+
+
+def test_pdf_clipping_state_restored_before_image_remains_eligible():
+    operators = b'q 0 0 50 50 re W n Q q 100 0 0 50 50 50 cm /Im1 Do Q'
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(operators=operators))
+    assert 'pdf_images_omitted' not in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 1
+
+
+@pytest.mark.parametrize('mode', [4, 5, 6, 7])
+def test_pdf_text_rendering_clip_does_not_export_hidden_image_pixels(mode):
+    operators = (f'BT /F1 12 Tf {mode} Tr 72 720 Td (Clip) Tj ET '.encode() +
+                 b'q 100 0 0 50 50 50 cm /Im1 Do Q')
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(operators=operators))
+    assert 'pdf_images_omitted' in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 0
+
+
+def test_pdf_text_rendering_clip_is_restored_by_graphics_state():
+    operators = (b'q BT /F1 12 Tf 7 Tr 72 720 Td (Clip) Tj ET Q '
+                 b'q 100 0 0 50 50 50 cm /Im1 Do Q')
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(operators=operators))
+    assert 'pdf_images_omitted' not in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 1
+
+
+def test_pdf_overlapping_image_draws_only_export_final_visible_image():
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(repeats=2))
+    assert 'pdf_images_omitted' in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 1
+
+
+def test_pdf_separate_images_are_retained_across_nested_save_restore():
+    operators = (b'q 100 0 0 50 50 50 cm /Im1 Do Q '
+                 b'q 1 0 0 1 200 0 cm q 100 0 0 50 50 50 cm /Im1 Do Q Q')
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(operators=operators))
+    assert 'pdf_images_omitted' not in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 2
+
+
+def test_pdf_later_overlapping_image_after_transform_restore_skips_earlier():
+    operators = (b'q 1 0 0 1 20 0 cm q 100 0 0 50 50 50 cm /Im1 Do Q Q '
+                 b'q 100 0 0 50 100 50 cm /Im1 Do Q')
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(operators=operators))
+    assert 'pdf_images_omitted' in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 1
+
+
+def test_pdf_page_without_resources_is_still_preserved():
+    from pypdf import PdfWriter
+    from pypdf.generic import NameObject
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    page.pop(NameObject('/Resources'), None)
+    output = BytesIO()
+    writer.write(output)
+    assert_error('pdf_needs_ocr', conversion.pdf_to_docx, output.getvalue())
+
+
+@pytest.mark.parametrize('kwargs', [{'transparent': True}, {'huge': True}, {'unsupported': True}])
+def test_pdf_unsupported_or_oversize_drawn_images_warn_and_keep_text(kwargs):
+    data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images(**kwargs))
+    assert 'pdf_images_omitted' in warnings
+    result = Document(BytesIO(data))
+    assert 'Editable text' in '\n'.join(p.text for p in result.paragraphs)
+    assert len(result.inline_shapes) == 0
+
+
+def test_pdf_image_count_limit_warns_without_dropping_text():
+    with patch.object(conversion, 'MAX_PDF_IMAGES', 0):
+        data, warnings = conversion.pdf_to_docx(pdf_with_drawn_images())
+    assert 'pdf_images_omitted' in warnings
+    assert len(Document(BytesIO(data)).inline_shapes) == 0
+
+
+def test_image_only_pdf_still_explains_that_ocr_is_required():
+    assert_error('pdf_needs_ocr', conversion.pdf_to_docx, pdf_with_drawn_images(text=False))
 
 
 @pytest.mark.parametrize("declared,data,code", [

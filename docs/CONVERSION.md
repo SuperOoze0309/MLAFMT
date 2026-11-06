@@ -4,7 +4,8 @@ The deployed v2.11.1 website provides a separate PDF / DOCX / DOC conversion
 page, `converter.html`, linked from the paper formatter's top navigation.
 It does not apply an MLA/APA template, edit your original file, or replace the
 paper formatter's current result. This version improves local Office engine
-startup; existing native installers remain v2.5.0.
+startup; existing native installers remain v2.5.0. The v2.12.0 source is a
+development candidate and its image-retention changes are not yet deployed.
 
 ## 中文
 
@@ -26,10 +27,21 @@ v2.11.1 正式网站按需并发加载 gzip 分片，支持先前已缓存的原
 页面与 Worker 必须通过 HTTPS 或 localhost 提供，并开启 COOP/COEP；
 不支持的浏览器会显示提示。取消会销毁正在运行的引擎实例。
 
-**PDF 转 Word 是文字重建。** 提取出的文字可编辑，插入原 PDF 页间分隔；
-图片不导出，原有栏位、表格结构、字体和复杂版式不会还原。扫描 PDF
-没有可提取的文字时提示需要 OCR；当前不包含 OCR。部分无文字页面会
-留下空白页并给出提醒。加密 PDF 不尝试解密。请核对内容与阅读顺序。
+**正式站 v2.11.1 的 PDF 转 Word 是文字重建。** 提取出的文字可编辑，
+插入原 PDF 页间分隔；图片不导出，原有栏位、表格结构、字体和复杂版式
+不会还原。扫描 PDF 没有可提取的文字时提示需要 OCR；当前不包含 OCR。
+部分无文字页面会留下空白页并给出提醒。加密 PDF 不尝试解密。
+
+**v2.12.0 开发候选**尝试保留符合条件的 JPEG 和 8 位 RGB／灰度
+Flate 直接嵌入图片，放在对应页文字之后；图片会按空间
+缩放，不保证原有位置或版式。同页多个互不重叠且没有后续绘制内容遮挡
+的符合条件图片可尝试保留；很多图文混排、裁剪、透明、旋转、隐藏或覆盖
+等情况可能跳过图片。其他格式、透明蒙版、Form 和内联图片等也可能遗漏；
+检测到遗漏会提示核对，但不能保证识别所有情况。可见性检测无法覆盖 PDF
+的所有语义，结果可能显示原 PDF 中被裁掉或隐藏的图片内容，分享前请
+对照原文件检查。JPEG 仅检查部分结构和结束标记，不能保证发现内部
+损坏。表格与复杂版式仍不还原，没有文字的扫描件仍需 OCR。请同时核对
+文字、阅读顺序和布局。
 
 **DOC/DOCX 转换也可能改变版式。** 缺失字体可能被替换，旧版 DOC
 不能保留所有现代 Word 功能。请检查页数、表格、公式和页眉页脚。
@@ -59,10 +71,22 @@ previously cached uncompressed chunks remain usable. Browsers without
 bytes are checked against pinned size and SHA-256. See [v2.11.1 verification](TESTING-v2.11.1.md)
 for measured scope and passed local, public preview and production acceptance.
 
-PDF-to-Word is editable text reconstruction, with page breaks. It omits images
-and does not reconstruct columns, tables, fonts or the original layout. There
-is no OCR: image-only documents are rejected with an actionable message, while
-partially blank pages are retained and disclosed. Encrypted PDFs are rejected.
+The v2.11.1 production PDF-to-Word converter reconstructs editable text with
+page breaks. It omits images and does not reconstruct columns, tables, fonts or
+the original layout. The v2.12.0 development candidate attempts to retain
+eligible direct JPEG or 8-bit RGB/grayscale Flate embedded images after the
+page's text. Multiple eligible images may be retained if they do not overlap
+and have no later painting obscuring them. Many mixed layouts and cropped,
+transparent, rotated, hidden or covered images may be skipped; other formats, transparency masks, Forms and
+inline images can also be omitted. Detected omissions are disclosed, but not
+every omission can be identified. Visibility checks cannot cover every PDF
+visibility semantic; the result may reveal image content hidden or cropped in
+the original, so compare it before sharing. JPEG checks inspect some structure
+and the end marker but cannot guarantee detection of internal corruption.
+Images may be scaled and original positions are not restored. Tables and complex
+layouts are still not reconstructed. There is no
+OCR: image-only documents are rejected with an actionable message. Pages without
+extractable text are disclosed. Encrypted PDFs are rejected.
 Word layouts can also change because of font substitution and legacy DOC
 feature limits. Always review the result.
 
@@ -81,7 +105,7 @@ menu. It uses local pypdf and an installed LibreOffice executable. Set
 Run the existing static builder from the repository root:
 
 ```powershell
-.venv\Scripts\python.exe scripts/build_browser_static.py --out dist/formcapy-v2.11.1-preview
+.venv\Scripts\python.exe scripts/build_browser_static.py --out dist/formcapy-v2.12.0-preview
 ```
 
 The office preparer verifies the snapshot pinned in `browser/office-runtime.json`

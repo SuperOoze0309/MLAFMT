@@ -1,6 +1,6 @@
 """Local PDF / DOCX / Word 97-2003 conversion, without a conversion service.
 
-PDF-to-DOCX is an explicitly text-only reconstruction using optional pypdf.
+PDF-to-DOCX reconstructs text and supported images using optional pypdf.
 It runs in memory, including inside Pyodide. Native Word conversions require
 an installed LibreOffice and use its real binary DOC export filter. No format
 is implemented by changing a filename extension.
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from io import BytesIO
+import base64
 import importlib.util
 import math
 import os
@@ -20,6 +21,7 @@ import struct
 import sys
 import tempfile
 import time
+import zlib
 from xml.etree import ElementTree
 from zipfile import BadZipFile, ZipFile
 
@@ -35,6 +37,13 @@ MAX_DOCX_ENTRIES = 2000
 MAX_PDF_PAGES = 200
 MAX_PDF_PAGE_CONTENT = 4 * 1024 * 1024
 MAX_PDF_TEXT = 2_000_000
+# Bound decoded and generated image data before touching an image stream.
+MAX_PDF_IMAGE_PIXELS = 4_000_000
+MAX_PDF_IMAGE_DIMENSION = 4096
+MAX_PDF_IMAGE_BYTES = 12 * 1024 * 1024
+MAX_PDF_IMAGES_TOTAL_BYTES = 32 * 1024 * 1024
+MAX_PDF_IMAGES = 100
+MAX_PDF_IMAGE_OPERATIONS = 50000
 OLE_SIGNATURE = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
 _EXPORT_FILTERS = {
     "pdf": "pdf:writer_pdf_Export",
@@ -198,8 +207,231 @@ def _pypdf_available():
         return False
 
 
+def _png_from_pixels(width, height, channels, pixels):
+    """Encode already-bounded 8-bit pixels without an optional image library."""
+    def chunk(kind, payload):
+        return (struct.pack(">I", len(payload)) + kind + payload +
+                struct.pack(">I", zlib.crc32(kind + payload) & 0xffffffff))
+    stride = width * channels
+    rows = bytearray()
+    for i in range(0, len(pixels), stride):
+        rows.append(0)
+        rows.extend(pixels[i:i + stride])
+    return (b"\x89PNG\r\n\x1a\n" +
+            chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8,
+                                       0 if channels == 1 else 2, 0, 0, 0)) +
+            chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+
+
+def _pdf_image_bytes(image):
+    """Decode a small, deliberately narrow subset; return None for others.
+
+    Never use pypdf's image helper or get_data(): its image decoder may expand
+    untrusted data before our own pixel budget can be enforced.
+    """
+    from docx.image.image import Image
+    try:
+        width, height = int(image.get('/Width', 0)), int(image.get('/Height', 0))
+        if (width <= 0 or height <= 0 or width > MAX_PDF_IMAGE_DIMENSION or
+                height > MAX_PDF_IMAGE_DIMENSION or width * height > MAX_PDF_IMAGE_PIXELS):
+            return None
+        if any(image.get(k) is not None for k in ('/SMask', '/Mask', '/ImageMask', '/Decode',
+                                                   '/OC', '/SMaskInData', '/Alternates')):
+            return None
+        colorspace = str(image.get('/ColorSpace', ''))
+        channels = {'/DeviceGray': 1, '/DeviceRGB': 3}.get(colorspace)
+        if not channels or int(image.get('/BitsPerComponent', 0)) != 8:
+            return None
+        raw = image._data
+        if not isinstance(raw, bytes) or len(raw) > MAX_FILE_SIZE:
+            return None
+        filters = image.get('/Filter', [])
+        filters = list(filters) if isinstance(filters, (list, tuple)) else [filters]
+        filters = [str(x) for x in filters]
+        if filters and filters[0] in ('/ASCII85Decode', '/A85'):
+            raw = raw.strip()
+            if raw.startswith(b'<~'):
+                raw = raw[2:]
+            if raw.endswith(b'~>'):
+                raw = raw[:-2]
+            raw = base64.a85decode(raw, adobe=False)
+            filters = filters[1:]
+        # Non-default DecodeParms may change output interpretation.
+        params = image.get('/DecodeParms')
+        if params:
+            if isinstance(params, (list, tuple)):
+                if any(p and (p.get('/Predictor', 1) != 1 or
+                              any(str(k) not in ('/Predictor', '/Colors', '/Columns', '/BitsPerComponent') for k in p)) for p in params):
+                    return None
+            elif (params.get('/Predictor', 1) != 1 or
+                  any(str(k) not in ('/Predictor', '/Colors', '/Columns', '/BitsPerComponent') for k in params)):
+                return None
+        if filters in (['/DCTDecode'], ['/DCT']):
+            if len(raw) > MAX_PDF_IMAGE_BYTES or not raw.endswith(b'\xff\xd9'):
+                return None
+            parsed = Image.from_blob(raw)
+            if parsed.px_width != width or parsed.px_height != height:
+                return None
+            return raw, width, height
+        if filters not in (['/FlateDecode'], ['/Fl']):
+            return None
+        expected = width * height * channels
+        if expected > MAX_PDF_IMAGE_BYTES:
+            return None
+        decoder = zlib.decompressobj()
+        pixels = decoder.decompress(raw, expected + 1)
+        if len(pixels) != expected or not decoder.eof or decoder.unconsumed_tail:
+            return None
+        return _png_from_pixels(width, height, channels, pixels), width, height
+    except Exception:
+        return None
+
+
+def _page_pdf_images(page, reader, budget, cancel_event):
+    """Conservatively skip detected visibility changes for direct images.
+
+    This narrow check does not cover every PDF visibility semantic. Images
+    affected by detected clipping, layers, transparency, annotations or later
+    drawing are not exported.
+    """
+    from pypdf.generic import ContentStream
+    omitted = False
+    candidates = []
+    contents = page.get_contents()
+    if contents is None:
+        return [], False
+    # Later unknown drawing can mask/redact prior images. Axis-aligned direct
+    # images have a known painted rectangle and are compared separately.
+    painters = {b'S', b's', b'f', b'F', b'f*', b'B', b'B*', b'b', b'b*',
+                b'Tj', b'TJ', b"'", b'"', b'sh', b'Do', b'INLINE IMAGE'}
+    harmless = {b'w', b'J', b'j', b'M', b'd', b'ri', b'i', b'm', b'l', b'c', b'v',
+                b'y', b'h', b're', b'n', b'BT', b'ET', b'Tc', b'Tw', b'Tz', b'TL',
+                b'Tf', b'Tr', b'Ts', b'Td', b'TD', b'Tm', b'T*', b'CS', b'cs',
+                b'SC', b'SCN', b'sc', b'scn', b'G', b'g', b'RG', b'rg', b'K',
+                b'k', b'MP', b'DP'} | painters
+    try:
+        resources = page.get('/Resources')
+        resources = resources.get_object() if resources else {}
+        objects = resources.get('/XObject', {})
+        objects = objects.get_object() if objects else {}
+        crop, media = page.cropbox, page.mediabox
+        bounds = (max(float(crop.left), float(media.left)), max(float(crop.bottom), float(media.bottom)),
+                  min(float(crop.right), float(media.right)), min(float(crop.top), float(media.top)))
+        page_unsafe = bool(page.get('/Annots')) or bool(page.get('/Group')) or int(page.get('/Rotate', 0)) % 360 != 0
+        matrix = (1., 0., 0., 1., 0., 0.)
+        uncertain = page_unsafe
+        stack = []
+        marked = 0
+        for operands, operator in ContentStream(contents, reader).operations:
+            _cancelled(cancel_event)
+            budget['operations'] += 1
+            if budget['operations'] > MAX_PDF_IMAGE_OPERATIONS:
+                return [], True
+            if operator in painters and operator != b'Do' and candidates:
+                candidates = []
+                omitted = True
+            if operator == b'q':
+                stack.append((matrix, uncertain))
+            elif operator == b'Q':
+                if stack:
+                    matrix, uncertain = stack.pop()
+                else:
+                    uncertain = True
+            elif operator == b'cm':
+                a,b,c,d,e,f = matrix
+                A,B,C,D,E,F = (float(value) for value in operands)
+                matrix = (a*A+c*B, b*A+d*B, a*C+c*D, b*C+d*D, a*E+c*F+e, b*E+d*F+f)
+                if not all(math.isfinite(v) for v in matrix):
+                    uncertain = True
+            elif operator in (b'W', b'W*', b'gs'):
+                uncertain = True
+            elif operator == b'Tr':
+                # Text rendering modes 4..7 add glyph outlines to the clip
+                # at ET. Conservatively treat the graphics state as unsafe
+                # even if no subsequent text is actually shown.
+                value = float(operands[0]) if len(operands) == 1 else -1
+                if not math.isfinite(value) or value not in (0, 1, 2, 3):
+                    uncertain = True
+            elif operator in (b'BMC', b'BDC'):
+                marked += 1
+            elif operator == b'EMC':
+                if marked:
+                    marked -= 1
+                else:
+                    uncertain = True
+            elif operator == b'INLINE IMAGE':
+                omitted = True
+            elif operator == b'Do':
+                obj = objects.get(operands[0]) if operands else None
+                obj = obj.get_object() if obj else None
+                # Nested Form streams, clipping, arbitrary transforms, marked
+                # content, annotations and ExtGState are deliberately skipped.
+                a,b,c,d,e,f = matrix
+                simple = (all(math.isfinite(v) for v in matrix + bounds) and
+                          a > 0 and d > 0 and b == 0 and c == 0)
+                if not obj or str(obj.get('/Subtype', '')) != '/Image' or not simple:
+                    if candidates:
+                        candidates = []
+                    omitted = True
+                    continue
+                rect = (e, f, e+a, f+d)
+                kept = []
+                for existing, other in candidates:
+                    # A one-point margin also treats touching edges as overlap.
+                    disjoint = (rect[2]+1 < other[0] or other[2]+1 < rect[0] or
+                                rect[3]+1 < other[1] or other[3]+1 < rect[1])
+                    if disjoint:
+                        kept.append((existing, other))
+                    else:
+                        omitted = True
+                candidates = kept
+                fully_visible = (simple and
+                                 e >= bounds[0] and f >= bounds[1] and
+                                 e+a <= bounds[2] and f+d <= bounds[3])
+                if uncertain or marked or not fully_visible or len(candidates) >= MAX_PDF_IMAGES:
+                    omitted = True
+                else:
+                    candidates.append((obj, rect))
+            elif operator not in harmless:
+                # Unknown operators may change visibility or paint over images.
+                if candidates:
+                    candidates = []
+                    omitted = True
+                uncertain = True
+        if not candidates:
+            return [], omitted
+        found = []
+        for candidate, _ in candidates:
+            _cancelled(cancel_event)
+            if budget['count'] >= MAX_PDF_IMAGES:
+                omitted = True
+                break
+            w, h = int(candidate.get('/Width', 0)), int(candidate.get('/Height', 0))
+            channels = 1 if str(candidate.get('/ColorSpace', '')) == '/DeviceGray' else 3
+            estimate = max(0, w*h*channels)
+            if estimate > MAX_PDF_IMAGE_BYTES or budget['bytes'] + estimate > MAX_PDF_IMAGES_TOTAL_BYTES:
+                omitted = True
+                continue
+            result = _pdf_image_bytes(candidate)
+            if result is None:
+                omitted = True
+                continue
+            blob, width, height = result
+            if budget['bytes'] + max(estimate, len(blob)) > MAX_PDF_IMAGES_TOTAL_BYTES:
+                omitted = True
+                continue
+            budget['count'] += 1
+            budget['bytes'] += max(estimate, len(blob))
+            found.append((blob, width, height))
+        return found, omitted
+    except ConversionError:
+        raise
+    except Exception:
+        return [], True
+
+
 def pdf_to_docx(data, *, cancel_event=None):
-    """Return (DOCX bytes, warning codes) from PDF text. No OCR or layout claim.
+    """Reconstruct PDF text and supported images, without OCR or layout claims.
 
     This path uses no filesystem, subprocess, HTTP client or platform-specific
     dependency, so it is also suitable for the browser's existing Pyodide worker.
@@ -233,6 +465,7 @@ def pdf_to_docx(data, *, cancel_event=None):
         warnings = ["pdf_text_reconstruction"]
         total_chars = 0
         blank_pages = 0
+        image_budget = {'count': 0, 'bytes': 0, 'operations': 0}
         for index, page in enumerate(reader.pages):
             _cancelled(cancel_event)
             contents = page.get_contents()
@@ -251,13 +484,18 @@ def pdf_to_docx(data, *, cancel_event=None):
             else:
                 for line in text.split("\n"):
                     document.add_paragraph(line)
-            # Do not decode images (which would introduce Pillow and another
-            # decompression boundary). We disclose their omission explicitly.
-            resources = page.get("/Resources")
-            if resources:
-                resources = resources.get_object()
-                if resources.get("/XObject") and "pdf_images_omitted" not in warnings:
-                    warnings.append("pdf_images_omitted")
+            images, omitted = _page_pdf_images(page, reader, image_budget, cancel_event)
+            for blob, width, height in images:
+                _cancelled(cancel_event)
+                try:
+                    # Place each image on its source page after the page text;
+                    # these limits avoid page-spanning shapes for tall images.
+                    display_width = min(6.5, 9.0 * width / height)
+                    document.add_picture(BytesIO(blob), width=Inches(display_width))
+                except Exception:
+                    omitted = True
+            if omitted and "pdf_images_omitted" not in warnings:
+                warnings.append("pdf_images_omitted")
         _cancelled(cancel_event)
         if blank_pages == page_count:
             raise ConversionError("pdf_needs_ocr")

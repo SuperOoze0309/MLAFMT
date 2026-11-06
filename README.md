@@ -1,8 +1,10 @@
 # FormCapy · 论文与报告排版
 
+**v2.12.0 开发候选 / Development candidate:** PDF 转 Word 尝试保留符合条件的嵌入图片，放在对应页文字后；很多图文混排和裁剪、透明、旋转等图片可能跳过，不能保证原位置或完整保留。结果可能显示原 PDF 中隐藏或裁掉的图片内容，分享前请核对。此功能尚未上线，扫描文字仍需 OCR。PDF-to-Word attempts to retain eligible embedded images after the page text; many mixed layouts and cropped, transparent or rotated images may be skipped. The result may reveal hidden or cropped image content; review before sharing. The candidate is not yet deployed and does not include OCR. [候选范围 / Candidate scope](docs/CONVERSION.md)
+
 **v2.11.1 文件互转已上线 / File converter v2.11.1 is live。** 本地 Office 转换引擎按需并发加载 gzip 分片；旧缓存可继续使用。正式网站 Cloudflare 版本 `74e5d598` 已接收 100% 流量；离线安装包仍为 v2.5.0。详见 [v2.11.1 验证记录](docs/TESTING-v2.11.1.md)。
 
-**[独立文件互转 / File converter](https://formcapy.com/converter.html)** 在浏览器内完成 PDF / DOCX / DOC 互转；桌面源码使用本机引擎。PDF 转 Word 为可编辑文字重建，不含 OCR、图片或原版式还原。首次 Word 转换仍需下载程序组件，建议桌面浏览器。[使用条件与范围 / Conversion scope](docs/CONVERSION.md)
+**[独立文件互转 / File converter](https://formcapy.com/converter.html)** 在浏览器内完成 PDF / DOCX / DOC 互转；桌面源码使用本机引擎。当前正式站的 PDF 转 Word 为可编辑文字重建，不含 OCR、图片或原版式还原。首次 Word 转换仍需下载程序组件，建议桌面浏览器。[使用条件与范围 / Conversion scope](docs/CONVERSION.md)
 
 v2.11.1 本地、Cloudflare 预览和正式站的 Edge 页面验收均通过 18 项检查，分别完成六个实际转换下载及离线双向导航。Local, Cloudflare preview and production Edge each passed 18 checks, including six real conversion downloads and offline navigation. [验证范围 / Verification scope](docs/TESTING-v2.11.1.md)
 
@@ -245,7 +247,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前仓库源码和正式网站均为 v2.11.1；部署及验证范围见[记录](docs/TESTING-v2.11.1.md)。离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码为 v2.12.0 开发候选，正式网站仍为 v2.11.1；已上线版本的部署及验证范围见[记录](docs/TESTING-v2.11.1.md)。离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 

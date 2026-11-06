@@ -35,7 +35,7 @@ import docx, typing_extensions
 docx.__version__
 `));
 
-for (const name of ["mla_formatter.py", "format_profiles.py", "docx_preserve.py", "bibliography_export.py", "browser_bridge.py"]) {
+for (const name of ["mla_formatter.py", "format_profiles.py", "docx_preserve.py", "bibliography_export.py", "document_conversion.py", "browser_bridge.py"]) {
   const bytes = await readFile(path.join(root, name));
   pyodide.FS.writeFile("/app/" + name, new Uint8Array(bytes));
 }
@@ -264,16 +264,18 @@ const testWorkerSelf={
 const fetchWorkerAsset=async(value)=>{
   const url=new URL(value);
   assert.equal(url.origin,"http://localhost");
-  assert.ok(/^\/(?:wheels\/python_docx-1\.2\.0-py3-none-any\.whl|python\/(?:mla_formatter|format_profiles|docx_preserve|bibliography_export|browser_bridge)\.py)$/.test(url.pathname));
+  assert.ok(/^\/(?:wheels\/(?:python_docx-1\.2\.0|pypdf-6\.21\.4)-py3-none-any\.whl|python\/(?:mla_formatter|format_profiles|docx_preserve|bibliography_export|document_conversion|browser_bridge)\.py)$/.test(url.pathname));
   if(failWorkerModuleOnce && url.pathname==="/python/bibliography_export.py"){
     failWorkerModuleOnce=false;
     return {ok:false,status:503};
   }
-  const local=url.pathname.startsWith("/wheels/")?path.join(runtimeDir,PYTHON_DOCX_WHEEL_NAME):path.join(root,path.basename(url.pathname));
+  const local=url.pathname.startsWith("/wheels/")
+    ? path.join(url.pathname.endsWith(PYPDF_WHEEL_NAME) ? path.dirname(runtimeDir) : runtimeDir, path.basename(url.pathname))
+    : path.join(root,path.basename(url.pathname));
   const data=await readFile(local);
   return {ok:true,arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)};
 };
-const PYTHON_DOCX_WHEEL_NAME="python_docx-1.2.0-py3-none-any.whl";
+const PYPDF_WHEEL_NAME="pypdf-6.21.4-py3-none-any.whl";
 const workerSource=await readFile(path.join(root,"browser/worker.js"),"utf8");
 const importStatement='const module = await import(new URL("pyodide.mjs", config.indexURL).href);';
 assert.equal(workerSource.split(importStatement).length,2,"worker loader test hook must match exactly once");
@@ -285,6 +287,8 @@ const workerHarness=makeWorker(testWorkerSelf,fetchWorkerAsset,console,async(url
   return {loadPyodide:options=>loadPyodide({...options,indexURL:runtimeURL})};
 });
 const workerConfig={indexURL:pathToFileURL(runtimeDir+path.sep).href,baseURL:"http://localhost/",runtimeVersion:pyodide.version};
+const pdfWheelResponse=await fetchWorkerAsset(new URL(`wheels/${PYPDF_WHEEL_NAME}`,workerConfig.baseURL));
+assert.ok(pdfWheelResponse.ok && (await pdfWheelResponse.arrayBuffer()).byteLength > 0);
 testWorkerSelf.onmessage({data:{type:"init",id:10,config:workerConfig}});
 await workerHarness.drain();
 assert.ok(workerMessages.some(message=>message.type==="init-error" && message.id===10));

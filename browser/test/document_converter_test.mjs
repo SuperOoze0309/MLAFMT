@@ -128,8 +128,20 @@ test("PDF reconstruction and actual backend warnings are explained before downlo
   await ui.file("source.pdf"); await ui.find("convert").click();
   assert.equal(ui.find("warnings").children.length, 3);
   assert.match(ui.find("warnings").textContent, /editable Word/);
-  assert.match(ui.find("warnings").textContent, /images were not retained/);
+  assert.match(ui.find("warnings").textContent, /Some or all PDF images could not be retained/);
   assert.match(ui.find("warnings").textContent, /no extractable text/);
+  for (const [language, limitation, warning, review] of [
+    ["en", /attempts to retain eligible embedded images/, /Some or all PDF images could not be retained/, /hidden or cropped.*before sharing/],
+    ["zh", /尝试保留符合条件的嵌入图片/, /部分或全部图片未能保留/, /隐藏或裁掉.*分享前/],
+    ["es", /intenta conservar las imágenes incrustadas aptas/, /algunas o todas las imágenes del PDF/, /oculto o recortado.*antes de compartir/],
+  ]) {
+    ui.locale(language);
+    assert.match(ui.find("limitations").textContent, limitation);
+    assert.match(ui.find("limitations").textContent, /OCR/);
+    assert.match(ui.find("warnings").textContent, warning);
+    assert.match(ui.find("limitations").textContent, review);
+    assert.match(ui.find("warnings").textContent, review);
+  }
 });
 
 test("busy controls and localized progress follow the active conversion", async () => {
