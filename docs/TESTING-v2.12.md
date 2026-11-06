@@ -1,9 +1,8 @@
-# v2.12.0 PDF image reconstruction: local verification
+# v2.12.0 PDF image reconstruction: verification
 
-Status: development candidate. The checks below use the local frozen build
-`dist/formcapy-v2.12.0-preview`; they do not establish public preview,
-production deployment, or a new native installer release. The currently
-deployed website is v2.11.1, and existing installers remain v2.5.0.
+Status: frozen build `dist/formcapy-v2.12.0-preview` is deployed to production
+as Cloudflare Worker version `8cfcb05c` at 100% traffic. Existing native
+installers remain v2.5.0; no new installers are claimed in this release.
 
 ## Automated checks
 
@@ -62,6 +61,36 @@ Both local reports identify the same frozen `manifest.json` SHA-256:
 `cb952bd0d2f628e6dde95fd9a554d0cf415b2416fd25b078ec25eed6eddeed66`.
 The network results describe these instrumented runs, not every possible
 browser, extension or device.
+
+## Public preview and production acceptance
+
+The same frozen candidate was uploaded as Cloudflare version `8cfcb05c`.
+Physical Windows Edge ran the complete conversion acceptance against both its
+public preview and `https://formcapy.com/`: each run passed **18 checks**,
+including six real clicked downloads, cancellation, three-language narrow
+layouts and offline navigation. Reports:
+`build/v2.12.0/acceptance/cloudflare-preview/report.json` and
+`build/v2.12.0/production/browser/report.json`.
+
+Separate image acceptance against the preview and production each passed
+**8 checks**, using the same two-page, three-image fixture and actual
+PDF→DOCX, PDF→DOC and DOC→DOCX downloads. The independent checks verified
+logical-page text and image placement; for direct DOCX they compared JPEG
+bytes and Flate pixels, while the DOC roundtrip checked image dimensions and
+counts. They also tested the image-only OCR message. Reports:
+`build/v2.12.0/acceptance/cloudflare-preview-images/report.json` and
+`build/v2.12.0/production/browser-images/report.json`.
+
+The network trace covers the page, iframe and attached conversion workers,
+not initial Service Worker installation requests. These examples do not
+establish visual fidelity or visibility handling for arbitrary PDF files.
+
+The complete production audit checked `formcapy.com` and `www.formcapy.com`:
+209 assets per domain, **418/418** size and SHA-256 checks passed, alongside
+security headers and MIME types. The audit recorded 438 GET requests and no
+errors; old and new runtime manifest cache headers and all 13 gzip chunk cache
+headers were also checked. Report:
+`build/v2.12.0/production/deployment-verification.json`.
 
 ## Scope and known limits
 

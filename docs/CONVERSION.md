@@ -1,11 +1,11 @@
 # 本地文件互转 / Local file conversion
 
-The deployed v2.11.1 website provides a separate PDF / DOCX / DOC conversion
+The deployed v2.12.0 website provides a separate PDF / DOCX / DOC conversion
 page, `converter.html`, linked from the paper formatter's top navigation.
 It does not apply an MLA/APA template, edit your original file, or replace the
 paper formatter's current result. This version improves local Office engine
-startup; existing native installers remain v2.5.0. The v2.12.0 source is a
-development candidate and its image-retention changes are not yet deployed.
+startup and attempts to retain eligible embedded PDF images; existing native
+installers remain v2.5.0.
 
 ## 中文
 
@@ -20,19 +20,19 @@ Word 格式转换使用真正的 LibreOffice WebAssembly 引擎，不是修改�
 转换组件附带开放许可的中文字体；没有原文字体时仍可能发生替换。
 第一次 Word 格式转换需要下载较大的程序文件、分配较多内存，建议使用
 内存充足的桌面浏览器。PDF → DOCX 只加载较小的本地 Python/PDF 引擎。
-v2.11.1 正式网站按需并发加载 gzip 分片，支持先前已缓存的原始分片；
+正式网站继续按需并发加载 gzip 分片，支持先前已缓存的原始分片；
 没有 `DecompressionStream` 的浏览器使用原始分片。压缩字节和还原字节
 分别验证大小与 SHA-256，取消仍会中止加载。性能样本与验收状态见
 [v2.11.1 验证记录](TESTING-v2.11.1.md)。
 页面与 Worker 必须通过 HTTPS 或 localhost 提供，并开启 COOP/COEP；
 不支持的浏览器会显示提示。取消会销毁正在运行的引擎实例。
 
-**正式站 v2.11.1 的 PDF 转 Word 是文字重建。** 提取出的文字可编辑，
-插入原 PDF 页间分隔；图片不导出，原有栏位、表格结构、字体和复杂版式
-不会还原。扫描 PDF 没有可提取的文字时提示需要 OCR；当前不包含 OCR。
-部分无文字页面会留下空白页并给出提醒。加密 PDF 不尝试解密。
+**PDF 转 Word 重建可编辑文字。** 提取出的文字可编辑，插入原 PDF 页间
+分隔；原有栏位、表格结构、字体和复杂版式不会还原。扫描 PDF 没有可提取
+的文字时提示需要 OCR；当前不包含 OCR。
+部分无文字页面可能保留图片或留下空白页，并给出提醒。加密 PDF 不尝试解密。
 
-**v2.12.0 开发候选**尝试保留符合条件的 JPEG 和 8 位 RGB／灰度
+**v2.12.0** 尝试保留符合条件的 JPEG 和 8 位 RGB／灰度
 Flate 直接嵌入图片，放在对应页文字之后；图片会按空间
 缩放，不保证原有位置或版式。同页多个互不重叠且没有后续绘制内容遮挡
 的符合条件图片可尝试保留；很多图文混排、裁剪、透明、旋转、隐藏或覆盖
@@ -65,15 +65,14 @@ ample memory. An open CJK font is included for Chinese text; missing source
 fonts can still be substituted. PDF-to-DOCX uses the existing Pyodide worker and pypdf instead.
 The page needs HTTPS/localhost and cross-origin isolation (COOP/COEP headers).
 The office runtime is excluded from the initial app-shell precache.
-The deployed v2.11.1 website fetches gzip chunks with bounded concurrency;
+The deployed website fetches gzip chunks with bounded concurrency;
 previously cached uncompressed chunks remain usable. Browsers without
 `DecompressionStream` use the original chunks. Both compressed and decoded
 bytes are checked against pinned size and SHA-256. See [v2.11.1 verification](TESTING-v2.11.1.md)
 for measured scope and passed local, public preview and production acceptance.
 
-The v2.11.1 production PDF-to-Word converter reconstructs editable text with
-page breaks. It omits images and does not reconstruct columns, tables, fonts or
-the original layout. The v2.12.0 development candidate attempts to retain
+The PDF-to-Word converter reconstructs editable text with page breaks. It does
+not reconstruct columns, tables, fonts or the original layout. v2.12.0 attempts to retain
 eligible direct JPEG or 8-bit RGB/grayscale Flate embedded images after the
 page's text. Multiple eligible images may be retained if they do not overlap
 and have no later painting obscuring them. Many mixed layouts and cropped,
