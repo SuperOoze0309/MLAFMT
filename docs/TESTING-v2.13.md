@@ -1,9 +1,9 @@
 # v2.13.0 formatting-result inspection: verification
 
-Status: development candidate. The local candidate build is
-`dist/formcapy-v2.13.0-preview`. The checks below do not establish a public
-preview, production deployment, or a new native installer release. The
-production website remains on v2.12.0 and the existing installers on v2.5.0.
+Status: the static build `dist/formcapy-v2.13.0-preview` is deployed to the
+production website as Cloudflare Worker version
+`70394822-4a7a-4930-b281-2e92c986e2b9` with 100% traffic. The existing native
+installers remain v2.5.0; no new installer is claimed.
 
 ## Scope of the report
 
@@ -46,10 +46,21 @@ between exact and minimum fixed line spacing. Report:
 ## Physical Edge check
 
 On the physical Windows machine, the installed Edge was opened using the
-normal user profile and accessed the local candidate over localhost. An MLA
-sample draft and an APA blank document were generated, the language was
-switched to English, and the result was reused. The three report groups and
+normal user profile and accessed the build over localhost. An MLA sample draft
+and an APA blank document were generated, the interface was tested in Chinese,
+English and Spanish, and the result was reused. The three report groups and
 their displayed content were visually checked.
+
+Using the same regular Edge profile, both the Cloudflare public preview and
+`https://formcapy.com/` were opened. On each, the built-in example was selected
+and a document generated; the three check groups and a download link appeared.
+On production, the update notice was used to switch an existing v2.12.0 page
+to v2.13.0.
+
+The production audit checked `formcapy.com` and `www.formcapy.com`: 209
+resources per domain, **418/418** size and SHA-256 checks passed, alongside
+security headers and MIME types. It recorded 438 GET requests and no errors.
+Report: `build/v2.13.0/production/deployment-verification.json`.
 
 This check did **not** independently inspect a document downloaded by Edge.
 The independent checks of nine generated files above were run through Pyodide;
