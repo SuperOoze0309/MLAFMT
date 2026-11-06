@@ -97,6 +97,7 @@
     retained: [0, 0, 0],
     stats: [0, 0, 0],
     format: null,
+    layoutCheck: null,
     ...base,
   });
 
@@ -556,6 +557,7 @@
           Number(stats.retained_tables || 0),
         ],
         source: "browser",
+        layoutCheck: meta.layout_check || null,
         conversionWarnings: Array.isArray(meta.conversion_warnings) ? meta.conversion_warnings : [],
       });
     }

@@ -93,12 +93,12 @@ function harness() {
   return {
     workers, transport, stages,
     ready(worker = workers.at(-1)) { worker.emit({ type: 'ready' }); },
-    complete(worker = workers.at(-1), name = 'fresh.docx') {
+    complete(worker = workers.at(-1), name = 'fresh.docx', layoutCheck = null) {
       const request = worker.requests().at(-1);
       assert.ok(request, 'expected a dispatched task before sending a result');
       worker.emit({
         type: 'result', id: request.id,
-        meta: { ok: true, name, blank: true, format_id: 'mla', stats: {} },
+        meta: { ok: true, name, blank: true, format_id: 'mla', stats: {}, layout_check: layoutCheck },
         buffer: bytes('fresh document'),
       });
     },
@@ -131,6 +131,18 @@ async function check(name, callback) {
     await flush();
   }
 }
+
+await check('browser result carries the inspection report and keeps older results unavailable', async h => {
+  const first = track(h.blank());
+  h.ready(); await flush();
+  const report = {version: 1, checks: [{id: 'paper_size', status: 'pass'}]};
+  h.complete(undefined, 'checked.docx', report); await flush();
+  assert.equal(first.status, 'fulfilled');
+  assert.deepEqual(JSON.parse(JSON.stringify(first.value.layoutCheck)), report);
+  const second = track(h.blank()); await flush(); h.complete(); await flush();
+  assert.equal(second.status, 'fulfilled');
+  assert.equal(second.value.layoutCheck, null);
+});
 
 await check('cancel init then synchronously retry keeps the new init promise', async h => {
   const first = track(h.transport.init());

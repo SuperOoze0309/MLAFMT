@@ -28,6 +28,7 @@ import re
 import shutil
 import tempfile
 import zipfile
+from io import BytesIO
 
 from docx.opc.exceptions import PackageNotFoundError
 from lxml.etree import XMLSyntaxError
@@ -312,6 +313,151 @@ def _read(path):
         return source.read()
 
 
+def _layout_inspection(document_bytes, profile, stats):
+    """Inspect limited DOCX settings, never document text or rendered pages.
+
+    The returned codes and statuses are fixed strings and contain no document
+    content.  A pass applies only to the named setting, not the entire paper.
+    """
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+    from docx.oxml.ns import qn
+    from docx.shared import Cm, Inches, Pt
+
+    doc = Document(BytesIO(document_bytes))
+    checks = []
+
+    def add(code, status):
+        checks.append({"id": code, "status": status})
+
+    def near(actual, expected):
+        # DOCX section dimensions are quantized to twips.
+        return actual is not None and abs(int(actual) - int(expected)) <= 635
+
+    sections = list(doc.sections)
+    width, height = ((Cm(21), Cm(29.7)) if profile["paper_size"] == "A4"
+                     else (Inches(8.5), Inches(11)))
+    add("paper_size", "pass" if sections and all(
+        near(section.page_width, width) and near(section.page_height, height)
+        for section in sections) else "warn")
+    margin = Cm(profile["margin_cm"])
+    add("margins", "pass" if sections and all(
+        near(value, margin) for section in sections for value in
+        (section.top_margin, section.bottom_margin, section.left_margin, section.right_margin))
+        else "warn")
+
+    # This is the Normal style alone; run overrides, tables and other styles
+    # are deliberately not asserted to match the requested font.
+    normal = doc.styles["Normal"]
+    font_expected = profile["latin_font_name"] if profile["typography"] == "chinese" else profile["font_name"]
+    font_matches = normal.font.name == font_expected and near(normal.font.size, Pt(profile["font_size"]))
+    fonts = normal.element.get_or_add_rPr().find(qn("w:rFonts"))
+    font_matches = (font_matches and fonts is not None and
+                    all(fonts.get(qn("w:" + key)) == font_expected for key in ("ascii", "hAnsi", "cs")) and
+                    fonts.get(qn("w:eastAsia")) == profile["font_name"] and
+                    all(fonts.get(qn("w:" + key)) is None for key in
+                        ("asciiTheme", "hAnsiTheme", "eastAsiaTheme", "csTheme", "cstheme")))
+    add("default_font", "pass" if font_matches else "warn")
+
+    # Inspect only explicit spacing on nonempty top-level paragraphs. A run
+    # can still render differently due to fonts, style overrides or layout.
+    paragraphs = [p for p in doc.paragraphs if p.text.strip()]
+    spacing = Pt(profile["line_spacing_pt"]) if profile["line_spacing_pt"] else profile["line_spacing"]
+    def spacing_matches(paragraph):
+        actual = paragraph.paragraph_format.line_spacing
+        if actual is None:
+            return False
+        if profile["line_spacing_pt"]:
+            return (paragraph.paragraph_format.line_spacing_rule == WD_LINE_SPACING.EXACTLY and
+                    not isinstance(actual, float) and near(actual, spacing))
+        return (paragraph.paragraph_format.line_spacing_rule in
+                (WD_LINE_SPACING.SINGLE, WD_LINE_SPACING.ONE_POINT_FIVE,
+                 WD_LINE_SPACING.DOUBLE, WD_LINE_SPACING.MULTIPLE) and
+                isinstance(actual, float) and abs(actual - spacing) <= 1 / 480 + 1e-9)
+    add("paragraph_spacing", "unchecked" if not paragraphs else
+        "pass" if all(spacing_matches(p) for p in paragraphs) else "warn")
+
+    def page_field(paragraph):
+        def is_page(instruction):
+            # A property named PAGE (e.g. DOCPROPERTY PAGE) is not a PAGE field.
+            return bool(instruction and re.match(r"^\s*PAGE(?:\s|\\|$)", instruction, flags=re.IGNORECASE))
+
+        found = False
+        in_field = False
+        after_separator = False
+        instruction = []
+        for el in paragraph._p.iter():
+            if el.tag == qn("w:fldSimple"):
+                if in_field:
+                    return False  # Nested fields are outside this inspection.
+                if is_page(el.get(qn("w:instr"))) and el.find(qn("w:r")) is not None:
+                    found = True
+            elif el.tag == qn("w:fldChar"):
+                field_type = el.get(qn("w:fldCharType"))
+                if field_type == "begin" and not in_field:
+                    in_field, after_separator, instruction = True, False, []
+                elif field_type == "separate" and in_field and not after_separator:
+                    after_separator = True
+                elif field_type == "end" and in_field:
+                    found = found or is_page("".join(instruction))
+                    in_field = False
+                else:
+                    return False
+            elif el.tag == qn("w:instrText") and in_field and not after_separator:
+                instruction.append(el.text or "")
+        return found and not in_field
+
+    def unsupported_story_fields(story):
+        # Fields inside tables, text boxes and other wrappers are not inspected
+        # by story.paragraphs. Never claim their page-number configuration passed.
+        for el in story._element.iter():
+            if el.tag not in (qn("w:fldSimple"), qn("w:fldChar"), qn("w:instrText")):
+                continue
+            parent = el.getparent()
+            while parent is not None and parent.tag != qn("w:p"):
+                parent = parent.getparent()
+            if parent is None or parent.getparent() is not story._element:
+                return True
+        return False
+
+    hidden_cover = profile["title_page"] and not profile["show_cover_page_number"]
+    page_ok = bool(sections)
+    for index, section in enumerate(sections):
+        target_header = profile["page_number_position"] == "top_right"
+        expected_alignment = (WD_ALIGN_PARAGRAPH.CENTER if profile["page_number_position"] == "bottom_center"
+                              else WD_ALIGN_PARAGRAPH.RIGHT)
+        target = section.header if target_header else section.footer
+        other = section.footer if target_header else section.header
+        if unsupported_story_fields(target) or unsupported_story_fields(other):
+            page_ok = False
+        expected = profile["header"] != "none" and not (hidden_cover and index == 0)
+        target_fields = [p for p in target.paragraphs if page_field(p)]
+        other_fields = [p for p in other.paragraphs if page_field(p)]
+        if expected:
+            page_ok = page_ok and bool(target_fields) and all(p.alignment == expected_alignment for p in target_fields) and not other_fields
+        else:
+            page_ok = page_ok and not target_fields and not other_fields
+        # Different first/even-page stories require separate rendering checks.
+        if section.different_first_page_header_footer or doc.settings.odd_and_even_pages_header_footer:
+            page_ok = False
+    add("page_number", "pass" if page_ok else "warn")
+
+    add("preserved_content", "warn" if stats.get("preserved_paragraphs", 0) else "unchecked")
+    has_objects = bool(doc.tables or doc.inline_shapes or stats.get("retained_images", 0) or stats.get("retained_tables", 0))
+    add("images_tables", "warn" if has_objects else "unchecked")
+    for code in ("headings", "references", "visual_layout"):
+        add(code, "unchecked")
+    return {"version": 1, "checks": checks}
+
+
+def _safe_layout_inspection(document, profile, stats):
+    """A failed inspection must not prevent downloading the generated DOCX."""
+    try:
+        return _layout_inspection(document, profile, stats)
+    except Exception:  # noqa: BLE001 - report unknown without exposing content
+        return {"version": 1, "checks": [{"id": "inspection_unavailable", "status": "unchecked"}]}
+
+
 def _generate(request, workdir):
     kind = request["kind"]
     fields = _fields(request)
@@ -359,6 +505,7 @@ def _generate(request, workdir):
         "stats": stats,
         "format_id": profile["format_id"],
         "format_label": profile["label"],
+        "layout_check": _safe_layout_inspection(document, profile, stats),
     }
     return _metadata(metadata), document
 

@@ -489,6 +489,13 @@
       }
       .result-note { margin: 8px 0 0; }
       .result-warning { color: #77531f; background: #fff8e9; border: 1px solid #ead8b3; border-left: 4px solid #b78c44; border-radius: 7px; padding: 9px 11px; font-size: 11px; overflow-wrap: anywhere; }
+      .layout-check { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+      .layout-check h4 { margin: 0; font-size: 13px; }
+      .layout-check p { margin: 6px 0 9px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+      .layout-check-group { margin: 9px 0 0; }
+      .layout-check-group h5 { margin: 0 0 3px; font-size: 12px; }
+      .layout-check-group ul { margin: 0; padding-left: 1.4em; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+      .layout-check-group[data-status="warn"] h5 { color: #77531f; }
       .text-button {
         border: 0;
         background: transparent;
@@ -1448,6 +1455,13 @@
               <p class="result-note" id="result-format"></p>
               <p class="result-note" id="result-retained" hidden></p>
               <p class="result-warning" id="result-warning" role="status" aria-live="polite" hidden></p>
+              <section class="layout-check" id="layout-check" aria-labelledby="layout-check-title" hidden>
+                <h4 id="layout-check-title"></h4>
+                <p id="layout-check-scope"></p>
+                <div class="layout-check-group" data-status="pass"><h5 id="layout-check-pass-title"></h5><ul id="layout-check-pass"></ul></div>
+                <div class="layout-check-group" data-status="warn"><h5 id="layout-check-warn-title"></h5><ul id="layout-check-warn"></ul></div>
+                <div class="layout-check-group" data-status="unchecked"><h5 id="layout-check-unchecked-title"></h5><ul id="layout-check-unchecked"></ul></div>
+              </section>
               <div class="secondary">
                 <a class="ghost" id="web-download" data-t="download_word" download>Download Word</a>
                 <button type="button" class="ghost" id="web-share" data-t="share_word" hidden>Share / Save to Files</button>
@@ -2946,6 +2960,61 @@
         $(id).hidden = !values.some((value) => value > 0);
         $(id).textContent = t("result_retained", ...values);
       }
+      const LAYOUT_CHECK_TEXT = {
+        zh: {
+          title: "排版结果检查", scope: "依据这份生成的 Word 文件及生成时的模板检查部分设置；未渲染页面，不能证明论文符合全部规范。请对照要求检查文档。",
+          pass: "已检查", warn: "发现问题或需注意", unchecked: "无法自动判断",
+          noPass: "没有可确认通过的项目。", noWarn: "本次可检查项目未发现问题。", noWarnNoChecks: "没有可报告的检查结果。", noUnchecked: "没有其他未判断项目。",
+          paper_size: "各分节的纸张设置", margins: "各分节的页边距设置", default_font: "Normal 默认字体名称和字号", paragraph_spacing: "正文顶层非空段落的显式行距设置", page_number: "页码字段的位置、对齐和封面隐藏设置（不检查起始值或姓氏）",
+          preserved_content: "指定保留原格式的段落需对照草稿核对", images_tables: "正文图片与表格的内容和版式需核对", headings: "标题级别和实际格式需核对", references: "参考文献的内容、顺序和引用格式需核对", visual_layout: "页码起始值和姓氏、实际分页、字体显示及整体视觉排版需核对", inspection_unavailable: "本次检查不可用，请手动核对生成的文档。",
+        },
+        en: {
+          title: "Document formatting check", scope: "Checks some settings in this generated Word file against the template used. Pages were not rendered; this does not establish full compliance. Review the document against your requirements.",
+          pass: "Checked", warn: "Issues or items to review", unchecked: "Needs manual review",
+          noPass: "No items could be confirmed.", noWarn: "No issues were found in the checks performed.", noWarnNoChecks: "There are no check results to report.", noUnchecked: "No other items require manual review.",
+          paper_size: "Page size settings in document sections", margins: "Margin settings in document sections", default_font: "Font name and size of the Normal default style", paragraph_spacing: "Explicit line spacing in non-empty top-level body paragraphs", page_number: "Page-number field location, alignment and cover hiding (not starting value or surname)",
+          preserved_content: "Compare paragraphs kept in their original formatting", images_tables: "Review the contents and layout of body images and tables", headings: "Review heading levels and actual formatting", references: "Review reference details, order and citation formatting", visual_layout: "Review page-number start and surname, actual pagination, displayed fonts and visual layout", inspection_unavailable: "The check is unavailable for this result; review the generated document manually.",
+        },
+        es: {
+          title: "Revisión del formato", scope: "Comprueba algunos ajustes del Word generado frente a la plantilla utilizada. No se renderizaron las páginas; esto no garantiza el cumplimiento completo. Revisa el documento según tus requisitos.",
+          pass: "Comprobado", warn: "Problemas o aspectos a revisar", unchecked: "Revisión manual necesaria",
+          noPass: "No se pudo confirmar ningún elemento.", noWarn: "No se detectaron problemas en las comprobaciones realizadas.", noWarnNoChecks: "No hay resultados de comprobación que comunicar.", noUnchecked: "No hay otros elementos pendientes de revisión.",
+          paper_size: "Tamaño de página de las secciones", margins: "Márgenes de las secciones", default_font: "Nombre y tamaño de fuente del estilo predeterminado Normal", paragraph_spacing: "Interlineado explícito de párrafos no vacíos del cuerpo principal", page_number: "Ubicación y alineación del campo de página y ocultación en portada (no el valor inicial ni el apellido)",
+          preserved_content: "Compara los párrafos con formato original conservado", images_tables: "Revisa el contenido y diseño de imágenes y tablas del cuerpo", headings: "Revisa los niveles de títulos y su formato real", references: "Revisa datos, orden y formato de las referencias", visual_layout: "Revisa el valor inicial y apellido de página, la paginación, las fuentes mostradas y el diseño visual", inspection_unavailable: "La comprobación no está disponible para este resultado; revisa el documento manualmente.",
+        },
+      };
+      function renderLayoutCheck(report) {
+        const text = LAYOUT_CHECK_TEXT[lang] || LAYOUT_CHECK_TEXT.en;
+        const statuses = ["pass", "warn", "unchecked"];
+        const known = ["paper_size", "margins", "default_font", "paragraph_spacing", "page_number", "preserved_content", "images_tables", "headings", "references", "visual_layout", "inspection_unavailable"];
+        let checks = report?.version === 1 && Array.isArray(report.checks) ? report.checks : [];
+        const seen = new Set();
+        const invalid = !checks.length || checks.length > known.length || checks.some((item) => {
+          if (!item || !known.includes(item.id) || !statuses.includes(item.status) || seen.has(item.id)) return true;
+          seen.add(item.id);
+          if (["headings", "references", "visual_layout", "inspection_unavailable"].includes(item.id) && item.status !== "unchecked") return true;
+          return ["preserved_content", "images_tables"].includes(item.id) && item.status === "pass";
+        }) || (seen.has("inspection_unavailable") && checks.length !== 1);
+        if (invalid) checks = [{id: "inspection_unavailable", status: "unchecked"}];
+        // Missing categories mean an older or incomplete report; never infer success.
+        else if (!seen.has("inspection_unavailable") && known.slice(0, -1).some((id) => !seen.has(id))) {
+          checks = [...checks, {id: "inspection_unavailable", status: "unchecked"}];
+        }
+        $("layout-check").hidden = false;
+        $("layout-check-title").textContent = text.title;
+        $("layout-check-scope").textContent = text.scope;
+        for (const status of statuses) {
+          $(`layout-check-${status}-title`).textContent = text[status];
+          const list = $(`layout-check-${status}`);
+          const items = checks.filter((item) => item.status === status).map((item) => text[item.id]);
+          if (!items.length) items.push(text[status === "pass" ? "noPass" : status === "warn" ? (checks.some((item) => item.status === "pass") ? "noWarn" : "noWarnNoChecks") : "noUnchecked"]);
+          list.replaceChildren(...items.map((label) => {
+            const item = document.createElement("li");
+            item.textContent = label;
+            return item;
+          }));
+        }
+      }
       function renderWebResult() {
         if (native) return;
         for (const id of ["convert", "blank", "try-demo"]) $(id).disabled = sharing || inProgress || paragraphLoading;
@@ -2959,6 +3028,7 @@
         $("result-format").textContent = t("result_format", formatLabel(webResult.format));
         renderRetained("result-retained", webResult.retained);
         renderWarnings("result-warning", webResult.warnings);
+        renderLayoutCheck(webResult.layoutCheck);
         $("web-download").href = webResult.url;
         $("web-download").download = webResult.name;
         $("web-share").hidden = !canShareResult(webResult);
