@@ -86,7 +86,7 @@
         typeof navigator.share !== "function" ||
         typeof navigator.canShare !== "function") return null;
     try {
-      return new File([blob], name, { type: DOCX_MIME });
+      return new File([blob], name, { type: blob.type || DOCX_MIME });
     } catch (_) {
       return null;
     }
@@ -538,7 +538,7 @@
         blob,
         shareFile,
         isBlank: Boolean(meta.blank),
-        format: ["mla", "apa", "custom"].includes(meta.format_id)
+        format: ["mla", "apa", "custom", "icml"].includes(meta.format_id)
           ? { id: meta.format_id, label: meta.format_label || "" }
           : null,
         stats: [
@@ -558,6 +558,7 @@
         ],
         source: "browser",
         layoutCheck: meta.layout_check || null,
+        latexWarnings: Array.isArray(meta.latex_warnings) ? meta.latex_warnings : [],
         conversionWarnings: Array.isArray(meta.conversion_warnings) ? meta.conversion_warnings : [],
       });
     }

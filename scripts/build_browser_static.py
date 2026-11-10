@@ -46,6 +46,7 @@ PYTHON_MODULES = (
     "browser_bridge.py",
     "bibliography_export.py",
     "document_conversion.py",
+    "icml_latex.py",
 )
 STATIC_ASSETS = (
     "transport.js", "template-share.js", "template-sharing-ui.js", "capybara-64.png",

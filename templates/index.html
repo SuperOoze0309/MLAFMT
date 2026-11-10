@@ -510,6 +510,8 @@
       .layout-check-group h5 { margin: 0 0 3px; font-size: 12px; }
       .layout-check-group ul { margin: 0; padding-left: 1.4em; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
       .layout-check-group[data-status="warn"] h5 { color: #77531f; }
+      .preview-column [hidden] { display: none !important; }
+      .fields > [hidden] { display: none !important; }
       .text-button {
         border: 0;
         background: transparent;
@@ -1304,6 +1306,7 @@
                     <option value="mla" data-t="format_mla">MLA 9</option>
                     <option value="apa" data-t="format_apa">APA 7 · Student paper</option>
                     <option value="custom" data-t="format_custom">Custom course template</option>
+                    <option value="icml" id="format-icml" data-t="format_icml">ICML 2026 · LaTeX</option>
                   </select>
                 </label>
                 <p class="format-note" id="format-note"></p>
@@ -1413,7 +1416,7 @@
                 <p class="hint" data-t="template_local">Templates are saved in this browser on this device. Export one to keep a copy or use it elsewhere.</p>
               </details>
               <div class="fields">
-                <label class="field"
+                <label class="field" id="name-field"
                   ><span data-t="name">Your name</span
                   ><span class="required">*</span
                   ><input
@@ -1424,7 +1427,7 @@
                     data-ph="name_ph"
                     placeholder="Jane Doe"
                 /></label>
-                <label class="field"
+                <label class="field" id="instructor-field"
                   ><span data-t="instructor">Instructor</span
                   ><input
                     id="instructor"
@@ -1445,7 +1448,7 @@
                 <label class="field full" id="affiliation-field" hidden><span data-t="affiliation">School / department</span>
                   <input id="affiliation" name="affiliation" maxlength="5000" data-ph="affiliation_ph" placeholder="Department, University" />
                 </label>
-                <label class="field"
+                <label class="field" id="course-field"
                   ><span data-t="course">Course</span
                   ><input
                     id="course"
@@ -1453,7 +1456,7 @@
                     data-ph="course_ph"
                     placeholder="ENG 101"
                 /></label>
-                <label class="field"
+                <label class="field" id="date-field"
                   ><span data-t="date">Date</span
                   ><input
                     id="date"
@@ -1511,7 +1514,7 @@
               </div>
               <div class="actions">
                 <button type="submit" class="primary" id="convert">
-                  <span data-t="convert">Format document</span
+                  <span id="convert-label" data-t="convert">Format document</span
                   ><svg
                     aria-hidden="true"
                     viewBox="0 0 24 24"
@@ -1593,7 +1596,7 @@
                 <button type="button" class="ghost" id="web-share" data-t="share_word" hidden>Share / Save to Files</button>
               </div>
               <p class="result-note" data-t="result_hint">You can download this result again while this page stays open.</p>
-              <p class="result-note" data-t="apple_save_hint">iPhone / iPad: tap Download Word, then find the file in Safari Downloads or the Files app. If a preview opens, use Share → Save to Files.</p>
+              <p class="result-note" id="apple-save-hint" data-t="apple_save_hint">iPhone / iPad: tap Download Word, then find the file in Safari Downloads or the Files app. If a preview opens, use Share → Save to Files.</p>
             </section>
             <div id="native-actions" class="secondary" hidden>
               <button type="button" class="ghost" id="native-save" data-t="native_save">Save Word document</button>
@@ -1627,7 +1630,9 @@
                 >MLA 9 · Letter</span
               >
             </div>
-            <div class="paper-stage">
+            <div id="icml-preview" class="format-note" hidden></div>
+            <p class="format-note" id="icml-official" hidden><a href="https://media.icml.cc/Conferences/ICML2026/Styles/icml2026.zip" target="_blank" rel="noopener noreferrer" data-t="icml_official_link">Download the official ICML 2026 style ZIP</a></p>
+            <div class="paper-stage" id="paper-stage">
               <div class="paper" id="paper-preview" data-label="preview_label">
                 <div class="paper-header" id="paper-header">Doe 1</div>
                 <div class="paper-heading">
@@ -1647,11 +1652,11 @@
                 </div>
               </div>
             </div>
-            <p class="preview-note" data-t="preview_note">
+            <p class="preview-note" id="paper-preview-note" data-t="preview_note">
               Layout illustration · your draft appears in the downloaded
               document
             </p>
-            <div class="specs">
+            <div class="specs" id="paper-specs">
               <div class="spec">
                 <span class="check" aria-hidden="true">✓</span>
                 <div>
@@ -1687,7 +1692,7 @@
                 </div>
               </div>
             </div>
-            <p class="disclaimer" data-t="disclaimer">
+            <p class="disclaimer" id="paper-disclaimer" data-t="disclaimer">
               Choose a template to create a Word file, then review its layout and citations.
               Add images from TXT/MD separately.
             </p>
@@ -2534,6 +2539,39 @@
         summary_references_line: (title, chinese, sorted) =>
           `${title}: ${chinese ? "página nueva, título centrado, sin sangría francesa" : "página nueva, título centrado, sangría francesa de 1,27 cm"}; ${sorted ? "entradas ordenadas" : "orden original"}`,
       });
+      Object.assign(T.zh, {
+        format_icml: "ICML 2026 · LaTeX",
+        format_note_icml: "生成匿名审稿用 LaTeX 源文件 ZIP，需自行从 ICML 官网获取 2026 样式文件后编译。标题、正文、参考文献及文件元数据中的身份信息须自行核对。",
+        icml_preview_title: "ICML LaTeX 源文件", icml_preview: "下载包包含可编辑的 LaTeX 和使用说明，不是已排版的 PDF。正文按文本重建，不自动识别摘要或引用；图片、表格、公式、分页、文本框、脚注、尾注及复杂格式需人工处理。中文等非 ASCII 文字未必能正确显示，须配置合适的 TeX 引擎和字体，并逐字检查生成的 PDF。请核对目标年份要求与匿名信息。", icml_official_link: "下载 ICML 官方 2026 样式 ZIP（新标签页）",
+        icml_convert: "生成 LaTeX 源文件", icml_blank: "生成空白 LaTeX 模板", icml_download: "下载 LaTeX ZIP",
+        icml_details: (size) => `LaTeX ZIP · ${size}`, icml_working: "正在本地生成 LaTeX 源文件…",
+        icml_missing_title: "请填写论文标题。",
+        icml_done: (name) => `LaTeX 源文件已生成：${name}。请在下方下载。`,
+        icml_result_warning: "ZIP 不含 ICML 样式文件：请按包内说明从官网获取 2026 样式后编译。不会自动识别摘要或引用，图片、表格、公式、分页、文本框、脚注、尾注及复杂格式可能遗漏或改变；标题、正文、参考文献和文件元数据的匿名性须自行检查。中文等非 ASCII 文字未必能正确显示，须配置合适的 TeX 引擎和字体，并逐字检查生成的 PDF。",
+        icml_apple_hint: "iPhone／iPad：下载 ZIP 后，在 Safari 下载列表或“文件”App 中查找。",
+      });
+      Object.assign(T.en, {
+        format_icml: "ICML 2026 · LaTeX",
+        format_note_icml: "Create a LaTeX source ZIP for anonymous review. Obtain the 2026 style files from ICML before compiling. Review the title, body, references and file metadata for identifying information.",
+        icml_preview_title: "ICML LaTeX source", icml_preview: "The download contains editable LaTeX and instructions, not a rendered PDF. Text is reconstructed without automatic abstract or citation recognition; images, tables, formulas, pagination, text boxes, footnotes, endnotes and complex formatting require manual work. Chinese and other non-ASCII characters may not display correctly; configure a suitable TeX engine and fonts, then check every character in the generated PDF. Verify the target year and anonymity requirements.", icml_official_link: "Download the official ICML 2026 style ZIP (opens in a new tab)",
+        icml_convert: "Generate LaTeX source", icml_blank: "Create a blank LaTeX template", icml_download: "Download LaTeX ZIP",
+        icml_details: (size) => `LaTeX ZIP · ${size}`, icml_working: "Generating LaTeX source locally…",
+        icml_missing_title: "Please enter the paper title.",
+        icml_done: (name) => `LaTeX source is ready: ${name}. Download it below.`,
+        icml_result_warning: "The ZIP does not include the ICML style files: follow its instructions to obtain the 2026 files from ICML before compiling. Abstracts and citations are not automatically recognized; images, tables, formulas, pagination, text boxes, footnotes, endnotes and complex formatting may be omitted or changed. Review the title, body, references and file metadata for identifying information. Chinese and other non-ASCII characters may not display correctly; configure a suitable TeX engine and fonts, then check every character in the generated PDF.",
+        icml_apple_hint: "iPhone / iPad: find the ZIP in Safari Downloads or the Files app.",
+      });
+      Object.assign(T.es, {
+        format_icml: "ICML 2026 · LaTeX",
+        format_note_icml: "Crea un ZIP LaTeX para revisión anónima. Obtén los archivos de estilo 2026 de ICML antes de compilar. Revisa el título, el texto, las referencias y los metadatos para eliminar datos identificativos.",
+        icml_preview_title: "Código fuente ICML LaTeX", icml_preview: "La descarga contiene LaTeX editable e instrucciones, no un PDF renderizado. El texto se reconstruye sin identificar automáticamente el resumen ni las citas; imágenes, tablas, fórmulas, paginación, cuadros de texto, notas al pie, notas finales y formato complejo requieren revisión manual. El chino y otros caracteres no ASCII pueden no mostrarse correctamente; configura un motor TeX y fuentes adecuados y comprueba cada carácter del PDF generado. Comprueba el año y el anonimato.", icml_official_link: "Descargar el ZIP de estilos oficial de ICML 2026 (abre una pestaña nueva)",
+        icml_convert: "Generar código LaTeX", icml_blank: "Crear plantilla LaTeX vacía", icml_download: "Descargar ZIP LaTeX",
+        icml_details: (size) => `ZIP LaTeX · ${size}`, icml_working: "Generando código LaTeX localmente…",
+        icml_missing_title: "Escribe el título del trabajo.",
+        icml_done: (name) => `Código LaTeX preparado: ${name}. Descárgalo abajo.`,
+        icml_result_warning: "El ZIP no incluye los estilos ICML: sigue las instrucciones para obtener los archivos de 2026 antes de compilar. No se identifican automáticamente el resumen ni las citas; imágenes, tablas, fórmulas, paginación, cuadros de texto, notas al pie, notas finales y formato complejo pueden omitirse o cambiar. Revisa el anonimato del título, texto, referencias y metadatos. El chino y otros caracteres no ASCII pueden no mostrarse correctamente; configura un motor TeX y fuentes adecuados y comprueba cada carácter del PDF generado.",
+        icml_apple_hint: "iPhone / iPad: busca el ZIP en Descargas de Safari o en Archivos.",
+      });
       const $ = (id) => document.getElementById(id);
       const store = {
         get(key) {
@@ -2688,7 +2726,7 @@
           const preset = BUILTIN_PRESETS.find((item) => item.id === snapshot.builtin_id);
           return preset ? t(preset.translation) : snapshot.label || t("format_custom");
         }
-        return t(snapshot.id === "apa" ? "format_apa" : "format_mla");
+        return t(snapshot.id === "icml" ? "format_icml" : snapshot.id === "apa" ? "format_apa" : "format_mla");
       }
       function resultFormat(reported, requested) {
         if (!reported || (reported.id === requested?.id &&
@@ -2967,7 +3005,7 @@
         $("template-message").textContent = t(key);
       }
       const savedFormat = store.get("format_id");
-      if (["mla", "apa", "custom"].includes(savedFormat)) $("format-id").value = savedFormat;
+      if (["mla", "apa", "custom", "icml"].includes(savedFormat)) $("format-id").value = savedFormat;
       try {
         const saved = store.get("custom_profile");
         if (saved) writeProfile(JSON.parse(saved), store.get("custom_profile_exact") === "true");
@@ -3147,13 +3185,23 @@
         $("web-result").hidden = !webResult;
         if (!webResult) return;
         $("result-filename").textContent = webResult.name;
-        $("result-details").textContent = webResult.isBlank
-          ? t("result_blank", fileSize(webResult.blob.size))
+        const isIcmlResult = webResult.format?.id === "icml";
+        $("result-details").textContent = isIcmlResult ? t("icml_details", fileSize(webResult.blob.size))
+          : webResult.isBlank ? t("result_blank", fileSize(webResult.blob.size))
           : t("result_details", fileSize(webResult.blob.size), ...webResult.stats);
         $("result-format").textContent = t("result_format", formatLabel(webResult.format));
-        renderRetained("result-retained", webResult.retained);
-        renderWarnings("result-warning", webResult.warnings);
-        renderLayoutCheck(webResult.layoutCheck);
+        if (isIcmlResult) {
+          $("result-retained").hidden = true;
+          $("result-warning").hidden = false;
+          $("result-warning").textContent = t("icml_result_warning");
+          $("layout-check").hidden = true;
+        } else {
+          renderRetained("result-retained", webResult.retained);
+          renderWarnings("result-warning", webResult.warnings);
+          renderLayoutCheck(webResult.layoutCheck);
+        }
+        $("web-download").textContent = t(isIcmlResult ? "icml_download" : "download_word");
+        $("apple-save-hint").textContent = t(isIcmlResult ? "icml_apple_hint" : "apple_save_hint");
         $("web-download").href = webResult.url;
         $("web-download").download = webResult.name;
         $("web-share").hidden = !canShareResult(webResult);
@@ -3196,6 +3244,25 @@
       }
       function refreshPreview() {
         syncPageControls();
+        const isIcml = currentFormat() === "icml";
+        for (const id of ["name-field", "instructor-field", "course-field", "date-field"]) $(id).hidden = isIcml;
+        $("name").required = !isIcml;
+        $("adv-open").hidden = isIcml;
+        for (const id of ["paper-stage", "paper-preview-note", "paper-specs", "paper-disclaimer"]) $(id).hidden = isIcml;
+        $("icml-preview").hidden = !isIcml;
+        $("icml-official").hidden = !isIcml;
+        $("convert-label").textContent = t(isIcml ? "icml_convert" : "convert");
+        $("blank").textContent = t(isIcml ? "icml_blank" : "blank");
+        if (isIcml) {
+          $("preview-heading").textContent = t("icml_preview_title");
+          $("icml-preview").textContent = t("icml_preview");
+          $("format-note").textContent = t("format_note_icml");
+          $("custom-editor").hidden = true;
+          $("affiliation-field").hidden = true;
+          document.querySelector("[data-t=preview_tag]").textContent = t("format_icml");
+          return;
+        }
+        $("preview-heading").textContent = t("preview_title");
         for (const id of ["name", "instructor", "course", "title"])
           $("paper-" + id).textContent =
             $(id).value.trim() ||
@@ -3313,6 +3380,9 @@
         document.documentElement.lang = LANGUAGE_LOCALES[lang] || "en";
         document.title = t("page_title");
         $("file-converter-nav").hidden = transport?.kind !== "browser";
+        $("format-icml").hidden = transport?.kind !== "browser";
+        $("format-icml").disabled = transport?.kind !== "browser";
+        if (transport?.kind !== "browser" && currentFormat() === "icml") $("format-id").value = "mla";
         $("brand-mascot").alt = t("mascot_alt");
         document.querySelectorAll("[data-t]").forEach((el) => {
           el.textContent = t(el.dataset.t);
@@ -3692,7 +3762,7 @@
           closeDialog();
       });
       function fields() {
-        return { ...Object.fromEntries(
+        const data = { ...Object.fromEntries(
           [
             ["name", "name"],
             ["title", "title"],
@@ -3706,6 +3776,12 @@
           preserve_paragraphs: isWordDraft() ? [...preservedIds].sort((a, b) => a - b) : [],
           ...(isWordDraft() && preservedIds.size ? { source_fingerprint: paragraphFingerprint } : {}),
         };
+        if (data.format_id === "icml") {
+          for (const key of ["name", "instructor", "course", "affiliation", "date", "last_name_override"]) data[key] = "";
+          data.preserve_paragraphs = [];
+          delete data.source_fingerprint;
+        }
+        return data;
       }
       function validate() {
         let data;
@@ -3716,10 +3792,10 @@
           return null;
         }
         for (const id of ["name", "title"])
-          $(id).setAttribute("aria-invalid", String(!data[id]));
-        if (!data.name || !data.title) {
-          setStatus("missing_fields", "err");
-          $(data.name ? "title" : "name").focus();
+          $(id).setAttribute("aria-invalid", String(!data[id] && !(id === "name" && data.format_id === "icml")));
+        if ((!data.name && data.format_id !== "icml") || !data.title) {
+          setStatus(data.format_id === "icml" ? "icml_missing_title" : "missing_fields", "err");
+          $(!data.title ? "title" : "name").focus();
           return null;
         }
         return data;
@@ -3731,7 +3807,7 @@
         for (const id of ["convert", "blank"]) $(id).disabled = on;
         if (native)
           for (const id of ["native-save", "native-open", "native-share", "remove-file"]) $(id).disabled = on;
-        if (on) setStatus(native && ["importing", "saving"].includes(message) ? message : "working", "working");
+        if (on) setStatus(native && ["importing", "saving"].includes(message) ? message : currentFormat() === "icml" ? "icml_working" : "working", "working");
         renderWebResult();
         renderParagraphControls();
         renderProcessingProgress();
@@ -3785,7 +3861,7 @@
           if (runId !== generationSeq) return;
           if (native) return;
           showWebResult(result, isBlank, format);
-          setStatus(isBlank ? "done_blank" : "done", "ok", result.name);
+          setStatus(format.id === "icml" ? "icml_done" : isBlank ? "done_blank" : "done", "ok", result.name);
         } catch (error) {
           if (runId !== generationSeq) return;
           const code = transport.errorCode(error);

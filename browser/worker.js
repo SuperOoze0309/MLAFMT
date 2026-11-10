@@ -21,6 +21,7 @@ const PYTHON_MODULES = [
   "docx_preserve.py",
   "bibliography_export.py",
   "document_conversion.py",
+  "icml_latex.py",
   "browser_bridge.py",
 ];
 

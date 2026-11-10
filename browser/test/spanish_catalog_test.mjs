@@ -68,7 +68,7 @@ check('Chinese, English and Spanish have exactly the same catalog keys and types
 
 check('Spanish contains explicit translations instead of inherited English messages', () => {
   // Identical universal units and the MLA style name are intentional.
-  const unchangedAllowed = new Set(['format_mla', 'unit_pt', 'unit_cm']);
+  const unchangedAllowed = new Set(['format_mla', 'format_icml', 'unit_pt', 'unit_cm']);
   for (const key of keys) {
     if (unchangedAllowed.has(key)) continue;
     assert.notEqual(catalogs.es[key], catalogs.en[key], `${key}: English string/function fallback`);
@@ -232,6 +232,58 @@ check('Personal template names matching built-ins stay literal in every language
     assert.equal(h.run('formatLabel(profileSnapshot({format_id:"custom",custom_profile:customProfile()}))'), '中文课程论文（通用）');
     assert.equal(h.run('profileSnapshot({format_id:"custom",custom_profile:customProfile()}).builtin_id'), null);
   }
+});
+
+check('ICML selection shows source requirements and preserves user fields', () => {
+  const h = renderingHarness();
+  h.nodes.get('format-id').value = 'icml';
+  for (const lang of ['zh', 'en', 'es']) {
+    h.nodes.get(`lang-${lang}`).trigger('click');
+    assert.equal(h.nodes.get('icml-preview').hidden, false);
+    assert.equal(h.nodes.get('icml-official').hidden, false);
+    assert.equal(h.nodes.get('paper-stage').hidden, true);
+    assert.equal(h.nodes.get('paper-specs').hidden, true);
+    assert.equal(h.nodes.get('name-field').hidden, true);
+    assert.equal(h.nodes.get('adv-open').hidden, true);
+    assert.ok(h.nodes.get('format-note').textContent.includes('2026'));
+    assert.match(h.nodes.get('icml-preview').textContent, /PDF/);
+    const privacy = {zh:/标题.*正文/, en:/title, body/i, es:/título, el texto/i}[lang];
+    const skipped = {zh:/文本框.*脚注.*尾注/, en:/text boxes, footnotes, endnotes/i, es:/cuadros de texto, notas al pie, notas finales/i}[lang];
+    assert.match(h.nodes.get('format-note').textContent, privacy);
+    assert.match(h.nodes.get('icml-preview').textContent, skipped);
+    for (const [id, value] of Object.entries(h.userValues)) assert.equal(h.nodes.get(id).value, value);
+  }
+  h.nodes.get('format-id').value = 'mla';
+  h.run('render()');
+  assert.equal(h.nodes.get('paper-stage').hidden, false);
+  assert.equal(h.nodes.get('name-field').hidden, false);
+  assert.equal(h.nodes.get('icml-preview').hidden, true);
+  assert.equal(h.nodes.get('icml-official').hidden, true);
+  assert.equal(h.nodes.get('adv-open').hidden, false);
+});
+
+check('ICML official style link targets the verified HTTPS archive safely', () => {
+  assert.match(source, /<a href="https:\/\/media\.icml\.cc\/Conferences\/ICML2026\/Styles\/icml2026\.zip" target="_blank" rel="noopener noreferrer" data-t="icml_official_link">/);
+  for (const language of ['zh','en','es']) assert.ok(catalogs[language].icml_official_link.includes('2026'));
+});
+
+check('ICML requests do not transmit the identity fields or paragraph selection', () => {
+  const h = renderingHarness();
+  Object.assign(h.context, { isWordDraft: () => true, preservedIds: new Set([2]), paragraphFingerprint: 'PRIVATE', setStatus() {} });
+  h.run(section('      function fields() {', '      function busy('));
+  h.nodes.get('format-id').value = 'icml';
+  const data = JSON.parse(h.run('JSON.stringify(fields())'));
+  for (const key of ['name','instructor','course','affiliation','date','last_name_override']) assert.equal(data[key], '', key);
+  assert.deepEqual(data.preserve_paragraphs, []);
+  assert.equal(data.source_fingerprint, undefined);
+  assert.equal(data.title, h.userValues.title);
+  assert.ok(h.run('validate()'), 'title-only anonymous ICML request must be valid');
+  h.nodes.get('title').protectValue = false;
+  h.nodes.get('title').value = '';
+  h.context.setStatus = (key) => { h.context.lastValidationStatus = key; };
+  h.nodes.get('title').focus = () => {};
+  assert.equal(h.run('validate()'), null);
+  assert.equal(h.context.lastValidationStatus, 'icml_missing_title');
 });
 
 console.log(JSON.stringify({ sourcePath, sourceSha256, catalogKeysPerLanguage: keys.length,

@@ -144,6 +144,21 @@ await check('browser result carries the inspection report and keeps older result
   assert.equal(second.value.layoutCheck, null);
 });
 
+await check('ICML output preserves ZIP MIME, filename, format and warning codes', async h => {
+  const result = track(h.transport.generate({isBlank:true, request:{kind:'blank', format_id:'icml', title:'Fictional'}, file:null}));
+  h.ready(); await flush();
+  const worker = h.workers.at(-1);
+  const request = worker.requests().at(-1);
+  worker.emit({type:'result', id:request.id, meta:{ok:true, name:'FormCapy-ICML-2026.zip', mime:'application/zip', blank:true, format_id:'icml', format_label:'ICML LaTeX', latex_warnings:['icml_manual_style','icml_anonymity_review']}, buffer:bytes('fictional ZIP')});
+  await flush();
+  assert.equal(result.status, 'fulfilled');
+  assert.equal(result.value.name, 'FormCapy-ICML-2026.zip');
+  assert.equal(result.value.blob.type, 'application/zip');
+  assert.equal(result.value.format.id, 'icml');
+  assert.equal(result.value.layoutCheck, null);
+  assert.deepEqual(Array.from(result.value.latexWarnings), ['icml_manual_style','icml_anonymity_review']);
+});
+
 await check('cancel init then synchronously retry keeps the new init promise', async h => {
   const first = track(h.transport.init());
   const oldWorker = h.workers[0];

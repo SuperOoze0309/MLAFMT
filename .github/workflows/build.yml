@@ -53,6 +53,7 @@ jobs:
           node browser/test/document_converter_test.mjs
           node browser/test/office_frame_loading_test.mjs
           node browser/test/layout_check_ui_test.mjs
+          node browser/test/icml_ui_test.mjs
 
   windows-exe:
     needs: test

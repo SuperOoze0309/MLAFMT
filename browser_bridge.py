@@ -460,6 +460,8 @@ def _safe_layout_inspection(document, profile, stats):
 
 def _generate(request, workdir):
     kind = request["kind"]
+    if request.get("format_id") == "icml":
+        return _generate_icml(request, workdir)
     fields = _fields(request)
     layout, profile = _layout(request)
     override = fields["last_name_override"]
@@ -508,6 +510,30 @@ def _generate(request, workdir):
         "layout_check": _safe_layout_inspection(document, profile, stats),
     }
     return _metadata(metadata), document
+
+
+def _generate_icml(request, workdir):
+    """Build a local LaTeX starter; ICML's original style is not bundled."""
+    from icml_latex import make_icml_source
+
+    title = request.get("title", "").strip()
+    if not title:
+        raise RequestError("missing_fields")
+    path = None
+    if request["kind"] != "blank":
+        path, extension = _input_path(request, workdir)
+        if extension not in SUPPORTED_EXTS:
+            raise RequestError("unsupported")
+        _check_limits(path)
+        if extension == ".docx":
+            _check_docx(path)
+    data, warnings, count = make_icml_source(title, path, txt_mode=request.get("txt_mode", "blank_line"))
+    return _metadata({
+        "ok": True, "kind": request["kind"], "blank": request["kind"] == "blank",
+        "name": "FormCapy-ICML-2026.zip", "mime": "application/zip", "bytes": len(data),
+        "format_id": "icml", "format_label": "ICML 2026 LaTeX",
+        "stats": {"body": count, "works_cited": 0}, "latex_warnings": list(warnings),
+    }), data
 
 
 def _bibliography(request):

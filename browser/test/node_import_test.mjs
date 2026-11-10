@@ -35,7 +35,7 @@ import docx, typing_extensions
 docx.__version__
 `));
 
-for (const name of ["mla_formatter.py", "format_profiles.py", "docx_preserve.py", "bibliography_export.py", "document_conversion.py", "browser_bridge.py"]) {
+for (const name of ["mla_formatter.py", "format_profiles.py", "docx_preserve.py", "bibliography_export.py", "document_conversion.py", "icml_latex.py", "browser_bridge.py"]) {
   const bytes = await readFile(path.join(root, name));
   pyodide.FS.writeFile("/app/" + name, new Uint8Array(bytes));
 }
@@ -264,7 +264,7 @@ const testWorkerSelf={
 const fetchWorkerAsset=async(value)=>{
   const url=new URL(value);
   assert.equal(url.origin,"http://localhost");
-  assert.ok(/^\/(?:wheels\/(?:python_docx-1\.2\.0|pypdf-6\.21\.4)-py3-none-any\.whl|python\/(?:mla_formatter|format_profiles|docx_preserve|bibliography_export|document_conversion|browser_bridge)\.py)$/.test(url.pathname));
+  assert.ok(/^\/(?:wheels\/(?:python_docx-1\.2\.0|pypdf-6\.21\.4)-py3-none-any\.whl|python\/(?:mla_formatter|format_profiles|docx_preserve|bibliography_export|document_conversion|icml_latex|browser_bridge)\.py)$/.test(url.pathname));
   if(failWorkerModuleOnce && url.pathname==="/python/bibliography_export.py"){
     failWorkerModuleOnce=false;
     return {ok:false,status:503};
