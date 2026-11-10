@@ -82,7 +82,7 @@ test("mounting, opening and choosing a file do not start the engine or read byte
   assert.equal(ui.find("convert").disabled, false);
   assert.match(ui.find("engine-notice").textContent, /hundreds of MB/);
   assert.match(ui.find("engine-notice").textContent, /1 GiB/);
-  assert.match(ui.mount.textContent, /not uploaded/);
+  assert.match(ui.mount.textContent, /stay in your browser/);
 });
 
 test("file choice exposes only the two different output formats", async () => {
@@ -127,13 +127,13 @@ test("PDF reconstruction and actual backend warnings are explained before downlo
   const ui = setup({ convert: async () => ({ blob: new Blob(["docx"]), name: "result.docx", warnings: ["pdf_text_reconstruction", "pdf_images_omitted", "pdf_blank_pages"] }) });
   await ui.file("source.pdf"); await ui.find("convert").click();
   assert.equal(ui.find("warnings").children.length, 3);
-  assert.match(ui.find("warnings").textContent, /editable Word/);
+  assert.match(ui.find("warnings").textContent, /Images, pages and tables may change or be lost/);
   assert.match(ui.find("warnings").textContent, /Some or all PDF images could not be retained/);
   assert.match(ui.find("warnings").textContent, /no extractable text/);
   for (const [language, limitation, warning, review] of [
-    ["en", /attempts to retain eligible embedded images/, /Some or all PDF images could not be retained/, /hidden or cropped.*before sharing/],
-    ["zh", /尝试保留符合条件的嵌入图片/, /部分或全部图片未能保留/, /隐藏或裁掉.*分享前/],
-    ["es", /intenta conservar las imágenes incrustadas aptas/, /algunas o todas las imágenes del PDF/, /oculto o recortado.*antes de compartir/],
+    ["en", /change or omit images and complex layouts/, /Some or all PDF images could not be retained/, /hidden or cropped.*before sharing/i],
+    ["zh", /图片和复杂版式可能改变或丢失/, /部分或全部图片未能保留/, /隐藏或裁掉.*分享前/],
+    ["es", /pueden cambiar o perderse imágenes/, /algunas o todas las imágenes del PDF/, /oculto o recortado.*antes de compartir/],
   ]) {
     ui.locale(language);
     assert.match(ui.find("limitations").textContent, limitation);
@@ -219,7 +219,7 @@ test("changing language preserves file, target and result without another conver
   assert.match(ui.mount.textContent, /不会上传/);
   assert.equal(ui.find("download").download, "Result.pdf");
   ui.locale("es"); assert.match(ui.find("status").textContent, /Conversión terminada/);
-  assert.match(ui.mount.textContent, /no se suben/);
+  assert.match(ui.mount.textContent, /se procesan en el navegador/);
   assert.equal(ui.instance.state().hasFile, true);
   assert.equal(ui.requests.length, 1);
 });

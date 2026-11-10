@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="mlafmt-mode" content="server" />
     <meta name="mlafmt-runtime" content="" />
     <meta name="mlafmt-materials" content="none" />
@@ -750,7 +750,7 @@
         font-size: 11px;
         line-height: 1.95;
         margin: 0;
-        color: #777785;
+        color: #666670;
       }
       .paper-lines {
         margin-top: 8px;
@@ -1147,6 +1147,102 @@
         .hero h1 { font-size: 25px; }
         .hero-description, .hero-formats { display: none; }
       }
+
+      /* A warm, typeset workspace; the paper preview stays faithful to the document. */
+      :root {
+        --ink: #3f3028; --muted: #6d5b50; --accent: #855339;
+        --accent-dark: #623a29; --bg: #f5f0e8; --line: #ded1c3;
+        --soft: #f1e4d4; --warm: #a34f30; --ok: #46704a; --error: #a5363d;
+        --paper-shadow: 0 12px 34px #65463410, 0 2px 8px #65463408;
+      }
+      body { background: var(--bg); }
+      .topbar { border-bottom-color: #d9cbbd; }
+      .brand { letter-spacing: -.6px; }
+      .languages { background: #ede2d5; border-color: #dfd0c0; }
+      .languages button[aria-pressed="true"] { background: #fffdf8; }
+      .tool-nav span { background: #f0dfcd; }
+      .tool-nav a { background: #fffdf8; }
+      .hero { border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+      .eyebrow { color: var(--warm); display: flex; align-items: center; gap: 9px; }
+      .eyebrow::before { content: ""; width: 22px; height: 2px; flex: 0 0 22px; background: currentColor; }
+      .hero h1 { font-family: ui-serif, Georgia, "Songti SC", STSong, serif; font-weight: 650; letter-spacing: -.035em; }
+      .hero-description { max-width: 58ch; }
+      .hero-formats span { color: #855339; background: #f3e6d7; border-color: #e3cdb8; }
+      .hero-formats span:last-child { color: #854327; background: #f5e3d7; border-color: #e7c8b7; }
+      .scene-water { background: #e8d4bd; border-color: #dbc0a3; }
+      .scene-water::after { border-color: #cba782; }
+      .panel { background: #fffdf8; }
+      .step { color: #8b402a; background: #f4e3d5; }
+      .field input, .field select, .field textarea { background: #fffefa; }
+      .template-editor { background: #f8efe3; border-color: #e3d0be; }
+      .drop { background: #faf1e6; border-color: #c7a78d; }
+      .drop.has { background: #fbf4eb; border-color: #e2cbb5; }
+      .primary { background: #855339; box-shadow: 0 3px 0 #623d2d, 0 7px 15px #85533918; }
+      .primary:hover:not(:disabled) { background: #623a29; }
+      .ghost { background: #fffdf8; }
+      .paper-stage { background: #ede0d0; border-color: #ddc9b6; }
+      .preview-tag { background: #f3e6d7; }
+      .check { background: #f2e4d4; }
+      .legal-links a { color: var(--muted); }
+      :focus-visible { outline-color: #855339; }
+      .template-editor summary:hover, .share-full-settings > summary:hover,
+      #preserve-options > summary:hover, .option:not(:has(input:disabled)):hover,
+      .option:focus-within { background: #f1e4d4; }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f3eae0; --muted: #c9b8aa; --accent: #e6be9c;
+          --accent-dark: #f6dcc5; --bg: #211b18; --line: #685447;
+          --soft: #493a30; --warm: #f0b796; --ok: #b8d2ae; --error: #ffb0aa;
+          --paper-shadow: 0 14px 36px #0005, 0 2px 8px #0003;
+        }
+        body { background: var(--bg); }
+        .topbar { border-color: var(--line); }
+        .mark { background: #4a3327; border-color: #795946; }
+        .languages { background: #332820; border-color: var(--line); }
+        .languages button[aria-pressed="true"] { background: #604a39; color: #fff5ea; box-shadow: none; }
+        .tool-nav span { background: #584032; color: #f8e8d6; }
+        .tool-nav a { background: #322820; color: #f6dcc5; }
+        .hero-formats span, .hero-formats span:last-child { background: #443126; border-color: #795b49; color: #f3d7bd; }
+        .hero-formats span:last-child { background: #4b3125; border-color: #805945; color: #f5ccb3; }
+        .scene-water { background: #594134; border-color: #876451; }
+        .scene-water::after { border-color: #a67d61; }
+        .panel, .dialog-section { background: #2d2521; }
+        .step { background: #5c3c2e; color: #f6d2b7; }
+        .field input, .field select, .field textarea,
+        .template-editor .field input, .template-editor .field select {
+          color: var(--ink); background: #241d19; border-color: #705a4d;
+        }
+        .field input[aria-invalid="true"], .field select[aria-invalid="true"],
+        .field textarea[aria-invalid="true"], .template-editor .field input[aria-invalid="true"],
+        .template-editor .field select[aria-invalid="true"] { background: #4e302c; border-color: #eaa09b; }
+        .template-editor, .share-full-settings { background: #3c3029; border-color: #765f50; box-shadow: none; }
+        .template-editor summary:hover, .share-full-settings > summary:hover,
+        #preserve-options > summary:hover, .option:not(:has(input:disabled)):hover,
+        .option:focus-within { background: #493a30; }
+        .drop, .drop.has { background: #403028; border-color: #9c7961; }
+        .drop:hover, .drop.over { background: #493a30; }
+        .result-card { background: #413329; }
+        .result-warning, .layout-check-group[data-status="warn"] h5 { color: #f3d39e; }
+        .result-warning { background: #4c3b29; border-color: #8c6a46; }
+        .template-message:not(:empty), #transfer-message:not(:empty),
+        #share-message:not(:empty), #share-editor-message:not(:empty) { background: #45352c; color: #f6dcc5; }
+        .template-message[data-message="invalid_template"], .template-message[data-message="template_storage"] { background: #4e302c; color: #ffb0aa; }
+        .template-message[data-message="template_limit"], .template-message[data-message="template_none"] { background: #4c3b29; color: #f3d39e; }
+        .primary { color: #2b1910; background: #e6be9c; box-shadow: 0 3px 0 #ae805f; }
+        .primary:hover:not(:disabled) { color: #2b1910; background: #f6dcc5; }
+        .ghost { color: var(--ink); background: #3b2e27; border-color: #886b59; }
+        .ghost:hover:not(:disabled), .ghost:active:not(:disabled) { background: #493a30; border-color: #b69176; }
+        .status { background: #3b3029; border-color: #765f50; }
+        .status.ok { background: #384131; border-color: #789675; color: #d1e6c5; }
+        .status.err { background: #4e302c; border-color: #bc7470; color: #ffb8b1; }
+        .paper-stage { background: #493a30; border-color: #7b604f; box-shadow: none; }
+        .preview-tag, .check { background: #49392d; color: #f6dcc5; }
+        dialog { background: #29211d; border-color: #886b59; }
+        :focus-visible { outline-color: #edc493; }
+        .ghost:focus-visible, .text-button:focus-visible,
+        .template-editor summary:focus-visible, .share-full-settings > summary:focus-visible,
+        #preserve-options > summary:focus-visible { outline-color: #edc493; }
+      }
     </style>
   </head>
   <body data-public-server="{{ public_server }}">
@@ -1285,7 +1381,7 @@
                   </div>
                   <p class="hint" data-t="chinese_typography_hint">Chinese typography uses a 16 pt Heiti title and 16/14/12 pt Heiti headings. Your body font remains editable.</p>
                   <label class="option"><input type="checkbox" id="c-show_cover_page_number" checked /><span data-t="show_cover_page_number">Show a page number on the cover</span></label>
-                  <p class="hint" data-t="numbering_hint">When the cover number is hidden, the starting number applies to the first body page. Numbering options apply when page numbers are enabled.</p>
+                  <p class="hint" data-t="numbering_hint">When the cover number is hidden, numbering starts on the first body page.</p>
                   <button type="button" class="text-button" id="open-preserve-options" data-t="open_preserve_options">Keep paragraph formatting in this draft…</button>
                 </details>
                 <div class="template-tools">
@@ -1297,7 +1393,7 @@
                 <details class="template-sharing" id="template-sharing" hidden>
                   <summary data-share-t="sharing">Share a course template</summary>
                   <p class="hint" data-share-t="steps">Copy code → paste into Import template → preview → apply.</p>
-                  <p class="hint" data-share-t="labels_hint">Optional labels describe this template. They do not fill in your paper details.</p>
+                  <p class="hint" data-share-t="labels_hint">Add optional course labels.</p>
                   <div class="fields">
                     <label class="field"><span data-share-t="school_name">School name</span><input id="share-school_name" maxlength="240" /></label>
                     <label class="field"><span data-share-t="school_abbr">School abbreviation</span><input id="share-school_abbr" maxlength="48" /></label>
@@ -1309,11 +1405,11 @@
                     <button class="ghost" type="button" id="preset-share-code" data-share-t="copy_code">Copy template code</button>
                     <button class="ghost" type="button" id="preset-share-json" data-share-t="export_json">Export sharing JSON</button>
                   </div>
-                  <p class="hint" data-share-t="privacy">Codes and sharing JSON contain the template name, layout settings and entered course labels. Anyone with a copy can read them. Drafts and paper details are not included automatically.</p>
+                  <p class="hint" data-share-t="privacy">Codes and sharing JSON contain the template name, layout and course labels. Anyone with a copy can read them. Drafts and paper details are not included automatically.</p>
                   <p class="hint" id="share-editor-message" role="status" aria-live="polite"></p>
                 </details>
                 <p class="template-message" id="template-message" role="status" aria-live="polite"></p>
-                <p class="hint" id="chinese-template-hint" data-t="chinese_preset_hint" hidden>Common basic layouts; follow your institution's requirements. Does not generate contents, abstracts, institution-specific covers or rewrite GB/T 7714 citations.</p>
+                <p class="hint" id="chinese-template-hint" data-t="chinese_preset_hint" hidden>Basic layouts; add your contents, abstract, institution-specific cover and GB/T 7714 citations as needed. Follow your institution’s requirements.</p>
                 <p class="hint" data-t="template_local">Templates are saved in this browser on this device. Export one to keep a copy or use it elsewhere.</p>
               </details>
               <div class="fields">
@@ -1592,9 +1688,8 @@
               </div>
             </div>
             <p class="disclaimer" data-t="disclaimer">
-              Bold, italic and underline are kept. Images, footnotes, tables and
-              special styles may be lost. Please review the result before
-              submitting.
+              Choose a template to create a Word file, then review its layout and citations.
+              Add images from TXT/MD separately.
             </p>
           </aside>
         </div>
@@ -1734,7 +1829,7 @@
           <summary data-share-t="full_settings">All 19 layout settings</summary>
           <dl class="share-preview" id="share-preview-settings"></dl>
         </details>
-        <p class="hint" data-share-t="privacy">Codes and sharing JSON contain template settings and entered labels, without automatically including drafts or paper details.</p>
+        <p class="hint" data-share-t="privacy">Codes and sharing JSON contain the template name, layout and course labels. Anyone with a copy can read them. Drafts and paper details are not included automatically.</p>
         <label class="field" id="share-output-row" hidden><span id="share-output-label"></span><textarea id="share-output" rows="5" readonly spellcheck="false"></textarea></label>
         <div class="template-tools">
           <button class="primary" type="button" id="share-apply" data-share-t="apply">Apply this template</button>
@@ -1841,7 +1936,7 @@
           spec_cited: "有序的参考文献",
           spec_cited_sub: "另起一页 · 悬挂缩进",
           disclaimer:
-            "保留粗体、斜体与下划线。图片、脚注、表格和特殊样式可能丢失，提交前请检查生成文档。",
+            "选择模板生成 Word，完成后核对版式和引用。TXT/MD 中的图片需另行添加。",
           footer: "为每一段认真写下的文字。",
           ready: "填写姓名与标题，添加草稿，就可以开始了。",
           file_ready: (f, size) => `已选择 ${f} · ${size}`,
@@ -1964,7 +2059,7 @@
           spec_cited: "Works Cited, sorted",
           spec_cited_sub: "New page · hanging indents",
           disclaimer:
-            "Bold, italic and underline are kept. Images, footnotes, tables and special styles may be lost. Please review the result before submitting.",
+            "Choose a template to create a Word file, then review its layout and citations. Add images from TXT/MD separately.",
           footer: "Made for the words that matter.",
           ready: "Enter your name and title, add a draft, and you're ready.",
           file_ready: (f, size) => `Selected ${f} · ${size}`,
@@ -2050,11 +2145,11 @@
         advanced_customization: "高级定制", page_number_position: "页码位置", page_number_start: "起始页码",
         position_top_right: "右上角", position_bottom_center: "页脚居中", position_bottom_right: "页脚右侧",
         show_cover_page_number: "封面显示页码",
-        numbering_hint: "隐藏封面页码时，起始数字用于正文第一页。启用页码后，这些设置才会生效。",
+        numbering_hint: "隐藏封面页码时，正文第一页使用起始页码。",
         numbering_summary: (position, start) => `页码：${position} · 从 ${start} 开始`,
         cover_number_shown: "封面显示页码", cover_number_hidden: "封面隐藏页码，正文从所设数字开始",
         open_preserve_options: "设置本草稿的段落保留…", paragraph_more: "显示更多段落",
-        preserve_title: "指定段落保持原格式", preserve_hint: "仅用于当前 Word 草稿。保留所选段落的字体、字号、行距和缩进；纸张、页边距与页码仍使用全篇模板。正文图片和表格会自动保留。选择不会保存进课程模板。",
+        preserve_title: "指定段落保持原格式", preserve_hint: "只对当前 Word 草稿生效，不会保存到模板。所选段落保留字体、字号、行距和缩进；纸张、页边距和页码仍按模板设置。",
         load_paragraphs: "读取 Word 段落", select_all_paragraphs: "全选段落", clear_preserved: "清空勾选", preserve_range: "按段落编号批量选择",
         preserve_range_hint: "例如 2, 4-6；应用编号会替换当前勾选。空段不在列表中显示。", apply_preserve_range: "应用编号",
         preserve_docx_only: "选择一个 Word（.docx）草稿后，可在这里勾选保持原格式的段落。", preserve_reading: "正在读取段落…",
@@ -2091,7 +2186,7 @@
         warning_headings: (count) => `${count} 个第 4 级及更深标题保留为普通文字，请检查标题层级。`,
         warning_reference_sort: "参考文献中有保留原格式的段落或对象，仅对连续的普通条目排序。请手动核对参考文献顺序。",
         result_retained: (paragraphs, images, tables) => `保留原格式 ${paragraphs} 段 · 正文图片 ${images} 项 · 表格 ${tables} 个`,
-        disclaimer: "保留 DOCX 正文图片和表格，纸张、页边距和页码采用所选模板。TXT/MD 图像语法不会自动嵌图。请核对复杂文档与引用。",
+        disclaimer: "选择模板生成 Word，完成后核对版式和引用。TXT/MD 中的图片需另行添加。",
       });
       Object.assign(T.en, {
         mascot_alt: "FormCapy capybara mascot",
@@ -2125,11 +2220,11 @@
         advanced_customization: "Advanced customization", page_number_position: "Page number position", page_number_start: "Starting page number",
         position_top_right: "Top right", position_bottom_center: "Bottom center", position_bottom_right: "Bottom right",
         show_cover_page_number: "Show a page number on the cover",
-        numbering_hint: "When the cover number is hidden, the starting number applies to the first body page. Numbering options apply when page numbers are enabled.",
+        numbering_hint: "When the cover number is hidden, numbering starts on the first body page.",
         numbering_summary: (position, start) => `Page numbers: ${position} · start at ${start}`,
         cover_number_shown: "Show cover page number", cover_number_hidden: "Hide cover number; start numbering on the first body page",
         open_preserve_options: "Keep paragraph formatting in this draft…", paragraph_more: "Show more paragraphs",
-        preserve_title: "Keep selected paragraphs unchanged", preserve_hint: "For this Word draft only. Keep selected paragraphs' fonts, sizes, spacing and indentation. Page size, margins and numbering still follow the document template. Body images and tables are retained automatically. The selection is not saved in course templates.",
+        preserve_title: "Keep selected paragraphs unchanged", preserve_hint: "For this Word draft only; selections are not saved in templates. Selected paragraphs keep their font, size, spacing and indentation. Page size, margins and numbering follow the template.",
         load_paragraphs: "Read Word paragraphs", select_all_paragraphs: "Select all", clear_preserved: "Clear selection", preserve_range: "Select by paragraph number",
         preserve_range_hint: "Use numbers or ranges, e.g. 2, 4-6. Applying them replaces the current selection. Empty paragraphs are omitted from the list.", apply_preserve_range: "Apply numbers",
         preserve_docx_only: "Choose a Word (.docx) draft to select paragraphs whose formatting should stay unchanged.", preserve_reading: "Reading paragraphs…",
@@ -2166,7 +2261,7 @@
         warning_headings: (count) => `${count} headings at level 4 or deeper were kept as ordinary text. Check their heading levels.`,
         warning_reference_sort: "References contain preserved paragraphs or objects, so only consecutive ordinary entries were sorted. Check the reference order manually.",
         result_retained: (paragraphs, images, tables) => `${paragraphs} paragraphs kept unchanged · ${images} body images · ${tables} tables retained`,
-        disclaimer: "DOCX body images and tables are retained. Page size, margins and numbering follow the selected template. TXT/MD image syntax does not embed images. Check complex documents and citations.",
+        disclaimer: "Choose a template to create a Word file, then review its layout and citations. Add images from TXT/MD separately.",
       });
       Object.assign(T.zh, {
         format_custom: "中文预设 / 自定义模板", template_details: "选择预设或定制模板",
@@ -2176,7 +2271,7 @@
         line_spacing_pt: "固定行距（磅）", indent_mode: "首行缩进单位", indent_cm: "厘米", indent_chars: "字符",
         first_line_chars: "首行缩进（字符）", chinese_course: "中文课程论文（通用）", chinese_thesis: "中文毕业论文（基础版）",
         chinese_typography_hint: "中文排版：标题和参考文献标题为 16 磅黑体，1–3 级标题为 16/14/12 磅黑体；正文字体可修改。",
-        chinese_preset_hint: "这是常用基础排版，请以学校要求为准。不自动生成目录、摘要或学校专用封面，也不改写 GB/T 7714 引文。",
+        chinese_preset_hint: "使用基础排版，并按学校要求补充目录、摘要、专用封面和 GB/T 7714 引文。",
         spacing_summary: (p) => p.line_spacing_pt > 0 ? `固定 ${p.line_spacing_pt} 磅行距` : `${p.line_spacing} 倍行距`,
         indent_summary: (p) => p.first_line_chars > 0 ? `首行缩进 ${p.first_line_chars} 字符` : `首行缩进 ${p.first_line_cm} cm`,
         reference_original: "保留条目顺序 · 无悬挂缩进", builtin_copy: "副本",
@@ -2189,7 +2284,7 @@
         line_spacing_pt: "Exact line spacing (pt)", indent_mode: "First-line indent unit", indent_cm: "Centimeters", indent_chars: "Characters",
         first_line_chars: "First-line indent (characters)", chinese_course: "Chinese course paper · General", chinese_thesis: "Chinese graduation paper · Basic",
         chinese_typography_hint: "Chinese typography: 16 pt Heiti titles and reference headings; 16/14/12 pt Heiti heading levels 1–3. The body font is editable.",
-        chinese_preset_hint: "Common basic layouts; follow your institution's requirements. Does not generate contents, abstracts, institution-specific covers or rewrite GB/T 7714 citations.",
+        chinese_preset_hint: "Basic layouts; add your contents, abstract, institution-specific cover and GB/T 7714 citations as needed. Follow your institution’s requirements.",
         spacing_summary: (p) => p.line_spacing_pt > 0 ? `Exactly ${p.line_spacing_pt} pt line spacing` : `${p.line_spacing}× line spacing`,
         indent_summary: (p) => p.first_line_chars > 0 ? `${p.first_line_chars}-character first-line indent` : `${p.first_line_cm} cm first-line indent`,
         reference_original: "Original entry order · no hanging indent", builtin_copy: "Copy",
@@ -2296,7 +2391,7 @@
         spec_header_sub: "Apellido y número de página automático",
         spec_cited: "Works Cited, ordenado",
         spec_cited_sub: "Página nueva · sangría francesa",
-        disclaimer: "Se conservan negrita, cursiva y subrayado. Pueden perderse imágenes, notas al pie, tablas y estilos especiales. Revisa el resultado antes de entregarlo.",
+        disclaimer: "Elige una plantilla para crear un Word y revisa el diseño y las citas. Añade por separado las imágenes de TXT/MD.",
         footer: "Hecho para las palabras que importan.",
         ready: "Escribe tu nombre y el título, añade un borrador y estarás listo.",
         file_ready: (f, size) => `Seleccionado ${f} · ${size}`,
@@ -2372,11 +2467,11 @@
         advanced_customization: "Personalización avanzada", page_number_position: "Posición del número de página", page_number_start: "Número de página inicial",
         position_top_right: "Arriba a la derecha", position_bottom_center: "Pie centrado", position_bottom_right: "Pie a la derecha",
         show_cover_page_number: "Mostrar número en la portada",
-        numbering_hint: "Si ocultas el número de la portada, el número inicial se aplica a la primera página del cuerpo. Las opciones de numeración se aplican cuando los números están activos.",
+        numbering_hint: "Si ocultas el número de portada, la numeración empieza en la primera página del cuerpo.",
         numbering_summary: (position, start) => `Números de página: ${position} · empieza en ${start}`,
         cover_number_shown: "Mostrar número en la portada", cover_number_hidden: "Ocultar número en la portada; empezar en la primera página del cuerpo",
         open_preserve_options: "Mantener el formato de párrafos de este borrador…", paragraph_more: "Mostrar más párrafos",
-        preserve_title: "Mantener sin cambios los párrafos seleccionados", preserve_hint: "Solo para este borrador Word. Conserva fuente, tamaño, interlineado y sangría de los párrafos elegidos. El tamaño de papel, los márgenes y la numeración siguen la plantilla del documento. Las imágenes y tablas del cuerpo se conservan automáticamente. La selección no se guarda en las plantillas de curso.",
+        preserve_title: "Mantener sin cambios los párrafos seleccionados", preserve_hint: "Solo para este borrador Word; la selección no se guarda en la plantilla. Los párrafos elegidos conservan fuente, tamaño, interlineado y sangría. El papel, los márgenes y la numeración siguen la plantilla.",
         load_paragraphs: "Leer párrafos de Word", select_all_paragraphs: "Seleccionar todo", clear_preserved: "Borrar selección", preserve_range: "Seleccionar por número de párrafo",
         preserve_range_hint: "Usa números o rangos, p. ej., 2, 4-6. Al aplicarlos se sustituye la selección actual. Los párrafos vacíos no se muestran.", apply_preserve_range: "Aplicar números",
         preserve_docx_only: "Elige un borrador Word (.docx) para seleccionar los párrafos que deben conservar su formato.", preserve_reading: "Leyendo párrafos…",
@@ -2411,7 +2506,7 @@
         warning_headings: (count) => `${count} títulos de nivel 4 o superior se conservaron como texto normal. Revisa sus niveles.`,
         warning_reference_sort: "Las referencias contienen párrafos u objetos con formato conservado, así que solo se ordenaron las entradas normales consecutivas. Revisa manualmente el orden.",
         result_retained: (paragraphs, images, tables) => `${paragraphs} ${paragraphs === 1 ? "párrafo sin cambios" : "párrafos sin cambios"} · ${images} ${images === 1 ? "imagen del cuerpo" : "imágenes del cuerpo"} · ${tables} ${tables === 1 ? "tabla conservada" : "tablas conservadas"}`,
-        disclaimer: "Se conservan las imágenes y tablas del cuerpo DOCX. El tamaño de papel, los márgenes y la numeración siguen la plantilla elegida. La sintaxis de imágenes de TXT/MD no inserta imágenes. Revisa documentos complejos y citas.",
+        disclaimer: "Elige una plantilla para crear un Word y revisa el diseño y las citas. Añade por separado las imágenes de TXT/MD.",
       });
       Object.assign(T.es, {
         format_custom: "Preajustes chinos / Plantilla personalizada", template_details: "Elegir un preajuste o personalizar una plantilla",
@@ -2421,7 +2516,7 @@
         line_spacing_pt: "Interlineado exacto (pt)", indent_mode: "Unidad de sangría de primera línea", indent_cm: "Centímetros", indent_chars: "Caracteres",
         first_line_chars: "Sangría de primera línea (caracteres)", chinese_course: "Trabajo de curso en chino (general)", chinese_thesis: "Trabajo de fin de estudios en chino (básico)",
         chinese_typography_hint: "Tipografía china: títulos y encabezados de referencias en Heiti de 16 pt; niveles de título 1–3 en Heiti de 16/14/12 pt. La fuente del cuerpo se puede editar.",
-        chinese_preset_hint: "Diseños básicos habituales; sigue los requisitos de tu institución. No genera índice, resumen, portadas específicas de la institución ni reescribe citas GB/T 7714.",
+        chinese_preset_hint: "Diseños básicos. Añade el índice, resumen, portada institucional y citas GB/T 7714 según los requisitos de tu institución.",
         spacing_summary: (p) => p.line_spacing_pt > 0 ? `Interlineado exacto de ${p.line_spacing_pt} pt` : `Interlineado de ${p.line_spacing}×`,
         indent_summary: (p) => p.first_line_chars > 0 ? `Sangría de primera línea de ${p.first_line_chars} caracteres` : `Sangría de primera línea de ${p.first_line_cm} cm`,
         reference_original: "Orden original de las entradas · sin sangría francesa", builtin_copy: "Copia",
@@ -2992,21 +3087,21 @@
       }
       const LAYOUT_CHECK_TEXT = {
         zh: {
-          title: "排版结果检查", scope: "依据这份生成的 Word 文件及生成时的模板检查部分设置；未渲染页面，不能证明论文符合全部规范。请对照要求检查文档。",
+          title: "排版结果检查", scope: "检查部分模板设置。请打开文档，对照要求核对页面。",
           pass: "已检查", warn: "发现问题或需注意", unchecked: "无法自动判断",
           noPass: "没有可确认通过的项目。", noWarn: "本次可检查项目未发现问题。", noWarnNoChecks: "没有可报告的检查结果。", noUnchecked: "没有其他未判断项目。",
           paper_size: "各分节的纸张设置", margins: "各分节的页边距设置", default_font: "Normal 默认字体名称和字号", paragraph_spacing: "正文顶层非空段落的显式行距设置", page_number: "页码字段的位置、对齐和封面隐藏设置（不检查起始值或姓氏）",
           preserved_content: "指定保留原格式的段落需对照草稿核对", images_tables: "正文图片与表格的内容和版式需核对", headings: "标题级别和实际格式需核对", references: "参考文献的内容、顺序和引用格式需核对", visual_layout: "页码起始值和姓氏、实际分页、字体显示及整体视觉排版需核对", inspection_unavailable: "本次检查不可用，请手动核对生成的文档。",
         },
         en: {
-          title: "Document formatting check", scope: "Checks some settings in this generated Word file against the template used. Pages were not rendered; this does not establish full compliance. Review the document against your requirements.",
+          title: "Document formatting check", scope: "Checks some settings against the selected template. Open the document and review its pages against your requirements.",
           pass: "Checked", warn: "Issues or items to review", unchecked: "Needs manual review",
           noPass: "No items could be confirmed.", noWarn: "No issues were found in the checks performed.", noWarnNoChecks: "There are no check results to report.", noUnchecked: "No other items require manual review.",
           paper_size: "Page size settings in document sections", margins: "Margin settings in document sections", default_font: "Font name and size of the Normal default style", paragraph_spacing: "Explicit line spacing in non-empty top-level body paragraphs", page_number: "Page-number field location, alignment and cover hiding (not starting value or surname)",
           preserved_content: "Compare paragraphs kept in their original formatting", images_tables: "Review the contents and layout of body images and tables", headings: "Review heading levels and actual formatting", references: "Review reference details, order and citation formatting", visual_layout: "Review page-number start and surname, actual pagination, displayed fonts and visual layout", inspection_unavailable: "The check is unavailable for this result; review the generated document manually.",
         },
         es: {
-          title: "Revisión del formato", scope: "Comprueba algunos ajustes del Word generado frente a la plantilla utilizada. No se renderizaron las páginas; esto no garantiza el cumplimiento completo. Revisa el documento según tus requisitos.",
+          title: "Revisión del formato", scope: "Comprueba algunos ajustes con la plantilla elegida. Abre el documento y revisa las páginas según tus requisitos.",
           pass: "Comprobado", warn: "Problemas o aspectos a revisar", unchecked: "Revisión manual necesaria",
           noPass: "No se pudo confirmar ningún elemento.", noWarn: "No se detectaron problemas en las comprobaciones realizadas.", noWarnNoChecks: "No hay resultados de comprobación que comunicar.", noUnchecked: "No hay otros elementos pendientes de revisión.",
           paper_size: "Tamaño de página de las secciones", margins: "Márgenes de las secciones", default_font: "Nombre y tamaño de fuente del estilo predeterminado Normal", paragraph_spacing: "Interlineado explícito de párrafos no vacíos del cuerpo principal", page_number: "Ubicación y alineación del campo de página y ocultación en portada (no el valor inicial ni el apellido)",

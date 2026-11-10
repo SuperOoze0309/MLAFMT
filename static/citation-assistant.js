@@ -15,7 +15,7 @@
     zh: {
       assistant: "参考文献助手",
       summary_hint: "在本地整理书目，生成独立的 MLA 9 或 APA 7 参考文献表。",
-      scope: "只生成独立的参考文献表；现有正文、论文信息和文中引用不会被改写。当前只支持 MLA 9 与 APA 7。",
+      scope: "整理文献，生成独立的 MLA 9 或 APA 7 参考文献表。",
       add: "添加条目",
       entries: "条目",
       entries_count: "共 {count} 条",
@@ -32,14 +32,14 @@
       year: "年", month: "月", day: "日",
       publisher: "出版社", container: "期刊/网站名称", volume: "卷", issue: "期", page: "页码",
       edition: "版次", doi: "DOI", url: "网址", language: "语言",
-      original_text: "原始内容（只读）", original_hint: "导入时保存的原始内容；不会作为可编辑字段被改写。",
+      original_text: "原始内容（只读）", original_hint: "导入时保存的原始内容。",
       optional: "可选",
       delete_entry: "删除条目",
       undo: "撤销", undo_remove: "撤销删除", undo_library: "撤销替换", undo_applied: "已撤销。",
       style: "样式", style_mla: "MLA 9", style_apa: "APA 7",
-      style_scope: "预览只用于这里独立生成的文献表，不会改论文中的引用。",
+      style_scope: "选择样式并预览文献表。",
       preview: "预览文献表", preview_busy: "正在生成预览…", preview_stale: "输入或样式已更改，请重新预览。",
-      preview_required: "填写条目后点击“预览文献表”。", preview_error: "预览生成失败，请稍后重试。",
+      preview_required: "先添加文献。", preview_error: "预览生成失败，请稍后重试。",
       engine_missing: "引用渲染器尚未加载，无法预览。", model_missing: "引用数据模块尚未加载。",
       preview_ready: "预览已更新。",
       copy_text: "复制纯文本", copy_rich: "复制带格式文本", copy_json: "复制库 JSON",
@@ -50,7 +50,7 @@
       copy_manual: "内容已选中，请使用系统的复制操作。", json_copied: "库 JSON 已复制。",
       import_export: "导入 / 导出",
       import_library_json: "导入文献库 JSON",
-      import_hint: "粘贴或选择库 JSON；先预览，再确认替换当前库。不会读取草稿或论文数据。",
+      import_hint: "粘贴或选择库 JSON，预览后确认替换当前库。",
       import_text: "库 JSON", choose_file: "选择 JSON 文件", review: "预览导入",
       review_import: "核对导入的库", review_count: "{count} 条将替换当前库。",
       review_titles: "条目：", apply_import: "确认替换", cancel: "取消",
@@ -58,9 +58,9 @@
       import_stale: "导入文本已改变，请重新预览核对。",
       file_too_large: "文件超过 1 MiB。", invalid_encoding: "文件不是有效的 UTF-8。",
       library_json: "库 JSON",
-      save: "保存到本设备", save_hint: "只保存这个文献库；不会保存草稿、论文信息或模板。",
+      save: "保存到本设备", save_hint: "将文献库保存到本设备。",
       load: "载入已保存的库", load_hint: "只读取本设备上由你明确保存的库。",
-      remove_saved: "删除已保存的库", remove_hint: "删除本设备上的保存副本，不会删除当前正在使用的库。",
+      remove_saved: "删除已保存的库", remove_hint: "只删除设备上的保存副本，当前文献库不受影响。",
       saved: "已保存到本设备。", unsaved: "有未保存的更改。", not_saved: "尚未保存到本设备。",
       removed_saved: "已删除本设备上的保存副本；当前库未改变。",
       download_unavailable: "此环境不支持下载，请使用复制。",
@@ -93,18 +93,18 @@
       error_engine_size: "文献表超过导出大小限制。请缩短过长字段或减少条目后重新预览。",
       preview_unsafe: "预览内容无法安全显示，复制和导出仍保持禁用。",
       status_ready: "就绪。", status_changed: "有未预览的更改。",
-      session_note: "默认只在当前页面会话中保留；保存到本设备是单独操作。",
-      export_note: "导出的库 JSON 只含文献条目，不含草稿、论文信息或模板。",
-      word_note: "可下载这份独立参考文献表的 Word 文件；论文和文中引用不会被改动。",
-      preview_note: "每次修改条目或样式后都需要重新预览，复制/导出会在刷新前禁用。",
+      session_note: "文献库仅在当前页面保留，保存到设备需单独操作。",
+      export_note: "导出的 JSON 只包含文献条目。",
+      word_note: "下载 Word 版参考文献表。",
+      preview_note: "修改后请重新预览，才能复制或导出。",
       warning_note: "提醒不会阻止预览。", error_note: "请修正后再预览。",
-      import_note: "导入只替换文献库；当前草稿、论文信息和生成结果保持不变。",
+      import_note: "导入将替换当前文献库。",
       replace_note: "替换前会保留一份撤销快照。",
     },
     en: {
       assistant: "Reference assistant",
       summary_hint: "Build a standalone MLA 9 or APA 7 reference list locally.",
-      scope: "This creates an independent reference list only. Your paper, paper details and in-text citations are not rewritten. Currently MLA 9 and APA 7 only.",
+      scope: "Organize references and create a standalone MLA 9 or APA 7 list.",
       add: "Add entry",
       entries: "Entries",
       entries_count: "{count} entries",
@@ -121,14 +121,14 @@
       year: "Year", month: "Month", day: "Day",
       publisher: "Publisher", container: "Journal / site name", volume: "Volume", issue: "Issue", page: "Pages",
       edition: "Edition", doi: "DOI", url: "URL", language: "Language",
-      original_text: "Original content (read-only)", original_hint: "Original content stored on import; it is never rewritten as an editable field.",
+      original_text: "Original content (read-only)", original_hint: "Original content saved during import.",
       optional: "Optional",
       delete_entry: "Delete entry",
       undo: "Undo", undo_remove: "Undo removal", undo_library: "Undo replacement", undo_applied: "Undone.",
       style: "Style", style_mla: "MLA 9", style_apa: "APA 7",
-      style_scope: "Preview applies only to this independent list, not to citations in your paper.",
+      style_scope: "Choose a style and preview the reference list.",
       preview: "Preview bibliography", preview_busy: "Building preview…", preview_stale: "Inputs or style changed. Preview again.",
-      preview_required: "Add entries, then choose Preview bibliography.", preview_error: "Preview failed. Please try again.",
+      preview_required: "Add a reference to preview.", preview_error: "Preview failed. Please try again.",
       engine_missing: "The citation renderer is not loaded, so preview is unavailable.", model_missing: "The citation data module is not loaded.",
       preview_ready: "Preview updated.",
       copy_text: "Copy plain text", copy_rich: "Copy formatted text", copy_json: "Copy library JSON",
@@ -139,7 +139,7 @@
       copy_manual: "Content selected. Use your system's copy action.", json_copied: "Library JSON copied.",
       import_export: "Import / export",
       import_library_json: "Import library JSON",
-      import_hint: "Paste or choose library JSON. Review before replacing the current library. Drafts and paper details are not read.",
+      import_hint: "Paste or choose library JSON, then review and confirm replacement.",
       import_text: "Library JSON", choose_file: "Choose JSON file", review: "Preview import",
       review_import: "Review imported library", review_count: "{count} entries will replace the current library.",
       review_titles: "Entries:", apply_import: "Replace library", cancel: "Cancel",
@@ -147,9 +147,9 @@
       import_stale: "The import text changed. Review it again before replacing the library.",
       file_too_large: "The file exceeds 1 MiB.", invalid_encoding: "The file is not valid UTF-8.",
       library_json: "Library JSON",
-      save: "Save library on this device", save_hint: "Saves this citation library only; drafts, paper details and templates are not included.",
+      save: "Save library on this device", save_hint: "Save the citation library on this device.",
       load: "Load saved library", load_hint: "Reads only a library you explicitly saved on this device.",
-      remove_saved: "Remove saved library", remove_hint: "Removes the saved copy on this device. The active library is not deleted.",
+      remove_saved: "Remove saved library", remove_hint: "Removes the saved copy, not the current library.",
       saved: "Saved on this device.", unsaved: "Unsaved changes.", not_saved: "Not saved on this device.",
       removed_saved: "Removed the saved copy on this device. The active library is unchanged.",
       download_unavailable: "Downloads are unavailable here; use Copy instead.",
@@ -182,18 +182,18 @@
       error_engine_size: "The reference list exceeds the export size limit. Shorten very long fields or use fewer entries, then preview again.",
       preview_unsafe: "The preview could not be displayed safely. Copy and export remain disabled.",
       status_ready: "Ready.", status_changed: "Changes have not been previewed.",
-      session_note: "By default this library lives only in this page session; saving to this device is a separate action.",
-      export_note: "Exported library JSON contains citation entries only, not drafts, paper details or templates.",
-      word_note: "Download the independent reference list for Word. Your paper and in-text citations stay untouched.",
-      preview_note: "Preview again after changing entries or style. Copy and export stay disabled until the preview is refreshed.",
+      session_note: "The library stays in this page session unless you save it to this device.",
+      export_note: "The exported JSON contains citation entries only.",
+      word_note: "Download the independent reference list for Word.",
+      preview_note: "Preview again after changes to copy or export.",
       warning_note: "Warnings do not block preview.", error_note: "Fix these before previewing.",
-      import_note: "Import replaces only the citation library; the current draft, paper details and generated results stay unchanged.",
+      import_note: "Import replaces the current citation library.",
       replace_note: "An undo snapshot is kept before replacement.",
     },
     es: {
       assistant: "Asistente de referencias",
       summary_hint: "Crea localmente una lista de referencias MLA 9 o APA 7 independiente.",
-      scope: "Solo crea una lista de referencias independiente. No reescribe el trabajo, los datos del trabajo ni las citas del texto. Por ahora, solo MLA 9 y APA 7.",
+      scope: "Organiza referencias y crea una lista independiente en MLA 9 o APA 7.",
       add: "Añadir entrada",
       entries: "Entradas",
       entries_count: "{count} entradas",
@@ -210,14 +210,14 @@
       year: "Año", month: "Mes", day: "Día",
       publisher: "Editorial", container: "Revista / sitio", volume: "Volumen", issue: "Número", page: "Páginas",
       edition: "Edición", doi: "DOI", url: "URL", language: "Idioma",
-      original_text: "Contenido original (solo lectura)", original_hint: "Contenido original guardado al importar; nunca se reescribe como campo editable.",
+      original_text: "Contenido original (solo lectura)", original_hint: "Contenido original guardado al importar.",
       optional: "Opcional",
       delete_entry: "Eliminar entrada",
       undo: "Deshacer", undo_remove: "Deshacer eliminación", undo_library: "Deshacer reemplazo", undo_applied: "Deshecho.",
       style: "Estilo", style_mla: "MLA 9", style_apa: "APA 7",
-      style_scope: "La vista previa solo afecta a esta lista independiente, no a las citas del trabajo.",
+      style_scope: "Elige un estilo y previsualiza la lista.",
       preview: "Previsualizar bibliografía", preview_busy: "Creando vista previa…", preview_stale: "Los datos o el estilo cambiaron. Vuelve a previsualizar.",
-      preview_required: "Añade entradas y elige Previsualizar bibliografía.", preview_error: "No se pudo crear la vista previa. Inténtalo de nuevo.",
+      preview_required: "Añade una referencia para previsualizar.", preview_error: "No se pudo crear la vista previa. Inténtalo de nuevo.",
       engine_missing: "El motor de citas no está cargado; no se puede previsualizar.", model_missing: "El módulo de datos de citas no está cargado.",
       preview_ready: "Vista previa actualizada.",
       copy_text: "Copiar texto sin formato", copy_rich: "Copiar texto con formato", copy_json: "Copiar JSON de la biblioteca",
@@ -228,7 +228,7 @@
       copy_manual: "Contenido seleccionado. Usa la acción Copiar del sistema.", json_copied: "JSON de la biblioteca copiado.",
       import_export: "Importar / exportar",
       import_library_json: "Importar biblioteca JSON",
-      import_hint: "Pega o elige un JSON de biblioteca. Revísalo antes de sustituir la biblioteca actual. No se leen borradores ni datos del trabajo.",
+      import_hint: "Pega o elige un JSON de biblioteca; revísalo y confirma el reemplazo.",
       import_text: "JSON de la biblioteca", choose_file: "Elegir archivo JSON", review: "Revisar importación",
       review_import: "Revisar biblioteca importada", review_count: "{count} entradas sustituirán la biblioteca actual.",
       review_titles: "Entradas:", apply_import: "Sustituir biblioteca", cancel: "Cancelar",
@@ -236,9 +236,9 @@
       import_stale: "El texto de importación cambió. Revísalo de nuevo antes de sustituir la biblioteca.",
       file_too_large: "El archivo supera 1 MiB.", invalid_encoding: "El archivo no es UTF-8 válido.",
       library_json: "JSON de la biblioteca",
-      save: "Guardar biblioteca en este dispositivo", save_hint: "Guarda solo esta biblioteca; no incluye borradores, datos del trabajo ni plantillas.",
+      save: "Guardar biblioteca en este dispositivo", save_hint: "Guarda la biblioteca en este dispositivo.",
       load: "Cargar biblioteca guardada", load_hint: "Solo lee una biblioteca que hayas guardado explícitamente en este dispositivo.",
-      remove_saved: "Eliminar biblioteca guardada", remove_hint: "Elimina la copia guardada en este dispositivo. La biblioteca activa no se borra.",
+      remove_saved: "Eliminar biblioteca guardada", remove_hint: "Elimina la copia guardada, no la biblioteca actual.",
       saved: "Guardada en este dispositivo.", unsaved: "Hay cambios sin guardar.", not_saved: "Aún no se ha guardado en este dispositivo.",
       removed_saved: "Se eliminó la copia guardada en este dispositivo. La biblioteca activa no cambió.",
       download_unavailable: "Las descargas no están disponibles aquí; usa Copiar.",
@@ -271,12 +271,12 @@
       error_engine_size: "La lista supera el límite de exportación. Acorta los campos muy largos o reduce las entradas y vuelve a previsualizar.",
       preview_unsafe: "La vista previa no se pudo mostrar de forma segura. Copiar y exportar siguen desactivados.",
       status_ready: "Listo.", status_changed: "Hay cambios sin previsualizar.",
-      session_note: "Por defecto, la biblioteca solo existe en esta sesión de página; guardarla en el dispositivo es una acción aparte.",
-      export_note: "El JSON exportado contiene solo entradas de citas, no borradores, datos del trabajo ni plantillas.",
-      word_note: "Descarga la lista de referencias independiente en Word. El trabajo y las citas del texto no cambian.",
-      preview_note: "Vuelve a previsualizar después de cambiar entradas o estilo. Copiar y exportar permanecen desactivados hasta refrescar la vista previa.",
+      session_note: "La biblioteca solo se conserva en esta página, salvo que la guardes en el dispositivo.",
+      export_note: "El JSON exportado contiene solo las referencias.",
+      word_note: "Descarga la lista de referencias en Word.",
+      preview_note: "Vuelve a previsualizar tras los cambios para copiar o exportar.",
       warning_note: "Los avisos no impiden la vista previa.", error_note: "Corrige esto antes de previsualizar.",
-      import_note: "La importación solo sustituye la biblioteca de citas; el borrador, los datos del trabajo y los resultados generados no cambian.",
+      import_note: "La importación reemplaza la biblioteca actual.",
       replace_note: "Se guarda una instantánea para deshacer antes de sustituir.",
     },
   };
@@ -322,14 +322,14 @@
   // Intake copy lives together so every new workflow has the same three locales.
   const INTAKE_TEXT = {
     zh: {
-      quick_add: "快速添加参考文献", quick_hint: "用 DOI 自动填写，或导入 Zotero、数据库导出的 BibTeX / RIS / CSL JSON。核对后再加入文献库。",
-      manual_add: "手动添加", quick_doi: "DOI 自动填写", quick_import: "导入文献", quick_doi_label: "DOI 或 doi.org 链接",
+      quick_add: "快速添加参考文献", quick_hint: "用 DOI 查询，或导入文献记录。",
+      manual_add: "手动添加", quick_doi: "DOI 查询", quick_import: "导入文献", quick_doi_label: "DOI 或 doi.org 链接",
       quick_doi_placeholder: "例如 10.1234/example 或 https://doi.org/…", quick_query: "查询 DOI（联网）", quick_cancel: "取消查询",
-      quick_privacy: "只有点击查询才联网：Crossref 会收到这个 DOI 和常规网络请求信息，不会收到文稿、文献库或论文信息。",
-      quick_lookup_hint: "自动填写仅使用 Crossref 的公开记录；查不到时可导入数据库记录或手动添加。请核对来源信息。",
-      quick_import_hint: "粘贴 BibTeX、RIS 或 CSL JSON，也可选择文件。识别与导入完全在此设备上进行，限 1 MiB、UTF-8。FormCapy 库备份请使用下方“导入文献库 JSON”。",
+      quick_privacy: "查询时会把 DOI 发给 Crossref。",
+      quick_lookup_hint: "",
+      quick_import_hint: "支持 BibTeX、RIS 或 CSL JSON，文件需为 UTF-8，最大 1 MiB。FormCapy 备份请用下方的“导入文献库 JSON”。",
       quick_text: "粘贴文献记录", quick_format: "文件格式", quick_auto: "自动识别", quick_choose_file: "选择 .bib / .ris / .json / .txt 文件",
-      quick_review: "识别并核对", quick_review_title: "核对识别结果", quick_review_hint: "自动记录可能不完整。加入后仍可编辑作者、日期等字段；不会替换已有文献。",
+      quick_review: "识别并核对", quick_review_title: "核对识别结果", quick_review_hint: "核对识别结果；添加后仍可编辑。",
       quick_count: "识别 {count} 条 · 可追加 {added} 条 · 重复 {skipped} 条", quick_append: "追加到文献库（{count} 条）", quick_dismiss: "取消本次添加",
       quick_added: "已追加 {added} 条，跳过 {skipped} 条重复记录；可撤销本次追加。", quick_no_new: "这些记录已在文献库中，没有新增条目。", undo_append: "撤销本次追加",
       quick_busy: "正在向 Crossref 查询这个 DOI…", quick_reading: "正在读取本地文件…", quick_cancelled: "查询已取消。", quick_ready: "已识别，核对后再追加。",
@@ -341,14 +341,14 @@
       quick_detected_format: "识别格式：{format}", quick_original_truncated: "原始内容过长，只保存了前半部分；请保留原文件。", quick_field_conflict: "同一字段有多个不同值，已采用其中一个，请核对。", quick_date_lost: "无法识别日期，请在加入后补充。", quick_date_range: "日期为一个范围，已采用起始日期，请核对。", quick_formatting_lost: "原记录的文字格式未保留，请核对标题文字。", quick_latex: "部分 LaTeX 写法未转换，请核对并修正文字。", quick_directive: "BibTeX 指令未导入，请核对依赖该指令的记录。", quick_authors_incomplete: "作者列表可能不完整，请核对。", quick_type_review: "记录已映射到支持的文献类型，请核对类型。", quick_duplicate_author: "原记录中有重复作者，请核对。", quick_duplicate_skipped: "这条重复记录将跳过。", quick_author_name: "作者姓名的拆分需要核对。",
     },
     en: {
-      quick_add: "Quickly add references", quick_hint: "Fill fields from a DOI, or import BibTeX, RIS or CSL JSON from Zotero and research databases. Review before adding to your library.",
-      manual_add: "Add manually", quick_doi: "Fill from DOI", quick_import: "Import references", quick_doi_label: "DOI or doi.org link",
+      quick_add: "Quickly add references", quick_hint: "Look up DOIs or import references.",
+      manual_add: "Add manually", quick_doi: "Look up DOI", quick_import: "Import references", quick_doi_label: "DOI or doi.org link",
       quick_doi_placeholder: "e.g. 10.1234/example or https://doi.org/…", quick_query: "Look up DOI (online)", quick_cancel: "Cancel lookup",
-      quick_privacy: "Only Look up connects online: Crossref receives this DOI and normal network request information. Your draft, library and paper details are not sent.",
-      quick_lookup_hint: "Automatic filling uses public Crossref records only. If none is found, import a database record or add it manually. Check the source details.",
-      quick_import_hint: "Paste BibTeX, RIS or CSL JSON, or choose a file. Detection and import stay on this device. Limit: 1 MiB, UTF-8. For a FormCapy library backup, use Import library JSON below.",
+      quick_privacy: "Lookups send DOIs to Crossref.",
+      quick_lookup_hint: "",
+      quick_import_hint: "Use BibTeX, RIS or CSL JSON, up to 1 MiB in UTF-8. For FormCapy backups, use Import library JSON below.",
       quick_text: "Paste reference records", quick_format: "Record format", quick_auto: "Detect automatically", quick_choose_file: "Choose a .bib / .ris / .json / .txt file",
-      quick_review: "Detect and review", quick_review_title: "Review detected references", quick_review_hint: "Automatic records may be incomplete. You can edit authors, dates and other fields after adding. Existing references are kept.",
+      quick_review: "Detect and review", quick_review_title: "Review detected references", quick_review_hint: "Review the detected records; you can edit them after adding.",
       quick_count: "{count} detected · {added} to add · {skipped} duplicates", quick_append: "Add to library ({count})", quick_dismiss: "Dismiss this batch",
       quick_added: "Added {added} and skipped {skipped} duplicates. You can undo this batch.", quick_no_new: "These references are already in your library. Nothing was added.", undo_append: "Undo this batch",
       quick_busy: "Looking up this DOI with Crossref…", quick_reading: "Reading the local file…", quick_cancelled: "Lookup cancelled.", quick_ready: "References detected. Review before adding.",
@@ -360,14 +360,14 @@
       quick_detected_format: "Detected format: {format}", quick_original_truncated: "The original record was too long, so only its beginning is stored. Keep the source file.", quick_field_conflict: "This field had different values. One was chosen; please check it.", quick_date_lost: "The date could not be read. Add it after importing.", quick_date_range: "This date is a range. The starting date was used; please check it.", quick_formatting_lost: "Text formatting in the source record was not preserved. Check the title text.", quick_latex: "Some LaTeX notation was not converted. Check and correct the text.", quick_directive: "A BibTeX directive was not imported. Check any records that depend on it.", quick_authors_incomplete: "The author list may be incomplete. Check it.", quick_type_review: "This record was mapped to a supported source type. Check the type.", quick_duplicate_author: "The source record has duplicate authors. Check them.", quick_duplicate_skipped: "This duplicate record will be skipped.", quick_author_name: "Check how this author's name was split.",
     },
     es: {
-      quick_add: "Añadir referencias rápidamente", quick_hint: "Rellena los campos con un DOI o importa BibTeX, RIS o CSL JSON de Zotero y bases bibliográficas. Revisa antes de añadir a la biblioteca.",
-      manual_add: "Añadir manualmente", quick_doi: "Rellenar con DOI", quick_import: "Importar referencias", quick_doi_label: "DOI o enlace doi.org",
+      quick_add: "Añadir referencias rápidamente", quick_hint: "Consulta DOI o importa referencias.",
+      manual_add: "Añadir manualmente", quick_doi: "Consultar DOI", quick_import: "Importar referencias", quick_doi_label: "DOI o enlace doi.org",
       quick_doi_placeholder: "p. ej., 10.1234/example o https://doi.org/…", quick_query: "Consultar DOI (en línea)", quick_cancel: "Cancelar consulta",
-      quick_privacy: "Solo Consultar se conecta a internet: Crossref recibe este DOI y la información habitual de la solicitud de red. No se envían el borrador, la biblioteca ni los datos del trabajo.",
-      quick_lookup_hint: "El rellenado utiliza solo registros públicos de Crossref. Si no hay resultados, importa un registro o añádelo manualmente. Comprueba los datos de la fuente.",
-      quick_import_hint: "Pega BibTeX, RIS o CSL JSON, o elige un archivo. La detección y la importación se realizan en este dispositivo. Límite: 1 MiB, UTF-8. Para una copia de FormCapy, usa Importar biblioteca JSON más abajo.",
+      quick_privacy: "La consulta envía los DOI a Crossref.",
+      quick_lookup_hint: "",
+      quick_import_hint: "Usa BibTeX, RIS o CSL JSON en UTF-8, hasta 1 MiB. Para copias de FormCapy, usa Importar biblioteca JSON abajo.",
       quick_text: "Pegar registros bibliográficos", quick_format: "Formato de los registros", quick_auto: "Detectar automáticamente", quick_choose_file: "Elegir archivo .bib / .ris / .json / .txt",
-      quick_review: "Detectar y revisar", quick_review_title: "Revisar referencias detectadas", quick_review_hint: "Los registros automáticos pueden estar incompletos. Puedes editar autores, fechas y otros campos después de añadirlos. Se conservan las referencias existentes.",
+      quick_review: "Detectar y revisar", quick_review_title: "Revisar referencias detectadas", quick_review_hint: "Revisa los registros detectados; podrás editarlos después de añadirlos.",
       quick_count: "{count} detectadas · {added} para añadir · {skipped} duplicadas", quick_append: "Añadir a la biblioteca ({count})", quick_dismiss: "Descartar este lote",
       quick_added: "Se añadieron {added} y se omitieron {skipped} duplicadas. Puedes deshacer este lote.", quick_no_new: "Estas referencias ya están en la biblioteca. No se añadió ninguna.", undo_append: "Deshacer este lote",
       quick_busy: "Consultando este DOI en Crossref…", quick_reading: "Leyendo el archivo local…", quick_cancelled: "Consulta cancelada.", quick_ready: "Referencias detectadas. Revísalas antes de añadirlas.",
@@ -383,46 +383,46 @@
   const BATCH_TEXT = {
     zh: {
       batch_doi_label: "DOI 或 doi.org 链接（一行一个，最多 50 条）", batch_placeholder: "10.1234/example-one\nhttps://doi.org/10.1234/example-two",
-      batch_hint: "一行一条，按顺序查询，最多 50 条、32 KiB。无效和重复行不会联网；失败不会丢掉已查到的记录。",
-      batch_privacy: "只有点击查询才联网：逐个向 Crossref 发送本次列表中的有效 DOI 及常规网络请求信息，不发送文稿、文献库或论文信息。不会自动重试。",
+      batch_hint: "",
+      batch_privacy: "查询时会把 DOI 发给 Crossref。",
       batch_rows: "逐行查询状态", batch_line: "第 {line} 行", batch_ready: "等待查询", batch_unqueried: "未查询", batch_running: "查询中", batch_success: "已找到", batch_failed: "查询失败", batch_invalid: "无效 DOI", batch_duplicate: "重复行（同第 {line} 行）", batch_cancelled_row: "未查询 / 已取消",
       batch_progress: "顺序查询：完成 {completed}/{total} · 成功 {succeeded} · 失败 {failed}", batch_current: "当前队列：第 {line} 行", batch_cancel: "取消批量查询",
-      batch_done: "本次查询完成：找到 {succeeded} 条，失败 {failed} 条。核对并选择要追加的记录。", batch_cancelled: "已取消；保留 {succeeded} 条已完成结果，未完成的不会再加入。",
-      batch_rate_limited: "Crossref 要求稍后再查，本批已停止。已找到 {succeeded} 条可继续核对；请稍后手动重新查询，不会自动重试。",
+      batch_done: "查到 {succeeded} 条，{failed} 条未成功。", batch_cancelled: "已取消，保留 {succeeded} 条结果。",
+      batch_rate_limited: "Crossref 请稍后再试，已保留 {succeeded} 条结果。",
       batch_invalid_input: "没有开始查询，请检查逐行状态和输入限制。", batch_limit: "最多输入 50 条非空 DOI，文本不超过 32 KiB。", batch_no_valid: "没有可查询的有效 DOI。请检查逐行状态。",
       select_record: "选择：{title}", select_all: "全选", select_none: "全不选", quick_count: "识别 {count} 条 · 已选 {selected} 条 · 可追加 {added} 条 · 重复 {skipped} 条",
-      select_hint: "仅追加勾选的条目；按 DOI 或保守的书目信息去重。", batch_lookup_invalid: "查询模块返回的数据无效。已完成的成功记录仍可核对。",
+      select_hint: "只添加勾选的条目，重复项会跳过。", batch_lookup_invalid: "查询模块返回的数据无效。已完成的成功记录仍可核对。",
     },
     en: {
       batch_doi_label: "DOIs or doi.org links (one per line, up to 50)", batch_placeholder: "10.1234/example-one\nhttps://doi.org/10.1234/example-two",
-      batch_hint: "One per line, queried in order. Up to 50 entries and 32 KiB. Invalid and duplicate lines are not queried; failures keep earlier successful records.",
-      batch_privacy: "Only Look up connects online: valid DOIs in this list and normal request information are sent individually to Crossref. Drafts, your library and paper details are not sent. No automatic retries.",
+      batch_hint: "",
+      batch_privacy: "Lookups send DOIs to Crossref.",
       batch_rows: "Lookup status by line", batch_line: "Line {line}", batch_ready: "Waiting", batch_unqueried: "Not queried", batch_running: "Looking up", batch_success: "Found", batch_failed: "Lookup failed", batch_invalid: "Invalid DOI", batch_duplicate: "Duplicate of line {line}", batch_cancelled_row: "Not queried / cancelled",
       batch_progress: "Sequential lookup: {completed}/{total} completed · {succeeded} found · {failed} failed", batch_current: "Current queue item: line {line}", batch_cancel: "Cancel batch",
-      batch_done: "Lookup finished: {succeeded} found and {failed} failed. Review and select the records to add.", batch_cancelled: "Cancelled. Kept {succeeded} completed results; unfinished results will not be added.",
-      batch_rate_limited: "Crossref requested a pause, so this batch stopped. You can review {succeeded} completed results. Try again manually later; there are no automatic retries.",
+      batch_done: "Found {succeeded}; {failed} failed.", batch_cancelled: "Cancelled. Kept {succeeded} results.",
+      batch_rate_limited: "Crossref asked you to try again later. Kept {succeeded} results.",
       batch_invalid_input: "No lookup started. Check the line statuses and input limits.", batch_limit: "Enter no more than 50 nonempty DOI lines and 32 KiB of text.", batch_no_valid: "There are no valid DOIs to look up. Check the line statuses.",
       select_record: "Select: {title}", select_all: "Select all", select_none: "Select none", quick_count: "{count} detected · {selected} selected · {added} to add · {skipped} duplicates",
-      select_hint: "Only checked records are added. Duplicates are detected using DOI or a conservative match of source details.", batch_lookup_invalid: "The lookup module returned invalid data. Completed successful records are still available to review.",
+      select_hint: "Only selected entries are added; duplicates are skipped.", batch_lookup_invalid: "The lookup module returned invalid data. Completed successful records are still available to review.",
     },
     es: {
       batch_doi_label: "DOI o enlaces doi.org (uno por línea, hasta 50)", batch_placeholder: "10.1234/example-one\nhttps://doi.org/10.1234/example-two",
-      batch_hint: "Uno por línea, consultados en orden. Máximo 50 entradas y 32 KiB. No se consultan las líneas no válidas ni duplicadas; los fallos conservan los registros encontrados.",
-      batch_privacy: "Solo Consultar se conecta a internet: los DOI válidos de esta lista y la información habitual de la solicitud se envían individualmente a Crossref. No se envían borradores, biblioteca ni datos del trabajo. No hay reintentos automáticos.",
+      batch_hint: "",
+      batch_privacy: "La consulta envía los DOI a Crossref.",
       batch_rows: "Estado de consulta por línea", batch_line: "Línea {line}", batch_ready: "En espera", batch_unqueried: "Sin consultar", batch_running: "Consultando", batch_success: "Encontrado", batch_failed: "Consulta fallida", batch_invalid: "DOI no válido", batch_duplicate: "Duplicado de la línea {line}", batch_cancelled_row: "Sin consultar / cancelado",
       batch_progress: "Consulta en orden: {completed}/{total} completadas · {succeeded} encontradas · {failed} fallidas", batch_current: "Registro actual en cola: línea {line}", batch_cancel: "Cancelar lote",
-      batch_done: "Consulta terminada: {succeeded} encontradas y {failed} fallidas. Revisa y selecciona los registros que añadir.", batch_cancelled: "Cancelado. Se conservan {succeeded} resultados completados; no se añadirán resultados pendientes.",
-      batch_rate_limited: "Crossref pidió esperar; el lote se detuvo. Puedes revisar {succeeded} resultados completados. Vuelve a consultar manualmente más tarde; no hay reintentos automáticos.",
+      batch_done: "Se encontraron {succeeded}; fallaron {failed}.", batch_cancelled: "Cancelado. Se conservan {succeeded} resultados.",
+      batch_rate_limited: "Crossref pide volver a intentarlo más tarde. Se conservan {succeeded} resultados.",
       batch_invalid_input: "No se inició la consulta. Revisa los estados de las líneas y los límites.", batch_limit: "Introduce como máximo 50 líneas DOI no vacías y 32 KiB de texto.", batch_no_valid: "No hay DOI válidos que consultar. Revisa los estados de las líneas.",
       select_record: "Seleccionar: {title}", select_all: "Seleccionar todas", select_none: "No seleccionar ninguna", quick_count: "{count} detectadas · {selected} seleccionadas · {added} para añadir · {skipped} duplicadas",
-      select_hint: "Solo se añaden los registros marcados. Los duplicados se detectan por DOI o una coincidencia conservadora de los datos bibliográficos.", batch_lookup_invalid: "El módulo de consulta devolvió datos no válidos. Los registros ya encontrados se pueden revisar.",
+      select_hint: "Solo se añaden las entradas seleccionadas; se omiten los duplicados.", batch_lookup_invalid: "El módulo de consulta devolvió datos no válidos. Los registros ya encontrados se pueden revisar.",
     },
   };
   for (const language of Object.keys(BATCH_TEXT)) Object.assign(TEXT[language], BATCH_TEXT[language]);
 
   const MANAGEMENT_TEXT = {
     zh: {
-      library_search: "搜索文献", library_search_hint: "标题、作者、来源、DOI、网址或年份；多个词需同时匹配。",
+      library_search: "搜索文献", library_search_hint: "标题、作者或 DOI",
       library_type: "筛选类型", library_all_types: "全部类型", library_matches: "显示 {visible} / {total} 条",
       library_no_matches: "没有匹配的条目。可以调整搜索词或清除筛选。", library_clear: "清除筛选",
       library_hidden_selection: "当前编辑的条目不在筛选结果中；编辑内容和文献表预览保持不变。",
@@ -440,7 +440,7 @@
       portable_copied: "已复制当前导出内容。", portable_downloaded: "已下载当前导出文件。", portable_manual: "自动复制不可用，已选中下方内容，请手动复制。",
     },
     en: {
-      library_search: "Search references", library_search_hint: "Title, authors, source, DOI, URL or year; all search words must match.",
+      library_search: "Search references", library_search_hint: "Title, author or DOI",
       library_type: "Filter by type", library_all_types: "All types", library_matches: "Showing {visible} / {total} references",
       library_no_matches: "No matching references. Change the search or clear the filters.", library_clear: "Clear filters",
       library_hidden_selection: "The entry being edited is outside these filters. Its contents and bibliography preview are kept.",
@@ -458,7 +458,7 @@
       portable_copied: "Current export copied.", portable_downloaded: "Current export downloaded.", portable_manual: "Automatic copying is unavailable. The contents below are selected for manual copying.",
     },
     es: {
-      library_search: "Buscar referencias", library_search_hint: "Título, autores, fuente, DOI, URL o año; deben coincidir todas las palabras.",
+      library_search: "Buscar referencias", library_search_hint: "Título, autor o DOI",
       library_type: "Filtrar por tipo", library_all_types: "Todos los tipos", library_matches: "Mostrando {visible} / {total} referencias",
       library_no_matches: "No hay referencias coincidentes. Cambia la búsqueda o borra los filtros.", library_clear: "Borrar filtros",
       library_hidden_selection: "La entrada que editas queda fuera de estos filtros. Se conservan su contenido y la vista previa de la bibliografía.",
@@ -1297,7 +1297,6 @@
         nodes.wordCancel.hidden = !state.busyExport || !wordController;
         nodes.wordCancel.disabled = Boolean(wordController?.signal.aborted);
       }
-      if (nodes.wordNote) nodes.wordNote.hidden = !(allowDownloads && onExportWord);
       if (nodes.htmlButton) nodes.htmlButton.disabled = !fresh || !canDownload();
       if (nodes.wordLink) nodes.wordLink.hidden = !state.wordLink;
       if (nodes.wordLinkWrap) nodes.wordLinkWrap.hidden = !state.wordLink;
@@ -1488,7 +1487,6 @@
       for (const [node, key] of nodes.quickLabels) setText(node, t(key));
       setText(nodes.quickDoiLabel, t(canBatch ? "batch_doi_label" : "quick_doi_label"));
       setText(nodes.quickPrivacy, t(canBatch ? "batch_privacy" : "quick_privacy"));
-      nodes.batchHint.hidden = !canBatch;
       nodes.quickDoiInput.placeholder = t(canBatch ? "batch_placeholder" : "quick_doi_placeholder");
       setText(nodes.quickCancel, t(canBatch ? "batch_cancel" : "quick_cancel"));
       nodes.quickDoiTab.setAttribute("aria-pressed", String(state.quickMode === "doi"));
@@ -1740,13 +1738,11 @@
       renderStatusOnly();
       setText(nodes.summaryTitle, t("assistant"));
       setText(nodes.summaryHint, t("summary_hint"));
-      setText(nodes.scope, t("scope"));
       setText(nodes.add, t(canImport ? "manual_add" : "add"));
       setText(nodes.entriesHeading, t("entries"));
       setText(nodes.styleLabel, t("style"));
       setText(nodes.styleMla, t("style_mla"));
       setText(nodes.styleApa, t("style_apa"));
-      setText(nodes.styleScope, t("style_scope"));
       setText(nodes.editorHeading, t("editor"));
       setText(nodes.noSelection, t("no_selection"));
       for (const { node, textKey } of Object.values(labelNodes)) setText(node, t(textKey));
@@ -1764,7 +1760,6 @@
       setText(nodes.deleteEntry, t("delete_entry"));
       setText(nodes.previewHeading, t("preview"));
       setText(nodes.previewButton, t(state.previewBusy ? "preview_busy" : "preview"));
-      setText(nodes.previewNote, t("preview_note"));
       setText(nodes.copyButton, t("copy_text"));
       setText(nodes.copyRichButton, t("copy_rich"));
       setText(nodes.copyJsonButton, t("copy_json"));
@@ -1794,7 +1789,6 @@
       setText(nodes.removeHint, t("remove_hint"));
       setText(nodes.sessionNote, t("session_note"));
       setText(nodes.exportNote, t("export_note"));
-      setText(nodes.wordNote, t("word_note"));
       setText(nodes.importNote, t("import_note"));
       setText(nodes.replaceNote, t("replace_note"));
       setText(nodes.warningNote, t("warning_note"));
@@ -1889,8 +1883,6 @@
     rootElement.append(nodes.summary);
 
     const body = make("div", "fc-citations-body");
-    nodes.scope = make("p", "fc-citations-scope", t("scope"));
-    body.append(nodes.scope);
 
     nodes.quickLabels = [];
     const quickNode = (tag, className, key) => {
@@ -1909,7 +1901,6 @@
     nodes.quickHeading = quickNode("h3", "", "quick_add");
     nodes.quickHeading.id = `${instanceId}-intake-title`;
     nodes.quickSection.setAttribute("aria-labelledby", nodes.quickHeading.id);
-    nodes.quickHint = quickNode("p", "fc-citations-hint", "quick_hint");
     const modes = make("div", "fc-citations-intake-modes");
     nodes.quickDoiTab = quickButton("quick_doi", "intake-doi");
     nodes.quickImportTab = quickButton("quick_import", "intake-import");
@@ -1946,9 +1937,7 @@
     nodes.quickPrivacy = quickNode("p", "fc-citations-note fc-citations-intake-privacy", "quick_privacy");
     nodes.quickPrivacy.id = `${instanceId}-intake-privacy`;
     nodes.quickDoiInput.setAttribute("aria-describedby", nodes.quickPrivacy.id);
-    nodes.batchHint = quickNode("p", "fc-citations-hint", "batch_hint");
-    append(nodes.quickDoiPanel, doiRow, nodes.quickPrivacy,
-      nodes.batchHint, quickNode("p", "fc-citations-hint", "quick_lookup_hint"));
+    append(nodes.quickDoiPanel, doiRow, nodes.quickPrivacy);
     nodes.batchPanel = make("section", "fc-citations-batch");
     nodes.batchHeading = quickNode("h4", "", "batch_rows");
     nodes.batchHeading.id = `${instanceId}-batch-title`;
@@ -2018,7 +2007,7 @@
       quickNode("p", "fc-citations-hint", "select_hint"),
       append(make("div", "fc-citations-intake-actions"), nodes.quickSelectAll, nodes.quickSelectNone), nodes.quickReviewList,
       nodes.quickPlanIssues, append(make("div", "fc-citations-intake-actions"), nodes.quickAppend, nodes.quickDismiss));
-    append(nodes.quickSection, nodes.quickHeading, nodes.quickHint, modes,
+    append(nodes.quickSection, nodes.quickHeading, modes,
       nodes.quickDoiPanel, nodes.quickImportPanel, nodes.quickStatus, nodes.quickIssues,
       nodes.batchPanel, nodes.quickReview);
     body.append(nodes.quickSection);
@@ -2062,9 +2051,6 @@
     nodes.libraryQuery = input("search", "", "library-query");
     nodes.libraryQuery.maxLength = 500;
     nodes.libraryQuery.setAttribute("autocomplete", "off");
-    nodes.libraryQueryHint = filterNode("p", "fc-citations-hint", "library_search_hint");
-    nodes.libraryQueryHint.id = `${instanceId}-library-search-hint`;
-    nodes.libraryQuery.setAttribute("aria-describedby", nodes.libraryQueryHint.id);
     nodes.libraryType = make("select", "fc-citations-select");
     nodes.libraryType.setAttribute("data-field", "library-type");
     for (const [value, key] of [["all", "library_all_types"], ["book", "type_book"],
@@ -2077,7 +2063,6 @@
     nodes.hiddenSelection = filterNode("p", "fc-citations-hidden-selection", "library_hidden_selection");
     nodes.hiddenSelection.setAttribute("data-field", "library-hidden-selection");
     append(filters, append(make("label", "fc-citations-field"), filterNode("span", "fc-citations-label", "library_search"), nodes.libraryQuery),
-      nodes.libraryQueryHint,
       append(make("label", "fc-citations-field"), filterNode("span", "fc-citations-label", "library_type"), nodes.libraryType), nodes.clearFilters);
     nodes.libraryQuery.addEventListener("input", () => changeFilters(nodes.libraryQuery.value, state.typeFilter));
     nodes.libraryType.addEventListener("change", () => changeFilters(state.query, nodes.libraryType.value));
@@ -2247,8 +2232,6 @@
     nodes.previewStatus = make("p", "fc-citations-preview-status", t("preview_required"));
     nodes.previewStatus.setAttribute("role", "status");
     nodes.previewStatus.setAttribute("aria-live", "polite");
-    nodes.styleScope = make("p", "fc-citations-note", t("style_scope"));
-    nodes.previewNote = make("p", "fc-citations-note", t("preview_note"));
     nodes.previewHeadingText = make("h4", "fc-citations-preview-heading", "");
     nodes.previewBody = make("div", "fc-citations-preview-body");
     nodes.previewIssues = make("div", "fc-citations-issues");
@@ -2265,7 +2248,6 @@
       setStatus("word_cancelled");
       render();
     });
-    nodes.wordNote = make("p", "fc-citations-note", t("word_note"));
     nodes.wordLinkWrap = make("p", "fc-citations-word-link");
     nodes.wordLink = make("a", "");
     nodes.wordLink.target = "_blank";
@@ -2280,8 +2262,8 @@
     nodes.fallback.hidden = true;
     nodes.fallback.setAttribute("aria-label", t("copy_text"));
     append(previewSection, nodes.previewHeading, nodes.previewButton, nodes.previewStatus,
-      nodes.styleScope, nodes.previewNote, nodes.previewHeadingText, nodes.previewBody,
-      nodes.previewIssues, nodes.previewActions, nodes.wordLinkWrap, nodes.wordNote, nodes.fallback);
+      nodes.previewHeadingText, nodes.previewBody,
+      nodes.previewIssues, nodes.previewActions, nodes.wordLinkWrap, nodes.fallback);
     grid.append(previewSection);
     body.append(grid, nodes.portablePanel);
 

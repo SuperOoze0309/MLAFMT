@@ -75,3 +75,22 @@
   .converter-nav a { transition: color 0.24s ease; }
   .converter-languages button { transition: background-color 0.24s ease, box-shadow 0.24s ease; }
 }
+
+/* Editorial colors and headings match the paper formatter. */
+.converter-page { --ink: #3f3028; --muted: #6d5b50; --accent: #855339; --accent-dark: #623a29; --bg: #f5f0e8; --line: #ded1c3; --soft: #f1e4d4; --error: #a5363d; }
+.converter-languages { background: #ede2d5; border-color: #dfd0c0; }
+.converter-languages button[aria-pressed="true"] { background: #fffdf8; }
+.converter-eyebrow { color: #a34f30; display: flex; align-items: center; gap: 9px; }
+.converter-eyebrow::before { content: ""; width: 22px; height: 2px; flex: 0 0 22px; background: currentColor; }
+.converter-hero h1 { font-family: ui-serif, Georgia, "Songti SC", STSong, serif; font-weight: 650; letter-spacing: -.035em; }
+.converter-page .fc-converter { background: #fffdf8; }
+.converter-page :focus-visible { outline-color: #855339; }
+@media (prefers-color-scheme: dark) {
+  .converter-page { --ink: #f3eae0; --muted: #c9b8aa; --accent: #e6be9c; --accent-dark: #f6dcc5; --bg: #211b18; --line: #685447; --soft: #493a30; --error: #ffb0aa; }
+  .converter-page .fc-converter { background: #2d2521; box-shadow: 0 14px 36px #0005, 0 2px 8px #0003; }
+  .converter-languages { background: #332820; border-color: var(--line); }
+  .converter-languages button[aria-pressed="true"] { background: #604a39; color: #fff5ea; box-shadow: none; }
+  .converter-eyebrow { color: #f0b796; }
+  .converter-page :focus-visible { outline-color: #edc493; }
+  .converter-skip { background: #3b2e27; }
+}

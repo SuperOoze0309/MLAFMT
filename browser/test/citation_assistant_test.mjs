@@ -1125,7 +1125,7 @@ test("ordinary Word copy and explicit import label are present", async () => {
   const h = setup();
   await addAndFill(h);
   assert.match(action(h, "import-toggle").textContent, /Import library JSON/);
-  assert.match(status(h), /Download the independent reference list for Word/);
+  assert.match(action(h, "word").textContent, /Download Word reference list/);
   assert.doesNotMatch(status(h), /host page|页面提供/i);
 });
 
@@ -1596,17 +1596,18 @@ test("after a rate-limit stop unstarted DOI rows say Not queried instead of Wait
 });
 
 for (const [locale, words] of Object.entries({
-  zh: { hint: /一行一条/, selected: /识别 1 条 · 已选 1 条/, none: /已选 0 条/,
-    cancelled: /已取消；保留 1 条/, limited: /稍后手动重新查询/ },
-  en: { hint: /One per line/, selected: /1 detected · 1 selected/, none: /0 selected/,
-    cancelled: /Cancelled\. Kept 1/, limited: /Try again manually later/ },
-  es: { hint: /Uno por línea/, selected: /1 detectadas · 1 seleccionadas/, none: /0 seleccionadas/,
-    cancelled: /Cancelado\. Se conservan 1/, limited: /Vuelve a consultar manualmente más tarde/ },
+  zh: { hint: /一行一个/, selected: /识别 1 条 · 已选 1 条/, none: /已选 0 条/,
+    cancelled: /已取消，保留 1 条/, limited: /稍后再试/ },
+  en: { hint: /one per line/i, selected: /1 detected · 1 selected/, none: /0 selected/,
+    cancelled: /Cancelled\. Kept 1/, limited: /try again later/i },
+  es: { hint: /uno por línea/i, selected: /1 detectadas · 1 seleccionadas/, none: /0 seleccionadas/,
+    cancelled: /Cancelado\. Se conservan 1/, limited: /intentarlo más tarde/ },
 })) {
   test(`${locale} translates batch guidance, selection counts, cancellation and rate limiting`, async () => {
     const batch = controlledBatch();
     const h = setup({ locale, importer: true, lookup: controlledLookup(), batch: batch.api });
     assert.match(status(h), words.hint);
+    assert.match(status(h), /Crossref/);
     const first = await beginDoi(h, "10.5555/first\n10.5555/unfinished");
     const firstRows = batch.jobs[0].rows;
     batch.publish(0, [succeededDoi(firstRows[0], intakeItem(h)), firstRows[1]]);

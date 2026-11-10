@@ -64,3 +64,15 @@
   .fc-converter .fc-converter-button:hover:enabled,
   .fc-converter .fc-converter-button:active:enabled { transform: none; }
 }
+
+@media (prefers-color-scheme: dark) {
+  .fc-converter { background: #2d2521; border-color: #685447; }
+  .fc-converter-summary { background: #3c3029; }
+  .fc-converter .fc-converter-target { background: #241d19; color: #f3eae0; border-color: #886b59; }
+  .fc-converter .fc-converter-button { background: #3b2e27; color: #f3eae0; border-color: #886b59; }
+  .fc-converter .fc-converter-button:hover:enabled { background: #493a30; }
+  .fc-converter .fc-converter-primary { background: #e6be9c; color: #2b1910; border-color: #e6be9c; }
+  .fc-converter .fc-converter-primary:hover:enabled { background: #f6dcc5; color: #2b1910; }
+  .fc-converter .fc-converter-error { color: #ffb0aa; }
+  .fc-converter-warnings { color: #f3d39e; }
+}

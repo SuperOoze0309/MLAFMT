@@ -365,3 +365,83 @@
   .fc-citations *::before,
   .fc-citations *::after { animation: none !important; transition: none !important; }
 }
+
+/* Warm paper and capybara tones in the light theme. */
+.fc-citations { background: #fffaf3; box-shadow: 0 12px 34px #65463410; }
+.fc-citations > summary { background: linear-gradient(110deg, #f4e6d8, #fcf8f1); }
+.fc-citations > summary:hover { background: linear-gradient(110deg, #eedccb, #f8f0e6); }
+.fc-citations > summary::before {
+  border-color: #c5a389;
+  background: linear-gradient(#b8957b, #b8957b) 5px 8px / 10px 1px no-repeat,
+    linear-gradient(#b8957b, #b8957b) 5px 13px / 10px 1px no-repeat,
+    linear-gradient(#b8957b, #b8957b) 5px 18px / 7px 1px no-repeat, #fffdf8;
+  box-shadow: 3px 3px 0 #e5d2bf;
+}
+.fc-citations-library { background: #f7ede0; border-top-color: #bf9575; }
+.fc-citations-editor { border-top-color: #c5a38b; }
+.fc-citations-preview { background: #fbf5eb; border-top-color: #ba835d; }
+.fc-citations-author { background: #faf2e9; }
+.fc-citations-intake { background: linear-gradient(120deg, #f4e6d8, #fcf8f1); }
+.fc-citations-input, .fc-citations-select, .fc-citations-textarea,
+.fc-citations-button, .fc-citations-icon { border-color: #d9c5b4; }
+
+/* Follow the system theme while keeping the formatted bibliography on paper. */
+@media (prefers-color-scheme: dark) {
+  .fc-citations {
+    color-scheme: dark;
+    --fc-ink: #f3eae0;
+    --fc-muted: #c9b8aa;
+    --fc-accent: #e6be9c;
+    --fc-accent-dark: #f1ccad;
+    --fc-bg: #211b18;
+    --fc-line: #685447;
+    --fc-soft: #4a3930;
+    --fc-ok: #c3d6ac;
+    --fc-error: #f1ada5;
+    --fc-warn: #efd18d;
+    background: #2d2521;
+    box-shadow: 0 8px 28px #0003;
+  }
+  .fc-citations > summary { background: linear-gradient(110deg, #3a2d26, #2d2521); }
+  .fc-citations > summary:hover { background: linear-gradient(110deg, #4a392f, #382c25); }
+  .fc-citations > summary::before {
+    border-color: #ae8b70;
+    border-left-color: var(--fc-accent);
+    background:
+      linear-gradient(#e6be9c, #e6be9c) 5px 8px / 10px 1px no-repeat,
+      linear-gradient(#e6be9c, #e6be9c) 5px 13px / 10px 1px no-repeat,
+      linear-gradient(#e6be9c, #e6be9c) 5px 18px / 7px 1px no-repeat,
+      #2d2521;
+    box-shadow: 3px 3px 0 #685447;
+  }
+  .fc-citations-library,
+  .fc-citations-editor,
+  .fc-citations-preview,
+  .fc-citations-portable { background: #2d2521; border-color: var(--fc-line); }
+  .fc-citations-library { border-top-color: #c39b7b; background: #352a24; }
+  .fc-citations-editor { border-top-color: #b99b86; }
+  .fc-citations-preview { border-top-color: #d0a77f; }
+  .fc-citations-item,
+  .fc-citations-input,
+  .fc-citations-select,
+  .fc-citations-textarea,
+  .fc-citations-icon,
+  .fc-citations-button,
+  .fc-citations-intake-record { background: #211b18; color: var(--fc-ink); border-color: var(--fc-line); }
+  .fc-citations-input::placeholder, .fc-citations-textarea::placeholder { color: #c9b8aa; opacity: 1; }
+  .fc-citations-item:hover,
+  .fc-citations-button:hover:not(:disabled) { background: var(--fc-soft); border-color: #ae8b70; }
+  .fc-citations-item.is-selected { background: #48372d; border-color: var(--fc-accent); }
+  .fc-citations-author { background: #392d27; }
+  .fc-citations-button.is-primary { background: var(--fc-accent); border-color: var(--fc-accent); color: #2a1d16; }
+  .fc-citations-button.is-primary:hover:not(:disabled) { background: #f2d0b2; border-color: #f2d0b2; color: #2a1d16; }
+  .fc-citations-button.is-danger { color: var(--fc-error); border-color: #9a6660; }
+  .fc-citations-issues-error { background: #4a302d; border-color: #9a6660; color: #ffdad4; }
+  .fc-citations-issues-warning { background: #463a2a; border-color: #8d734d; color: #f6ddaa; }
+  .fc-citations-preview-body { color-scheme: light; background: #fff; color: #30241d; border-color: #d8c6b8; }
+  .fc-citations-intake { border-color: var(--fc-line); background: linear-gradient(120deg, #3a2d26, #2d2521); }
+  .fc-citations-intake-modes .fc-citations-button[aria-pressed="true"] { background: #4d392e; color: #f8dfc9; }
+  .fc-citations-intake-privacy { border-left-color: #ae8b70; }
+  .fc-citations-batch,
+  .fc-citations-intake-review { border-top-color: var(--fc-line); }
+}
