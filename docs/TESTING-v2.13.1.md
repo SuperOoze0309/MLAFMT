@@ -46,3 +46,13 @@ possible source document. This update does not claim a new native-app release.
 - Reports and actual files remain under `build/v2.13.1/acceptance/` on H.
 
 Production status is recorded separately in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+Production subsequently passed the same 18-check Edge conversion run and all
+six actual download validations. Root/www each passed 209 resource checks,
+418 total, with no HTTP errors or retries. A separate visible Chrome session
+upgraded an old v2.10.0 cache through the normal update notice to v2.13.1;
+the public preview generated the sample Word output and layout-report groups.
+After the normal upgrade, the public v2.13.1 homepage also generated a fresh
+sample Word download link and all three layout-report groups. Its screenshot
+uses fictional built-in data; no independently downloaded main-paper file or
+rendered Word pages are claimed by that visible check.

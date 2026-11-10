@@ -1,6 +1,47 @@
 # FormCapy web deployment
 
-## Current public website — v2.11.0
+## Current public website — v2.13.1
+
+On **9 November 2026 (America/Los_Angeles)**, YMX0913's four theme/motion
+commits from `codex/formcapy-light-motion` were integrated and deployed to
+[formcapy.com](https://formcapy.com/) and
+[www.formcapy.com](https://www.formcapy.com/). The refresh includes warm paper
+colors, system dark mode, rounded surfaces, reduced-motion support and concise
+Chinese/English/Spanish guidance. Existing local processing and anonymous use
+remain available; native downloads remain v2.5.0.
+
+Windows MCP pushed application source
+`aec8b92d442e9906425150f578c2492d26b80728` to main. The existing Wrangler
+authentication directory on H was reused without new permissions. Wrangler
+uploaded 12 changed assets and reused 197, creating version
+`51db6eab-eeb8-40fa-be18-dce37327edb7`. After the public preview generated the
+MLA sample and its layout report, the same frozen version was deployed at
+**100% traffic** through Windows MCP.
+
+| Item | Recorded result |
+| --- | --- |
+| Contributed source | Four commits ending at `01b25e7bf716287bff70436097e6f265673c73e9`; contributor history retained |
+| Frozen directory | `dist/formcapy-v2.13.1-preview`; 209 manifest entries plus manifest.json |
+| Manifest SHA-256 | `5f14e21d21308e575ac1719b279686ef8aefb7c6cfb4c4df07abc5a02ef9fc50` |
+| Cache | `formcapy-2.13.1-pyodide-314.0.7-12d446092011` |
+| Regression | 19 Node suites passed: 546 counted cases plus two grouped smoke checks; Python 325 passed, one native LibreOffice skip, 159 subtests passed |
+| Local conversion | 18 actual Edge browser checks and six real downloads passed, including independent Chinese/PDF font/DOCX/DOC structural checks, cancellation, three-language narrow layouts and offline navigation |
+| Theme | Light/dark and normal/reduced-motion checks at 320/390/1366 widths; paper preview stays light with dark text, primary transitions disabled under reduced motion |
+| Public integrity | Root/www each 209 resources, 418/418 size/SHA/header/MIME matches; 981,020,728 decoded bytes verified with 438 GETs, zero errors or retries |
+| HTTPS | Trusted certificate/hostname checks, two-domain HTTPS navigation and all four encoded-path/query HTTP upgrades passed |
+| Public conversion | A separate full 18-check Edge run passed at formcapy.com, with six actual downloads independently checked, Chinese fonts, cancellation, narrow layouts and offline navigation; no external document request or upload |
+| Browser upgrade | An existing Chrome v2.10.0 cache displayed the normal update notice and upgraded to v2.13.1 through its explicit save-and-update flow |
+| Public paper UI | After upgrading, the built-in MLA sample generated a fresh Word download link and all three layout-report groups; this visible check is separate from independently inspecting downloaded converter files |
+| CI | [42744788918](https://github.com/SuperOoze0309/MLAFMT/actions/runs/42744788918): test job passed; native packaging jobs are separate from this web-only release |
+
+The artifact was not rebuilt after acceptance. Evidence is retained under
+`build/v2.13.1/acceptance/` and `build/v2.13.1/production/` on H. The first local
+converter assertion using old copy and the initial missing changelog test are
+preserved separately; both were corrected before deployment. No new DNS,
+security or TLS setting was needed. See [test scope](TESTING-v2.13.1.md).
+Safari, physical mobile devices and visual Word pagination remain unverified.
+
+## Public v2.11.0 deployment record
 
 The [independent file converter](https://formcapy.com/converter.html) and
 [paper formatter](https://formcapy.com/) are live as v2.11.0. On **28 October

@@ -1,12 +1,23 @@
 # FormCapy · 论文与报告排版
 
+**v2.13.1 界面更新已上线 / Theme refresh is live:** 整合 YMX0913 的暖纸配色、系统深色主题、圆角与轻动效，精简三语引导；支持系统“减少动态效果”。已有排版、文献与文件互转功能继续提供。[查看网站](https://formcapy.com/) · [验证范围](docs/TESTING-v2.13.1.md) · [上线记录](docs/DEPLOYMENT.md)
+
+<details>
+<summary>v2.13.1 正式网站截图 / Live website screenshot</summary>
+
+![v2.13.1 正式网站暖纸主题，使用内置虚构示例资料 / Live v2.13.1 warm-paper theme with fictional built-in sample data](docs/images/formcapy-live-v2.13.1.png)
+
+*2026-11-09，正式网站 Chrome 截图；右侧是版式示意，不代表 Word 分页渲染。Live Chrome screenshot; the right-hand paper illustrates layout rather than rendered Word pagination.*
+
+</details>
+
 **v2.13.0 排版结果检查已上线 / Formatting-result checks are live:** 网页本地生成 Word 后增加排版结果检查，分为已检查、需注意和无法自动判断。检查范围是生成 DOCX 的分节纸张与页边距、Normal 默认样式字体、顶层非空段落的显式行距，以及页码字段位置、对齐和封面隐藏设置；不检查页码起始值或姓氏，也不渲染页面。检查不能证明全篇格式或规范完全合规，保留段落、图片、表格、标题、参考文献及实际视觉效果仍须人工核对。报告只由浏览器本地处理路径提供；网页版没有检查数据时显示“检查不可用”，原生界面尚无此报告。
 
 The v2.13.0 browser website reports a limited check of generated DOCX section settings, Normal-style fonts, explicit top-level paragraph spacing and page-number field placement, alignment and cover hiding. Pages are not rendered and full compliance is not established; preserved paragraphs, images, tables, headings, references and visual output require review. Missing web reports are marked unavailable; the native interface does not provide this report. [验证范围 / Verification scope](docs/TESTING-v2.13.md)
 
 **v2.12.0 文件互转已上线 / File converter v2.12.0 is live:** PDF 转 Word 尝试保留符合条件的嵌入图片，放在对应页文字后；很多图文混排和裁剪、透明、旋转等图片可能跳过，不能保证原位置或完整保留。结果可能显示原 PDF 中隐藏或裁掉的图片内容，分享前请核对；扫描文字仍需 OCR。PDF-to-Word attempts to retain eligible embedded images after the page text; many mixed layouts and cropped, transparent or rotated images may be skipped. The result may reveal hidden or cropped image content; review before sharing. OCR is not included. [使用范围 / Scope](docs/CONVERSION.md)
 
-本地 Office 转换引擎按需并发加载 gzip 分片；旧缓存可继续使用。正式网站 Cloudflare 版本 `70394822` 已接收 100% 流量；离线安装包仍为 v2.5.0。详见 [v2.13.0 验证记录](docs/TESTING-v2.13.md)。
+本地 Office 转换引擎按需并发加载 gzip 分片；旧缓存可继续使用。正式网站 Cloudflare 版本 `51db6eab` 已接收 100% 流量；离线安装包仍为 v2.5.0。详见 [v2.13.1 验证记录](docs/TESTING-v2.13.1.md)。
 
 **[独立文件互转 / File converter](https://formcapy.com/converter.html)** 在浏览器内完成 PDF / DOCX / DOC 互转；桌面源码使用本机引擎。PDF 转 Word 重建可编辑文字并尝试保留符合条件的图片，不含 OCR 或原版式还原。首次 Word 转换仍需下载程序组件，建议桌面浏览器。[使用条件与范围 / Conversion scope](docs/CONVERSION.md)
 
