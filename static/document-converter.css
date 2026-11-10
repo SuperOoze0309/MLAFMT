@@ -4,7 +4,7 @@
   color: var(--ink, #233c48);
   background: #fafbf8;
   border: 1px solid var(--line, #dce5e3);
-  border-radius: 18px;
+  border-radius: 24px;
   overflow: hidden;
 }
 .fc-converter [hidden] { display: none !important; }
@@ -28,13 +28,13 @@
 .fc-converter-filename { margin: 8px 0 0; font-size: 12px; color: var(--muted, #566b73); overflow-wrap: anywhere; }
 .fc-converter .fc-converter-target {
   width: 100%; max-width: 100%; min-height: 42px; padding: 8px 12px;
-  color: inherit; background: #fff; border: 1px solid #bfd0ce; border-radius: 9px;
+  color: inherit; background: #fff; border: 1px solid #bfd0ce; border-radius: 12px;
 }
 .fc-converter .fc-converter-button {
   min-height: 42px; padding: 8px 16px; border: 1px solid #bfd0ce;
-  border-radius: 9px; background: #fff; color: var(--accent-dark, #1c5268);
+  border-radius: 12px; background: #fff; color: var(--accent-dark, #1c5268);
   font-size: 13px; font-weight: 650; line-height: 1.5; cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.24s ease, border-color 0.24s ease, transform 0.24s cubic-bezier(.22, 1, .36, 1);
 }
 .fc-converter .fc-converter-button:hover:enabled { background: #edf4f2; }
 .fc-converter .fc-converter-primary { color: #fff; background: var(--accent, #246a83); border-color: var(--accent, #246a83); }

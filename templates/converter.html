@@ -19,11 +19,11 @@
       @media (prefers-reduced-motion: no-preference) {
         @view-transition { navigation: auto; }
         ::view-transition-old(root),
-        ::view-transition-new(root) { animation-duration: 180ms; animation-timing-function: ease; }
+        ::view-transition-new(root) { animation-duration: 300ms; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
 
         /* Older browsers still get a quiet arrival without delaying navigation. */
         @supports not (view-transition-name: none) {
-          main { animation: formcapy-arrive 180ms ease-out; }
+          main { animation: formcapy-arrive 300ms ease-out; }
         }
       }
       @keyframes formcapy-arrive { from { opacity: .96; } to { opacity: 1; } }
