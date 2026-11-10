@@ -13,6 +13,18 @@
     <title>FormCapy · Paper Formatter</title>
     <link rel="icon" type="image/png" sizes="64x64" href="static/capybara-64.png" />
     <style>
+      /* Optional, same-origin page transitions. Navigation works without this CSS. */
+      @media (prefers-reduced-motion: no-preference) {
+        @view-transition { navigation: auto; }
+        ::view-transition-old(root),
+        ::view-transition-new(root) { animation-duration: 180ms; animation-timing-function: ease; }
+
+        /* Older browsers still get a quiet arrival without delaying navigation. */
+        @supports not (view-transition-name: none) {
+          main { animation: formcapy-arrive 180ms ease-out; }
+        }
+      }
+      @keyframes formcapy-arrive { from { opacity: .96; } to { opacity: 1; } }
       :root {
         --ink: #233c48;
         --muted: #566b73;
@@ -118,6 +130,7 @@
         font-size: 12px;
         font-weight: 600;
       }
+      .languages button { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
       .languages button[aria-pressed="true"] {
         background: white;
         color: var(--ink);
@@ -127,7 +140,7 @@
       .tool-nav[hidden] { display: none; }
       .tool-nav span, .tool-nav a { padding: 9px 14px; border: 1px solid var(--line); border-radius: 9px; }
       .tool-nav span { background: var(--soft); color: var(--accent-dark); }
-      .tool-nav a { background: white; color: var(--accent-dark); text-decoration: none; }
+      .tool-nav a { background: white; color: var(--accent-dark); text-decoration: none; transition: border-color 0.15s ease, background-color 0.15s ease; }
       .tool-nav a:hover { border-color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
       .hero {
         position: relative;

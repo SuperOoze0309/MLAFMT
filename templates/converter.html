@@ -14,6 +14,20 @@
     <link rel="icon" type="image/png" href="static/capybara-64.png" />
     <link rel="stylesheet" href="static/document-converter.css" />
     <link rel="stylesheet" href="static/converter-page.css" />
+    <style>
+      /* Optional, same-origin page transitions. Navigation works without this CSS. */
+      @media (prefers-reduced-motion: no-preference) {
+        @view-transition { navigation: auto; }
+        ::view-transition-old(root),
+        ::view-transition-new(root) { animation-duration: 180ms; animation-timing-function: ease; }
+
+        /* Older browsers still get a quiet arrival without delaying navigation. */
+        @supports not (view-transition-name: none) {
+          main { animation: formcapy-arrive 180ms ease-out; }
+        }
+      }
+      @keyframes formcapy-arrive { from { opacity: .96; } to { opacity: 1; } }
+    </style>
     <script defer src="static/transport.js"></script>
     <script defer src="static/local-office.js"></script>
     <script defer src="static/document-converter.js"></script>

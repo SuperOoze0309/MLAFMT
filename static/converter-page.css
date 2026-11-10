@@ -70,3 +70,8 @@
   .converter-page .fc-converter-privacy { font-size: 12px; margin-bottom: 20px; }
   .converter-footer { padding-top: 18px; }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .converter-nav a { transition: color 0.15s ease; }
+  .converter-languages button { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+}
