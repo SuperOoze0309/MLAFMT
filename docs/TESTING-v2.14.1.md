@@ -1,9 +1,9 @@
 # v2.14.1 ICML style bundle: verification
 
-Status: the build at `dist/formcapy-v2.14.1-preview` is a development
-candidate. The checks below do not establish production deployment or a new
-desktop or Android installer release. The production website remains on
-v2.14.0; the existing installers remain v2.5.0.
+Status: the static build at `dist/formcapy-v2.14.1-preview` is deployed to
+production as Cloudflare Worker `4270e25b-4b93-439c-a032-77c9aa4e12c1` at
+100% traffic. Existing desktop and Android installers remain v2.5.0; no new
+installer is claimed.
 
 ## Scope and implementation
 
@@ -77,8 +77,19 @@ The same Edge profile was used against the Cloudflare public preview
 generating a project displayed that the style files were included and cached,
 alongside the ZIP download link. A separate GET verified the preview bundle
 was 24,486 bytes with the pinned SHA-256, served as `application/zip` without
-`Content-Encoding` and with an immutable cache policy. This is a preview
-check; the candidate has not been deployed to production.
+`Content-Encoding` and with an immutable cache policy. On the production site,
+the same regular Edge profile updated a v2.14.0 page to v2.14.1, selected ICML
+and generated a ZIP download link; the page reported the styles were included
+and cached. This check did not independently inspect an Edge-downloaded ZIP;
+the Pyodide-generated ZIPs were independently inspected and compiled above.
+
+The production audit checked `formcapy.com` and `www.formcapy.com`: 211
+assets per domain, **422/422** size and SHA-256 checks passed, alongside
+security headers and MIME types. It recorded 442 GET requests, no errors and
+no retries. A separate GET of the style ZIP on each domain confirmed 24,486
+bytes, the pinned SHA-256, `application/zip`, no `Content-Encoding`, and an
+immutable cache policy. Report:
+`build/v2.14.1/production/deployment-verification.json`.
 
 ## Remaining submission checks
 

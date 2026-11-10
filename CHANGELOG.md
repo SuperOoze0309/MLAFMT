@@ -1,10 +1,10 @@
 # Changelog
 
-## v2.14.1 — in development
+## v2.14.1 — 2026-11-09 (static website deployed)
 
 - ICML 2026 网页预设在首次明确生成时按需下载并校验 24,486 字节的样式包；ZIP 包含五个官方样式及来源说明。样式成功缓存后可离线复用；无缓存时离线生成失败并可重试。文稿仍在本地处理。
 - 不包含 TeX 编译器或已渲染 PDF；目标年份、匿名性、中文字体、摘要引用与公式图表等仍须人工核对。[使用范围](docs/ICML-LATEX.md)
-- 此版本是开发候选，正式网站仍为 v2.14.0，现有桌面和 Android 安装包仍为 v2.5.0。
+- 正式站 Cloudflare Worker `4270e25b-4b93-439c-a032-77c9aa4e12c1` 已接收 100% 流量。常规 Edge 从 v2.14.0 更新后生成 ICML 工程，界面显示样式已加入并缓存；现有桌面和 Android 安装包仍为 v2.5.0。[验证范围](docs/TESTING-v2.14.1.md)
 
 ## v2.14.0 — 2026-11-09 (static website deployed)
 
