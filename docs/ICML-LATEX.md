@@ -1,8 +1,8 @@
 # ICML 2026 LaTeX 源文件预设 / ICML 2026 LaTeX source starter
 
-v2.14.0 开发候选在浏览器内生成 ICML 2026 匿名审稿用 LaTeX 源文件。
+v2.14.0 正式网站在浏览器内生成 ICML 2026 匿名审稿用 LaTeX 源文件。
 它是需要继续编辑和核对的起稿文件，不是已编译的 PDF。文件处理在用户
-本机浏览器中完成，文稿不会自动上传。正式网站目前仍为 v2.13.1；现有
+本机浏览器中完成，文稿不会自动上传。现有
 桌面和 Android 安装包不包含此入口。
 
 ## 使用
@@ -38,7 +38,7 @@ v2.14.0 开发候选在浏览器内生成 ICML 2026 匿名审稿用 LaTeX 源文
 
 ## English
 
-The v2.14.0 development candidate creates a local ZIP containing `main.tex`
+The v2.14.0 production website creates a local ZIP containing `main.tex`
 and `README.txt` for the **ICML 2026** anonymous-review style. It does not
 include the official style files, a TeX installation or a rendered PDF. Obtain
 the [official style archive](https://media.icml.cc/Conferences/ICML2026/Styles/icml2026.zip),

@@ -1,8 +1,8 @@
 # FormCapy · 论文与报告排版
 
-**v2.14.0 开发候选 / Development candidate:** 网页新增 ICML 2026 LaTeX 源文件预设，导出含 `main.tex` 与 `README.txt` 的 ZIP。需要自行从 ICML 官网获取 2026 样式并配置编译环境；摘要、引用、公式、图片、表格、文本框、脚注和尾注需人工整理；标题、正文及参考文献中的身份信息需自行核查。中文等非 ASCII 文字未必正确显示，须配置 TeX 引擎和字体并逐字检查 PDF。此候选尚未上线，正式网站仍为 v2.13.1。[使用范围 / Usage and scope](docs/ICML-LATEX.md)
+**v2.14.0 ICML 2026 LaTeX 预设已上线 / ICML 2026 LaTeX starter is live:** 网页新增 ICML 2026 LaTeX 源文件预设，导出含 `main.tex` 与 `README.txt` 的 ZIP。需要自行从 ICML 官网获取 2026 样式并配置编译环境；摘要、引用、公式、图片、表格、文本框、脚注和尾注需人工整理；标题、正文及参考文献中的身份信息需自行核查。中文等非 ASCII 文字未必正确显示，须配置 TeX 引擎和字体并逐字检查 PDF。网页版已上线；现有桌面和 Android 安装包仍为 v2.5.0。[使用范围 / Usage and scope](docs/ICML-LATEX.md)
 
-The v2.14.0 browser candidate creates an ICML 2026 LaTeX source ZIP. Obtain the official style separately and review the title, body, references and anonymity before compiling and submitting. Text boxes, footnotes and endnotes may be omitted. Chinese and other non-ASCII characters may not display correctly; configure the TeX engine and fonts and check each character in the PDF. Production remains v2.13.1. [Instructions and limitations](docs/ICML-LATEX.md)
+The v2.14.0 browser website creates an ICML 2026 LaTeX source ZIP. Obtain the official style separately and review the title, body, references and anonymity before compiling and submitting. Text boxes, footnotes and endnotes may be omitted. Chinese and other non-ASCII characters may not display correctly; configure the TeX engine and fonts and check each character in the PDF. The existing desktop and Android installers remain at v2.5.0. [Instructions and limitations](docs/ICML-LATEX.md)
 
 **v2.13.1 界面更新已上线 / Theme refresh is live:** 整合 YMX0913 的暖纸配色、系统深色主题、圆角与轻动效，精简三语引导；支持系统“减少动态效果”。已有排版、文献与文件互转功能继续提供。[查看网站](https://formcapy.com/) · [验证范围](docs/TESTING-v2.13.1.md) · [上线记录](docs/DEPLOYMENT.md)
 
@@ -21,7 +21,7 @@ The v2.13.0 browser website reports a limited check of generated DOCX section se
 
 **v2.12.0 文件互转已上线 / File converter v2.12.0 is live:** PDF 转 Word 尝试保留符合条件的嵌入图片，放在对应页文字后；很多图文混排和裁剪、透明、旋转等图片可能跳过，不能保证原位置或完整保留。结果可能显示原 PDF 中隐藏或裁掉的图片内容，分享前请核对；扫描文字仍需 OCR。PDF-to-Word attempts to retain eligible embedded images after the page text; many mixed layouts and cropped, transparent or rotated images may be skipped. The result may reveal hidden or cropped image content; review before sharing. OCR is not included. [使用范围 / Scope](docs/CONVERSION.md)
 
-本地 Office 转换引擎按需并发加载 gzip 分片；旧缓存可继续使用。正式网站 Cloudflare 版本 `51db6eab` 已接收 100% 流量；离线安装包仍为 v2.5.0。详见 [v2.13.1 验证记录](docs/TESTING-v2.13.1.md)。
+本地 Office 转换引擎按需并发加载 gzip 分片；旧缓存可继续使用。正式网站 Cloudflare 版本 `9036196a` 已接收 100% 流量；离线安装包仍为 v2.5.0。详见 [v2.14.0 验证记录](docs/TESTING-v2.14.md)。
 
 **[独立文件互转 / File converter](https://formcapy.com/converter.html)** 在浏览器内完成 PDF / DOCX / DOC 互转；桌面源码使用本机引擎。PDF 转 Word 重建可编辑文字并尝试保留符合条件的图片，不含 OCR 或原版式还原。首次 Word 转换仍需下载程序组件，建议桌面浏览器。[使用条件与范围 / Conversion scope](docs/CONVERSION.md)
 
@@ -266,7 +266,7 @@ APA 7 学生版式、自定义课程模板及其字段、边界、JSON 示例见
 
 ### 从源码运行
 
-当前仓库源码及正式网站为 v2.13.0；部署及验证范围见[记录](docs/TESTING-v2.13.md)。离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
+当前仓库源码及正式网站为 v2.14.0；部署及验证范围见[记录](docs/TESTING-v2.14.md)。离线下载仍为 v2.5.0。源码运行方式如下，本轮没有新增已验证的桌面或 Android 安装包。
 
 需要 Python 3.10+。建议先创建虚拟环境，再安装依赖。
 

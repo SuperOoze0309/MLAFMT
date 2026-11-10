@@ -1,10 +1,10 @@
 # Changelog
 
-## v2.14.0 — in development
+## v2.14.0 — 2026-11-09 (static website deployed)
 
 - 网页本地增加 ICML 2026 LaTeX 预设，可从空白或 TXT、Markdown、DOCX 草稿生成含 `main.tex` 和说明的 ZIP；不生成 PDF，不附带官方样式。用户须从 ICML 官方获取 2026 样式文件并准备编译环境，投稿前应确认目标会议年份的要求。
 - 文本只做有限重建，不自动识别摘要或引用；图片、表格结构、公式、文本框、脚注、尾注和复杂排版须人工补全。匿名占位符不会移除标题、正文、参考文献、文件元数据或其他材料中的身份信息，须自行核对。中文等非 ASCII 文字未必能正确显示，须配置 TeX 引擎和字体并逐字检查 PDF。[使用范围](docs/ICML-LATEX.md)
-- 此版本仍为开发候选，尚未上线；正式网站为 v2.13.1，现有桌面和 Android 安装包仍为 v2.5.0。
+- 正式网站 Cloudflare Worker `9036196a-101c-4a94-89f8-91151fe4526e` 已接收 100% 流量；现有桌面和 Android 安装包仍为 v2.5.0。现有 Edge 在本地、公网预览和正式站生成 ZIP 下载链接，未独立核验 Edge 下载文件。真实 Pyodide 生成 ZIP 并配合官方样式用 Tectonic 编译，英文样本通过；中文样本编译时记录 62 条缺字警告，PDF 未提取到中文。[验证范围](docs/TESTING-v2.14.md)
 
 ## v2.13.1 — 2026-11-09 (static website deployed)
 

@@ -1,8 +1,9 @@
 # v2.14.0 ICML 2026 LaTeX starter: verification
 
-Status: development candidate in `dist/formcapy-v2.14.0-preview`. The checks
-below include local and public-preview observations, but do not establish a
-production deployment or a new desktop or Android installer release.
+Status: the static build `dist/formcapy-v2.14.0-preview` is deployed to the
+production website as Cloudflare Worker version
+`9036196a-101c-4a94-89f8-91151fe4526e` at 100% traffic. Existing desktop and
+Android installers remain v2.5.0; no new installer is claimed.
 
 ## Scope and limitations
 
@@ -67,8 +68,17 @@ local build. An ICML blank starter and sample draft were generated and their
 ZIP download links, limitations and the official style download link were
 displayed. The same normal Edge profile also generated a blank starter on
 Cloudflare public preview version `9036196a`, displaying its ZIP download
-link and the official style download link. These Edge checks did **not** independently
-inspect files downloaded by Edge. The four ZIPs independently inspected and
+link and the official style download link. On production the same Edge profile
+updated an existing v2.13.1 page to v2.14.0, selected the ICML preset, entered
+a fictional title and generated a ZIP download link; the official style link
+was visible. These Edge checks did **not** independently inspect files
+downloaded by Edge. The four ZIPs independently inspected and
 compiled above were generated through the same frozen Pyodide application,
-not downloaded from those Edge sessions. No production deployment is claimed
-by these observations.
+not downloaded from those Edge sessions. These observations do not establish
+correctness for arbitrary input files or final submissions.
+
+The production asset audit checked `formcapy.com` and `www.formcapy.com`:
+210 assets per domain, **420/420** size and SHA-256 checks passed, alongside
+security headers and MIME types. The audit recorded 440 GET requests, no
+errors and no retries. Report:
+`build/v2.14.0/production/deployment-verification.json`.
