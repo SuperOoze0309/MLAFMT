@@ -370,7 +370,10 @@ writer.write(sys.argv[1])
   await runConversion(doc, "docx", "03-doc-to-docx.docx");
   await runConversion(doc, "pdf", "04-doc-to-pdf.pdf");
   await runConversion(pdf, "docx", "05-pdf-to-docx.docx");
-  assert.match(await evaluate("document.querySelector('[data-fc-convert=warnings]').textContent"), /editable Word|PDF|分页|paginación/);
+  const reconstructionNotice = await evaluate("document.querySelector('[data-fc-convert=warnings]').textContent");
+  assert.match(reconstructionNotice, /Images, pages and tables may change or be lost\./);
+  assert.match(reconstructionNotice, /Hidden or cropped image content may also appear\./);
+  assert.match(reconstructionNotice, /Compare with the original before sharing\./);
   await runConversion(pdf, "doc", "06-pdf-to-doc.doc");
   assert.deepEqual(await noEssayUI(),{fields:[],citation:false,paperForm:false},"All six conversions remain in the independent file tool");
   record("all six format directions complete on the standalone page without a paper formatter");
