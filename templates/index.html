@@ -310,6 +310,7 @@
         content: ""; flex: 0 0 7px; width: 7px; height: 7px; margin: 0 5px 4px 0;
         border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
         transform: rotate(45deg); pointer-events: none;
+        transition: transform 180ms ease;
       }
       .template-editor[open] > summary::after, .template-advanced[open] > summary::after,
       .template-sharing[open] > summary::after, .share-full-settings[open] > summary::after,
@@ -531,15 +532,19 @@
         padding: 12px 16px;
         font-size: 13px;
         font-weight: 650;
-        transition: background 0.15s, box-shadow 0.15s;
+        transition: background 0.15s, box-shadow 0.15s, transform 0.15s ease;
       }
       .primary svg {
         width: 17px;
         height: 17px;
       }
-      .primary:hover {
-        background: var(--accent-dark);
+      @media (hover: hover) and (pointer: fine) {
+        .primary:hover:not(:disabled) { transform: translateY(-1px); }
+        .drop:hover .upload-icon { transform: translateY(-2px); }
       }
+      .primary:hover:not(:disabled) { background: var(--accent-dark); }
+      .primary:active:not(:disabled) { transform: translateY(1px); }
+      .upload-icon { transition: transform 0.15s ease; }
       .secondary {
         display: flex;
         justify-content: space-between;
@@ -637,17 +642,17 @@
         height: 2px; border-radius: 2px; background: #4d8cda;
       }
       .capy-runner {
-        position: absolute; bottom: 4px; left: calc(50% - 24px); width: 48px; height: 32px;
+        position: absolute; bottom: 4px; left: 0; width: 100%; height: 32px;
         animation: capy-travel 4.48s linear infinite;
       }
-      .capy-direction { display: block; width: 100%; height: 100%; animation: capy-turn 4.48s steps(1, end) infinite; }
+      .capy-direction { display: block; width: 48px; height: 100%; animation: capy-turn 4.48s steps(1, end) infinite; }
       .capy-pixel { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
       .capy-legs { opacity: 0; animation: capy-steps 0.56s steps(1, end) infinite; }
       .capy-legs-0 { opacity: 1; }
       .capy-legs-1 { animation-delay: -0.42s; }
       .capy-legs-2 { animation-delay: -0.28s; }
       .capy-legs-3 { animation-delay: -0.14s; }
-      @keyframes capy-travel { 0%, 100% { left: 0; } 50% { left: calc(100% - 48px); } }
+      @keyframes capy-travel { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(calc(100% - 48px)); } }
       @keyframes capy-turn { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } }
       @keyframes capy-steps { 0% { opacity: 1; } 25%, 100% { opacity: 0; } }
       .privacy {
@@ -1006,10 +1011,13 @@
       }
       @media (prefers-reduced-motion: reduce) {
         *,
-        *::before {
+        *::before,
+        *::after {
           animation: none !important;
           transition: none !important;
         }
+        .primary:hover:not(:disabled), .primary:active:not(:disabled),
+        .drop:hover .upload-icon { transform: none; }
       }
       /* Native fold coordinates come from Jetpack WindowManager, not screen size guesses. */
       .native-fold-vertical .shell { width: calc(100% - 32px); max-width: none; }

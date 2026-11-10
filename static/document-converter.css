@@ -34,6 +34,7 @@
   min-height: 42px; padding: 8px 16px; border: 1px solid #bfd0ce;
   border-radius: 9px; background: #fff; color: var(--accent-dark, #1c5268);
   font-size: 13px; font-weight: 650; line-height: 1.5; cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 .fc-converter .fc-converter-button:hover:enabled { background: #edf4f2; }
 .fc-converter .fc-converter-primary { color: #fff; background: var(--accent, #246a83); border-color: var(--accent, #246a83); }
@@ -52,4 +53,14 @@
   .fc-converter-body { padding: 3px 16px 20px; }
   .fc-converter-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .fc-converter-actions .fc-converter-button { flex: 1 1 auto; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fc-converter .fc-converter-button:hover:enabled { transform: translateY(-1px); }
+}
+.fc-converter .fc-converter-button:active:enabled { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) {
+  .fc-converter .fc-converter-button { transition: none; }
+  .fc-converter .fc-converter-button:hover:enabled,
+  .fc-converter .fc-converter-button:active:enabled { transform: none; }
 }
