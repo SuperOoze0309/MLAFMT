@@ -1,0 +1,12 @@
+{
+  "official": {
+    "url": "https://media.icml.cc/Conferences/ICML2026/Styles/icml2026.zip",
+    "size": 228368,
+    "sha256": "8b29290f5828e176debb57ea9cc00252502973d55ea561a2f18a7f0a326bfc6c"
+  },
+  "bundle": {
+    "size": 24486,
+    "sha256": "03be9bd927f247198af11eed05a83865531edcacde80804ee8e831f512e2c293",
+    "filename": "icml2026-03be9bd927f247198af11eed05a83865531edcacde80804ee8e831f512e2c293.zip"
+  }
+}

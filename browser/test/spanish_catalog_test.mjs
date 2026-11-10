@@ -267,6 +267,22 @@ check('ICML official style link targets the verified HTTPS archive safely', () =
   for (const language of ['zh','en','es']) assert.ok(catalogs[language].icml_official_link.includes('2026'));
 });
 
+check('ICML style stages and failure messages remain available in three languages', () => {
+  const h = renderingHarness();
+  h.context.renderProcessingProgress = () => {};
+  h.run('let stageKey = null;\n' + section('      function setStage(stage) {', '      function transportErrorKey('));
+  for (const stage of ['icml_style_fetch', 'icml_style_check', 'icml_style_cached']) {
+    h.run(`setStage('${stage}')`);
+    assert.equal(h.run('stageKey'), stage);
+    for (const language of ['zh', 'en', 'es']) assert.ok(catalogs[language][stage]);
+  }
+  for (const language of ['zh', 'en', 'es']) {
+    assert.ok(catalogs[language].icml_style_unavailable);
+    assert.ok(catalogs[language].icml_style_unknown);
+    assert.ok(catalogs[language].icml_style_included_uncached);
+  }
+});
+
 check('ICML requests do not transmit the identity fields or paragraph selection', () => {
   const h = renderingHarness();
   Object.assign(h.context, { isWordDraft: () => true, preservedIds: new Set([2]), paragraphFingerprint: 'PRIVATE', setStatus() {} });

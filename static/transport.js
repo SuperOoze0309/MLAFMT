@@ -45,6 +45,7 @@
     "invalid_fields",
     "invalid_json",
     "invalid_options",
+    "icml_style_unavailable",
     "missing_fields",
     "net",
     "no_file",
@@ -558,6 +559,9 @@
         ],
         source: "browser",
         layoutCheck: meta.layout_check || null,
+        icmlStyleIncluded: meta.icml_style_included === true,
+        icmlStyleSource: ["cache", "network", "network_uncached"].includes(meta.icml_style_source)
+          ? meta.icml_style_source : null,
         latexWarnings: Array.isArray(meta.latex_warnings) ? meta.latex_warnings : [],
         conversionWarnings: Array.isArray(meta.conversion_warnings) ? meta.conversion_warnings : [],
       });

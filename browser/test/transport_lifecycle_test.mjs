@@ -149,14 +149,37 @@ await check('ICML output preserves ZIP MIME, filename, format and warning codes'
   h.ready(); await flush();
   const worker = h.workers.at(-1);
   const request = worker.requests().at(-1);
-  worker.emit({type:'result', id:request.id, meta:{ok:true, name:'FormCapy-ICML-2026.zip', mime:'application/zip', blank:true, format_id:'icml', format_label:'ICML LaTeX', latex_warnings:['icml_manual_style','icml_anonymity_review']}, buffer:bytes('fictional ZIP')});
+  worker.emit({type:'result', id:request.id, meta:{ok:true, name:'FormCapy-ICML-2026.zip', mime:'application/zip', blank:true, format_id:'icml', format_label:'ICML LaTeX', icml_style_included:true, icml_style_source:'cache', latex_warnings:['icml_anonymity_review']}, buffer:bytes('fictional ZIP')});
   await flush();
   assert.equal(result.status, 'fulfilled');
   assert.equal(result.value.name, 'FormCapy-ICML-2026.zip');
   assert.equal(result.value.blob.type, 'application/zip');
   assert.equal(result.value.format.id, 'icml');
   assert.equal(result.value.layoutCheck, null);
-  assert.deepEqual(Array.from(result.value.latexWarnings), ['icml_manual_style','icml_anonymity_review']);
+  assert.deepEqual(Array.from(result.value.latexWarnings), ['icml_anonymity_review']);
+  assert.equal(result.value.icmlStyleIncluded, true);
+  assert.equal(result.value.icmlStyleSource, 'cache');
+});
+
+await check('ICML style download or verification failures preserve an actionable error', async h => {
+  const first = track(h.transport.generate({isBlank:true, request:{kind:'blank', format_id:'icml', title:'Fictional'}, file:null}));
+  h.ready(); await flush();
+  const worker = h.workers.at(-1);
+  const request = worker.requests().at(-1);
+  worker.emit({type:'stage', id:request.id, stage:'icml_style_fetch'});
+  assert.equal(h.stages.at(-1),'icml_style_fetch');
+  worker.emit({type:'error', id:request.id, code:'icml_style_unavailable'});
+  await flush();
+  assert.equal(first.status, 'rejected');
+  assert.equal(h.transport.errorCode(first.error),'icml_style_unavailable');
+  const retry = track(h.transport.generate({isBlank:true, request:{kind:'blank', format_id:'icml', title:'Fictional'}, file:null}));
+  await flush();
+  assert.equal(worker.terminated,false);
+  const next = worker.requests().at(-1);
+  worker.emit({type:'result', id:next.id, meta:{ok:true, name:'retry.zip', mime:'application/zip', format_id:'icml', icml_style_included:true, icml_style_source:'network'}, buffer:bytes('fictional ZIP')});
+  await flush();
+  assert.equal(retry.status,'fulfilled');
+  assert.equal(retry.value.icmlStyleSource,'network');
 });
 
 await check('cancel init then synchronously retry keeps the new init promise', async h => {

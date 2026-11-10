@@ -1,5 +1,21 @@
 # ICML 2026 LaTeX 源文件预设 / ICML 2026 LaTeX source starter
 
+**v2.14.1 开发候选**：首次点击生成 ICML 工程时，浏览器按需下载并校验
+24,486 字节的官方样式资源；不会因为打开页面或使用其他预设而下载。
+生成的 ZIP 包含 `main.tex`、`README.txt` 和五个官方样式文件：
+`icml2026.sty`、`icml2026.bst`、`algorithm.sty`、`algorithmic.sty`
+及 `fancyhdr.sty`。缓存成功后可以离线复用；没有可用缓存时需要联网，
+失败不会生成工程，可检查网络后重试。资源在本地校验，文稿不上传。
+ZIP 不包含 TeX 编译器或 PDF，仍需兼容的 TeX 环境与所需宏包。
+此版本尚未上线；当前正式网站仍为下文所述 v2.14.0。
+
+**v2.14.1 development candidate:** The verified 24,486-byte official-style
+bundle is loaded on demand when an ICML project is generated; opening the page
+or using another preset does not fetch it. The generated ZIP includes the
+five style files above. Once cached successfully it can be reused offline;
+an uncached offline request fails and may be retried. The ZIP contains neither
+a TeX compiler nor a rendered PDF. Production remains v2.14.0.
+
 v2.14.0 正式网站在浏览器内生成 ICML 2026 匿名审稿用 LaTeX 源文件。
 它是需要继续编辑和核对的起稿文件，不是已编译的 PDF。文件处理在用户
 本机浏览器中完成，文稿不会自动上传。现有

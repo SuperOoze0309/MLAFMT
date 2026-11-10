@@ -34,3 +34,4 @@ def test_office_manifest_cache_rules_do_not_conflict(tmp_path):
     assert values("/runtime/office/runtime.json") == [immutable]
     assert values("/runtime/office/zeta-test/soffice.wasm.part-001.hash.gz") == [immutable]
     assert values("/runtime/pyodide/314.0.7/pyodide.mjs") == [immutable]
+    assert values("/runtime/icml/icml2026-bundle.zip") == [immutable]

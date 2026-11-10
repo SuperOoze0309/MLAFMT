@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 from prepare_office_runtime import prepare as prepare_office_runtime
+from prepare_icml_runtime import make_bundle as prepare_icml_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 BROWSER = ROOT / "browser"
@@ -408,6 +409,8 @@ def write_headers(out: Path) -> None:
   Cache-Control: public, max-age=0, must-revalidate
 /runtime/pyodide/*
   Cache-Control: public, max-age=31536000, immutable
+/runtime/icml/*
+  Cache-Control: public, max-age=31536000, immutable
 /runtime/office/zeta-*
   Cache-Control: public, max-age=31536000, immutable
 /runtime/office/runtime.json
@@ -443,6 +446,7 @@ def precache_paths(entries: list[dict]) -> list[str]:
         for entry in entries
         if entry["path"].startswith(prefixes)
         and not entry["path"].startswith("runtime/office/")
+        and not entry["path"].startswith("runtime/icml/")
     )
 
 
@@ -514,6 +518,18 @@ def build(
     for name in PYTHON_MODULES:
         shutil.copyfile(ROOT / name, out / "python" / name)
 
+    # Official ICML style is pinned at build time, but fetched by the browser
+    # only upon an ICML export; it is deliberately outside initial precache.
+    icml = json.loads((BROWSER / "icml-runtime.json").read_text(encoding="utf-8"))
+    official = icml["official"]
+    bundle = icml["bundle"]
+    icml_source = CACHE / "icml" / ("official-" + official["sha256"] + ".zip")
+    download(official["url"], icml_source, official, refresh)
+    (out / "runtime" / "icml").mkdir(parents=True)
+    icml_output = out / "runtime" / "icml" / bundle["filename"]
+    icml_output.write_bytes(prepare_icml_bundle(icml_source.read_bytes()))
+    verify(icml_output, bundle, "ICML style bundle")
+
     # Pinned Pyodide core and packages. The 314.x distribution keeps package
     # wheels next to pyodide-lock.json rather than in a packages/ directory.
     runtime_out = out / "runtime" / "pyodide" / pyodide_version
@@ -547,6 +563,11 @@ def build(
         for name in ("NOTICE.txt", "citeproc-LICENSE.txt", "CPAL-1.0.txt", "AGPL-3.0.txt", "CC-BY-SA-3.0.txt"):
             notice.write(f"\n--- static/vendor/citations/{name} ---\n\n")
             notice.write((citation_dir / name).read_text(encoding="utf-8") + "\n")
+    with (out / "THIRD-PARTY-NOTICES.txt").open("a", encoding="utf-8") as notice:
+        notice.write("\n" + "=" * 78 + "\nOfficial ICML 2026 author style archive\n" + "=" * 78 + "\n\n")
+        notice.write("Source: " + official["url"] + "\nOfficial SHA-256: " + official["sha256"] + "\n")
+        notice.write("Five official styles, retaining original notices, are provided as a deterministic on-demand archive.\n")
+        notice.write("On-demand bundle SHA-256: " + bundle["sha256"] + "\n")
     materials_info = None
     if materials_source:
         materials_info = copy_materials(

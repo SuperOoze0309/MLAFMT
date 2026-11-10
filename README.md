@@ -1,5 +1,9 @@
 # FormCapy · 论文与报告排版
 
+**v2.14.1 开发候选 / Development candidate:** ICML 2026 预设在首次明确生成时按需下载并校验 24,486 字节的官方样式包，将五个样式文件放入 LaTeX ZIP；缓存成功后可离线复用，未缓存时离线无法生成。编译仍需 TeX 环境，文稿转换、匿名和中文字体限制见 [使用指南](docs/ICML-LATEX.md)。此候选尚未上线，正式网站仍为 v2.14.0。
+
+The v2.14.1 browser candidate downloads and verifies the 24,486-byte ICML style bundle only when a project is generated, includes five official style files, and can reuse a successful cache offline. An uncached offline request fails. A TeX installation is still required; see the [usage and limitations](docs/ICML-LATEX.md). Production remains v2.14.0.
+
 **v2.14.0 ICML 2026 LaTeX 预设已上线 / ICML 2026 LaTeX starter is live:** 网页新增 ICML 2026 LaTeX 源文件预设，导出含 `main.tex` 与 `README.txt` 的 ZIP。需要自行从 ICML 官网获取 2026 样式并配置编译环境；摘要、引用、公式、图片、表格、文本框、脚注和尾注需人工整理；标题、正文及参考文献中的身份信息需自行核查。中文等非 ASCII 文字未必正确显示，须配置 TeX 引擎和字体并逐字检查 PDF。网页版已上线；现有桌面和 Android 安装包仍为 v2.5.0。[使用范围 / Usage and scope](docs/ICML-LATEX.md)
 
 The v2.14.0 browser website creates an ICML 2026 LaTeX source ZIP. Obtain the official style separately and review the title, body, references and anonymity before compiling and submitting. Text boxes, footnotes and endnotes may be omitted. Chinese and other non-ASCII characters may not display correctly; configure the TeX engine and fonts and check each character in the PDF. The existing desktop and Android installers remain at v2.5.0. [Instructions and limitations](docs/ICML-LATEX.md)

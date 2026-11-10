@@ -1,8 +1,9 @@
 """ICML export uses real LaTeX source, bounded local input and safe escaping."""
 import json
+import hashlib
 from io import BytesIO
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
 from docx import Document
@@ -10,6 +11,24 @@ from docx.oxml import OxmlElement
 
 import browser_bridge
 import icml_latex
+
+
+@pytest.fixture(autouse=True)
+def verified_style_fixture(tmp_path, monkeypatch):
+    """Use a locally generated fixture; official integrity is checked in build tests."""
+    payloads = {name: ("fixture style " + name).encode() for name in icml_latex.STYLE_FILES}
+    result = BytesIO()
+    with ZipFile(result, "w", compression=ZIP_DEFLATED) as archive:
+        for name, content in payloads.items():
+            archive.writestr(name, content)
+    blob = result.getvalue()
+    path = tmp_path / "official-fixture.zip"
+    path.write_bytes(blob)
+    monkeypatch.setattr(icml_latex, "STYLE_ARCHIVE_PATH", path)
+    monkeypatch.setattr(icml_latex, "STYLE_FILES", {name: len(data) for name, data in payloads.items()})
+    monkeypatch.setattr(icml_latex, "STYLE_BUNDLE_SIZE", len(blob))
+    monkeypatch.setattr(icml_latex, "STYLE_BUNDLE_SHA256", hashlib.sha256(blob).hexdigest())
+    return path, payloads
 
 
 def submit(data=None, filename="", **options):
@@ -27,21 +46,25 @@ def submit(data=None, filename="", **options):
 
 def unpack(result):
     with ZipFile(BytesIO(result)) as z:
-        assert set(z.namelist()) == {"main.tex", "README.txt"}
+        assert set(z.namelist()) == {"main.tex", "README.txt", *icml_latex.STYLE_FILES}
         return z.read("main.tex").decode(), z.read("README.txt").decode()
 
 
-def test_blank_has_real_anonymous_icml_source_and_explicit_official_style_requirement():
+def test_blank_has_real_anonymous_icml_source_and_included_verified_styles(verified_style_fixture):
     meta, result = submit()
     assert meta["ok"] and meta["mime"] == "application/zip"
     assert meta["format_id"] == "icml" and meta["name"].endswith(".zip")
-    assert meta["latex_warnings"] == ["icml_manual_style", "icml_anonymity_review"]
+    assert meta["latex_warnings"] == ["icml_anonymity_review"]
+    assert meta["icml_style_included"] is True
     source, readme = unpack(result)
     assert r"\documentclass{article}" in source
     assert r"\usepackage{icml2026}" in source and r"\printAffiliationsAndNotice{}" in source
     assert r"Research 100\% \& Safe" in source
     assert "Private Name" not in source and "Private Name" not in readme
-    assert "does NOT include the ICML style" in readme
+    assert "includes the official ICML 2026 style" in readme
+    with ZipFile(BytesIO(result)) as archive:
+        for name, payload in verified_style_fixture[1].items():
+            assert archive.read(name) == payload
     assert icml_latex.OFFICIAL_STYLE_URL in readme
     assert "does not anonymize" in readme
 
@@ -57,7 +80,7 @@ def test_markdown_is_data_not_executable_tex_and_simple_sections_are_supported()
     content = b'# Introduction\n\nA \\input{secrets} & 50% _ ~ ^ $ # { }\n\n## Related Work\n\nText'
     meta, result = submit(content, "draft.md")
     source, _ = unpack(result)
-    assert meta["latex_warnings"] == ["icml_manual_style", "icml_anonymity_review", "icml_text_reconstruction"]
+    assert meta["latex_warnings"] == ["icml_anonymity_review", "icml_text_reconstruction"]
     assert r"\section{Introduction}" in source and r"\subsection{Related Work}" in source
     assert r"\input{secrets}" not in source
     assert r"\textbackslash{}input\{secrets\}" in source
@@ -157,5 +180,16 @@ def test_table_cell_budget_rejects_excessive_reconstruction(monkeypatch):
 def test_output_is_starter_not_a_fake_document_or_compiled_pdf():
     meta, result = submit(b"Some text", "draft.txt")
     with ZipFile(BytesIO(result)) as archive:
-        assert not any(name.endswith((".docx", ".pdf", ".sty")) for name in archive.namelist())
+        assert not any(name.endswith((".docx", ".pdf")) for name in archive.namelist())
         assert b"Some text" in archive.read("main.tex")
+
+
+def test_missing_or_corrupt_style_fails_without_output(verified_style_fixture):
+    path, _ = verified_style_fixture
+    original = path.read_bytes()
+    path.write_bytes(original[:-1] + bytes([original[-1] ^ 1]))
+    meta, result = submit()
+    assert meta["error"] == "icml_style_unavailable" and not result
+    path.unlink()
+    meta, result = submit()
+    assert meta["error"] == "icml_style_unavailable" and not result

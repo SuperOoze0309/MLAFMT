@@ -22,14 +22,26 @@ const context = vm.createContext({
   webResult:null,
 });
 vm.runInContext(html.slice(start,end), context);
-context.webResult = {name:'FormCapy-ICML-2026.zip', blob:{size:1024}, format:{id:'icml'}, url:'blob:icml', stats:[0,0,0], retained:[0,0,0], warnings:{}};
+context.webResult = {name:'FormCapy-ICML-2026.zip', blob:{size:1024}, format:{id:'icml'}, url:'blob:icml', stats:[0,0,0], retained:[0,0,0], warnings:{}, icmlStyleIncluded:true, icmlStyleSource:'cache'};
 vm.runInContext('renderWebResult()',context);
 assert.equal(node('result-details').textContent, 'LaTeX ZIP · 1 KB');
 assert.equal(node('web-download').textContent, 'icml_download');
 assert.equal(node('web-download').download, 'FormCapy-ICML-2026.zip');
 assert.equal(node('result-warning').hidden, false);
-assert.equal(node('result-warning').textContent, 'icml_result_warning');
+assert.equal(node('result-warning').textContent, 'icml_style_included_cache icml_result_warning');
 assert.equal(node('layout-check').hidden, true, 'Word inspection must not appear for a LaTeX ZIP');
+for (const [source, expected] of [['network','icml_style_included_network'], ['network_uncached','icml_style_included_uncached']]) {
+  context.webResult.icmlStyleSource = source;
+  vm.runInContext('renderWebResult()',context);
+  assert.equal(node('result-warning').textContent, expected + ' icml_result_warning');
+}
+context.webResult.icmlStyleIncluded = false;
+vm.runInContext('renderWebResult()',context);
+assert.equal(node('result-warning').textContent, 'icml_style_unknown icml_result_warning', 'older backends must never claim the style was included');
+context.webResult.icmlStyleIncluded = true;
+context.webResult.icmlStyleSource = null;
+vm.runInContext('renderWebResult()',context);
+assert.equal(node('result-warning').textContent, 'icml_style_included_unknown icml_result_warning', 'unknown cache state is distinct from absent style');
 context.webResult = {name:'paper.docx', blob:{size:1024}, format:{id:'mla'}, url:'blob:docx', stats:[0,0,0], retained:[0,0,0], warnings:{}};
 vm.runInContext('renderWebResult()',context);
 assert.equal(node('web-download').textContent, 'download_word');

@@ -78,6 +78,7 @@ KNOWN_VALUE_ERRORS = (
     "unsupported",
     "no_file",
     "missing_fields",
+    "icml_style_unavailable",
 )
 _TEMP_PREFIX = "mlafmt-"
 
@@ -513,7 +514,7 @@ def _generate(request, workdir):
 
 
 def _generate_icml(request, workdir):
-    """Build a local LaTeX starter; ICML's original style is not bundled."""
+    """Build a local LaTeX starter using the verified official style archive."""
     from icml_latex import make_icml_source
 
     title = request.get("title", "").strip()
@@ -533,6 +534,7 @@ def _generate_icml(request, workdir):
         "name": "FormCapy-ICML-2026.zip", "mime": "application/zip", "bytes": len(data),
         "format_id": "icml", "format_label": "ICML 2026 LaTeX",
         "stats": {"body": count, "works_cited": 0}, "latex_warnings": list(warnings),
+        "icml_style_included": True,
     }), data
 
 

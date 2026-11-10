@@ -2541,36 +2541,42 @@
       });
       Object.assign(T.zh, {
         format_icml: "ICML 2026 · LaTeX",
-        format_note_icml: "生成匿名审稿用 LaTeX 源文件 ZIP，需自行从 ICML 官网获取 2026 样式文件后编译。标题、正文、参考文献及文件元数据中的身份信息须自行核对。",
+        format_note_icml: "生成匿名审稿用 LaTeX 源文件 ZIP，首次生成时按需下载并校验官方 2026 样式；成功缓存后可离线使用。标题、正文、参考文献及文件元数据中的身份信息须自行核对。",
         icml_preview_title: "ICML LaTeX 源文件", icml_preview: "下载包包含可编辑的 LaTeX 和使用说明，不是已排版的 PDF。正文按文本重建，不自动识别摘要或引用；图片、表格、公式、分页、文本框、脚注、尾注及复杂格式需人工处理。中文等非 ASCII 文字未必能正确显示，须配置合适的 TeX 引擎和字体，并逐字检查生成的 PDF。请核对目标年份要求与匿名信息。", icml_official_link: "下载 ICML 官方 2026 样式 ZIP（新标签页）",
         icml_convert: "生成 LaTeX 源文件", icml_blank: "生成空白 LaTeX 模板", icml_download: "下载 LaTeX ZIP",
         icml_details: (size) => `LaTeX ZIP · ${size}`, icml_working: "正在本地生成 LaTeX 源文件…",
         icml_missing_title: "请填写论文标题。",
         icml_done: (name) => `LaTeX 源文件已生成：${name}。请在下方下载。`,
-        icml_result_warning: "ZIP 不含 ICML 样式文件：请按包内说明从官网获取 2026 样式后编译。不会自动识别摘要或引用，图片、表格、公式、分页、文本框、脚注、尾注及复杂格式可能遗漏或改变；标题、正文、参考文献和文件元数据的匿名性须自行检查。中文等非 ASCII 文字未必能正确显示，须配置合适的 TeX 引擎和字体，并逐字检查生成的 PDF。",
+        icml_result_warning: "不会自动识别摘要或引用，图片、表格、公式、分页、文本框、脚注、尾注及复杂格式可能遗漏或改变；标题、正文、参考文献和文件元数据的匿名性须自行检查。中文等非 ASCII 文字未必能正确显示，须配置合适的 TeX 引擎和字体，并逐字检查生成的 PDF。",
         icml_apple_hint: "iPhone／iPad：下载 ZIP 后，在 Safari 下载列表或“文件”App 中查找。",
+        icml_style_fetch: "正在下载 ICML 官方样式…", icml_style_check: "正在校验 ICML 官方样式…", icml_style_cached: "已使用校验通过的本机样式缓存。",
+        icml_style_unavailable: "无法下载或校验 ICML 样式，本次未生成工程；页面保留的上一份结果不变。请检查网络后重试。", icml_style_included_cache: "官方 2026 样式已加入，使用本机缓存。", icml_style_included_network: "官方 2026 样式已加入并缓存。", icml_style_included_uncached: "官方 2026 样式已加入，但未能缓存；下次可能需要联网。", icml_style_unknown: "无法确认 ZIP 是否包含官方样式；请检查文件或通过官网链接获取。", icml_style_included_unknown: "官方 2026 样式已加入，缓存状态未知。",
       });
       Object.assign(T.en, {
         format_icml: "ICML 2026 · LaTeX",
-        format_note_icml: "Create a LaTeX source ZIP for anonymous review. Obtain the 2026 style files from ICML before compiling. Review the title, body, references and file metadata for identifying information.",
+        format_note_icml: "Create a LaTeX source ZIP for anonymous review. The official 2026 style is downloaded and verified on first use; once cached, it can be used offline. Review the title, body, references and file metadata for identifying information.",
         icml_preview_title: "ICML LaTeX source", icml_preview: "The download contains editable LaTeX and instructions, not a rendered PDF. Text is reconstructed without automatic abstract or citation recognition; images, tables, formulas, pagination, text boxes, footnotes, endnotes and complex formatting require manual work. Chinese and other non-ASCII characters may not display correctly; configure a suitable TeX engine and fonts, then check every character in the generated PDF. Verify the target year and anonymity requirements.", icml_official_link: "Download the official ICML 2026 style ZIP (opens in a new tab)",
         icml_convert: "Generate LaTeX source", icml_blank: "Create a blank LaTeX template", icml_download: "Download LaTeX ZIP",
         icml_details: (size) => `LaTeX ZIP · ${size}`, icml_working: "Generating LaTeX source locally…",
         icml_missing_title: "Please enter the paper title.",
         icml_done: (name) => `LaTeX source is ready: ${name}. Download it below.`,
-        icml_result_warning: "The ZIP does not include the ICML style files: follow its instructions to obtain the 2026 files from ICML before compiling. Abstracts and citations are not automatically recognized; images, tables, formulas, pagination, text boxes, footnotes, endnotes and complex formatting may be omitted or changed. Review the title, body, references and file metadata for identifying information. Chinese and other non-ASCII characters may not display correctly; configure a suitable TeX engine and fonts, then check every character in the generated PDF.",
+        icml_result_warning: "Abstracts and citations are not automatically recognized; images, tables, formulas, pagination, text boxes, footnotes, endnotes and complex formatting may be omitted or changed. Review the title, body, references and file metadata for identifying information. Chinese and other non-ASCII characters may not display correctly; configure a suitable TeX engine and fonts, then check every character in the generated PDF.",
         icml_apple_hint: "iPhone / iPad: find the ZIP in Safari Downloads or the Files app.",
+        icml_style_fetch: "Downloading the official ICML style…", icml_style_check: "Verifying the official ICML style…", icml_style_cached: "Using the verified local style cache.",
+        icml_style_unavailable: "The ICML style could not be downloaded or verified; no project was generated this time. Any prior result remains unchanged. Check your connection and retry.", icml_style_included_cache: "The official 2026 style is included from the local cache.", icml_style_included_network: "The official 2026 style is included and cached.", icml_style_included_uncached: "The official 2026 style is included, but could not be cached; a connection may be needed next time.", icml_style_unknown: "Could not confirm that the ZIP includes the official style; check its files or use the official link.", icml_style_included_unknown: "The official 2026 style is included; cache status is unknown.",
       });
       Object.assign(T.es, {
         format_icml: "ICML 2026 · LaTeX",
-        format_note_icml: "Crea un ZIP LaTeX para revisión anónima. Obtén los archivos de estilo 2026 de ICML antes de compilar. Revisa el título, el texto, las referencias y los metadatos para eliminar datos identificativos.",
+        format_note_icml: "Crea un ZIP LaTeX para revisión anónima. El estilo oficial de 2026 se descarga y verifica al usarlo por primera vez; una vez en caché, puede usarse sin conexión. Revisa el título, el texto, las referencias y los metadatos para eliminar datos identificativos.",
         icml_preview_title: "Código fuente ICML LaTeX", icml_preview: "La descarga contiene LaTeX editable e instrucciones, no un PDF renderizado. El texto se reconstruye sin identificar automáticamente el resumen ni las citas; imágenes, tablas, fórmulas, paginación, cuadros de texto, notas al pie, notas finales y formato complejo requieren revisión manual. El chino y otros caracteres no ASCII pueden no mostrarse correctamente; configura un motor TeX y fuentes adecuados y comprueba cada carácter del PDF generado. Comprueba el año y el anonimato.", icml_official_link: "Descargar el ZIP de estilos oficial de ICML 2026 (abre una pestaña nueva)",
         icml_convert: "Generar código LaTeX", icml_blank: "Crear plantilla LaTeX vacía", icml_download: "Descargar ZIP LaTeX",
         icml_details: (size) => `ZIP LaTeX · ${size}`, icml_working: "Generando código LaTeX localmente…",
         icml_missing_title: "Escribe el título del trabajo.",
         icml_done: (name) => `Código LaTeX preparado: ${name}. Descárgalo abajo.`,
-        icml_result_warning: "El ZIP no incluye los estilos ICML: sigue las instrucciones para obtener los archivos de 2026 antes de compilar. No se identifican automáticamente el resumen ni las citas; imágenes, tablas, fórmulas, paginación, cuadros de texto, notas al pie, notas finales y formato complejo pueden omitirse o cambiar. Revisa el anonimato del título, texto, referencias y metadatos. El chino y otros caracteres no ASCII pueden no mostrarse correctamente; configura un motor TeX y fuentes adecuados y comprueba cada carácter del PDF generado.",
+        icml_result_warning: "No se identifican automáticamente el resumen ni las citas; imágenes, tablas, fórmulas, paginación, cuadros de texto, notas al pie, notas finales y formato complejo pueden omitirse o cambiar. Revisa el anonimato del título, texto, referencias y metadatos. El chino y otros caracteres no ASCII pueden no mostrarse correctamente; configura un motor TeX y fuentes adecuados y comprueba cada carácter del PDF generado.",
         icml_apple_hint: "iPhone / iPad: busca el ZIP en Descargas de Safari o en Archivos.",
+        icml_style_fetch: "Descargando el estilo oficial de ICML…", icml_style_check: "Verificando el estilo oficial de ICML…", icml_style_cached: "Se usa el estilo local verificado en caché.",
+        icml_style_unavailable: "No se pudo descargar o verificar el estilo ICML; esta vez no se generó el proyecto y el resultado anterior permanece sin cambios. Comprueba la conexión y vuelve a intentarlo.", icml_style_included_cache: "El estilo oficial de 2026 está incluido desde la caché local.", icml_style_included_network: "El estilo oficial de 2026 está incluido y guardado en caché.", icml_style_included_uncached: "El estilo oficial de 2026 está incluido, pero no se pudo guardar en caché; la próxima vez podría requerirse conexión.", icml_style_unknown: "No se pudo confirmar que el ZIP incluya el estilo oficial; comprueba los archivos o usa el enlace oficial.", icml_style_included_unknown: "El estilo oficial de 2026 está incluido; se desconoce el estado de la caché.",
       });
       const $ = (id) => document.getElementById(id);
       const store = {
@@ -3076,6 +3082,9 @@
           application: "stage_application",
           reading: "stage_reading",
           formatting: "stage_formatting",
+          icml_style_fetch: "icml_style_fetch",
+          icml_style_check: "icml_style_check",
+          icml_style_cached: "icml_style_cached",
         };
         if (!keys[stage]) return;
         stageKey = keys[stage];
@@ -3193,7 +3202,12 @@
         if (isIcmlResult) {
           $("result-retained").hidden = true;
           $("result-warning").hidden = false;
-          $("result-warning").textContent = t("icml_result_warning");
+          const styleKey = !webResult.icmlStyleIncluded ? "icml_style_unknown"
+            : webResult.icmlStyleSource === "cache" ? "icml_style_included_cache"
+            : webResult.icmlStyleSource === "network" ? "icml_style_included_network"
+            : webResult.icmlStyleSource === "network_uncached" ? "icml_style_included_uncached"
+            : "icml_style_included_unknown";
+          $("result-warning").textContent = t(styleKey) + " " + t("icml_result_warning");
           $("layout-check").hidden = true;
         } else {
           renderRetained("result-retained", webResult.retained);

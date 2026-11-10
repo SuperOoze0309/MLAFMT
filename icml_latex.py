@@ -1,4 +1,4 @@
-"""Generate a local ICML 2026 LaTeX source starter, without bundling ICML files.
+"""Generate a local ICML 2026 LaTeX source starter with verified styles.
 
 Text from a draft is always escaped as data, never inserted as executable TeX.
 The output is a starter: its formatting, contents and anonymity require review.
@@ -7,9 +7,10 @@ The output is a starter: its formatting, contents and anonymity require review.
 from __future__ import annotations
 
 from io import BytesIO
+import hashlib
 from pathlib import Path
 import re
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED, BadZipFile, ZipFile
 
 from docx import Document
 from docx.table import Table
@@ -20,6 +21,14 @@ from mla_formatter import _read_text_draft
 
 OFFICIAL_STYLE_URL = "https://media.icml.cc/Conferences/ICML2026/Styles/icml2026.zip"
 OFFICIAL_INSTRUCTIONS_URL = "https://icml.cc/Conferences/2026/AuthorInstructions"
+OFFICIAL_STYLE_SHA256 = "8b29290f5828e176debb57ea9cc00252502973d55ea561a2f18a7f0a326bfc6c"
+STYLE_BUNDLE_SHA256 = "03be9bd927f247198af11eed05a83865531edcacde80804ee8e831f512e2c293"
+STYLE_BUNDLE_SIZE = 24486
+STYLE_ARCHIVE_PATH = Path(__file__).with_name("icml2026-official.zip")
+STYLE_FILES = {
+    "icml2026.sty": 27344, "icml2026.bst": 27147,
+    "algorithm.sty": 2223, "algorithmic.sty": 7414, "fancyhdr.sty": 31715,
+}
 MAX_DRAFT_CHARS = 2_000_000
 MAX_BLOCKS = 50_000
 MAX_TABLE_CELLS = 100_000
@@ -139,8 +148,34 @@ def _docx_blocks(path):
     return blocks
 
 
+def _verified_style_files():
+    """Return only pinned, bounded official files; never extract to disk."""
+    try:
+        with STYLE_ARCHIVE_PATH.open("rb") as stream:
+            blob = stream.read(STYLE_BUNDLE_SIZE + 1)
+        if len(blob) != STYLE_BUNDLE_SIZE or hashlib.sha256(blob).hexdigest() != STYLE_BUNDLE_SHA256:
+            raise ValueError("icml_style_unavailable")
+        with ZipFile(BytesIO(blob)) as archive:
+            entries = archive.infolist()
+            names = [item.filename for item in entries]
+            if len(names) != len(set(names)):
+                raise ValueError("icml_style_unavailable")
+            result = {}
+            for name, expected_size in STYLE_FILES.items():
+                info = archive.getinfo(name)
+                if info.file_size != expected_size or info.flag_bits & 1 or info.is_dir():
+                    raise ValueError("icml_style_unavailable")
+                data = archive.read(info)
+                if len(data) != expected_size:
+                    raise ValueError("icml_style_unavailable")
+                result[name] = data
+            return result
+    except (OSError, KeyError, BadZipFile, RuntimeError, ValueError) as error:
+        raise ValueError("icml_style_unavailable") from error
+
+
 def make_icml_source(title, input_path=None, *, txt_mode="blank_line"):
-    """Return a ZIP of main.tex and instructions; does not bundle ICML styles.
+    """Return a ZIP of main.tex, instructions and verified official styles.
 
     Input may be TXT, Markdown or DOCX.  Images, tables, equations, citations
     and rich formatting are not reconstructed; users must review the output.
@@ -167,7 +202,8 @@ def make_icml_source(title, input_path=None, *, txt_mode="blank_line"):
     body = "\n\n".join(rendered) if rendered else "% Add your paper text here."
     safe_title = escape_tex(" ".join(title.split()))
     contains_non_ascii = any(ord(c) > 127 for c in title + "".join(text for _, text in blocks))
-    tex = r"""% ICML 2026 starter: obtain the official style package before compiling.
+    style_files = _verified_style_files()
+    tex = r"""% ICML 2026 starter: official style files are included.
 % Review the entire source, references and PDF for anonymity before submission.
 """ + ("% Non-ASCII text may disappear from the PDF with default ICML fonts;\n"
        "% configure compatible fonts/engine and verify every character in the PDF.\n"
@@ -198,13 +234,15 @@ def make_icml_source(title, input_path=None, *, txt_mode="blank_line"):
 """
     readme = f"""FormCapy ICML 2026 LaTeX starter
 
-This ZIP does NOT include the ICML style or bibliography files and is not
-ready to compile on its own. Obtain the official ICML 2026 style archive:
+This ZIP includes the official ICML 2026 style and bibliography files,
+plus algorithm.sty, algorithmic.sty and fancyhdr.sty from the official archive:
 {OFFICIAL_STYLE_URL}
+Official ZIP SHA-256: {OFFICIAL_STYLE_SHA256}
+Verified FormCapy style bundle SHA-256: {STYLE_BUNDLE_SHA256}
 
-Unpack the official files into the same project as main.tex. In particular,
-icml2026.sty is required, and icml2026.bst is needed when using its BibTeX
-style. Standard LaTeX packages and a TeX installation are also required.
+The included files retain their original copyright and license notices.
+Keep all files alongside main.tex. Standard LaTeX packages and a TeX
+installation are required; the package is not itself a compiled PDF.
 Read the official instructions: {OFFICIAL_INSTRUCTIONS_URL}
 Check the official template for the intended conference year before submitting;
 this starter specifically targets 2026 and is not a future-year template.
@@ -229,7 +267,7 @@ The abstract environment starts empty; move or write your abstract there.
 Text that resembles references remains body text; create a bibliography yourself.
 No PDF is generated by FormCapy. Compile and review the result yourself.
 """
-    warnings = ["icml_manual_style", "icml_anonymity_review"]
+    warnings = ["icml_anonymity_review"]
     if input_path is not None:
         warnings.append("icml_text_reconstruction")
     if contains_non_ascii:
@@ -238,4 +276,6 @@ No PDF is generated by FormCapy. Compile and review the result yourself.
     with ZipFile(out, "w", compression=ZIP_DEFLATED) as archive:
         archive.writestr("main.tex", tex.encode("utf-8"))
         archive.writestr("README.txt", readme.encode("utf-8"))
+        for name, contents in style_files.items():
+            archive.writestr(name, contents)
     return out.getvalue(), tuple(warnings), len(blocks)
