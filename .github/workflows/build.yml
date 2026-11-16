@@ -51,6 +51,7 @@ jobs:
           node browser/test/citation_assistant_test.mjs
           node browser/test/citation_host_state_test.mjs
           node browser/test/document_converter_test.mjs
+          node browser/test/batch_converter_test.mjs
           node browser/test/office_frame_loading_test.mjs
           node browser/test/layout_check_ui_test.mjs
           node browser/test/icml_ui_test.mjs
