@@ -6,6 +6,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 const source = fs.readFileSync(new URL("../../static/document-converter.js", import.meta.url), "utf8");
+const batchSource = fs.readFileSync(new URL("../../static/batch-converter.js", import.meta.url), "utf8");
 const css = fs.readFileSync(new URL("../../static/document-converter.css", import.meta.url), "utf8");
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
@@ -47,12 +48,14 @@ function setup(options = {}) {
   const created = [], revoked = [], requests = [], busy = [], events = new Map();
   let lang = "en";
   const window = {
-    document, AbortController,
+    document, AbortController, Blob,
     URL: { createObjectURL: blob => { const url = `blob:test-${created.length}`; created.push({ blob, url }); return url; }, revokeObjectURL: url => revoked.push(url) },
     addEventListener: (name, listener) => events.set(name, listener),
     removeEventListener: (name, listener) => { if (events.get(name) === listener) events.delete(name); },
   };
   vm.runInNewContext(source, { window, fetch: () => { throw new Error("UI must not fetch"); } });
+  vm.runInNewContext(batchSource, { window, TextEncoder });
+  if (options.createZip) window.FormCapyBatchConverter = { ...window.FormCapyBatchConverter, createZip: options.createZip };
   const instance = window.FormCapyDocumentConverter.create({
     mount, getLocale: () => lang,
     convert: async request => { requests.push(request); return options.convert ? options.convert(request) : { blob: new Blob(["converted"]), name: "Result.pdf", warnings: [] }; },
@@ -68,7 +71,12 @@ function setup(options = {}) {
     input.files = [{ name, size, arrayBuffer: () => { throw new Error("UI must not read bytes before Convert"); } }];
     await input.dispatch("change");
   }
-  return { instance, mount, find, file, requests, busy, created, revoked, events, locale: value => { lang = value; instance.setLocale(); } };
+  async function files(values) {
+    const input = find("file");
+    input.files = values.map(value => ({ name: value.name, size: value.size ?? 100, arrayBuffer: async () => new ArrayBuffer(0) }));
+    await input.dispatch("change");
+  }
+  return { instance, mount, find, file, files, requests, busy, created, revoked, events, locale: value => { lang = value; instance.setLocale(); } };
 }
 
 test("mounting, opening and choosing a file do not start the engine or read bytes", async () => {
@@ -274,4 +282,88 @@ test("a tampered same-format target is rejected before the local engine", async 
   await ui.find("convert").click();
   assert.equal(ui.requests.length, 0);
   assert.equal(ui.created.length, 0);
+});
+
+test("batch handles mixed formats, failure, warnings, ZIP and releases results on target change", async () => {
+  const ui = setup({ convert: async ({ file }) => {
+    if (file.name === "bad.doc") throw Object.assign(new Error("private details"), { code: "bad_doc" });
+    return { blob: new Blob([file.name]), name: "same.pdf", warnings: ["office_layout_review"] };
+  } });
+  await ui.files([{name:"one.docx"}, {name:"bad.doc"}, {name:"same.pdf"}, {name:"two.doc"}]);
+  assert.equal(ui.find("file").multiple, true);
+  assert.deepEqual(ui.find("target").children.map(option => option.value), ["pdf", "docx", "doc"]);
+  await ui.find("convert").click();
+  assert.equal(ui.requests.length, 3);
+  assert.match(ui.find("batch-list").textContent, /Skipped: already in the selected format/);
+  assert.match(ui.find("batch-list").textContent, /could not be read/);
+  assert.doesNotMatch(ui.find("batch-list").textContent, /private details/);
+  const rows = ui.find("batch-list").children;
+  assert.equal(rows[0].children.find(child => child.tagName === "A").download, "same.pdf");
+  assert.equal(rows[3].children.find(child => child.tagName === "A").download, "same (2).pdf");
+  assert.match(rows[0].textContent, /pagination and layout/);
+  ui.locale("zh");
+  assert.match(ui.find("batch-list").textContent, /已跳过/);
+  ui.locale("es"); assert.match(ui.find("batch-list").textContent, /Omitido/);
+  await ui.find("batch-download").click();
+  assert.equal(ui.created.length, 3);
+  assert.equal(ui.created[2].blob.type, "application/zip");
+  ui.find("target").value = "docx"; await ui.find("target").dispatch("change");
+  assert.equal(ui.revoked.length, 3);
+  assert.equal(ui.find("batch-download").hidden, true);
+});
+
+test("cancelled or failed ZIP packaging keeps the individual downloads", async () => {
+  const gate = deferred();
+  const ui = setup({createZip: () => gate.promise});
+  await ui.files([{name:"one.doc"}, {name:"two.doc"}]);
+  await ui.find("convert").click();
+  const packing = ui.find("batch-download").click();
+  assert.equal(ui.instance.state().busy, true);
+  await ui.find("cancel").click();
+  gate.resolve(new Blob(["late zip"])); await packing;
+  assert.equal(ui.created.length, 2);
+  assert.equal(ui.find("batch-download").hidden, false);
+  assert.equal(ui.instance.state().busy, false);
+  const failure = setup({createZip: async () => { throw new Error("private"); }});
+  await failure.files([{name:"one.doc"}, {name:"two.doc"}]);
+  await failure.find("convert").click(); await failure.find("batch-download").click();
+  assert.match(failure.find("status").textContent, /Could not create the ZIP/);
+  assert.equal(failure.created.length, 2);
+});
+
+test("batch cancellation preserves completed results and waits for in-flight work", async () => {
+  const gate = deferred();
+  const ui = setup({convert: ({file}) => file.name === "one.doc" ? Promise.resolve({blob:new Blob(["ok"]), name:"one.pdf"}) : gate.promise});
+  await ui.files([{name:"one.doc"}, {name:"two.doc"}, {name:"three.doc"}]);
+  const running = ui.find("convert").click();
+  await flush();
+  assert.equal(ui.requests.length, 2);
+  await ui.find("cancel").click();
+  assert.equal(ui.requests[1].signal.aborted, true);
+  assert.equal(ui.instance.state().busy, true);
+  gate.resolve({blob:new Blob(["late"]),name:"late.pdf"}); await running;
+  assert.equal(ui.instance.state().busy, false);
+  assert.equal(ui.requests.length, 2);
+  assert.equal(ui.created.length, 1);
+  assert.match(ui.find("status").textContent, /Completed results are still available/);
+  assert.match(ui.find("batch-list").textContent, /Conversion cancelled/);
+  assert.equal(ui.find("batch-download").hidden, false);
+  ui.instance.destroy(); assert.deepEqual(ui.revoked, ["blob:test-0"]);
+});
+
+test("batch count and total size limits reject the selection without starting work", async () => {
+  const ui = setup();
+  await ui.files(Array.from({length:21}, (_, index) => ({name:`${index}.doc`})));
+  assert.match(ui.find("status").textContent, /up to 20 files/);
+  assert.equal(ui.find("convert").disabled, true);
+  await ui.files(Array.from({length:6}, (_, index) => ({name:`${index}.doc`, size:20 * 1024 * 1024})));
+  assert.match(ui.find("status").textContent, /100 MiB/);
+  assert.equal(ui.requests.length, 0);
+});
+
+test("a uniform batch defaults to a different output format", async () => {
+  const ui = setup();
+  await ui.files([{name:"one.pdf"}, {name:"two.pdf"}]);
+  assert.deepEqual(ui.find("target").children.map(option => option.value), ["docx", "doc"]);
+  assert.equal(ui.instance.state().targetFormat, "docx");
 });

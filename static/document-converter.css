@@ -48,6 +48,12 @@
 .fc-converter-warnings { margin: 12px 0 0; padding-left: 22px; font-size: 12px; color: #815b20; overflow-wrap: anywhere; }
 .fc-converter-warnings li + li { margin-top: 7px; }
 .fc-converter-download { display: inline-block; margin-top: 18px; color: var(--accent-dark, #1c5268); font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.fc-converter-batch { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.fc-converter-batch-item { min-width: 0; padding: 13px 15px; border: 1px solid var(--line, #dce5e3); border-radius: 12px; font-size: 13px; overflow-wrap: anywhere; }
+.fc-converter-batch-name, .fc-converter-batch-status { display: block; }
+.fc-converter-batch-status { margin-top: 5px; color: var(--muted, #566b73); }
+.fc-converter-batch-item .fc-converter-download { margin-top: 9px; font-size: 13px; }
+.fc-converter-batch-download { margin-top: 16px; }
 @media (max-width: 560px) {
   .fc-converter-summary { padding: 17px 16px; }
   .fc-converter-body { padding: 3px 16px 20px; }

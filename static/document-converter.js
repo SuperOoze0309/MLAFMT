@@ -4,13 +4,15 @@
   "use strict";
 
   const MAX_SIZE = 20 * 1024 * 1024;
+  const MAX_FILES = 20;
+  const MAX_TOTAL_SIZE = 100 * 1024 * 1024;
   const FORMATS = ["pdf", "docx", "doc"];
   let instances = 0;
   const TEXT = {
     zh: {
       title: "PDF / Word 文件互转", summary: "PDF、DOCX、DOC，在本设备处理",
       privacy: "文件在浏览器中转换，不会上传；原文件不受影响。",
-      file: "原始文件", choose: "选择文件", no_file_selected: "尚未选择文件（最大 20 MiB）",
+      file: "原始文件", choose: "选择文件", no_file_selected: "尚未选择文件（每个最大 20 MiB，最多 20 个，总计最大 100 MiB）",
       target: "转换为", convert: "开始转换", cancel: "取消转换", clear: "清除", download: "下载转换结果",
       ready: "选择 PDF、DOCX 或 DOC，再选择需要的格式。", selected: "已选择文件，可以开始转换。",
       engine: "DOC 转换或导出 PDF 首次需下载数百 MB，可能占用超过 1 GiB 内存。建议用电脑浏览器，加载时请保持页面打开。",
@@ -29,11 +31,16 @@
       pdf_reconstructed: "图片、分页和表格可能改变或丢失；原 PDF 中隐藏或裁掉的图片内容也可能显示。分享前请对照原文件核对。",
       layout_changed: "格式转换可能改变分页、字体和版式，请对照原文件核对。", images_omitted: "PDF 中的部分或全部图片未能保留，请对照原文件核对。", legacy_doc_limits: "旧版 DOC 格式的功能有限；表格可能变为普通文本，复杂版式或新版 Word 功能可能改变或丢失。请核对导出文件。",
       partial_text: "部分页面没有可提取文字，可能为扫描内容；请核对是否遗漏。", warning: "请对照原文件核对转换结果。",
+      choose_many: "选择文件（可多选）", many_selected: "已选择 {count} 个文件", batch_selected: "已选择多个文件，可以开始批量转换。",
+      batch_limit: "一次最多选择 20 个文件，总大小不超过 100 MiB。", pending: "等待转换", skipped: "已跳过：文件已是目标格式。",
+      batch_done: "批量转换结束，请检查各文件的结果。", batch_cancelled: "已取消批量转换；已完成的结果仍可下载。", batch_download: "打包下载全部成功结果（ZIP）", batch_packaging: "正在打包…",
+      output_limit: "批量结果总大小超过 100 MiB，无法保留此结果。", zip_failed: "打包失败，请重试或逐个下载结果。",
+      batch_progress: "正在处理第 {current} / {count} 个文件。",
     },
     en: {
       title: "PDF / Word file converter", summary: "PDF, DOCX and DOC, processed on this device",
       privacy: "Files stay in your browser; the original is unchanged.",
-      file: "Source file", choose: "Choose file", no_file_selected: "No file selected (20 MiB maximum)",
+      file: "Source files", choose: "Choose file", no_file_selected: "No files selected (20 MiB each; up to 20 files and 100 MiB total)",
       target: "Convert to", convert: "Convert file", cancel: "Cancel conversion", clear: "Clear", download: "Download converted file",
       ready: "Choose a PDF, DOCX or DOC file, then choose the output format.", selected: "File selected. Ready to convert.",
       engine: "DOC conversion or PDF export first downloads hundreds of MB and may use over 1 GiB of memory. Use a desktop browser and keep this page open while it loads.",
@@ -52,11 +59,16 @@
       pdf_reconstructed: "Images, pages and tables may change or be lost. Hidden or cropped image content may also appear. Compare with the original before sharing.",
       layout_changed: "Conversion may change fonts, pagination and layout. Compare with the original file.", images_omitted: "Some or all PDF images could not be retained. Compare with the original file.", legacy_doc_limits: "Legacy DOC has limited support for newer Word features. Tables may become plain text, and complex layouts or other features may change or be lost. Review the exported file.",
       partial_text: "Some pages have no extractable text and may contain scanned content. Check for omissions.", warning: "Compare the converted file with the original.",
+      choose_many: "Choose files (multiple allowed)", many_selected: "{count} files selected", batch_selected: "Files selected. Ready to convert.",
+      batch_limit: "Choose up to 20 files totaling no more than 100 MiB.", pending: "Waiting", skipped: "Skipped: already in the selected format.",
+      batch_done: "Batch finished. Check each file's result.", batch_cancelled: "Batch cancelled. Completed results are still available.", batch_download: "Download all successful results (ZIP)", batch_packaging: "Preparing ZIP…",
+      output_limit: "The batch results exceed 100 MiB, so this result could not be kept.", zip_failed: "Could not create the ZIP. Try again or download each result individually.",
+      batch_progress: "Processing file {current} of {count}.",
     },
     es: {
       title: "Conversor de PDF / Word", summary: "PDF, DOCX y DOC, en este dispositivo",
       privacy: "Los archivos se procesan en el navegador; el original no cambia.",
-      file: "Archivo original", choose: "Elegir archivo", no_file_selected: "Ningún archivo seleccionado (máximo 20 MiB)",
+      file: "Archivos originales", choose: "Elegir archivo", no_file_selected: "Ningún archivo seleccionado (20 MiB cada uno; hasta 20 archivos y 100 MiB en total)",
       target: "Convertir a", convert: "Convertir archivo", cancel: "Cancelar conversión", clear: "Borrar", download: "Descargar archivo convertido",
       ready: "Elige un PDF, DOCX o DOC y selecciona el formato de salida.", selected: "Archivo seleccionado. Listo para convertir.",
       engine: "Convertir DOC o exportar a PDF descarga cientos de MB la primera vez y puede usar más de 1 GiB de memoria. Usa un navegador de escritorio y mantén abierta esta página durante la carga.",
@@ -75,6 +87,11 @@
       pdf_reconstructed: "Las imágenes, páginas y tablas pueden cambiar o perderse. También puede aparecer contenido oculto o recortado de imágenes. Compara con el original antes de compartir.",
       layout_changed: "La conversión puede cambiar fuentes, paginación y diseño. Compara con el archivo original.", images_omitted: "No se pudieron conservar algunas o todas las imágenes del PDF. Compara con el archivo original.", legacy_doc_limits: "DOC antiguo no admite todas las funciones nuevas de Word. Las tablas pueden convertirse en texto y los diseños complejos u otras funciones pueden cambiar o perderse. Revisa el archivo exportado.",
       partial_text: "Algunas páginas no tienen texto extraíble y pueden contener imágenes escaneadas. Comprueba si falta contenido.", warning: "Compara el archivo convertido con el original.",
+      choose_many: "Elegir archivos (se permite seleccionar varios)", many_selected: "{count} archivos seleccionados", batch_selected: "Archivos seleccionados. Listos para convertir.",
+      batch_limit: "Elige hasta 20 archivos con un máximo total de 100 MiB.", pending: "En espera", skipped: "Omitido: ya tiene el formato elegido.",
+      batch_done: "Conversión por lotes terminada. Revisa el resultado de cada archivo.", batch_cancelled: "Conversión cancelada. Los resultados terminados aún se pueden descargar.", batch_download: "Descargar todos los resultados correctos (ZIP)", batch_packaging: "Preparando ZIP…",
+      output_limit: "Los resultados superan los 100 MiB; no se pudo guardar este resultado.", zip_failed: "No se pudo crear el ZIP. Inténtalo de nuevo o descarga cada resultado por separado.",
+      batch_progress: "Procesando archivo {current} de {count}.",
     },
   };
 
@@ -100,6 +117,11 @@
   const sourceFormat = (file) => String(file?.name || "").toLowerCase().match(/\.(pdf|docx|doc)$/)?.[1] || "";
   const safeName = (name, extension) => String(name || `Converted.${extension}`)
     .replace(/[\\/\u0000-\u001f\u007f]/g, "_").slice(0, 240) || `Converted.${extension}`;
+  const stageKey = (stage) => {
+    const key = typeof stage === "string" ? stage : stage?.stage;
+    return /extract|pdf_text/.test(key || "") ? "extracting" :
+      /export|convert/.test(key || "") ? "exporting" : /load|download|runtime|init|office|packages|application/.test(key || "") ? "loading" : "working";
+  };
 
   function create({ mount, getLocale = () => "en", convert, canStart = () => true, onBusyChange = () => {} }) {
     if (!mount || typeof mount.replaceChildren !== "function" || typeof convert !== "function") {
@@ -108,6 +130,11 @@
     const document = mount.ownerDocument || root.document;
     const id = `fc-document-converter-${++instances}`;
     let file = null;
+    let files = [];
+    let batchEntries = [];
+    let batchURLs = new Map();
+    let zipURL = null;
+    let batchAction = false;
     let busy = false;
     let destroyed = false;
     let epoch = 0;
@@ -138,9 +165,10 @@
     const fileInput = node("input", "fc-converter-file", null, "file");
     fileInput.id = id + "-file";
     fileInput.type = "file";
+    fileInput.multiple = true;
     fileInput.accept = ".pdf,.docx,.doc,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     fileInput.hidden = true;
-    const choose = node("button", "fc-converter-button", "choose", "choose");
+    const choose = node("button", "fc-converter-button", "choose_many", "choose");
     choose.type = "button";
     const fileName = node("p", "fc-converter-filename", null, "filename");
     fileName.id = id + "-filename";
@@ -170,7 +198,12 @@
     const warnings = node("ul", "fc-converter-warnings", null, "warnings");
     const download = node("a", "fc-converter-download", "download", "download");
     download.hidden = true;
-    body.append(privacy, grid, engineNotice, limitation, actions, status, warnings, download);
+    const batchList = node("ol", "fc-converter-batch", null, "batch-list");
+    batchList.hidden = true;
+    const batchDownload = node("button", "fc-converter-button fc-converter-batch-download", "batch_download", "batch-download");
+    batchDownload.type = "button";
+    batchDownload.hidden = true;
+    body.append(privacy, grid, engineNotice, limitation, actions, status, warnings, download, batchList, batchDownload);
     panel.append(summary, body);
     mount.replaceChildren(panel);
 
@@ -181,11 +214,17 @@
       download.removeAttribute("href");
       download.removeAttribute("download");
       warningCodes = [];
+      for (const url of batchURLs.values()) root.URL.revokeObjectURL(url);
+      batchURLs.clear();
+      if (zipURL) root.URL.revokeObjectURL(zipURL);
+      zipURL = null;
+      batchEntries = [];
     }
     function updateTargets() {
       const previous = target.value;
       target.replaceChildren();
-      const source = sourceFormat(file);
+      const firstSource = sourceFormat(file);
+      const source = files.every((item) => sourceFormat(item) === firstSource) ? firstSource : "";
       for (const format of FORMATS.filter((format) => format !== source)) {
         const option = node("option");
         option.value = format;
@@ -204,11 +243,17 @@
       start.disabled = busy || !file;
       clear.disabled = busy || !file;
       cancel.hidden = !busy;
-      fileName.textContent = file ? file.name : text("no_file_selected");
-      const source = sourceFormat(file);
-      engineNotice.textContent = text(source === "doc" || target.value === "doc" || target.value === "pdf" ? "engine" : "light_engine");
-      limitation.textContent = text(source === "pdf" ? "pdf_limits" : "word_limits");
+      cancel.disabled = busy && Boolean(controller?.signal.aborted);
+      fileName.textContent = files.length > 1 ? text("many_selected").replace("{count}", String(files.length)) : file ? file.name : text("no_file_selected");
+      const hasPDF = files.some((item) => sourceFormat(item) === "pdf");
+      const hasDoc = files.some((item) => sourceFormat(item) === "doc");
+      engineNotice.textContent = text(hasDoc || target.value === "doc" || target.value === "pdf" ? "engine" : "light_engine");
+      limitation.textContent = hasPDF && files.length > 1 ? text("pdf_limits") + " " + text("word_limits") : text(hasPDF ? "pdf_limits" : "word_limits");
       status.textContent = text(statusKey);
+      const currentEntry = batchEntries.find((entry) => entry.status === "converting");
+      if (busy && !batchAction && currentEntry && !controller?.signal.aborted) {
+        status.textContent = text("batch_progress").replace("{current}", String(currentEntry.index + 1)).replace("{count}", String(files.length)) + " " + text(stageKey(currentEntry.stage));
+      }
       status.classList.toggle("fc-converter-error", statusError);
       warnings.replaceChildren();
       const translated = [...new Set(warningCodes.map((code) => text(WARNING_ALIASES[code] || code)))];
@@ -218,31 +263,75 @@
         warnings.append(item);
       }
       warnings.hidden = !translated.length;
+      batchList.hidden = files.length < 2;
+      batchList.replaceChildren();
+      for (const entry of batchEntries) {
+        const item = node("li", "fc-converter-batch-item", null, "batch-item");
+        const label = node("strong", "fc-converter-batch-name");
+        label.textContent = entry.name;
+        const entryStatus = node("span", "fc-converter-batch-status");
+        const error = ERROR_ALIASES[entry.error] || entry.error;
+        const key = entry.status === "converting" ? stageKey(entry.stage) : entry.status === "success" ? "done" : entry.status === "error" ? (Object.prototype.hasOwnProperty.call(TEXT.en, error) ? error : "conversion_failed") : entry.status;
+        entryStatus.textContent = text(key || "pending");
+        entryStatus.classList.toggle("fc-converter-error", entry.status === "error");
+        item.append(label, entryStatus);
+        if (entry.result?.blob && entry.status === "success") {
+          let url = batchURLs.get(entry.index);
+          if (!url) { url = root.URL.createObjectURL(entry.result.blob); batchURLs.set(entry.index, url); }
+          const link = node("a", "fc-converter-download", null, "batch-item-download");
+          link.textContent = text("download");
+          link.setAttribute("aria-label", `${text("download")} — ${entry.name}`);
+          link.href = url;
+          link.download = safeName(entry.result.name, target.value);
+          item.append(link);
+          const codes = Array.isArray(entry.result.warnings) ? entry.result.warnings.filter((code) => typeof code === "string") : [];
+          if (sourceFormat(files[entry.index]) === "pdf" && !codes.includes("pdf_reconstructed")) codes.unshift("pdf_reconstructed");
+          const messages = [...new Set(codes.map((code) => text(WARNING_ALIASES[code] || code)))];
+          if (messages.length) {
+            const list = node("ul", "fc-converter-warnings");
+            for (const message of messages) { const warning = node("li"); warning.textContent = message; list.append(warning); }
+            item.append(list);
+          }
+        }
+        batchList.append(item);
+      }
+      batchDownload.hidden = files.length < 2 || !batchEntries.some((entry) => entry.status === "success");
+      batchDownload.disabled = busy;
+      if (batchAction) batchDownload.textContent = text("batch_packaging");
     }
     function setBusy(next) {
       if (busy === next) return;
       busy = next;
       onBusyChange(next);
     }
-    function reset(nextFile) {
+    function reset(nextFiles) {
       if (busy || destroyed) return;
       epoch++;
       clearResult();
-      file = nextFile;
-      const problem = file && (!FORMATS.includes(sourceFormat(file)) ? "unsupported" :
+      files = Array.from(nextFiles || []);
+      file = files[0] || null;
+      const problem = files.length > MAX_FILES || files.reduce((sum, item) => sum + (Number.isFinite(Number(item.size)) ? Number(item.size) : 0), 0) > MAX_TOTAL_SIZE ? "batch_limit" : files.length === 1 && file && (!FORMATS.includes(sourceFormat(file)) ? "unsupported" :
         !Number.isFinite(Number(file.size)) || file.size < 0 ? "bad_document" :
           file.size > MAX_SIZE ? "too_large" : file.size === 0 ? "empty_file" : null);
       if (problem) {
         file = null;
+        files = [];
         fileInput.value = "";
       }
       updateTargets();
-      statusKey = problem || (file ? "selected" : "ready");
+      batchEntries = files.length > 1 ? files.map((item, index) => ({ index, name: item.name, status: "pending" })) : [];
+      statusKey = problem || (files.length > 1 ? "batch_selected" : file ? "selected" : "ready");
       statusError = Boolean(problem);
       render();
     }
     function stop() {
       if (!busy || destroyed) return;
+      if (files.length > 1) {
+        controller?.abort();
+        statusKey = "batch_cancelled";
+        render();
+        return;
+      }
       epoch++;
       controller?.abort();
       controller = null;
@@ -251,9 +340,64 @@
       statusError = false;
       render();
     }
+    async function runBatch() {
+      if (!FORMATS.includes(target.value)) { statusKey = "unsupported"; statusError = true; render(); return; }
+      if (!canStart()) { statusKey = "host_busy"; statusError = true; render(); return; }
+      if (!root.FormCapyBatchConverter?.run) { statusKey = "dependency_missing"; statusError = true; render(); return; }
+      clearResult();
+      const activeEpoch = ++epoch;
+      const activeController = new root.AbortController();
+      controller = activeController;
+      batchEntries = files.map((item, index) => ({ index, name: item.name, status: "pending" }));
+      statusKey = "working"; statusError = false; setBusy(true); render();
+      try {
+        const entries = await root.FormCapyBatchConverter.run({
+          files, targetFormat: target.value, convert, signal: activeController.signal,
+          onUpdate(entries) {
+            if (destroyed || activeEpoch !== epoch) return;
+            batchEntries = entries;
+            render();
+          },
+        });
+        if (destroyed || activeEpoch !== epoch) return;
+        batchEntries = entries;
+        statusKey = activeController.signal.aborted ? "batch_cancelled" : "batch_done";
+      } catch (error) {
+        if (destroyed || activeEpoch !== epoch) return;
+        statusKey = activeController.signal.aborted || error?.name === "AbortError" ? "batch_cancelled" : "conversion_failed";
+        statusError = statusKey !== "batch_cancelled";
+      } finally {
+        if (!destroyed && activeEpoch === epoch) { controller = null; setBusy(false); render(); }
+      }
+    }
+    async function downloadBatch() {
+      if (busy || destroyed || !root.FormCapyBatchConverter?.createZip || !batchEntries.some((entry) => entry.status === "success")) return;
+      const activeEpoch = ++epoch;
+      const activeController = new root.AbortController();
+      controller = activeController;
+      batchAction = true; statusKey = "batch_packaging"; statusError = false; setBusy(true); render();
+      try {
+        const blob = await root.FormCapyBatchConverter.createZip(batchEntries, { signal: activeController.signal });
+        if (destroyed || activeEpoch !== epoch || activeController.signal.aborted) return;
+        if (!blob || !Number.isFinite(blob.size) || blob.size <= 0) throw new Error("invalid zip");
+        if (zipURL) root.URL.revokeObjectURL(zipURL);
+        zipURL = root.URL.createObjectURL(blob);
+        const link = node("a");
+        link.href = zipURL; link.download = "converted-files.zip";
+        link.click();
+        statusKey = "batch_done";
+      } catch (error) {
+        if (destroyed || activeEpoch !== epoch) return;
+        statusKey = activeController.signal.aborted || error?.name === "AbortError" ? "batch_cancelled" : "zip_failed";
+        statusError = statusKey === "zip_failed";
+      } finally {
+        if (!destroyed && activeEpoch === epoch) { controller = null; batchAction = false; setBusy(false); render(); }
+      }
+    }
     async function run() {
       if (busy || destroyed) return;
       if (!file) { statusKey = "no_file"; statusError = true; render(); return; }
+      if (files.length > 1) return runBatch();
       if (!FORMATS.includes(target.value) || target.value === sourceFormat(file)) {
         statusKey = "unsupported"; statusError = true; render(); return;
       }
@@ -271,9 +415,7 @@
           file, targetFormat: target.value, signal: activeController.signal,
           onStage(stage) {
             if (destroyed || epoch !== activeEpoch || !busy) return;
-            const key = typeof stage === "string" ? stage : stage?.stage;
-            statusKey = /extract|pdf_text/.test(key || "") ? "extracting" :
-              /export|convert/.test(key || "") ? "exporting" : /load|download|runtime|init|office|packages|application/.test(key || "") ? "loading" : "working";
+            statusKey = stageKey(stage);
             render();
           },
         });
@@ -302,18 +444,20 @@
       }
     }
     choose.addEventListener("click", () => { if (!busy) fileInput.click(); });
-    fileInput.addEventListener("change", () => reset(fileInput.files?.[0] || null));
+    fileInput.addEventListener("change", () => reset(fileInput.files));
     target.addEventListener("change", () => {
       if (busy || destroyed) return;
       epoch++;
       clearResult();
-      statusKey = file ? "selected" : "ready";
+      batchEntries = files.length > 1 ? files.map((item, index) => ({ index, name: item.name, status: "pending" })) : [];
+      statusKey = files.length > 1 ? "batch_selected" : file ? "selected" : "ready";
       statusError = false;
       render();
     });
-    clear.addEventListener("click", () => { if (!busy) { fileInput.value = ""; reset(null); } });
+    clear.addEventListener("click", () => { if (!busy) { fileInput.value = ""; reset([]); } });
     start.addEventListener("click", run);
     cancel.addEventListener("click", stop);
+    batchDownload.addEventListener("click", downloadBatch);
     const pagehide = (event) => { if (!event.persisted) destroy(); };
     root.addEventListener?.("pagehide", pagehide);
     function destroy() {
@@ -323,6 +467,7 @@
       controller = null;
       clearResult();
       file = null;
+      files = [];
       fileInput.value = "";
       setBusy(false);
       destroyed = true;
@@ -333,7 +478,7 @@
     render();
     return Object.freeze({
       setLocale() { render(); },
-      state: () => ({ busy, hasFile: Boolean(file), sourceFormat: sourceFormat(file), targetFormat: target.value, hasResult: Boolean(resultURL) }),
+      state: () => ({ busy, hasFile: Boolean(file), sourceFormat: sourceFormat(file), targetFormat: target.value, hasResult: Boolean(resultURL) || batchURLs.size > 0 }),
       destroy,
     });
   }

@@ -54,7 +54,7 @@ STATIC_ASSETS = (
     "update-notice.js", "citation-library.js", "citation-import.js", "citation-lookup.js",
     "citation-doi-batch.js", "citation-export.js", "citation-engine.js",
     "citation-assistant.js", "citation-assistant.css",
-    "local-office.js", "document-converter.js", "document-converter.css",
+    "local-office.js", "batch-converter.js", "document-converter.js", "document-converter.css",
     "converter-page.js", "converter-page.css",
 )
 MAX_FILE_SIZE = 20 * 1024 * 1024

@@ -1,13 +1,19 @@
 # 本地文件互转 / Local file conversion
 
-The deployed v2.12.0 website provides a separate PDF / DOCX / DOC conversion
+The deployed website provides a separate PDF / DOCX / DOC conversion
 page, `converter.html`, linked from the paper formatter's top navigation.
 It does not apply an MLA/APA template, edit your original file, or replace the
-paper formatter's current result. This version improves local Office engine
-startup and attempts to retain eligible embedded PDF images; existing native
-installers remain v2.5.0.
+paper formatter's current result. The v2.15.0 website adds sequential batch
+conversion and local ZIP download; existing native installers remain v2.5.0.
 
 ## 中文
+
+独立转换页支持一次选择多个文件，统一选择目标格式后依次转换。
+每个文件分别显示状态、错误和转换提醒；与目标格式相同的文件会跳过。
+成功的结果既可单独下载，也可在本机打包成 ZIP 一次下载；重名结果会
+自动区分。取消会停止当前转换及后续任务，已完成的结果仍可下载。
+批量最多 20 个文件，每个文件最多 20 MiB，输入和保留的结果分别最多
+100 MiB。文件和结果始终在浏览器内处理。
 
 静态网页版的“文件互转”支持六个方向：DOCX → PDF、DOCX → DOC、
 DOC → PDF、DOC → DOCX、PDF → DOCX、PDF → DOC。
@@ -53,6 +59,15 @@ PDF 文字重建需要 pypdf，Word 格式转换还需要在本机安装 LibreOf
 明确提示，不会改用云服务。现有 v2.5.0 安装包不含这个入口。
 
 ## English
+
+The standalone converter supports selecting up to 20 files and converting
+them sequentially to one output format. Each item shows its own status, error
+and warnings; files already in the selected format are skipped. Successful
+outputs can be downloaded individually or collected in a locally generated
+ZIP with unique names. Cancel stops the current and remaining conversions,
+while completed outputs remain available. Each input is limited to 20 MiB;
+the total inputs and retained outputs are each limited to 100 MiB. Documents
+and outputs stay in the browser.
 
 The independent converter supports all six directions between PDF, DOCX and
 Word 97–2003 DOC. Select a file and a different output format, explicitly start

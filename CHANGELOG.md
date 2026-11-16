@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.15.0 — 2026-11-15 (static website deployed)
+
+- 文件互转页支持批量选择 PDF、DOCX 和 DOC，逐项显示转换结果，并可在本地打包下载成功的文件。
+- Batch conversion runs sequentially in the browser, with individual results and a locally generated ZIP.
+- 每批最多 20 个文件，单个不超过 20 MiB，输入与保留结果分别不超过 100 MiB；同格式文件跳过，重名输出自动区分。取消后已完成的结果仍可下载。原单文件流程继续提供。
+- 常规 Edge 本地测试覆盖混合文件、损坏文件、同名结果、实际 ZIP 下载、冷启动取消及单文件转换；未完整追踪所有 Worker 网络请求。[验证范围](docs/TESTING-v2.15.0.md)
+- 正式网站 Cloudflare Worker `d12ac416-c7e3-419c-89c6-69bcff6b07ee` 已接收 100% 流量；两域共 424/424 资源核对通过。常规 Edge 在公网预览和正式站完成五文件混合批次并验证 ZIP；正式站 Worker 网络未完整追踪。桌面和 Android 安装包仍为 v2.5.0。
+
 ## v2.14.1 — 2026-11-09 (static website deployed)
 
 - ICML 2026 网页预设在首次明确生成时按需下载并校验 24,486 字节的样式包；ZIP 包含五个官方样式及来源说明。样式成功缓存后可离线复用；无缓存时离线生成失败并可重试。文稿仍在本地处理。

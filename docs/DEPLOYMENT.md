@@ -1,6 +1,25 @@
 # FormCapy web deployment
 
-## Current public website — v2.13.1
+## Current public website — v2.15.0
+
+Cloudflare Worker version `d12ac416-c7e3-419c-89c6-69bcff6b07ee` is deployed
+at 100% traffic. This browser-local release adds sequential batch PDF/DOCX/DOC
+conversion with per-file status and locally generated ZIP downloads. Existing
+desktop and Android installers remain v2.5.0.
+
+The regular-profile Edge public preview converted a synthetic five-file mixed
+batch: three successes, one damaged-file failure and one same-format skip. The
+downloaded ZIP passed CRC and content checks. Both production domains passed
+the full resource audit: 424/424 assets, 444 GET requests, no errors or
+retries. The report is `build/v2.15.0/production/deployment-verification.json`.
+In regular Edge, an existing v2.14.1 page upgraded through the update notice;
+the production site then converted a synthetic five-file mixed batch to PDF
+with three successes, one damaged-file error and one same-format skip. Its
+downloaded ZIP passed CRC, distinct content marker and duplicate-name checks.
+The production Worker network was not fully traced. See
+[v2.15.0 verification](TESTING-v2.15.0.md).
+
+## Earlier public website — v2.13.1
 
 On **9 November 2026 (America/Los_Angeles)**, YMX0913's four theme/motion
 commits from `codex/formcapy-light-motion` were integrated and deployed to
